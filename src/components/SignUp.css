@@ -1,0 +1,147 @@
+
+/* General Styling */
+body {
+  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff;
+}
+
+.signin-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* min-height: 100vh; */
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+
+  /* padding: 20px; */
+}
+
+.signin-left {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 30px;
+}
+
+.signin-logo {
+  text-align: center;
+  font-size: 32px;
+  font-weight: bold;
+  color: #0073ff;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: 22px;
+  text-align: center;
+  margin-bottom: 10px;
+  color: #333333;
+}
+
+p {
+  text-align: center;
+  font-size: 14px;
+  color: #555555;
+  margin-bottom: 20px;
+}
+
+/* Input Fields */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 17px 16px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border-color: #0073ff;
+}
+
+/* Button */
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  background-color: #d93025;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #b42821;
+}
+
+.signup-link {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.signup-link span {
+  color: #0073ff;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 20px;
+}
+
+/* Secondary Section */
+.signin-right {
+  display: none; /* Optional, can hide for simplicity */
+}
+
+.signin-info {
+  text-align: center;
+}
+
+.learn-more {
+  background-color: transparent;
+  color: #0073ff;
+  font-size: 14px;
+  border: 1px solid #0073ff;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.3s ease-in-out;
+}
+
+.learn-more:hover {
+  background-color: #0073ff;
+  color: #ffffff;
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+  .signin-container {
+    flex-direction: row;
+    justify-content: space-around;
+  }
+
+  .signin-left {
+    max-width: 400px;
+  }
+
+  .signin-right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 400px;
+  }
+}
+
+.password{
+  padding: 17px 16px !important;
+}

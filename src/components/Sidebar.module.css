@@ -1,0 +1,32 @@
+/* Sidebar */
+.sidebar {
+    width: 60px;
+    background: #e6f0fa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 8px;
+    height: 100vh;
+    position: fixed;
+  }
+  
+  .sidebarIcon {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+  }
+  
+  .logoutIcon {
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  

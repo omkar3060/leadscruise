@@ -1,0 +1,275 @@
+.settings-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Full screen height */
+  width: 100vw; /* Full screen width */
+  overflow: hidden; /* Prevent scrollbars */
+}
+
+/* Main Content Layout */
+.settings-scroll-container {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Prevents scrolling */
+}
+
+/* Form layout with three columns */
+.settings-form {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 130px;
+  margin-left: 50px;
+}
+
+/* Each column box */
+.table-container {
+  flex: 1;
+  background-color: white;
+  padding: 20px;
+  padding-top: 50px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  width: 350px;
+  height: 500px;
+  position: relative; /* Ensures h2 is positioned within */
+  overflow: hidden; /* Ensures content doesn't overflow */
+}
+.header-content {
+  display: flex;
+  justify-content: space-between; /* Align left & right */
+  align-items: center;
+  width: 100%;
+  padding: 0 20px; /* Add spacing */
+}
+/* Header styling */
+.table-container h2 {
+  background-color: #6ea8fe;
+  color: black;
+  border-radius: 8px 8px 0 0; /* Round only the top corners */
+  font-size: 14px;
+  margin: 0; /* Removes any default margins */
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 15px 0; /* Ensures consistent height without extra spacing */
+}
+
+/* Table styling */
+.keyword-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.keyword-table th,
+.keyword-table td {
+  border-bottom: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.keyword-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+/* Styled input fields */
+.add-keyword-container {
+  display: flex;
+  margin-top: 10px;
+  gap: 10px;
+}
+
+.add-keyword-container input {
+  flex: 1;
+  padding: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border 0.3s ease;
+  margin-top: 10px;
+}
+
+.add-keyword-container input:focus {
+  border-color: #3b6db5;
+  outline: none;
+}
+
+/* Add button */
+.add-button {
+  background-color: #5cb85c;
+  color: white;
+  border: none;
+  padding: 0px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+  width: auto;
+  height: 46px;
+}
+
+.add-button:hover {
+  background-color: #4cae4c;
+}
+
+/* Delete button */
+.delete-button {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.delete-button:hover {
+  background-color: #c9302c;
+}
+
+.settings-buttons {
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  align-items: flex-start; /* Align buttons to the left */
+  margin-left: 20px; /* Ensure buttons stay on the left */
+  margin-top: 20px;
+}
+
+/* Button Styling */
+.settings-buttons button {
+  width: 220px;
+  background-color: #5cb85c;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  margin-bottom: 10px; /* Space between buttons */
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.settings-buttons button:hover {
+  background-color: #4cae4c;
+}
+
+/* Save button */
+.form-submit-button {
+  display: block;
+  width: 220px;
+  background-color: #5cb85c;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  margin: 30px auto;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.3s ease;
+}
+
+.form-submit-button:hover {
+  background-color: #4cae4c;
+}
+
+.dashboard-header {
+  position: fixed;
+  left: 60px; /* Start after the sidebar */
+  width: calc(100% - 90px); /* Adjust width */
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background-color: white;
+  margin-left: 10px;
+  margin-right: 30px;
+  padding-right: 20px;
+  padding-bottom: 10px;
+  border-radius: 8px;
+}
+
+.status-section {
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+
+}
+
+.start-stop-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.start-button,
+.stop-button {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 20vh;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.start-button {
+  background: #28a745;
+  color: white;
+}
+
+.stop-button {
+  background: #dc3545;
+  color: white;
+}
+
+.status-label {
+  background-color: #007bff;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 15px 20px;
+  border-radius: 5px;
+  text-align: center;
+  width: 36vh;
+  margin-top: 15px;
+}
+
+.status-label:hover {
+  background-color: #0056b3; 
+  cursor: pointer;  /* Darker blue on hover */
+}
+
+.profile-section {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.profile-button {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 0;
+}
+
+.renewal-text {
+  margin: 4px;
+  font-size: 12px;
+  color: #555;
+}
+
