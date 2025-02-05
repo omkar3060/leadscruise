@@ -13,7 +13,6 @@ const crypto = require("crypto");
 const Payment = require("./models/Payment");
 const paymentRoutes = require("./routes/paymentRoutes");
 
-// Middleware
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
