@@ -12,7 +12,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Payment = require("./models/Payment");
 const paymentRoutes = require("./routes/paymentRoutes");
-
+const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -20,7 +20,7 @@ app.use(cors());
 const User = require("./models/userModel");
 // MongoDB Connection
 mongoose
-  .connect("", {
+  .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -99,6 +99,8 @@ app.post("/api/save-payment", async (req, res) => {
 app.use("/api", authRoutes);
 app.use("/api", settingsRoutes);
 app.use("/api", paymentRoutes);
+app.use("/api/billing", billingDetailsRoutes);
+
 const numberSchema = new mongoose.Schema({
   number: { type: Number, required: true, unique: true },
 });

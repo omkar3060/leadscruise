@@ -33,10 +33,11 @@
   .table-container {
     flex: 1;
     background-color: white;
-    padding: 20px;
+    padding: 0;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
+    
   }
   .ProfileCredentials {
     flex: 0 0 300px; /* Fixed width for the right section */
@@ -58,6 +59,7 @@
     left: 0;
     padding: 15px 0;
     text-align: center;
+    margin-bottom: 10px;
   }
   
   /* Table Styling */
@@ -79,7 +81,15 @@
     background-color: #f4f4f4;
     font-weight: bold;
   }
-  
+
+  .billing-table th:nth-child(2), 
+.billing-table td:nth-child(2) {
+    width: 30%;  /* Adjust width as needed */
+}
+.billing-table th:nth-child(7), 
+.billing-table td:nth-child(7) {
+    width: 15%;  /* Adjust width as needed */
+}
   /* Download Button */
   .download-button {
     background-color: #5cb85c;
@@ -89,6 +99,7 @@
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
+    width: auto;
     transition: background 0.3s ease;
   }
   
@@ -96,22 +107,118 @@
     background-color: #4cae4c;
   }
   
-  /* Edit Button */
-  .edit-button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    margin-top: 10px;
-  }
-  
-  .edit-button:hover {
-    background-color: #0056b3;
-  }
-  
+/* Billing Details Section */
+.billing-details {
+  width: 68%;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  margin-top: 20px;
+}
+
+.billing-header {
+  background-color: #6ea8fe;
+  color: black;
+  font-size: 14px;
+  text-align: left;
+  padding: 15px;
+  border-radius: 6px 6px 0 0;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Billing Info Container */
+.billing-info {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Three-column layout for first row */
+.billing-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* Columns for Billing Phone, GST, and PAN */
+.billing-item {
+  flex: 1;
+  font-size: 25px;
+  font-weight: bolder;
+}
+
+.billing-item input,.billing-address-text input {
+  width: 95%;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  transition: border 0.3s ease-in-out;
+}
+
+.billing-item input:focus,.billing-address-text input:focus {
+  border-color: #007bff;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.billing-item strong {
+  display: block;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Address Section */
+.billing-address {
+  width: 100%;
+  margin-top: 10px;
+  text-align:left;
+}
+
+.billing-address-text{
+  text-align: left;
+  margin-bottom: 6px;
+  color: black;
+  font-weight: bolder;
+}
+
+.billing-address-text textarea{
+  width: 95%;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  transition: border 0.3s ease-in-out;
+}
+
+/* Edit Button */
+.edit-button,.save-button,.cancel-button {
+  display: block;
+  background-color: #5cb85c;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 10px;
+  width: 150px;
+  margin-left: 15px;
+  font-size: 14px;
+}
+
+.edit-button:hover {
+  background-color: #218838;
+}
+
   /* Header Content */
   .header-content {
     display: flex;
@@ -177,6 +284,7 @@
     color: white;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 10px;
   }
   
   .renewal-text {

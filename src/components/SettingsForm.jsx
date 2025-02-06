@@ -119,7 +119,7 @@ const SettingsForm = () => {
             </div>
           </div>
           <div className="profile-section">
-            <button className="profile-button">Profile</button>
+            <button className="profile-button" onClick={() => navigate("/profile")}>Profile</button>
             <div>
               <p className="renewal-text">Subscription Status: ACTIVE</p>
               <p className="renewal-text">Subscription next renewal date: 11/01/2025</p>
