@@ -7,6 +7,9 @@ import TaskExecutor from "./components/TaskExecutor";
 import Dashboard from "./components/Dashboard";
 import SettingsForm from "./components/SettingsForm";
 import Profile from "./components/Profile";
+import Footer from "./components/Footer"; // Import Footer
+import Master from "./components/Master";
+
 function App() {
   return (
     <Router>
@@ -19,7 +22,9 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<SettingsForm />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/master" element={<Master />} />
         </Routes>
+        <Footer /> {/* Footer will be displayed on all pages */}
       </div>
     </Router>
   );

@@ -4,7 +4,7 @@ import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
 import styles from "./Dashboard.module.css"; // Import CSS module
 import { useNavigate } from "react-router-dom";
-const Dashboard = () => {
+const Master = () => {
   const [leads, setLeads] = useState([]);
   const [status, setStatus] = useState("Not Running");
   const [isDisabled, setIsDisabled] = useState(false);
@@ -15,29 +15,32 @@ const Dashboard = () => {
     wordArray: [],
     h2WordArray: [],
   });
+  const [subscriptions, setSubscriptions] = useState([]);
 
-  // Fetch leads from backend
-  const fetchLeads = async () => {
+  const fetchSubscriptions = async () => {
     try {
-      const mobileNumber = localStorage.getItem("mobileNumber");
-      if (!mobileNumber) {
-        console.error("Mobile number not found in localStorage.");
-        return;
-      }
-  
-      const response = await axios.get(`http://localhost:5000/api/get-leads/${mobileNumber}`);
-      setLeads(response.data);
+      const response = await axios.get(`http://localhost:5000/api/get-all-subscriptions`);
+      setSubscriptions(response.data);
     } catch (error) {
-      console.error("Error fetching leads:", error);
+      console.error("Error fetching subscriptions:", error);
     }
   };
 
   useEffect(() => {
-    fetchLeads();
-    const interval = setInterval(fetchLeads, 10000);
+    fetchSubscriptions();
+    const interval = setInterval(fetchSubscriptions, 10000);
     return () => clearInterval(interval);
   }, []);
+  const calculateRemainingDays = (createdAt) => {
+    const createdDate = new Date(createdAt);
+    const expiryDate = new Date(createdDate);
+    expiryDate.setDate(expiryDate.getDate() + 30); // Monthly subscription (30 days)
 
+    const today = new Date();
+    const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+    return remainingDays > 0 ? remainingDays : "Expired";
+  };
   // Countdown Timer Effect
   useEffect(() => {
     if (timer > 0) {
@@ -178,31 +181,39 @@ const Dashboard = () => {
 
         {/* Recent Leads Table */}
         <div className={styles.leadsSection}>
-          <div className={styles.tableHeader}>Recent Purchased Leads</div>
+          <div className={styles.tableHeader}>Active Subscriptions</div>
           <div className={styles.tableWrapper}>
             <table className={styles.leadsTable}>
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Mobile Number</th>
                   <th>Email</th>
-                  <th>Purchase Date</th>
+                  <th>Contact</th>
+                  <th>Order ID</th>
+                  <th>Payment ID</th>
+                  <th>Order Amount</th>
+                  <th>Subscription Start</th>
+                  <th>Days Remaining</th>
                 </tr>
               </thead>
               <tbody>
-                {leads.length > 0 ? (
-                  leads.map((lead, index) => (
+                {subscriptions.length > 0 ? (
+                  subscriptions.map((sub, index) => (
                     <tr key={index}>
-                      <td>{lead.name}</td>
-                      <td>{lead.mobile}</td>
-                      <td>{lead.email}</td>
-                      <td>{new Date(lead.createdAt).toLocaleDateString()}</td>
+                      <td>{sub.name}</td>
+                      <td>{sub.email}</td>
+                      <td>{sub.contact}</td>
+                      <td>{sub.order_id}</td>
+                      <td>{sub.payment_id}</td>
+                      <td>₹{sub.order_amount}</td>
+                      <td>{new Date(sub.created_at).toLocaleDateString()}</td>
+                      <td>{calculateRemainingDays(sub.created_at)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" style={{ textAlign: "center" }}>
-                      No leads available
+                    <td colSpan="8" style={{ textAlign: "center" }}>
+                      No active subscriptions
                     </td>
                   </tr>
                 )}
@@ -216,4 +227,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Master;
