@@ -1,0 +1,121 @@
+.signin-left .plans {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 350px;
+  box-sizing: border-box;
+}
+
+.signin-left .plans .common {
+  display: flex;
+  background-color: #f2f2f2;
+  border-radius: 10px;
+  height: 100px;
+  padding: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.signin-left .plans .selected {
+  border: 3px solid rgb(108, 163, 234); /* Highlight selected plan */
+}
+
+.signin-left .plans .common .part-1 {
+  width: 70%;
+}
+
+.signin-left .plans .common .part-2 {
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+}
+
+.signin-left .plans .common .part-2 {
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+}
+
+.signin-left .plans .common .part-2 .tag {
+  min-height: 30px;
+}
+
+.signin-left .plans .common .part-2 .prices {
+  align-self: flex-end;
+}
+
+.signin-left .plans .common .part-2 .prices-p {
+  text-align: right;
+  font-style: normal;
+  color: black;
+  font-size: 10px;
+}
+
+.signin-left .plans .common .part-2 .overline {
+  text-decoration: line-through;
+}
+
+.signin-left .plans .common .part-2 .prices-h3 {
+  text-align: right;
+  font-style: normal;
+  color: black;
+  letter-spacing: 1px;
+}
+
+.signin-left .plans .common h2 {
+  font-family: "Norwester";
+  font-size: medium;
+  letter-spacing: 1px;
+}
+
+.signin-left .plans .common p {
+  margin: 2px;
+  font-size: small;
+  font-style: italic;
+  color: black;
+  font-weight: 100;
+}
+
+.signin-left .plans .common .first-p {
+  margin-top: 15px;
+}
+
+.signin-left .next-button {
+  margin-bottom: 20px;
+}
+
+.signin-left .end-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.signin-left .end-block .gback {
+  font-size: medium;
+  font-weight: 500;
+  text-align: left;
+  color: blue;
+  cursor: pointer;
+}
+
+.signin-left .end-block .gback:hover {
+  text-decoration: underline;
+}
+
+.signin-left .logout-link {
+  font-size: medium;
+  font-weight: 500;
+  text-align: left;
+  color: black;
+}
+
+.signin-left .logout-link span {
+  color: #ff0000;
+  cursor: pointer;
+}
+
+.signin-left .logout-link span:hover {
+  color: #ff0000;
+}

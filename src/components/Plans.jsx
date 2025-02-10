@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import "./styles.css";
-import "./PaginationSlider.css";
-import "./Signin.css";
+import "./Plans.css";
+import "@fontsource/norwester"; // Defaults to weight 400
+import "@fontsource/norwester/400.css"; // Specify weight
 
-const SignUp = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+const Plans = () => {
   const [selected, setSelected] = useState(0);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -21,65 +19,90 @@ const SignUp = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSignUp = async () => {
-    try {
-      const res = await axios.post("http://localhost:5000/api/signup", {
-        username,
-        email,
-        password,
-      });
-      alert(res.data.message);
-      navigate("/"); // Redirect to SignIn page after successful signup
-    } catch (error) {
-      alert(
-        error.response.data.message || "Failed to sign up. Please try again."
-      );
-    }
+  const handlePlanSelect = (plan, price) => {
+    setSelectedPlan(plan);
+    localStorage.setItem("selectedPrice", price); // Store price in local storage
   };
 
   return (
     <div className="signin-container">
       <div className="center-div">
         <div className="signin-left">
-          <div className="signin-logo-class">
-            <img
-              src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
-              alt="zohologo"
-            />
-            <div className="smart-scan">
-              {/* <img
-                src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
-                alt=""
-                className="scan-icon"
-              /> */}
-              <span>Try smart sign-in</span>
+          <div>Choose From Plans Below</div>
+          <div className="plans">
+            <div
+              className={`one-mo common ${
+                selectedPlan === "one-mo" ? "selected" : ""
+              }`}
+              onClick={() => handlePlanSelect("one-mo", 2999)}
+            >
+              <div className="part-1">
+                <h2>One Month Subscription</h2>
+                <p className="first-p">Unlimited AI Leads Capture</p>
+                <p>AI Business monitoring</p>
+                <p>AI Encryption & Authentication system</p>
+              </div>
+              <div className="part-2">
+                <div className="tag"></div>
+                <div className="prices">
+                  <p className="overline prices-p">₹ 7999</p>
+                  <p className="prices-p">62.50% OFF</p>
+                  <h3 className="prices-h3">₹ 2999</h3>
+                </div>
+              </div>
+            </div>
+            <div
+              className={`six-mo common ${
+                selectedPlan === "six-mo" ? "selected" : ""
+              }`}
+              onClick={() => handlePlanSelect("six-mo", 14999)}
+            >
+              <div className="part-1">
+                <h2>6 Months Subscription</h2>
+                <p className="first-p">Unlimited AI Leads Capture</p>
+                <p>AI Business monitoring</p>
+                <p>AI Encryption & Authentication system</p>
+              </div>
+              <div className="part-2">
+                <div className="tag"></div>
+                <div className="prices">
+                  <p className="overline prices-p">₹ 47999</p>
+                  <p className="prices-p">62.50% OFF</p>
+                  <h3 className="prices-h3">₹ 14999</h3>
+                </div>
+              </div>
+            </div>
+            <div
+              className={`year-mo common ${
+                selectedPlan === "year-mo" ? "selected" : ""
+              }`}
+              onClick={() => handlePlanSelect("year-mo", 29999)}
+            >
+              <div className="part-1">
+                <h2>Yearly Subscription</h2>
+                <p className="first-p">Unlimited AI Leads Capture</p>
+                <p>AI Business monitoring</p>
+                <p>AI Encryption & Authentication system</p>
+              </div>
+              <div className="part-2">
+                <div className="tag"></div>
+                <div className="prices">
+                  <p className="overline prices-p">₹ 95999</p>
+                  <p className="prices-p">62.50% OFF</p>
+                  <h3 className="prices-h3">₹ 29999</h3>
+                </div>
+              </div>
             </div>
           </div>
-          <h2 className="signin-tag">Sign up</h2>
-          <p className="signin-descriptor">to access Zoho Home</p>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            className="password"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button onClick={handleSignUp}>Sign Up</button>
-          <div className="signup-link">
-            Already have an account?{" "}
-            <span onClick={() => navigate("/")}>Sign In</span>
+
+          <button className="next-button">Next</button>
+          <div className="end-block">
+            <p className="gback" onClick={() => navigate("/check-number")}>
+              Go Back
+            </p>
+            <p className="logout-link">
+              Wish to <span onClick={() => navigate("/")}>Logout</span>?
+            </p>
           </div>
         </div>
         <div className="signin-right">
@@ -165,4 +188,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default Plans;

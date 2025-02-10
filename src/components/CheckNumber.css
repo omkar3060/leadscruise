@@ -1,135 +1,23 @@
-
-/* Container styling */
-.check-number-container {
-  display: flex;
-  background-color: white;
-  justify-content: left;
-  align-items: center;
-  /* height: 100vh; */
-  padding: 10px 28px 10px 28px;
-  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-}
-
-/* Left panel styling */
-.check-number-input-screen {
-  flex: 1;
-  max-width: 400px;
-  margin-right: 20px;
-}
-
-.check-number-input-screen h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.check-number-input-screen p {
-  font-size: 14px;
-  color: #000000;
-  font-weight: lighter;
-  margin-bottom: 80px;
-}
-
-.mobile-number-input {
-  width: 100%;
-  padding: 12px 15px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 16px;
-  color: #333;
-  outline: none;
-}
-
-.mobile-number-input::placeholder {
-  color: #aaa;
-}
-
-.next-button {
-  width: 100%;
-  padding: 17px 30px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.next-button:hover {
-  background-color: #0056b3;
-}
-
-.logout-link {
-  font-size: 14px;
-  color: #666;
-  margin-top: 10px;
-}
-
-.logout-link span {
-  color: #ff0000;
-
-  cursor: pointer;
-}
-
-.logout-link span:hover {
-  color: #0056b3;
-}
-
-/* Right panel styling */
-.signin-right {
-  flex: 1;
-  max-width: 400px;
-  text-align: center;
-}
-
-.overlapBanner {
-  background-color: white;
-}
-
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.banner1_img {
-  background-size: contain;
-  background-repeat: no-repeat;
-}
-
-.banner1_heading {
-  font-size: 16px;
-  font-weight: 600;
-  margin-top: 20px;
-  color: #333;
-}
-
-.banner1_content {
-  font-size: 14px;
-  color: #666;
-  margin-top: 10px;
-  text-align: center;
-}
-
-.banner1_href {
-  display: inline-block;
-  margin-top: 10px;
-  background-color: #ecf7fe;
-  color: #0091ff;
-  font-weight: 600;
-  border-radius: 18px;
-  padding: 8px 20px;
-  text-decoration: none;
-}
-
-.banner1_href:hover {
-  background-color: #d0effc;
-}
-
 /* Error Screen Styling */
+
+.signin-left .check-number-input-screen h2 {
+  font-size: larger;
+  margin: 10px 0;
+  font-weight: 600;
+}
+
+.signin-left .check-number-input-screen p {
+  font-size: medium;
+  font-weight: 500;
+  margin: 30px 0;
+  color: black;
+}
+
+.signin-left .logout-link span:hover {
+  color: #ff0000;
+  text-decoration: underline;
+}
+
 .error-screen {
   flex: 1;
   display: flex;
@@ -199,10 +87,6 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 40px;
 }
 
 .success-screen h1 {
@@ -212,13 +96,16 @@
   margin-bottom: 20px;
 }
 
-.success-screen .status-icon {
-  width: 100px;
-  height: 100px;
-  margin-bottom: 20px;
+.success-screen .success-icon {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.success-screen .status-icon img {
+.success-screen .success-icon img {
   max-width: 100%;
   max-height: 100%;
   display: block;
@@ -227,35 +114,59 @@
 .success-screen p {
   font-size: 16px;
   color: #666;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.success-screen .icon-cont {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.success-screen .icon-cont p {
+  text-align: center;
+  font-weight: 400;
+  color: rgb(56, 56, 56);
+  font-size: 18px;
 }
 
 .success-screen .phone-number {
   font-weight: bold;
   color: #000;
+  text-align: left;
+  letter-spacing: 0.6px;
 }
 
 .success-screen .next-button {
-  padding: 17px 30px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  text-transform: uppercase;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
-.success-screen .next-button:hover {
-  background-color: #0056b3;
+.success-screen .end-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.success-screen .end-block .gback {
+  font-size: medium;
+  font-weight: 500;
+  text-align: left;
+  color: blue;
+  cursor: pointer;
+}
+
+.success-screen .end-block .gback:hover {
+  text-decoration: underline;
 }
 
 .success-screen .logout-link {
-  font-size: 14px;
-  color: #666;
-  margin-top: 10px;
+  font-size: medium;
+  font-weight: 500;
+  text-align: left;
+  color: black;
 }
 
 .success-screen .logout-link span {
@@ -264,7 +175,7 @@
 }
 
 .success-screen .logout-link span:hover {
-  color: #0056b3;
+  color: #ff0000;
 }
 
 /* Loading Screen Styling */

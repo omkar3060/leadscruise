@@ -31,6 +31,22 @@ const Master = () => {
     const interval = setInterval(fetchSubscriptions, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchLeads = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/get-all-leads");
+      setLeads(response.data); // Ensure leads are set properly
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchLeads();
+    const interval = setInterval(fetchLeads, 10000); // Refresh every 10 seconds
+    return () => clearInterval(interval);
+  }, []);
+  
   const calculateRemainingDays = (createdAt) => {
     const createdDate = new Date(createdAt);
     const expiryDate = new Date(createdDate);
