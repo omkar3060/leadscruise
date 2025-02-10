@@ -19,13 +19,7 @@ const Dashboard = () => {
   // Fetch leads from backend
   const fetchLeads = async () => {
     try {
-      const mobileNumber = localStorage.getItem("mobileNumber");
-      if (!mobileNumber) {
-        console.error("Mobile number not found in localStorage.");
-        return;
-      }
-  
-      const response = await axios.get(`http://localhost:5000/api/get-leads/${mobileNumber}`);
+      const response = await axios.get("http://localhost:5000/api/get-leads");
       setLeads(response.data);
     } catch (error) {
       console.error("Error fetching leads:", error);

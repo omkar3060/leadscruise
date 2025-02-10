@@ -25,7 +25,6 @@ function App() {
           <Route path="/master" element={<Master />} />
           <Route path="/plans" element={<Plans/>} />
         </Routes>
-        <Footer /> {/* Footer will be displayed on all pages */}
       </div>
     </Router>
   );
