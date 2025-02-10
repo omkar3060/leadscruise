@@ -175,14 +175,20 @@ const SettingsForm = () => {
                 </tr>
               </thead>
               <tbody>
-                {settings.wordArray.map((word, index) => (
-                  <tr key={index}>
-                    <td>{word}</td>
-                    <td>
-                      <button className="delete-button" onClick={() => deleteItem("wordArray", index)}>Delete</button>
-                    </td>
+              {settings.wordArray.length > 0 ? (
+                  settings.wordArray.map((sentence, index) => (
+                    <tr key={index}>
+                      <td>{sentence}</td>
+                      <td>
+                        <button className="delete-button" onClick={() => deleteItem("sentences", index)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="2">No words added.</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
             <div className="add-keyword-container">
@@ -202,14 +208,20 @@ const SettingsForm = () => {
                 </tr>
               </thead>
               <tbody>
-                {settings.h2WordArray.map((word, index) => (
-                  <tr key={index}>
-                    <td>{word}</td>
-                    <td>
-                      <button className="delete-button" onClick={() => deleteItem("h2WordArray", index)}>Delete</button>
-                    </td>
+              {settings.h2WordArray.length > 0 ? (
+                  settings.h2WordArray.map((sentence, index) => (
+                    <tr key={index}>
+                      <td>{sentence}</td>
+                      <td>
+                        <button className="delete-button" onClick={() => deleteItem("sentences", index)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="2">No words added.</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
             <div className="add-keyword-container">

@@ -309,7 +309,7 @@ app.post("/api/store-lead", async (req, res) => {
 });
 
 // Endpoint to retrieve all leads from DB
-app.get("/api/get-leads", async (req, res) => {
+app.get("/api/get-all-leads", async (req, res) => {
   try {
     const leads = await Lead.find().sort({ createdAt: -1 }); // Sort by latest leads first
     res.json(leads);
@@ -318,6 +318,25 @@ app.get("/api/get-leads", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+app.get("/api/get-leads/:mobileNumber", async (req, res) => {
+  try {
+    const { mobileNumber } = req.params;
+
+    if (!mobileNumber) {
+      return res.status(400).json({ error: "Mobile number is required" });
+    }
+
+    // Fetch leads that match the mobileNumber
+    const leads = await Lead.find({ user_mobile_number: mobileNumber }).sort({ createdAt: -1 });
+
+    res.json(leads);
+  } catch (error) {
+    console.error("Error fetching leads:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 
 const PORT = 5000;

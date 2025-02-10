@@ -35,3 +35,12 @@ exports.getPaymentsByEmail = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+exports.getAllSubscriptions = async (req, res) => {
+  try {
+    const subscriptions = await Payment.find().sort({ createdAt: -1 }); // Fetch all subscriptions
+    res.status(200).json(subscriptions);
+  } catch (error) {
+    console.error("Error fetching subscriptions:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
