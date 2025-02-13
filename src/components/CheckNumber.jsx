@@ -12,9 +12,7 @@ const CheckNumber = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [status, setStatus] = useState("idle"); // 'idle', 'loading', 'success', or 'error'
   const [message, setMessage] = useState("");
-  const [paymentError, setPaymentError] = useState("");
   const navigate = useNavigate();
-  const [showBanner, setShowBanner] = useState(true);
   const [selected, setSelected] = useState(0);
 
   useEffect(() => {
@@ -44,139 +42,11 @@ const CheckNumber = () => {
     }
   };
 
-  // Razorpay handlers
-  const amount = 500;
-  const currency = "INR";
-  const receiptId = "qwsaq1";
-
-  const savePaymentDetails = async (paymentData) => {
-    try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-        paymentData;
-      const userDetails = {
-        name: "Shashidhar",
-        email: "shashidharangadi14@gmail.com",
-        contact: "7676577935",
-      };
-
-      await axios.post("http://localhost:5000/api/save-payment", {
-        unique_id: await getNextPaymentId(), // Fetch the next unique ID
-        name: userDetails.name,
-        email: userDetails.email,
-        contact: userDetails.contact,
-        order_id: razorpay_order_id,
-        payment_id: razorpay_payment_id,
-        signature: razorpay_signature,
-        order_amount: amount,
-      });
-
-      navigate("/execute-task");
-    } catch (error) {
-      console.error("Error saving payment details:", error);
-      setPaymentError("Payment unsuccessful. Please try again.");
-      setTimeout(() => navigate("/check-number"), 2000);
-    }
-  };
-
-  const getNextPaymentId = async () => {
-    const response = await axios.get("http://localhost:5000/api/get-latest-id");
-    return response.data.latestId;
-  };
-
-  const paymentHandler = async (e) => {
-    e.preventDefault();
-
-    try {
-      const response = await fetch("http://localhost:5000/order", {
-        method: "POST",
-        body: JSON.stringify({
-          amount,
-          currency,
-          receipt: receiptId,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const order = await response.json();
-      console.log(order);
-
-      var options = {
-        key: "rzp_test_WK0GdfgogeZ8Cy",
-        amount,
-        currency,
-        name: "Focus Engineering",
-        description: "Test Transaction",
-        image: "https://example.com/your_logo",
-        order_id: order.id,
-        prefill: {
-          name: "Shashidhar",
-          email: "shashidharangadi14@gmail.com",
-          contact: "7676577935",
-        },
-        handler: async function (response) {
-          const validationResult = await validateRes(response);
-          console.log(validationResult);
-          console.log(validationResult.success);
-          if (validationResult && validationResult.success) {
-            await savePaymentDetails(response);
-          } else {
-            console.error("Payment validation failed:", validationResult);
-            setPaymentError("Payment validation failed. Please try again.");
-          }
-        },
-
-        theme: {
-          color: "#3399cc",
-        },
-      };
-      var rzp1 = new window.Razorpay(options);
-
-      rzp1.on("payment.failed", function (response) {
-        setPaymentError("Payment unsuccessful. Please try again.");
-        setTimeout(() => navigate("/check-number"), 2000);
-      });
-
-      rzp1.open();
-    } catch (error) {
-      console.error("Error during payment process:", error);
-      setPaymentError("Payment unsuccessful. Please try again.");
-      setTimeout(() => navigate("/check-number"), 2000);
-    }
-  };
-
-  const validateRes = async (response) => {
-    try {
-      const body = {
-        ...response,
-      };
-      const validateResponse = await fetch(
-        "http://localhost:5000/order/validate",
-        {
-          method: "POST",
-          body: JSON.stringify(body),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const jsonRes = await validateResponse.json();
-      console.log("Validation Response:", jsonRes);
-
-      return jsonRes;
-    } catch (error) {
-      console.error("Error validating payment:", error);
-      return null;
-    }
-  };
-
   return (
     <div className="signin-container">
       <div className="center-div">
         <div className="signin-left">
-          {/* Main screens */}
+          {/* Loading Screen */}
           {status === "loading" && (
             <div className="loading-screen">
               <img
@@ -196,6 +66,7 @@ const CheckNumber = () => {
             </div>
           )}
 
+          {/* Success Screen */}
           {status === "success" && (
             <div className="success-screen">
               <div className="icon-cont">
@@ -217,7 +88,6 @@ const CheckNumber = () => {
               >
                 Next
               </button>
-              {paymentError && <p className="error-message">{paymentError}</p>}
               <div className="end-block">
                 <p className="gback" onClick={() => window.location.reload()}>
                   Go Back
@@ -229,6 +99,7 @@ const CheckNumber = () => {
             </div>
           )}
 
+          {/* Error Screen */}
           {status === "error" && (
             <div className="error-screen">
               <h2>Check Status</h2>
@@ -254,6 +125,8 @@ const CheckNumber = () => {
               </p>
             </div>
           )}
+
+          {/* Input Screen */}
           {status === "idle" && (
             <div className="check-number-input-screen">
               <h2>Check if your number is subscribed with us earlier</h2>
@@ -278,14 +151,12 @@ const CheckNumber = () => {
             </div>
           )}
         </div>
+
+        {/* Right Side Banner */}
         <div className="signin-right">
           <div className="banner-container">
             {/* First Banner */}
-            <div
-              className={`banner overlapBanner ${
-                selected === 0 ? "active" : ""
-              }`}
-            >
+            <div className={`banner overlapBanner ${selected === 0 ? "active" : ""}`}>
               <div className="rightbanner">
                 <div
                   className="banner1_img"
@@ -311,9 +182,7 @@ const CheckNumber = () => {
             </div>
 
             {/* Second Banner */}
-            <div
-              className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}
-            >
+            <div className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}>
               <div
                 className="product_img"
                 style={{
@@ -343,14 +212,10 @@ const CheckNumber = () => {
 
             {/* Pagination Dots */}
             <div className="pagination-container">
-              <div
-                className={`pagination-dot ${selected === 0 ? "selected" : ""}`}
-              >
+              <div className={`pagination-dot ${selected === 0 ? "selected" : ""}`}>
                 <div className="progress-fill"></div>
               </div>
-              <div
-                className={`pagination-dot ${selected === 1 ? "selected" : ""}`}
-              >
+              <div className={`pagination-dot ${selected === 1 ? "selected" : ""}`}>
                 <div className="progress-fill"></div>
               </div>
             </div>

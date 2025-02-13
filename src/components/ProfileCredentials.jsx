@@ -86,7 +86,7 @@ const ProfileCredentials = () => {
             <div className="password-field">
               {isEditingSavedPassword ? (
                 <input
-                  type="password"
+                  type="password" className="password-input"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
@@ -141,7 +141,7 @@ const ProfileCredentials = () => {
             <div className="password-field">
               {isEditing ? (
                 <input
-                  type="password"
+                  type="password" className="password-input"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"

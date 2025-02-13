@@ -10,6 +10,16 @@ const SettingsForm = () => {
     wordArray: [],
     h2WordArray: [],
   });
+  const [subscriptionDetails, setSubscriptionDetails] = useState({
+    renewal_date: "Loading...",
+    status: "Loading...",
+  });
+  useEffect(() => {
+    const storedSubscription = localStorage.getItem("subscriptionDetails");
+    if (storedSubscription) {
+      setSubscriptionDetails(JSON.parse(storedSubscription));
+    }
+  }, []);
 
   const [newSentence, setNewSentence] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
@@ -19,7 +29,7 @@ const SettingsForm = () => {
   const navigate = useNavigate();
   useEffect(() => {
     const fetchSettings = async () => {
-      const userEmail = localStorage.getItem("userEmail"); 
+      const userEmail = localStorage.getItem("userEmail");
       if (!userEmail) {
         alert("User email not found!");
         return;
@@ -60,13 +70,13 @@ const SettingsForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const userEmail = localStorage.getItem("userEmail"); // Ensure userEmail is stored in localStorage
     if (!userEmail) {
       alert("User email not found!");
       return;
     }
-  
+
     try {
       await axios.post("http://localhost:5000/api/save-settings", {
         userEmail,
@@ -74,21 +84,21 @@ const SettingsForm = () => {
         wordArray: settings.wordArray,
         h2WordArray: settings.h2WordArray,
       });
-  
+
       alert("Settings saved successfully!");
     } catch (error) {
       console.error("Error saving settings:", error);
       alert("Failed to save settings.");
     }
   };
-  
+
   const handleRevert = async () => {
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
       alert("User email not found!");
       return;
     }
-  
+
     if (window.confirm("Are you sure you want to revert all settings?")) {
       try {
         await axios.delete(`http://localhost:5000/api/delete-settings/${userEmail}`);
@@ -121,8 +131,12 @@ const SettingsForm = () => {
           <div className="profile-section">
             <button className="profile-button" onClick={() => navigate("/profile")}>Profile</button>
             <div>
-              <p className="renewal-text">Subscription Status: ACTIVE</p>
-              <p className="renewal-text">Subscription next renewal date: 11/01/2025</p>
+              <p className="renewal-text">
+                Subscription Status: {subscriptionDetails.status}
+              </p>
+              <p className="renewal-text">
+                Subscription next renewal date: {subscriptionDetails.renewal_date}
+              </p>
             </div>
           </div>
         </div>
@@ -175,7 +189,7 @@ const SettingsForm = () => {
                 </tr>
               </thead>
               <tbody>
-              {settings.wordArray.length > 0 ? (
+                {settings.wordArray.length > 0 ? (
                   settings.wordArray.map((sentence, index) => (
                     <tr key={index}>
                       <td>{sentence}</td>
@@ -208,7 +222,7 @@ const SettingsForm = () => {
                 </tr>
               </thead>
               <tbody>
-              {settings.h2WordArray.length > 0 ? (
+                {settings.h2WordArray.length > 0 ? (
                   settings.h2WordArray.map((sentence, index) => (
                     <tr key={index}>
                       <td>{sentence}</td>

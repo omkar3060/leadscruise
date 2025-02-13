@@ -1,59 +1,50 @@
-.task-executor-wrapper {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  background-color: white;
-  padding: 40px;
+.task-input-screen .te-tis-h4 {
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  font-weight: bolder;
 }
 
-.task-executor-container {
-  flex: 1;
-  max-width: 400px;
-  background-color: #ffffff;
-  border-radius: 8px;
+.task-input-screen .instr-wrapper {
+  display: flex;
+  min-height: 80px;
+  justify-content: space-between;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.task-input-screen .instr-wrapper .para {
+  width: 50%;
   display: flex;
   align-items: center;
-  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); */
-  /* padding: 25px; */
-  width: 60vh;
 }
 
-.signin-right {
-  flex: 0.4;
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 20px;
+.task-input-screen .instr-wrapper .para .te-tis-p {
+  margin-bottom: 0px;
+  color: rgb(80, 79, 79);
+  font-size: 1.0em;
 }
 
-.task-input-screen,
-.loading-screen,
-.success-screen,
-.error-screen {
-  text-align: center;
+.task-input-screen .instr-wrapper .red-divs {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
 }
 
-.input-field {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.execute-button,
-.try-again-button,
-.next-button {
-  background-color: #007bff;
+.task-input-screen .instr-wrapper .red-divs .red-cont {
+  background-color: #e34c26;
   color: white;
-  border: none;
+  font-size: 10px;
+  padding: 5px;
   border-radius: 4px;
-  padding: 17px 20px;
-  cursor: pointer;
-  margin-top: 10px;
+  font-weight: 500;
+  margin-bottom: 0.4em;
 }
 
-.execute-button:hover,
-.try-again-button:hover,
-.next-button:hover {
-  background-color: #0056b3;
+.task-input-screen .confirm {
+  text-align: center;
+  color: black;
+  font-size: 12px;
+  font-weight: 100;
+  margin-top: 10px;
 }

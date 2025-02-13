@@ -74,26 +74,74 @@ app.post("/order/validate", async (req, res) => {
 // Route to save payment details to MongoDB
 app.post("/api/save-payment", async (req, res) => {
   try {
-    const { unique_id, name, email, contact, order_id, payment_id, signature, order_amount } = req.body;
-
-    const payment = new Payment({
+    const {
       unique_id,
-      name,
       email,
       contact,
       order_id,
       payment_id,
       signature,
       order_amount,
+      subscription_type,
+    } = req.body;
+
+    // Fetch the latest subscription for this email (assuming the latest one is the most relevant)
+    const latestPayment = await Payment.findOne({ email })
+      .sort({ created_at: -1 })
+      .exec();
+
+    let created_at = Date.now();
+
+    if (latestPayment) {
+      // Check if the last subscription is still active
+      const subscriptionDuration = getSubscriptionDuration(latestPayment.subscription_type); // Helper function for duration in days
+      const subscriptionEndDate = new Date(latestPayment.created_at);
+      subscriptionEndDate.setDate(subscriptionEndDate.getDate() + subscriptionDuration);
+
+      const today = new Date();
+
+      if (subscriptionEndDate > today) {
+        // Last subscription is still active, start the new one after the current ends
+        created_at = subscriptionEndDate.getTime() + 1; // Start the next day after expiry
+      }
+    }
+
+    const payment = new Payment({
+      unique_id,
+      email,
+      contact,
+      order_id,
+      payment_id,
+      signature,
+      order_amount,
+      subscription_type,
+      created_at,
     });
 
     await payment.save();
+
     res.json({ success: true, message: "Payment details saved successfully" });
   } catch (error) {
     console.error("Error saving payment details:", error);
     res.status(500).json({ success: false, error: "Database error" });
   }
 });
+
+// Helper function to get subscription duration in days based on type
+function getSubscriptionDuration(subscription_type) {
+  switch (subscription_type) {
+    case "One Month":
+      return 30;
+    case "6 Months":
+      return 180;
+    case "Yearly":
+      return 365;
+    default:
+      return 30; // Default fallback
+  }
+}
+
+
 
 // Routes
 app.use("/api", authRoutes);

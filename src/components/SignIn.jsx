@@ -40,6 +40,7 @@ const SignIn = () => {
         password,
       });
       alert(res.data.message);
+      localStorage.setItem("userEmail", email);
       if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
         localStorage.setItem("password", res.data.user.savedPassword);

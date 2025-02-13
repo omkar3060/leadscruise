@@ -1,229 +1,230 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
-import DashboardHeader from "./DashboardHeader";
-import styles from "./Dashboard.module.css"; // Import CSS module
-import { useNavigate } from "react-router-dom";
+import masterstyles from "./Master.module.css"; // Import CSS module
+import BillingModal from "./BillingModal";
+
 const Master = () => {
-  const [leads, setLeads] = useState([]);
-  const [status, setStatus] = useState("Not Running");
   const [isDisabled, setIsDisabled] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const navigate = useNavigate();
-  const [settings, setSettings] = useState({
-    sentences: [],
-    wordArray: [],
-    h2WordArray: [],
+  const [subscriptionMetrics, setSubscriptionMetrics] = useState({
+    subscriptionsToday: 0,
+    subscriptionsThisWeek: 0,
+    pendingBilling: 0,
+    expiringWithinThreeDays: 0,
+    expiringToday: 0,
+    totalActiveUsers: 0,
+    totalUsers: 0,
   });
   const [subscriptions, setSubscriptions] = useState([]);
+  const [selectedUserEmail, setSelectedUserEmail] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uploadedInvoices, setUploadedInvoices] = useState({});
+  const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
+  useEffect(() => {
+    fetchSubscriptionMetrics();
+    fetchSubscriptions();
+  }, []);
+
+  const fetchSubscriptionMetrics = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/get-subscription-metrics");
+      setSubscriptionMetrics(response.data);
+    } catch (error) {
+      console.error("Error fetching subscription metrics:", error);
+    }
+  };
 
   const fetchSubscriptions = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/get-all-subscriptions`);
+      const response = await axios.get("http://localhost:5000/api/get-all-subscriptions");
       setSubscriptions(response.data);
+      fetchUploadedInvoices(response.data);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
     }
   };
 
-  useEffect(() => {
-    fetchSubscriptions();
-    const interval = setInterval(fetchSubscriptions, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchLeads = async () => {
+  const fetchUploadedInvoices = async (subs) => {
     try {
-      const response = await axios.get("http://localhost:5000/api/get-all-leads");
-      setLeads(response.data); // Ensure leads are set properly
+      const invoiceStatus = {};
+      await Promise.all(
+        subs.map(async (sub) => {
+          try {
+            const response = await axios.get(`http://localhost:5000/api/get-invoice/${sub.unique_id}`, {
+              responseType: "blob", // This is necessary to handle binary PDF data
+            });
+
+            const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+            const pdfUrl = URL.createObjectURL(pdfBlob); // Create a URL for the PDF file
+
+            invoiceStatus[sub.unique_id] = pdfUrl; // Store the generated URL
+          } catch (error) {
+            if (error.response && error.response.status === 404) {
+              console.warn(`Invoice not found for order ID: ${sub.unique_id}`);
+              invoiceStatus[sub.unique_id] = null;
+            } else {
+              console.error(`Error fetching invoice for order ID: ${sub.unique_id}`, error);
+            }
+          }
+        })
+      );
+      setUploadedInvoices(invoiceStatus);
     } catch (error) {
-      console.error("Error fetching leads:", error);
+      console.error("Error fetching uploaded invoices:", error);
     }
   };
-  
-  useEffect(() => {
-    fetchLeads();
-    const interval = setInterval(fetchLeads, 10000); // Refresh every 10 seconds
-    return () => clearInterval(interval);
-  }, []);
-  
-  const calculateRemainingDays = (createdAt) => {
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+
+    const sortedData = [...subscriptions].sort((a, b) => {
+      let valueA, valueB;
+
+      if (key === "order_amount") {
+        valueA = a[key] / 100;
+        valueB = b[key] / 100;
+      } else if (key === "created_at") {
+        valueA = new Date(a[key]);
+        valueB = new Date(b[key]);
+      } else if (key === "days_remaining") {
+        valueA = calculateRemainingDays(a.created_at, a.subscription_type);
+        valueB = calculateRemainingDays(b.created_at, b.subscription_type);
+        if (valueA === "Expired") valueA = -1;
+        if (valueB === "Expired") valueB = -1;
+      } else {
+        valueA = a[key].toString().toLowerCase();
+        valueB = b[key].toString().toLowerCase();
+      }
+
+      if (valueA < valueB) return direction === "asc" ? -1 : 1;
+      if (valueA > valueB) return direction === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    setSubscriptions(sortedData);
+  };
+
+
+  const handleOpenModal = (email, id) => {
+    setSelectedUserEmail(email);
+    setSelectedOrderId(id);
+    setSelectedInvoiceUrl(uploadedInvoices[id] || null);
+    setIsModalOpen(true);
+  };
+
+  const calculateRemainingDays = (createdAt, subscriptionType) => {
     const createdDate = new Date(createdAt);
     const expiryDate = new Date(createdDate);
-    expiryDate.setDate(expiryDate.getDate() + 30); // Monthly subscription (30 days)
+
+    const SUBSCRIPTION_DURATIONS = {
+      "One Month": 30,
+      "6 Months": 180,
+      "Yearly": 365,
+    };
+
+    const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
+    expiryDate.setDate(expiryDate.getDate() + duration);
 
     const today = new Date();
     const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
 
     return remainingDays > 0 ? remainingDays : "Expired";
   };
-  // Countdown Timer Effect
-  useEffect(() => {
-    if (timer > 0) {
-      const countdown = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(countdown);
-    } else if (timer === 0 && isDisabled) {
-      setIsDisabled(false);
-    }
-  }, [timer, isDisabled]);
-
-  // Calculate metrics based on leads data
-  const calculateMetrics = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    oneWeekAgo.setHours(0, 0, 0, 0);
-
-    const leadsToday = leads.filter((lead) => {
-      const leadDate = new Date(lead.createdAt);
-      leadDate.setHours(0, 0, 0, 0);
-      return leadDate.getTime() === today.getTime();
-    });
-
-    const leadsThisWeek = leads.filter((lead) => {
-      const leadDate = new Date(lead.createdAt);
-      return leadDate >= oneWeekAgo;
-    });
-
-    return {
-      totalLeadsToday: leadsToday.length,
-      totalLeadsThisWeek: leadsThisWeek.length,
-      totalLeadsCaptured: leads.length,
-    };
-  };
-
-  const metrics = calculateMetrics();
-
-  const handleStart = async () => {
-    try {
-      const mobileNumber = localStorage.getItem("mobileNumber");
-      const password = localStorage.getItem("password");
-      const userEmail = localStorage.getItem("userEmail");
-  
-      if (!mobileNumber || !password) {
-        alert("Mobile number or password not found in local storage!");
-        return;
-      }
-  
-      if (!userEmail) {
-        alert("User email not found!");
-        return;
-      }
-  
-      // Fetch settings
-      const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
-      const userSettings = response.data;
-  
-      if (!userSettings) {
-        alert("No settings found, please configure them first.");
-        navigate("/settings");
-        return;
-      }
-  
-      // Check if all settings arrays are empty
-      if (
-        (!userSettings.sentences || userSettings.sentences.length === 0) &&
-        (!userSettings.wordArray || userSettings.wordArray.length === 0) &&
-        (!userSettings.h2WordArray || userSettings.h2WordArray.length === 0)
-      ) {
-        alert("Please configure your settings first.");
-        navigate("/settings");
-        return;
-      }
-      console.log("Sending the following settings to backend:", userSettings);
-      // Start process
-      setStatus("Running");
-      setIsDisabled(true);
-      setTimer(300);
-  
-      // Send the fetched settings instead of using the state
-      const cycleResponse = await axios.post("http://localhost:5000/api/cycle", {
-        sentences: userSettings.sentences,
-        wordArray: userSettings.wordArray,
-        h2WordArray: userSettings.h2WordArray,
-        mobileNumber,
-        password,
-      });
-  
-      alert(cycleResponse.data.message || "Task started successfully!");
-    } catch (error) {
-      console.error("Error:", error.response?.data?.message || error.message);
-      alert("Failed to start task.");
-    }
-  };
-  
-  const handleStop = () => {
-    if (isDisabled && timer > 0) {
-      alert(`You cannot stop the script until ${Math.ceil(timer / 60)} min are completed.`);
-    } else {
-      if (window.confirm("Are you sure you want to stop the script?")) {
-        setStatus("Not Running");
-        setIsDisabled(false);
-        setTimer(0);
-      }
-    }
-  };
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={masterstyles.dashboardContainer}>
       {/* Sidebar Component */}
       <Sidebar isDisabled={isDisabled} />
 
       {/* Main Content */}
-      <div className={styles.dashboardContent}>
-        {/* Header Component */}
-        <DashboardHeader
-          status={status}
-          handleStart={handleStart}
-          handleStop={handleStop}
-          isDisabled={isDisabled}
-          timer={timer}
-        />
-
+      <div className={masterstyles.dashboardContent}>
         {/* Metrics Section */}
-        <div className={styles.metricsSection}>
-          <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Total Leads Today</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsThisWeek} <br /><span>Total Leads This Week</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Replies Sent Today</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>WhatsApp Messages Sent Today</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Emails Sent Today</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Emails Sent</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>
+        <div className={masterstyles.metricsSection}>
+          <div className={masterstyles.metricBox}>{subscriptionMetrics.subscriptionsToday} <br /><p>Subscriptions Today</p></div>
+          <div className={masterstyles.metricBox}>{subscriptionMetrics.subscriptionsThisWeek} <br /><p>Subscriptions This Week</p></div>
+          <div className={masterstyles.metricBox}>{subscriptionMetrics.pendingBilling} <br /><p>Pending Billing</p></div>
+          <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringWithinThreeDays} <br /><p>Expiring Within 3 Days</p></div>
+          <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringToday} <br /><p>Expiring Today</p></div>
+          <div className={masterstyles.metricBox}>{subscriptionMetrics.totalActiveUsers} <br /><p>Total Active Users</p></div>
+          <div className={masterstyles.metricBox}>{subscriptionMetrics.totalUsers} <br /><p>Total Users</p></div>
         </div>
 
-        {/* Recent Leads Table */}
-        <div className={styles.leadsSection}>
-          <div className={styles.tableHeader}>Active Subscriptions</div>
-          <div className={styles.tableWrapper}>
-            <table className={styles.leadsTable}>
-              <thead>
+        {/* Subscriptions Table */}
+        <div className={masterstyles.leadsSection}>
+          <div className={masterstyles.tableHeader}>Active Subscriptions</div>
+          <div className={masterstyles.tableWrapper}>
+            <table className={masterstyles.leadsTable}>
+            <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Contact</th>
-                  <th>Order ID</th>
-                  <th>Payment ID</th>
-                  <th>Order Amount</th>
-                  <th>Subscription Start</th>
-                  <th>Days Remaining</th>
+                  {[
+                    { label: "Email", key: "email" },
+                    { label: "Contact", key: "contact" },
+                    { label: "Subscription Type", key: "subscription_type" },
+                    { label: "Order ID", key: "unique_id" },
+                    { label: "Order Amount", key: "order_amount" },
+                    { label: "Subscription Start", key: "created_at" },
+                    { label: "Days Remaining", key: "days_remaining" },
+                  ].map(({ label, key }) => (
+                    <th key={key} onClick={() => handleSort(key)} style={{ cursor: "pointer" }}>
+                      {label} {sortConfig.key === key ? (sortConfig.direction === "asc" ? "▲" : "▼") : ""}
+                    </th>
+                  ))}
+                  <th>Billing</th>
                 </tr>
               </thead>
               <tbody>
                 {subscriptions.length > 0 ? (
                   subscriptions.map((sub, index) => (
                     <tr key={index}>
-                      <td>{sub.name}</td>
                       <td>{sub.email}</td>
                       <td>{sub.contact}</td>
-                      <td>{sub.order_id}</td>
-                      <td>{sub.payment_id}</td>
-                      <td>₹{sub.order_amount}</td>
+                      <td>{sub.subscription_type}</td>
+                      <td>{sub.unique_id}</td>
+                      <td>₹{sub.order_amount / 100}</td>
                       <td>{new Date(sub.created_at).toLocaleDateString()}</td>
-                      <td>{calculateRemainingDays(sub.created_at)}</td>
+                      <td>{calculateRemainingDays(sub.created_at, sub.subscription_type)}</td>
+
+                      <td>
+                        {uploadedInvoices[sub.unique_id] !== undefined ? (
+                          uploadedInvoices[sub.unique_id] ? (
+                            <div>
+                              <button
+                                className={masterstyles.uploadButton}
+                                onClick={() => handleOpenModal(sub.email, sub.unique_id)}
+                              >
+                                Click here to edit
+                              </button>
+                              <a
+                                href={uploadedInvoices[sub.unique_id]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={masterstyles.downloadButton}
+                                download={`invoice_${sub.unique_id}.pdf`}
+                              >
+                                Download Invoice
+                              </a>
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                className={masterstyles.uploadButton}
+                                onClick={() => handleOpenModal(sub.email, sub.unique_id)}
+                              >
+                                Upload Invoice
+                              </button>
+                            </>
+                          )
+                        ) : (
+                          <span className={masterstyles.loadingText}>Loading...</span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -238,6 +239,14 @@ const Master = () => {
           </div>
         </div>
 
+        {/* Billing Modal */}
+        <BillingModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          userEmail={selectedUserEmail}
+          unique_id={selectedOrderId}
+          invoiceUrl={selectedInvoiceUrl}
+        />
       </div>
     </div>
   );
