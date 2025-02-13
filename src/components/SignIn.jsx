@@ -39,22 +39,36 @@ const SignIn = () => {
         email,
         password,
       });
+
       alert(res.data.message);
       localStorage.setItem("userEmail", email);
+
+      // Check if a payment exists for the user
+      const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
+
+      if (paymentRes.status === 200 && paymentRes.data.length > 0) {
+        // If payment exists but mobileNumber and savedPassword are missing, redirect to execute-task
+        if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
+          localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+          navigate("/execute-task");
+          return;
+        }
+      } 
+
+      // If mobileNumber and savedPassword exist, proceed to dashboard
       if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
         localStorage.setItem("password", res.data.user.savedPassword);
         navigate("/dashboard");
-      } else {
+      }else {
         navigate("/check-number");
       }
     } catch (error) {
-      alert(
-        error.response.data.message || "Failed to sign in. Please try again."
-      );
+      alert(error.response?.data?.message || "Failed to sign in. Please try again.");
       navigate("/signup");
     }
   };
+
 
   return (
     <div className="signin-container">
@@ -114,9 +128,8 @@ const SignIn = () => {
           <div className="banner-container">
             {/* First Banner */}
             <div
-              className={`banner overlapBanner ${
-                selected === 0 ? "active" : ""
-              }`}
+              className={`banner overlapBanner ${selected === 0 ? "active" : ""
+                }`}
             >
               <div className="rightbanner">
                 <div

@@ -39,6 +39,7 @@
     border: 1px solid #ddd;
     width: 90%;
     max-height: 250px;
+    overflow-y: auto;
   }
   .ProfileCredentials {
     flex: 0 0 300px; /* Fixed width for the right section */

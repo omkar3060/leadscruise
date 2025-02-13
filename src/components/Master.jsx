@@ -47,6 +47,14 @@ const Master = () => {
     }
   };
 
+  const calculatePendingBilling = (subs, invoiceStatus) => {
+    const pendingBillingCount = subs.length - Object.values(invoiceStatus).filter((url) => url !== null).length;
+    setSubscriptionMetrics((prevMetrics) => ({
+      ...prevMetrics,
+      pendingBilling: pendingBillingCount,
+    }));
+  };
+
   const fetchUploadedInvoices = async (subs) => {
     try {
       const invoiceStatus = {};
@@ -72,6 +80,7 @@ const Master = () => {
         })
       );
       setUploadedInvoices(invoiceStatus);
+      calculatePendingBilling(subs, invoiceStatus);
     } catch (error) {
       console.error("Error fetching uploaded invoices:", error);
     }

@@ -26,7 +26,7 @@ exports.getPaymentsByEmail = async (req, res) => {
     const payments = await Payment.find({ email }); // Query the database
 
     if (payments.length === 0) {
-      return res.status(404).json({ message: "No payment records found" });
+      return res.status(200).json({ message: "No payment records found" });
     }
 
     res.status(200).json(payments); // Send the retrieved payments

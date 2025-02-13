@@ -200,7 +200,7 @@ const Profile = () => {
                         <td>
                           {calculateEndDate(item.created_at, item.subscription_type)}
                         </td>
-                        <td>{`INR ${item.order_amount}`}</td>
+                        <td>{`INR ${item.order_amount/100}`}</td>
                         <td>{item.unique_id}</td>
                         <td>
                           <button
