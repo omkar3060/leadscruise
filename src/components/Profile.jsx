@@ -157,7 +157,20 @@ const Profile = () => {
             </div>
           </div>
           <div className={styles["profile-section"]}>
-            <button className={styles["profile-button"]}>Profile</button>
+            <div className={styles["status-box-header"]}>
+              <div className={styles["left-content"]}>
+                <div className={styles["days-info"]}>
+                  <p className={styles["days-left"]}>Days till end:</p>
+                  <h2 className={styles["days-left-count"]}>
+                    {daysLeft !== null ? `${daysLeft} days left` : "Loading..."}
+                  </h2>
+                </div>
+              </div>
+              <button className={styles["renew-button"]} onClick={() => navigate("/plans")}>
+                Renew now
+              </button>
+            </div>
+
             <div>
               <p className={styles["renewal-text"]}>
                 Subscription Status: {subscriptionDetails.status}
@@ -200,7 +213,7 @@ const Profile = () => {
                         <td>
                           {calculateEndDate(item.created_at, item.subscription_type)}
                         </td>
-                        <td>{`INR ${item.order_amount/100}`}</td>
+                        <td>{`INR ${item.order_amount / 100}`}</td>
                         <td>{item.unique_id}</td>
                         <td>
                           <button
@@ -222,86 +235,73 @@ const Profile = () => {
             </div>
 
             {/* Billing Details and Subscription Status Wrapper */}
-<div className={styles["billing-and-subscription-container"]}>
-  {/* Billing Details Section */}
-  <div className={styles["billing-details"]}>
-    <div className={styles["billing-header"]}>My Billing Details</div>
-    <div className={styles["billing-info"]}>
-      {isEditing ? (
-        <>
-          <div className={styles["billing-row"]}>
-            <div className={styles["billing-item"]}>
-              <strong>Phone:</strong>
-              <input type="text" name="phone" value={billingDetails.phone} onChange={handleChange} />
-            </div>
-            <div className={styles["billing-item"]}>
-              <strong>GST:</strong>
-              <input type="text" name="gst" value={billingDetails.gst} onChange={handleChange} />
-            </div>
-            <div className={styles["billing-item"]}>
-              <strong>PAN:</strong>
-              <input type="text" name="pan" value={billingDetails.pan} onChange={handleChange} />
-            </div>
-          </div>
+            <div className={styles["billing-and-subscription-container"]}>
+              {/* Billing Details Section */}
+              <div className={styles["billing-details"]}>
+                <div className={styles["billing-header"]}>My Billing Details</div>
+                <div className={styles["billing-info"]}>
+                  {isEditing ? (
+                    <>
+                      <div className={styles["billing-row"]}>
+                        <div className={styles["billing-item"]}>
+                          <strong>Phone:</strong>
+                          <input type="text" name="phone" value={billingDetails.phone} onChange={handleChange} />
+                        </div>
+                        <div className={styles["billing-item"]}>
+                          <strong>GST:</strong>
+                          <input type="text" name="gst" value={billingDetails.gst} onChange={handleChange} />
+                        </div>
+                        <div className={styles["billing-item"]}>
+                          <strong>PAN:</strong>
+                          <input type="text" name="pan" value={billingDetails.pan} onChange={handleChange} />
+                        </div>
+                      </div>
 
-          <div className={styles["billing-address"]}>
-            <p className={styles["billing-address-text"]}>
-              <strong>Name:</strong>
-              <input type="text" name="name" value={billingDetails.name} onChange={handleChange} />
-            </p>
-            <p className={styles["billing-address-text"]}>
-              <strong>Address:</strong>
-              <textarea name="address" value={billingDetails.address} onChange={handleChange}></textarea>
-            </p>
-          </div>
+                      <div className={styles["billing-address"]}>
+                        <p className={styles["billing-address-text"]}>
+                          <strong>Name:</strong>
+                          <input type="text" name="name" value={billingDetails.name} onChange={handleChange} />
+                        </p>
+                        <p className={styles["billing-address-text"]}>
+                          <strong>Address:</strong>
+                          <textarea name="address" value={billingDetails.address} onChange={handleChange}></textarea>
+                        </p>
+                      </div>
 
-          <button className={styles["save-button"]} onClick={handleSave}>Save</button>
-          <button className={styles["cancel-button"]} onClick={() => setIsEditing(false)}>Cancel</button>
-        </>
-      ) : (
-        <>
-          <div className={styles["billing-row"]}>
-            <div className={styles["billing-item"]}>
-              <strong>Phone:</strong> <span>{billingDetails.phone}</span>
+                      <button className={styles["save-button"]} onClick={handleSave}>Save</button>
+                      <button className={styles["cancel-button"]} onClick={() => setIsEditing(false)}>Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <div className={styles["billing-row"]}>
+                        <div className={styles["billing-item"]}>
+                          <strong>Phone:</strong> <span>{billingDetails.phone}</span>
+                        </div>
+                        <div className={styles["billing-item"]}>
+                          <strong>GST:</strong> <span>{billingDetails.gst}</span>
+                        </div>
+                        <div className={styles["billing-item"]}>
+                          <strong>PAN:</strong> <span>{billingDetails.pan}</span>
+                        </div>
+                      </div>
+
+                      <div className={styles["billing-address"]}>
+                        <p className={styles["billing-address-text"]}><strong>Name:</strong> {billingDetails.name}</p>
+                        <p className={styles["billing-address-text"]}><strong>Address:</strong> {billingDetails.address}</p>
+                      </div>
+
+                      <button className={styles["edit-button"]} onClick={() => setIsEditing(true)}>Edit my Details</button>
+                    </>
+                  )}
+                </div>
+              </div>
+
             </div>
-            <div className={styles["billing-item"]}>
-              <strong>GST:</strong> <span>{billingDetails.gst}</span>
-            </div>
-            <div className={styles["billing-item"]}>
-              <strong>PAN:</strong> <span>{billingDetails.pan}</span>
-            </div>
-          </div>
 
-          <div className={styles["billing-address"]}>
-            <p className={styles["billing-address-text"]}><strong>Name:</strong> {billingDetails.name}</p>
-            <p className={styles["billing-address-text"]}><strong>Address:</strong> {billingDetails.address}</p>
-          </div>
-
-          <button className={styles["edit-button"]} onClick={() => setIsEditing(true)}>Edit my Details</button>
-        </>
-      )}
-    </div>
-  </div>
-
-  {/* Subscription Status Section (Moved to the right) */}
-  <div className={styles["subscription-status"]}>
-    <div className={styles["status-box"]}>
-      <div className={styles["upgrade-section"]}>Upgrade now</div>
-      <p className={styles["days-left"]}>Days till end</p>
-      <h2 className={styles["days-left-count"]}>
-        {daysLeft !== null ? `${daysLeft} days left` : "Loading..."}
-      </h2>
-      <button className={styles["renew-button"]} onClick={() => navigate("/plans")}>
-        Renew now
-      </button>
-    </div>
-  </div>
-</div>
-            
           </div>
 
           {/* Right Section: Profile Credentials */}
-          <ProfileCredentials />
+          <ProfileCredentials isProfilePage={true}/>
         </div>
       </div>
     </div>

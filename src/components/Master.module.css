@@ -157,28 +157,41 @@
     text-align: center;
     display: inline-block;
     font-weight: bold;
+    margin-bottom: 5px;
+    width: auto;
 }
 
 /* Upload Button */
 .uploadButton {
-    background: #01b428;
-    color: white;
-    border: none;
+  background: #6c5ce7;  /* Modern purple */
+  color: white;
+  border: none;
 }
 
 .uploadButton:hover {
-    background: #e68900;
+  background: #5849c4;  /* Darker purple on hover */
 }
 
+/* Upload Invoice button */
+.uploadButton:not(:has(+ .downloadButton)) {
+  background: #e74c3c;  /* Red for Upload Invoice */
+}
+
+.uploadButton:not(:has(+ .downloadButton)):hover {
+  background: #c0392b;  /* Darker red on hover */
+}
 /* Download Button */
 .downloadButton {
-    background: #28a745;
-    color: white;
-    border: none;
+  padding: 14px 16px;
+  background: #00b894;  /* Fresh teal */
+  color: white;
+  border: none;
+  text-decoration: none;
+  margin-left: 0.5em;
 }
 
 .downloadButton:hover {
-    background: #218838;
+  background: #00a886;  /* Darker teal on hover */
 }
 
 /* Loading Text */

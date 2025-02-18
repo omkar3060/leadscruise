@@ -1,23 +1,36 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import "./styles.css";
-import "./PaginationSlider.css";
 import "./Signin.css";
-import "./SignUp.css";
 
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
+import hmimg from "../images/home-img-new.png";
 
-const SignUp = () => {
-  const [refId, setRefId] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confPassword, setConfPassword] = useState("");
+const ResetPassword = () => {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [selected, setSelected] = useState(0);
+
+  const token = searchParams.get("token");
+  var email = searchParams.get("email");
+
+  email = decodeURIComponent(email);
+
+  useEffect(() => {
+    if (!token) {
+      setError("Invalid reset link");
+      setTimeout(() => navigate("/signin"), 3000);
+    }
+  }, [token, navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -27,20 +40,43 @@ const SignUp = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSignUp = async () => {
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    // Validate passwords
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    console.log({ token, newPassword, email });
+
     try {
-      const res = await axios.post("http://localhost:5000/api/signup", {
-        refId,
-        email,
-        password,
-        confPassword,
+      const response = await fetch("http://localhost:5000/api/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          newPassword,
+          email,
+        }),
       });
-      alert(res.data.message);
-      navigate("/"); // Redirect to SignIn page after successful signup
-    } catch (error) {
-      alert(
-        error.response.data.message || "Failed to sign up. Please try again."
-      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          navigate("/");
+        }, 3000);
+      } else {
+        setError(data.message || "Password reset failed");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
     }
   };
 
@@ -66,55 +102,38 @@ const SignUp = () => {
               <span>Sign In</span>
             </div>
           </div>
-          <h2 className="signin-tag">Sign up</h2>
+          <h2 className="signin-tag">Reset Your Password</h2>
           <p className="signin-descriptor">to access Leads Cruise Home</p>
-
           <input
             type="email"
-            placeholder="Email Address"
+            placeholder="Enter Your Email Address"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
             name="email"
             autoComplete="email"
+            readOnly
           />
-          <div className="pass-cont">
-            <input
-              className="password"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              name="password"
-              autoComplete="current-password"
-            />
-            <input
-              className="password"
-              type="password"
-              placeholder="Confirm Password"
-              value={confPassword}
-              onChange={(e) => setConfPassword(e.target.value)}
-            />
-          </div>
+
           <input
-            type="text"
-            placeholder="Refferal ID"
-            value={refId}
-            onChange={(e) => setRefId(e.target.value)}
+            type="password"
+            placeholder="New Password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            name="password"
+            autoComplete="current-password"
           />
-          <button onClick={handleSignUp} style={{ marginBottom: "40px" }}>
-            Sign Up
-          </button>
-          <div className="pri-cont">
-            <p className="priv-p">
-              By creating this account, you agree to our{" "}
-              <span>Privacy Policy</span> & <span>Cookie Policy</span>.
-            </p>
-          </div>
-          {/* <div className="signup-link">
-            Already have an account?{" "}
-            <span onClick={() => navigate("/")}>Sign In</span>
-          </div> */}
+
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            name="confirmpassword"
+            autoComplete="current-password"
+          />
+
+          <button onClick={handleResetPassword}>Next</button>
         </div>
+
         <div className="signin-right">
           <div className="banner-container">
             {/* First Banner */}
@@ -229,4 +248,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default ResetPassword;

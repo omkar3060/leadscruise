@@ -1,4 +1,3 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {
@@ -7,12 +6,13 @@ import {
   signInWithPopup,
   FacebookAuthProvider,
   GithubAuthProvider,
+  sendPasswordResetEmail,
+  fetchSignInMethodsForEmail,
+  linkWithCredential,
+  signInWithCredential,
 } from "firebase/auth";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyA58JjOoA5J9aB0shbos93kfVsoz9NKqH8",
   authDomain: "leads-cruise.firebaseapp.com",
@@ -31,4 +31,22 @@ const provider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
 const githubProvider = new GithubAuthProvider();
 
-export { auth, provider, facebookProvider, githubProvider, signInWithPopup };
+// Configure providers
+provider.addScope("email");
+githubProvider.addScope("user:email");
+facebookProvider.addScope("email");
+
+export {
+  auth,
+  provider,
+  facebookProvider,
+  githubProvider,
+  signInWithPopup,
+  sendPasswordResetEmail,
+  fetchSignInMethodsForEmail,
+  linkWithCredential,
+  signInWithCredential,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  FacebookAuthProvider,
+};

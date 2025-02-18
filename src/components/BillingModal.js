@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./BillingModal.module.css";
 
-const BillingModal = ({ isOpen, onClose, userEmail, unique_id, invoiceUrl }) => {
+const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [billingDetails, setBillingDetails] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
@@ -11,15 +11,15 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id, invoiceUrl }) => 
       axios
         .get(`http://localhost:5000/api/billing/${userEmail}`)
         .then((response) => {
-          console.log("API Response:", response.data); // Debugging log
           if (response.data.success) {
             setBillingDetails(response.data.data);
           } else {
-            console.error("Error: No billing details found");
             setBillingDetails(null);
           }
         })
         .catch((error) => console.error("Error fetching billing details:", error));
+    } else {
+      setBillingDetails(null); // Reset billing details when modal is closed
     }
   }, [isOpen, userEmail]);
 
@@ -41,61 +41,65 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id, invoiceUrl }) => 
         headers: { "Content-Type": "multipart/form-data" },
       });
       alert("Invoice uploaded successfully!");
-      onClose(); // Close modal after upload
+      handleClose(); // Reset state and close modal
     } catch (error) {
-      console.error("Error uploading invoice:", error);
       alert("Failed to upload invoice.");
     }
   };
 
-  console.log("Billing Details State:", billingDetails); // Debugging log
+  const handleClose = () => {
+    setBillingDetails(null); // Reset billing details when modal is closed
+    setSelectedFile(null); // Reset file input
+    onClose();
+  };
 
   if (!isOpen) return null;
 
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContainer}>
-        <h2>Customer Billing Details</h2>
-        
-        {billingDetails && billingDetails.phone ? (
+        {/* Close Button (Top Right) */}
+        <button className={styles.closeIcon} onClick={handleClose}>
+          &times;
+        </button>
+
+        <h2 className={styles.header}>Customer Billing Details</h2>
+
+        {billingDetails ? (
           <>
-            <p><strong>Billing Phone Number:</strong> {billingDetails.phone}</p>
-            <p><strong>Billing GST Number:</strong> {billingDetails.gst}</p>
-            <p><strong>PAN No:</strong> {billingDetails.pan}</p>
+            <div className={styles.billingDetails}>
+              <p>
+                Billing Phone Number: <span>{billingDetails.phone}</span>
+              </p>
+              <p>
+                Billing GST Number: <span>{billingDetails.gst}</span>
+              </p>
+              <p>
+                PAN No: <span>{billingDetails.pan}</span>
+              </p>
+            </div>
+
             <p><strong>Company Name:</strong> {billingDetails.name}</p>
             <p><strong>Address:</strong> {billingDetails.address}</p>
-            <p><strong>Billing Email:</strong> {billingDetails.email}</p>
-
-            {/* PDF Preview Section */}
-            {invoiceUrl ? (
-              <div className={styles.pdfContainer}>
-                <h3>Invoice Preview</h3>
-                
-                <a 
-                  href={invoiceUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className={styles.downloadButton}
-                  download={`invoice_${unique_id}.pdf`}
-                >
-                  Download Invoice
-                </a>
-              </div>
-            ) : (
-              <p>No invoice available. Please upload one.</p>
-            )}
+            <p><strong>Billing Email ID:</strong> {billingDetails.email}</p>
 
             {/* File Upload Section */}
-            <input type="file" accept="application/pdf" onChange={handleFileChange} />
-            {selectedFile && <p>📎 {selectedFile.name}</p>}
+            <div className={styles.fileUploadSection}>
+              <label htmlFor="fileUpload" className={styles.attachBillLabel}>
+                Attach Bill
+              </label>
+              <input id="fileUpload" type="file" accept="application/pdf" onChange={handleFileChange} />
+              {selectedFile && <span className={styles.uploadedFileName}>📎 {selectedFile.name}</span>}
+            </div>
 
+            {/* Buttons */}
             <div className={styles.buttonGroup}>
               <button onClick={handleUpload} className={styles.uploadButton}>Save & Upload</button>
-              <button onClick={onClose} className={styles.closeButton}>Close</button>
+              <button onClick={handleClose} className={styles.closeButton}>Close</button>
             </div>
           </>
         ) : (
-          <p>Loading billing details...</p>
+          <p>No billing details found.</p>
         )}
       </div>
     </div>

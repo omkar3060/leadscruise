@@ -237,8 +237,92 @@ app.post("/api/execute-task", async (req, res) => {
   });
 });
 
+const userLeadCounterSchema = new mongoose.Schema({
+  user_mobile_number: { type: String, required: true, unique: true },
+  leadCount: { type: Number, default: 0 },
+  lastReset: { type: Date, default: Date.now },
+  maxCaptures: { type: Number, default: 7 },
+  lastUpdatedMaxCaptures: { type: Date, default: null }, // Track last update time
+});
 
-app.post("/api/cycle", (req, res) => {
+const UserLeadCounter = mongoose.model("UserLeadCounter", userLeadCounterSchema);
+
+app.post("/api/update-max-captures", async (req, res) => {
+  try {
+    const { user_mobile_number, maxCaptures } = req.body;
+
+    if (!user_mobile_number || maxCaptures < 1) {
+      return res.status(400).json({ message: "Invalid request data" });
+    }
+
+    const user = await UserLeadCounter.findOne({ user_mobile_number });
+
+    if (user) {
+      // Check if 24 hours have passed since last update
+      const lastUpdated = user.lastUpdatedMaxCaptures;
+      const now = new Date();
+      if (lastUpdated && now - lastUpdated < 24 * 60 * 60 * 1000) {
+        return res.status(403).json({
+          message: "You can update Max Captures only once every 24 hours.",
+        });
+      }
+
+      // Update maxCaptures and lastUpdatedMaxCaptures timestamp
+      user.maxCaptures = maxCaptures;
+      user.lastUpdatedMaxCaptures = now;
+      await user.save();
+
+      return res.json({ message: "Max captures updated successfully", user });
+    } else {
+      // Create a new user record if not found
+      const newUser = new UserLeadCounter({
+        user_mobile_number,
+        maxCaptures,
+        lastUpdatedMaxCaptures: new Date(),
+      });
+      await newUser.save();
+
+      return res.json({ message: "Max captures set successfully", user: newUser });
+    }
+  } catch (error) {
+    console.error("Error updating max captures:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/api/get-max-captures", async (req, res) => {
+  try {
+    const { user_mobile_number } = req.query;
+
+    const user = await UserLeadCounter.findOne({ user_mobile_number });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ 
+      maxCaptures: user.maxCaptures,
+      lastUpdatedMaxCaptures: user.lastUpdatedMaxCaptures
+    });
+  } catch (error) {
+    console.error("Error fetching max captures:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+const cron = require("node-cron");
+
+cron.schedule("0 7 * * *", async () => {
+  try {
+    console.log("Resetting lead counters at 7:00 AM...");
+    await UserLeadCounter.updateMany({}, { leadCount: 0, lastReset: new Date() });
+    console.log("Lead counters reset successfully.");
+  } catch (error) {
+    console.error("Error resetting lead counters:", error);
+  }
+});
+
+app.post("/api/cycle", async(req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
   let { sentences, wordArray, h2WordArray, mobileNumber, password } = req.body;
 
@@ -264,6 +348,19 @@ app.post("/api/cycle", (req, res) => {
       status: "error",
       message: "Mobile number and password are required.",
     });
+  }
+
+  let userCounter = await UserLeadCounter.findOne({ user_mobile_number: mobileNumber });
+
+  // If the user has no entry, create one
+  if (!userCounter) {
+    userCounter = new UserLeadCounter({ user_mobile_number: mobileNumber, leadCount: 0 });
+    await userCounter.save();
+  }
+
+  // Check if user has exceeded daily limit
+  if (userCounter.leadCount >= userCounter.maxCaptures) {
+    return res.status(403).json({ status: "error", message: "Daily lead limit reached. Try again tomorrow." });
   }
 
   // Prepare data for Python script
@@ -337,17 +434,28 @@ app.post("/api/store-lead", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const newLead = new Lead({
-      name,
-      email,
-      mobile,
-      user_mobile_number,
-      createdAt: new Date() // Explicitly setting today's date
-    });
+    // Fetch user lead counter
+    let userCounter = await UserLeadCounter.findOne({ user_mobile_number });
 
+    if (!userCounter) {
+      userCounter = new UserLeadCounter({ user_mobile_number, leadCount: 0 });
+    }
+
+    // Stop script if limit is reached
+    if (userCounter.leadCount >= 5) {
+      console.log("Lead limit reached for user:", user_mobile_number);
+      return res.status(403).json({ error: "Lead limit reached. Cannot capture more leads today." });
+    }
+
+    // Store the new lead
+    const newLead = new Lead({ name, email, mobile, user_mobile_number, createdAt: new Date() });
     await newLead.save();
-    console.log("Lead Data Stored:", newLead);
 
+    // Increment lead count
+    userCounter.leadCount += 1;
+    await userCounter.save();
+
+    console.log("Lead Data Stored:", newLead);
     res.json({ message: "Lead data stored successfully", lead: newLead });
 
   } catch (error) {

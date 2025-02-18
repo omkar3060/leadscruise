@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom"; // Import useLocation to get the current path
 import axios from "axios";
 import "./ProfileCredentials.css";
 
-const ProfileCredentials = () => {
+const ProfileCredentials = ({isProfilePage}) => {
+  const location = useLocation(); // Get current route
+  const isSettingsPage = location.pathname === "/settings"; // Check if user is on Settings
+
   const [mobileNumber, setMobileNumber] = useState("");
   const [email, setEmail] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -10,6 +14,7 @@ const ProfileCredentials = () => {
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageSavedPassword, setMessageSavedPassword] = useState("");
+
   useEffect(() => {
     // Fetch credentials from localStorage
     const storedMobile = localStorage.getItem("mobileNumber") || "9579797269";
@@ -26,6 +31,58 @@ const ProfileCredentials = () => {
     const visiblePart = localPart.slice(-3);
     return `*****${visiblePart}@${domain}`;
   };
+
+  const [maxCaptures, setMaxCaptures] = useState(7); // Default value
+  const [isEditingMaxCaptures, setIsEditingMaxCaptures] = useState(false);
+  const [tempCaptures, setTempCaptures] = useState(maxCaptures);
+
+  const handleSaveMaxCaptures = async () => {
+    try {
+      const userMobileNumber = localStorage.getItem("mobileNumber");
+  
+      const response = await axios.post("http://localhost:5000/api/update-max-captures", {
+        user_mobile_number: userMobileNumber,
+        maxCaptures: tempCaptures,
+      });
+  
+      setMaxCaptures(tempCaptures);
+      setIsEditingMaxCaptures(false);
+      alert(response.data.message);
+    } catch (error) {
+      if (error.response && error.response.status === 403) {
+        alert(error.response.data.message); // Display "24-hour restriction" message
+      } else {
+        console.error("Failed to update max captures:", error);
+        alert("Error updating max captures. Try again.");
+      }
+    }
+  };
+
+  useEffect(() => {
+    const fetchMaxCaptures = async () => {
+      try {
+        const userMobileNumber = localStorage.getItem("mobileNumber");
+        const response = await axios.get(`http://localhost:5000/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
+  
+        if (response.data) {
+          setMaxCaptures(response.data.maxCaptures);
+  
+          // Check if 24 hours have passed
+          const lastUpdated = new Date(response.data.lastUpdatedMaxCaptures);
+          const now = new Date();
+          const hoursPassed = (now - lastUpdated) / (1000 * 60 * 60);
+  
+          if (hoursPassed < 24) {
+            setIsEditingMaxCaptures(false); // Disable edit
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching max captures:", error);
+      }
+    };
+  
+    fetchMaxCaptures();
+  }, []);
 
   // Function to handle password update
   const handlePasswordUpdate = async () => {
@@ -67,7 +124,34 @@ const ProfileCredentials = () => {
   };
 
   return (
-    <div className="credentials-container">
+    <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
+      {/* Show Max Captures per Day only on Settings page */}
+      {isSettingsPage && (
+        <div className="credentials-section">
+          <div className="credentials-header">Max Captures per day</div>
+          <div className="max-captures-content">
+            <span className="credential-value">
+              QTY : {maxCaptures < 10 ? `0${maxCaptures}` : maxCaptures}
+            </span>
+            {isEditingMaxCaptures ? (
+              <>
+                <input
+                  type="number"
+                  className="max-captures-input"
+                  value={tempCaptures}
+                  onChange={(e) => setTempCaptures(Number(e.target.value))}
+                  min="1"
+                />
+                <button className="edit-max-captures" onClick={handleSaveMaxCaptures}>Save</button>
+              </>
+            ) : (
+              <button className="edit-max-captures" onClick={() => setIsEditingMaxCaptures(true)}>Edit</button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* IndiaMart Account Credentials */}
       <div className="credentials-section">
         <h3 className="credentials-header">IndiaMart account credentials</h3>
         <div className="credentials-content">
@@ -95,25 +179,11 @@ const ProfileCredentials = () => {
                 <span>************</span>
               )}
               {isEditingSavedPassword ? (
-                <button
-                  type="button"
-                  className="save-button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSavedPasswordUpdate();
-                  }}
-                >
+                <button type="button" className="save-button" onClick={handleSavedPasswordUpdate}>
                   Save
                 </button>
               ) : (
-                <button
-                  type="button"
-                  className="edit-button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsEditingSavedPassword(true);
-                  }}
-                >
+                <button type="button" className="edit-button" onClick={() => setIsEditingSavedPassword(true)}>
                   Edit
                 </button>
               )}
@@ -123,6 +193,7 @@ const ProfileCredentials = () => {
         </div>
       </div>
 
+      {/* LeadsCruise Credentials */}
       <div className="credentials-section">
         <h3 className="credentials-header">LeadsCruise Credentials</h3>
         <div className="credentials-content">
@@ -150,40 +221,17 @@ const ProfileCredentials = () => {
                 <span>************</span>
               )}
               {isEditing ? (
-                <button
-                className="save-button"
-                onClick={(e) => {
-                  e.preventDefault(); // Prevent default behavior
-                  handlePasswordUpdate(); // Call the password update function
-                }}
-              >
-                Save
-              </button>              
+                <button className="save-button" onClick={handlePasswordUpdate}>
+                  Save
+                </button>
               ) : (
-                <button
-                  className="edit-button"
-                  onClick={(e) => {
-                    e.preventDefault(); // Prevent default behavior
-                    setIsEditing(true); // Enable editing mode
-                  }}
-                >
+                <button className="edit-button" onClick={() => setIsEditing(true)}>
                   Edit
                 </button>
-
               )}
             </div>
             {message && <p className="message">{message}</p>}
           </div>
-        </div>
-      </div>
-
-      <div className="terms-section">
-        <h3 className="credentials-header">Terms of use</h3>
-        <div className="terms-content">
-          <a href="#" className="download-link">
-            <span className="download-icon">⬇️</span>
-            Download Terms and Conditions (PDF)
-          </a>
         </div>
       </div>
     </div>

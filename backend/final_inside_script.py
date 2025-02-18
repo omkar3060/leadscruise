@@ -154,7 +154,7 @@ def redirect_and_refresh(driver, wait):
                     time_value = int(time_text.split()[0]) * 60  
                 else:
                     time_value = 11  
-                time_result = time_value < 10
+                time_result = time_value < 10000000
                 print(time_result)
             except Exception as e:
                 print(f"Failed to read the time text: {e}",flush=True)

@@ -4,16 +4,19 @@ import "./SettingsForm.css"; // Contains both header and form styling
 import ProfileCredentials from "./ProfileCredentials";
 import Sidebar from "./Sidebar"; // Import Sidebar component
 import axios from "axios";
+
 const SettingsForm = () => {
   const [settings, setSettings] = useState({
     sentences: [],
     wordArray: [],
     h2WordArray: [],
   });
+
   const [subscriptionDetails, setSubscriptionDetails] = useState({
     renewal_date: "Loading...",
     status: "Loading...",
   });
+
   useEffect(() => {
     const storedSubscription = localStorage.getItem("subscriptionDetails");
     if (storedSubscription) {
@@ -21,12 +24,9 @@ const SettingsForm = () => {
     }
   }, []);
 
-  const [newSentence, setNewSentence] = useState("");
-  const [newKeyword, setNewKeyword] = useState("");
-  const [newH2Keyword, setNewH2Keyword] = useState("");
   const [isDisabled, setIsDisabled] = useState(false); // Controls sidebar settings access
-
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchSettings = async () => {
       const userEmail = localStorage.getItem("userEmail");
@@ -51,21 +51,60 @@ const SettingsForm = () => {
     fetchSettings();
   }, []);
 
-  const addItem = (type, valueSetter, value) => {
-    if (value.trim()) {
-      setSettings((prev) => ({
-        ...prev,
-        [type]: [...prev[type], value.trim()],
-      }));
-      valueSetter("");
+  // Modal States
+  const [modalType, setModalType] = useState(""); // Which modal is open? ("sentences", "wordArray", "h2WordArray")
+  const [modalData, setModalData] = useState([]); // Stores the items inside the modal
+  const [newItem, setNewItem] = useState(""); // Stores input for new item
+
+  // Open modal
+  const openModal = (type) => {
+    setModalType(type);
+    setModalData([...settings[type]]);
+  };
+
+  // Close modal
+  const closeModal = () => {
+    setModalType("");
+    setModalData([]);
+    setNewItem("");
+  };
+
+  const addItemInModal = () => {
+    if (newItem.trim() && !modalData.includes(newItem.trim())) {
+      setModalData([...modalData, newItem.trim()]);
+      setNewItem("");
+
+      // Add animation class to the last item after a short delay
+      setTimeout(() => {
+        const listItems = document.querySelectorAll('.modal-content li');
+        if (listItems.length > 0) {
+          const lastItem = listItems[listItems.length - 1];
+          lastItem.classList.add('item-added');
+
+          // Remove the class after animation completes
+          setTimeout(() => {
+            lastItem.classList.remove('item-added');
+          }, 1500);
+        }
+      }, 10);
+    } else {
+      alert("Item already exists or empty!");
     }
   };
 
-  const deleteItem = (type, index) => {
+  // Delete item inside modal
+  const deleteItemInModal = (index) => {
+    const updatedData = modalData.filter((_, i) => i !== index);
+    setModalData(updatedData);
+  };
+
+  // Save changes from modal to main state
+  const saveChanges = () => {
     setSettings((prev) => ({
       ...prev,
-      [type]: prev[type].filter((_, i) => i !== index),
+      [modalType]: modalData,
     }));
+    closeModal();
   };
 
   const handleSubmit = async (e) => {
@@ -124,7 +163,7 @@ const SettingsForm = () => {
               Return to Dashboard
             </div>
             <div className="start-stop-buttons">
-              <button className="start-button" onClick={handleSubmit}>Save All</button>
+              <button className="start-button"onClick={handleSubmit}>Save All</button>
               <button className="stop-button" onClick={handleRevert}>Revert All</button>
             </div>
           </div>
@@ -144,110 +183,109 @@ const SettingsForm = () => {
 
       {/* Scrollable Settings Container */}
       <div className="settings-scroll-container">
-        <form onSubmit={handleSubmit} className="settings-form">
+        <form className="settings-form">
           {/* Sentences Section */}
           <div className="table-container">
             <h2>Messages to send as replies</h2>
-            <table className="keyword-table">
-              <thead>
-                <tr>
-                  <th>Sentence</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {settings.sentences.length > 0 ? (
-                  settings.sentences.map((sentence, index) => (
-                    <tr key={index}>
-                      <td>{sentence}</td>
-                      <td>
-                        <button className="delete-button" onClick={() => deleteItem("sentences", index)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="2">No sentences added.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <div className="add-keyword-container">
-              <input type="text" value={newSentence} onChange={(e) => setNewSentence(e.target.value)} placeholder="Enter a sentence" />
-              <button type="button" className="add-button" onClick={() => addItem("sentences", setNewSentence, newSentence)}>Add Sentence</button>
-            </div>
+            {settings.sentences.length > 0 ? (
+              <ul>
+                {settings.sentences.map((sentence, index) => (
+                  <li key={index}>{sentence}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No sentences added.</p>
+            )}
+            <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
+              Edit
+            </button>
           </div>
 
           {/* Word Array Section */}
           <div className="table-container">
             <h2>Accepted Categories</h2>
-            <table className="keyword-table">
-              <thead>
-                <tr>
-                  <th>Keyword</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {settings.wordArray.length > 0 ? (
-                  settings.wordArray.map((sentence, index) => (
-                    <tr key={index}>
-                      <td>{sentence}</td>
-                      <td>
-                        <button className="delete-button" onClick={() => deleteItem("sentences", index)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="2">No words added.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <div className="add-keyword-container">
-              <input type="text" value={newKeyword} onChange={(e) => setNewKeyword(e.target.value)} placeholder="Enter keyword" />
-              <button type="button" className="add-button" onClick={() => addItem("wordArray", setNewKeyword, newKeyword)}>Add Keyword</button>
-            </div>
+            {settings.wordArray.length > 0 ? (
+              <ul>
+                {settings.wordArray.map((category, index) => (
+                  <li key={index}>{category}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No categories added.</p>
+            )}
+            <button type="button" className="edit-button" onClick={() => openModal("wordArray")}>
+              Edit
+            </button>
           </div>
 
           {/* H2 Word Array Section */}
           <div className="table-container">
             <h2>Leads to be rejected</h2>
-            <table className="keyword-table">
-              <thead>
-                <tr>
-                  <th>Keyword</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {settings.h2WordArray.length > 0 ? (
-                  settings.h2WordArray.map((sentence, index) => (
-                    <tr key={index}>
-                      <td>{sentence}</td>
-                      <td>
-                        <button className="delete-button" onClick={() => deleteItem("sentences", index)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="2">No words added.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <div className="add-keyword-container">
-              <input type="text" value={newH2Keyword} onChange={(e) => setNewH2Keyword(e.target.value)} placeholder="Enter H2 keyword" />
-              <button type="button" className="add-button" onClick={() => addItem("h2WordArray", setNewH2Keyword, newH2Keyword)}>Add Keyword</button>
-            </div>
+            {settings.h2WordArray.length > 0 ? (
+              <ul>
+                {settings.h2WordArray.map((lead, index) => (
+                  <li key={index}>{lead}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No rejected leads added.</p>
+            )}
+            <button type="button" className="edit-button" onClick={() => openModal("h2WordArray")}>
+              Edit
+            </button>
           </div>
 
           {/* Profile Section */}
           <ProfileCredentials />
         </form>
       </div>
+
+      {/* Modal Popup */}
+      {modalType && (
+        <div className="modal-overlay" onClick={(e) => {
+          if (e.target.className === 'modal-overlay') closeModal();
+        }}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Edit {modalType.replace("wordArray", "Accepted Categories").replace("h2WordArray", "Rejected Leads")}</h2>
+              <button
+                className="modal-close-icon"
+                onClick={closeModal}
+                aria-label="Close modal"
+              >
+                &times;
+              </button>
+            </div>
+            <ul>
+              {modalData.map((item, index) => (
+                <li key={index}>
+                  <span>{item}</span>
+                  <button className="delete-button" onClick={() => deleteItemInModal(index)}>Delete</button>
+                </li>
+              ))}
+            </ul>
+            <div className="add-keyword-container">
+              <input
+                type="text"
+                value={newItem}
+                onChange={(e) => setNewItem(e.target.value)}
+                placeholder="Enter new item"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addItemInModal();
+                  }
+                }}
+              />
+              <button type="button" className="add-button" onClick={addItemInModal}>Add</button>
+            </div>
+            <div className="modal-buttons">
+              <button className="save-button" onClick={saveChanges}>Save Changes</button>
+              <button className="settings-close-button" onClick={closeModal}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
