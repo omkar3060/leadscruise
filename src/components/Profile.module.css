@@ -1,0 +1,466 @@
+.profile-page-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow-y: auto;
+  }
+  
+  .profile-scroll-container {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+    height: calc(100vh - 70px); /* Adjust based on header height */
+  }
+
+  .profile-content-layout {
+    display: flex;
+    flex-wrap: wrap; /* Ensure responsiveness */
+    gap: 20px;
+    margin-left: 50px;
+    margin-top: 115px;
+  }
+  
+  .left-section {
+    flex: 1; /* Takes available space */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  /* Table Container */
+  .table-container {
+    flex: 1;
+    background-color: white;
+    padding: 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    width: 90%;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+  .ProfileCredentials {
+    flex: 0 0 300px; /* Fixed width for the right section */
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+  }  
+  
+  .table-container h2 {
+    background-color: #6ea8fe;
+    color: black;
+    border-radius: 8px 8px 0 0;
+    font-size: 14px;
+    margin: 0;
+    width: 100%;
+    top: 0;
+    left: 0;
+    padding: 15px 0;
+    text-align: center;
+    position:sticky;
+    margin-bottom: 10px;
+  }
+  
+  /* Table Styling */
+  .billing-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  
+  .billing-table th,
+  .billing-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    font-size: 14px;
+  }
+  
+  .billing-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    
+  }
+
+  .billing-table th:nth-child(2), 
+.billing-table td:nth-child(2) {
+    width: 25%;  /* Adjust width as needed */
+}
+.billing-table th:nth-child(7), 
+.billing-table td:nth-child(7) {
+    width: 15%;  /* Adjust width as needed */
+}
+  /* Download Button */
+  .download-button {
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    width: auto;
+    transition: background 0.3s ease;
+    margin-bottom: 0px;
+  }
+  
+  .download-button:hover {
+    background-color: #4cae4c;
+  }
+  
+/* Billing Details Section */
+.billing-details {
+  flex: 1; /* Allows the section to take up available space */
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  /* margin-top: 20px; */
+}
+
+.billing-header {
+  background-color: #6ea8fe;
+  color: black;
+  font-size: 14px;
+  text-align: left;
+  padding: 15px;
+  border-radius: 6px 6px 0 0;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Billing Info Container */
+.billing-info {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Three-column layout for first row */
+.billing-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* Columns for Billing Phone, GST, and PAN */
+.billing-item {
+  flex: 1;
+  font-size: 25px;
+  font-weight: bolder;
+}
+
+.billing-item input,.billing-address-text input {
+  width: 95%;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  transition: border 0.3s ease-in-out;
+}
+
+.billing-item input:focus,.billing-address-text input:focus {
+  border-color: #007bff;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.billing-item strong {
+  display: block;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Address Section */
+.billing-address {
+  width: 100%;
+  margin-top: 10px;
+  text-align:left;
+}
+
+.billing-address-text{
+  text-align: left;
+  margin-bottom: 6px;
+  color: black;
+  font-weight: bolder;
+}
+
+.billing-address-text textarea{
+  width: 95%;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  transition: border 0.3s ease-in-out;
+}
+
+/* Edit Button */
+.edit-button,.save-button,.cancel-button {
+  display: block;
+  background-color: #5cb85c;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 10px;
+  width: 150px;
+  margin-left: 15px;
+  font-size: 14px;
+  margin-bottom: 0px;
+}
+
+.cancel-button{
+  background-color: #d9534f;
+}
+
+.cancel-button:hover {
+  background-color: #c9302c;
+}
+
+.save-button:hover {
+  background-color: #4cae4c;
+}
+
+.edit-button:hover {
+  background-color: #218838;
+}
+
+  /* Header Content */
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0 20px;
+  }
+  
+  /* Dashboard Header */
+  .dashboard-header {
+    position: fixed;
+    left: 60px;
+    width: calc(100% - 90px);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    margin-left: 10px;
+    padding-bottom: 10px;
+    border-radius: 8px;
+    margin-top: 5px;
+  }
+  
+  /* Status Section */
+  .status-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .status-label {
+    background-color: #007bff;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 15px 20px;
+    border-radius: 5px;
+    text-align: center;
+    width: 36vh;
+    margin-top: 0px;
+    margin: 0px 0px 35px 0px;
+  }
+  
+  .status-label:hover {
+    background-color: #0056b3;
+    cursor: pointer;
+  }
+
+  /* Compact styling for status-box-header in page header */
+.status-box-header {
+  background: linear-gradient(90deg, #1a365d 0%, #2c5282 100%);
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  padding: 0px 16px;
+  margin: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 600px;
+  height: 65px;
+}
+
+.status-box-header .left-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.status-box-header h2.upgrade-section {
+  color: #f7fafc;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.status-box-header .days-info {
+  display: flex;
+  align-items: baseline;
+}
+
+.status-box-header p.days-left {
+  color: #e2e8f0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin: 0 8px 0 0;
+  white-space: nowrap;
+}
+
+.status-box-header h2.days-left-count {
+  color: #fbd38d;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.status-box-header .renew-button {
+  background: #38a169;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  margin: 0;
+}
+
+.status-box-header .renew-button:hover {
+  background: #2f855a;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .status-box-header {
+    flex-direction: column;
+    height: auto;
+    padding: 8px 12px;
+    margin: 0 6px;
+  }
+  
+  .status-box-header .left-content {
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  
+  .status-box-header .days-info {
+    margin-bottom: 8px;
+  }
+  
+  .status-box-header .renew-button {
+    width: 100%;
+  }
+}
+  
+  /* Profile Section */
+  .profile-section {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
+  .profile-button {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 15px;
+    font-size: 16px;
+    margin-bottom: 15px;
+  }
+  
+  .renewal-text {
+    margin: 4px;
+    font-size: 12px;
+    color: #555;
+  }
+  
+  .subscription-status {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .status-box {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 0px;
+    text-align: center;
+    width: 200px;
+    height: 255px;
+  }
+  
+  .upgrade-section {
+    background: #6ea8fe;
+    padding: 15px;
+    font-weight: bold;
+    color: black;
+    font-size: 14px;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .days-left {
+    font-size: 14px;
+    margin-top: 20px;
+  }
+  
+  .days-left-count {
+    font-size: 24px;
+    font-weight: bold;
+    color: #000;
+  }
+  
+  .renew-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px;
+    margin-top: 75px;
+    margin-left: 15px;
+    margin-right: 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    width: auto;
+  }
+  
+  .renew-button:hover {
+    background-color: #45a049;
+  }
+
+  .billing-and-subscription-container {
+    display: flex;
+    gap: 20px; /* Adds spacing between Billing Details and Subscription Status */
+    align-items: flex-start; /* Aligns both sections at the top */
+    width: 80%;
+  }
+  

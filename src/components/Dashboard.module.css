@@ -1,0 +1,103 @@
+/* Dashboard Container */
+.dashboardContainer {
+  display: flex;
+  height: 100vh;
+  background-image: url('https://static.zohocdn.com/iam/v2/components/images/bg.49756b7c711696d95133fa95451f8e13.svg');
+  background-size: cover; /* Ensures the image covers the entire area */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents repeating */
+  background-attachment: fixed; /* Keeps the background fixed while scrolling */
+}
+
+/* Main Content */
+.dashboardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 5px;
+  margin-left: 50px;
+}
+
+/* Metrics Section */
+.metricsSection {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.metricBox {
+  background: #f9f9f9;
+  border-radius: 8px;
+  text-align: center;
+  padding: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.metricBox span {
+  font-size: 14px;
+  font-weight: normal;
+  color: #666;
+}
+
+.leadsSection {
+  border-radius: 8px;
+  overflow: hidden;
+  height: 400px; /* Fixed height to ensure internal scrolling */
+  display: flex;
+  flex-direction: column;
+}
+
+.tableWrapper {
+  overflow-y: auto; /* Enables vertical scrolling */
+  max-height: 340px; /* Leaves space for the header */
+}
+
+.tableHeader {
+  background: #007bff;
+  color: white;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 10; /* Ensures the header stays visible */
+}
+
+.leadsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leadsTable th,
+.leadsTable td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.leadsTable th {
+  background: #f1f1f1;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.leadsTable td {
+  color: #555;
+}
+
+.leadsTable tr:hover {
+  background: #f9f9f9;
+}

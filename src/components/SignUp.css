@@ -1,0 +1,8 @@
+.signin-left .pass-cont {
+  display: flex;
+  justify-content: space-between;
+}
+
+.signin-left .pass-cont input {
+  width: 48%;
+}

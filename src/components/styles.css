@@ -1,0 +1,602 @@
+body {
+  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+    "Lucida Sans", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  /* background-color: #f9f9f9; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Container Styling */
+.signin-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* min-height: 100vh; */
+  background-color: #ffffff;
+  box-shadow: 0px 2px 30px #ccc6;
+}
+
+.signin-left,
+.signin-right {
+  padding: 40px;
+  margin-bottom: 0px;
+}
+
+.signin-left {
+  flex: 1;
+  background-color: #ffffff;
+  /* box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); */
+  /* border-radius: 8px 0 0 8px; */
+  width: 500px;
+  height: 540px;
+}
+
+.signin-right {
+  flex: 1;
+  background-color: #ffffff;
+  /* border: 1px solid #e0e0e0; */
+  /* border-radius: 0 8px 8px 0; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.signup-link {
+  display: flex;
+}
+.center-div {
+  z-index: 1;
+  display: flex;
+  /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.center-div .vertical-line {
+  height: 518.8;
+  border: 1px solid rgb(230, 228, 228);
+}
+.signin-logo {
+  font-size: 30px;
+  font-weight: 800;
+  color: #0073ff;
+  margin-bottom: 20px;
+}
+
+h2 {
+  font-size: 24px;
+  color: #333333;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+p {
+  color: #000;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+input::placeholder {
+  color: #a5a3a3;
+}
+
+input:focus {
+  outline: none;
+}
+
+/* Buttons */
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: #159aff;
+  color: white;
+  height: 44px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+button:hover {
+  background-color: #005bb5;
+}
+
+.learn-more {
+  background-color: transparent;
+  color: #0073ff;
+  border: 1px solid #0073ff;
+}
+
+/* Sign-in Options */
+.signin-options {
+  text-align: center;
+}
+
+.signin-icons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.signin-icons i {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f1f1f1;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.signin-icons i:hover {
+  background-color: #e0e0e0;
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.signup-link span {
+  color: #0073ff;
+  cursor: pointer;
+  text-decoration: none;
+  margin-left: 2px;
+}
+
+/* Right Side Info Box */
+.signin-info {
+  max-width: 300px;
+  text-align: center;
+}
+
+.signin-info h3 {
+  font-size: 20px;
+  color: #333333;
+  margin-bottom: 10px;
+}
+
+.signin-info p {
+  font-size: 14px;
+  color: #555555;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.number-entry-container {
+  text-align: center;
+  padding: 40px;
+}
+
+.number-entry-container h2 {
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.number-entry-container input {
+  width: 80%;
+  max-width: 300px;
+  margin: 20px auto;
+}
+
+.number-entry-container button {
+  width: auto;
+  padding: 10px 20px;
+}
+
+/* General styling for the right section */
+.signin-right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f9f9f9;
+  /* border-left: 1px solid #e6e6e6; */
+  padding: 40px;
+}
+
+/* Overlap banner styling */
+.overlapBanner {
+  max-width: 350px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+/* Container for content */
+.main-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Image styling */
+/*
+.banner1_img {
+  width: 100%;
+  height: auto;
+  max-height: 240px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-bottom: 20px;
+}
+*/
+/* Heading styling */
+.banner1_heading {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #000;
+}
+
+/* Content text */
+.banner1_content,
+.banner2_content {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #555;
+  margin-bottom: 20px;
+  padding: 0 15px;
+}
+
+/* Button styling */
+.banner1_href,
+.banner2_href {
+  display: inline-block;
+  text-decoration: none;
+  color: #0091ff;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ecf7fe;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Animation for fade-in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Styling for the left section */
+
+/* Zoho logo styling */
+.signin-logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #309ff4;
+  margin-bottom: 20px;
+}
+
+/* Heading and subheading */
+.signin-left h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #000;
+}
+
+.signin-left p {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+/* Input fields */
+.signin-left input {
+  width: 100%;
+  padding: 20px 15px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  font-size: 16px;
+  color: #333;
+  transition: border 0.3s ease;
+  box-sizing: border-box;
+  height: 44px;
+  background: #f8f8f8;
+}
+
+/* Sign-in button */
+.signin-left button {
+  width: 100%;
+  background-color: #309ff4;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 17px 20px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: none;
+}
+
+.signin-left button:hover {
+  background-color: #309ff4;
+}
+
+/* Social sign-in icons */
+.signin-icons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.signin-icons svg {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.signin-icons svg:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Sign-up link */
+.signup-link {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
+.signup-link span {
+  color: #309ff4;
+  cursor: pointer;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.signup-link span:hover {
+  color: #0191fe;
+  text-decoration: underline;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.signin-tag {
+  font-size: 24px;
+  font-weight: 500;
+  text-align: start;
+}
+
+.signin-descriptor {
+  font-size: 16px;
+  color: #000;
+  font-weight: 400;
+  text-align: start;
+}
+
+@keyframes contentScroll {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.signin-right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff;
+  padding: 40px;
+  width: 390px;
+  overflow: hidden;
+  position: relative;
+}
+
+.scrolling-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  animation: contentScroll 5s linear infinite;
+}
+
+.banner-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.banner {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
+}
+
+.banner.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Pagination Dots */
+.pagination-container {
+  position: absolute;
+  bottom: 10px; /* Moves the dots below the banners */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  margin-top: 5px;
+  z-index: 2;
+}
+
+.pagination-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #d3d3d3;
+  margin: 0 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pagination-dot .progress-fill {
+  position: absolute;
+  width: 0%;
+  height: 100%;
+  background: #00a2f6;
+  transition: none; /* Disable transition for non-selected dots */
+}
+
+.pagination-dot.selected {
+  width: 24px;
+  border-radius: 4px;
+}
+
+.pagination-dot.selected .progress-fill {
+  width: 100%;
+  transition: width 5s linear; /* Apply transition only to selected dots */
+}
+
+.overlapBanner,
+.mfa_panel,
+.taskBanner {
+  width: 300px;
+  height: auto;
+  transition: opacity 0.5s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner1_img,
+.banner2_img,
+.banner3_img {
+  width: 300px;
+  height: 240px;
+  margin: auto;
+  background-size: 100%;
+  background-repeat: no-repeat;
+}
+
+.banner1_heading,
+.banner2_heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.banner1_content {
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.banner1_href {
+  display: block;
+  width: max-content;
+  max-width: 160px;
+  margin: auto;
+  margin-top: 10px;
+  background-color: #ecf7fe;
+  color: #0091ff;
+  font-weight: 600;
+  padding: 8px 20px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+  text-align: center;
+}
+
+.mfa_panel {
+  text-align: center;
+}
+
+.password {
+  padding: 17px 16px !important;
+}
+
+.product_text a {
+  color: #309ff4;
+  text-decoration: none;
+}
+
+@keyframes slideRightToLeft {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  10% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  90% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.banner-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.banner {
+  position: absolute;
+  width: 100%;
+  transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.banner.active {
+  opacity: 1;
+  visibility: visible;
+  animation: slideRightToLeft 5s linear infinite;
+}

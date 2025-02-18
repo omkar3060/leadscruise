@@ -1,0 +1,50 @@
+.task-input-screen .te-tis-h4 {
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  font-weight: bolder;
+}
+
+.task-input-screen .instr-wrapper {
+  display: flex;
+  min-height: 80px;
+  justify-content: space-between;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.task-input-screen .instr-wrapper .para {
+  width: 50%;
+  display: flex;
+  align-items: center;
+}
+
+.task-input-screen .instr-wrapper .para .te-tis-p {
+  margin-bottom: 0px;
+  color: rgb(80, 79, 79);
+  font-size: 1.0em;
+}
+
+.task-input-screen .instr-wrapper .red-divs {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.task-input-screen .instr-wrapper .red-divs .red-cont {
+  background-color: #e34c26;
+  color: white;
+  font-size: 10px;
+  padding: 5px;
+  border-radius: 4px;
+  font-weight: 500;
+  margin-bottom: 0.4em;
+}
+
+.task-input-screen .confirm {
+  text-align: center;
+  color: black;
+  font-size: 12px;
+  font-weight: 100;
+  margin-top: 10px;
+}

@@ -1,0 +1,235 @@
+/* Error Screen Styling */
+
+.signin-left .check-number-input-screen h2 {
+  font-size: larger;
+  margin: 10px 0;
+  font-weight: 600;
+}
+
+.signin-left .check-number-input-screen p {
+  font-size: medium;
+  font-weight: 500;
+  margin: 30px 0;
+  color: black;
+}
+
+.signin-left .logout-link span:hover {
+  color: #ff0000;
+  text-decoration: underline;
+}
+
+.error-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-right: 10px;
+  max-width: 400px;
+}
+
+.error-screen h1 {
+  font-size: 64px;
+  font-weight: bold;
+  color: #f15a24;
+  margin-bottom: 20px;
+}
+
+.error-screen p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.try-again-button {
+  padding: 17px 30px;
+  background-color: #f15a24;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.try-again-button:hover {
+  background-color: #d0461a;
+}
+
+.error-screen .logout-link {
+  font-size: 14px;
+  color: #000;
+  margin-top: 10px;
+}
+
+.error-screen .logout-link span {
+  color: #fd0808;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.error-screen .logout-link span:hover {
+  color: #0056b3;
+}
+
+.error-screen .illustration {
+  margin-top: 30px;
+}
+
+.error-screen .illustration img {
+  max-width: 250px;
+  height: auto;
+}
+
+/* Success Screen Styling */
+.success-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.success-screen h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.success-screen .success-icon {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.success-screen .success-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.success-screen p {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.success-screen .icon-cont {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.success-screen .icon-cont p {
+  text-align: center;
+  font-weight: 400;
+  color: rgb(56, 56, 56);
+  font-size: 18px;
+}
+
+.success-screen .phone-number {
+  font-weight: bold;
+  color: #000;
+  text-align: center;
+}
+
+.success-screen .next-button {
+  margin-bottom: 20px;
+}
+
+.success-screen .end-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.success-screen .end-block .gback {
+  font-size: medium;
+  font-weight: 500;
+  text-align: left;
+  color: blue;
+  cursor: pointer;
+}
+
+.success-screen .end-block .gback:hover {
+  text-decoration: underline;
+}
+
+.success-screen .logout-link {
+  font-size: medium;
+  font-weight: 500;
+  text-align: left;
+  color: black;
+}
+
+.success-screen .logout-link span {
+  color: #ff0000;
+  cursor: pointer;
+}
+
+.success-screen .logout-link span:hover {
+  color: #ff0000;
+}
+
+/* Loading Screen Styling */
+.loading-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-right: 10px;
+}
+
+.loading-screen h1 {
+  font-size: 30px;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 20px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #ddd;
+  border-top: 5px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-screen p {
+  font-size: 17px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.logout-link {
+  font-size: 14px;
+  color: #000;
+}
+
+.logout-link span {
+  color: #ff0000;
+  cursor: pointer;
+}
+
+.logout-link span:hover {
+  color: #0056b3;
+}
