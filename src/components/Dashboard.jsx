@@ -84,7 +84,7 @@ const Dashboard = () => {
       const mobileNumber = localStorage.getItem("mobileNumber");
       const password = localStorage.getItem("password");
       const userEmail = localStorage.getItem("userEmail");
-  
+      const uniqueId=localStorage.getItem("unique_id");
       if (!mobileNumber || !password) {
         alert("Mobile number or password not found in local storage!");
         return;
@@ -128,12 +128,13 @@ const Dashboard = () => {
         h2WordArray: userSettings.h2WordArray,
         mobileNumber,
         password,
+        uniqueId
       });
   
       alert(cycleResponse.data.message || "Task started successfully!");
     } catch (error) {
       console.error("Error:", error.response?.data?.message || error.message);
-      alert("Failed to start task.");
+      alert(error.response?.data?.message || error.message);
     }
   };
   
@@ -151,6 +152,7 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboardContainer}>
+      
       {/* Sidebar Component */}
       <Sidebar isDisabled={isDisabled} />
 

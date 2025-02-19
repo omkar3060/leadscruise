@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import axios from "axios";
 import "./styles.css";
 import "./Signin.css";
 
@@ -10,29 +11,15 @@ import successImage from "../images/success.png";
 import errorImage from "../images/error.png";
 import loadingGif from "../images/loading.gif";
 
-const ResetPassword = () => {
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+const EnterEmail = () => {
   const [status, setStatus] = useState("idle");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [selected, setSelected] = useState(0);
-
-  const token = searchParams.get("token");
-  var email = searchParams.get("email");
-
-  email = decodeURIComponent(email);
-
-  useEffect(() => {
-    if (!token) {
-      setError("Invalid reset link");
-      setTimeout(() => navigate("/signin"), 3000);
-    }
-  }, [token, navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,42 +29,48 @@ const ResetPassword = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setError("");
-
-    // Validate passwords
-    if (newPassword !== confirmPassword) {
-      alert("Passwords do not match");
+  const handleForgotPassword = async () => {
+    if (!email) {
+      alert("Please enter your email first.");
       return;
     }
 
-    console.log({ token, newPassword, email });
+    setStatus("loading");
 
     try {
-      const response = await fetch("http://localhost:5000/api/reset-password", {
+      const response = await fetch("http://localhost:5000/api/check-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          token,
-          newPassword,
-          email,
-        }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
+      if (!data.exists) {
+        alert("Email is not registered.");
+        return;
+      }
 
-      if (data.success) {
-        setSuccess(true);
+      const resetResponse = await fetch(
+        "http://localhost:5000/api/send-reset-email",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const resetData = await resetResponse.json();
+      if (resetData.success) {
         setStatus("success");
       } else {
-        setError(data.message || "Password reset failed");
-        setStatus("error");
+        alert("Failed to send reset email. Please try again.");
       }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
+    } catch (error) {
+      alert("Error sending reset email: " + error.message);
     }
   };
 
@@ -92,22 +85,23 @@ const ResetPassword = () => {
                 alt="Loading"
                 className="loading-gif"
                 style={{
-                  width: "150px",
-                  height: "125px",
-                  marginBottom: "20px",
+                  width: "200px",
+                  height: "200px",
+                  marginTop: "40px",
+                  marginBottom: "40px",
                 }}
               />
-              <p>Please, wait....</p>
-              <p className="logout-link">
-                Wish to <span onClick={() => navigate("/")}>Logout?</span>
+              <p
+                style={{ color: "black", fontWeight: "500", fontSize: "20px" }}
+              >
+                Please, wait while we send you a Mail.
               </p>
             </div>
           )}
-
           {status === "success" && (
             <div className="success-screen">
               <div className="icon-cont">
-                <h2>Password Changed</h2>
+                <h2>Email Sent</h2>
                 <div className="success-icon">
                   <img
                     src={successImage}
@@ -115,25 +109,25 @@ const ResetPassword = () => {
                     style={{ width: "175px", height: "125px" }}
                   />
                 </div>
-                <p>Great!! Password Succesfully Updated.</p>
+                <p>An email has been sent to your provided email id.</p>
               </div>
               <p
                 className="instruction"
                 style={{
                   color: "black",
                   fontWeight: "500",
-                  fontSize: "17px",
+                  fontSize: "18px",
                   textAlign: "center",
                 }}
               >
-                You can now signin with new password clicking next.
+                Use the link to reset the password.
               </p>
               <button className="next-button" onClick={() => navigate("/")}>
                 Sign In
               </button>
 
               <div className="end-block">
-                <p className="gback" onClick={() => window.location.reload()}>
+                <p className="gback" onClick={() => navigate("/")}>
                   Go Back
                 </p>
                 <p className="logout-link">
@@ -189,36 +183,43 @@ const ResetPassword = () => {
                   <span>Sign In</span>
                 </div>
               </div>
-              <h2 className="signin-tag">Reset Your Password</h2>
-              <p className="signin-descriptor">to access Leads Cruise Home</p>
+              <h2 className="signin-tag">Enter your Email id</h2>
+              <p
+                style={{
+                  color: "black",
+                  fontSize: "18px",
+                  fontWeight: "500",
+                  marginTop: "40px",
+                  marginBottom: "40px",
+                }}
+              >
+                If you have forgotten email id then feel free to contact our
+                Support Team.
+              </p>
               <input
                 type="email"
                 placeholder="Enter Your Email Address"
                 value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 name="email"
                 autoComplete="email"
-                readOnly
               />
 
-              <input
-                type="password"
-                placeholder="New Password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                name="password"
-                autoComplete="current-password"
-              />
+              <button onClick={handleForgotPassword}>Next</button>
 
-              <input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                name="confirmpassword"
-                autoComplete="current-password"
-              />
-
-              <button onClick={handleResetPassword}>Next</button>
+              <div
+                className="end-block"
+                style={{
+                  marginTop: "40px",
+                }}
+              >
+                <p className="gback" onClick={() => window.location.reload()}>
+                  Go Back
+                </p>
+                <p className="logout-link">
+                  Wish to <span onClick={() => navigate("/")}>Logout</span>?
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -337,4 +338,4 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword;
+export default EnterEmail;

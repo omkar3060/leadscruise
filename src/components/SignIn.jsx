@@ -293,7 +293,12 @@ const SignIn = () => {
         email,
         password,
       });
-
+      if (rememberMe) {
+        saveCredentials(email, password);
+      } else {
+        // Clear last used credentials if remember me is not checked
+        localStorage.removeItem("lastUsedCredentials");
+      }
       alert(res.data.message);
       localStorage.setItem("userEmail", email);
 
@@ -467,7 +472,7 @@ const SignIn = () => {
               />
               Remember Me
             </div>
-            <div className="fp" onClick={handleForgotPassword}>
+            <div className="fp" onClick={() => navigate("/enter-email")}>
               Forgot Password?
             </div>
           </div>

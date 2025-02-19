@@ -196,9 +196,11 @@ const SettingsForm = () => {
             ) : (
               <p>No sentences added.</p>
             )}
+            <div className="edit-button-container">
             <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
               Edit
             </button>
+            </div>
           </div>
 
           {/* Word Array Section */}
@@ -213,9 +215,11 @@ const SettingsForm = () => {
             ) : (
               <p>No categories added.</p>
             )}
+            <div className="edit-button-container">
             <button type="button" className="edit-button" onClick={() => openModal("wordArray")}>
               Edit
             </button>
+            </div>
           </div>
 
           {/* H2 Word Array Section */}
@@ -230,9 +234,11 @@ const SettingsForm = () => {
             ) : (
               <p>No rejected leads added.</p>
             )}
+            <div className="edit-button-container">
             <button type="button" className="edit-button" onClick={() => openModal("h2WordArray")}>
               Edit
             </button>
+            </div>
           </div>
 
           {/* Profile Section */}

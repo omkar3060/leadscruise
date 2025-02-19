@@ -10,6 +10,8 @@ import Profile from "./components/Profile";
 import Footer from "./components/Footer"; // Import Footer
 import Master from "./components/Master";
 import Plans from "./components/Plans";
+import EnterEmail from "./components/EnterEmail";
+import ResetPassword from "./components/ResetPassword";
 function App() {
   return (
     <Router>
@@ -24,6 +26,8 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/master" element={<Master />} />
           <Route path="/plans" element={<Plans />} />
+          <Route path="/enter-email" element={<EnterEmail />} />
+          <Route path="/reset-password" element={<ResetPassword/>}/>
         </Routes>
         <Footer /> {/* Footer will be displayed on all pages */}
       </div>

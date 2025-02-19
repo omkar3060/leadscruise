@@ -29,4 +29,29 @@
     cursor: pointer;
   }
 
+  .sidebarIcon:hover {
+    transform: scale(1.1);
+
+  }
+  
+  .centerIcons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .icon {
+    font-size: 26px;
+    color: #209e24;
+  }
+  
+  .icon:hover {
+    color: #25d366; /* WhatsApp green */
+  }
+  
+  .disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   

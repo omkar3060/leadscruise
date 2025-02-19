@@ -1,21 +1,23 @@
 const User = require("../models/userModel");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 exports.signup = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { refId, email, password, confPassword } = req.body;
 
-    // Debugging: Log received data
-    console.log("Received signup request:", req.body);
-
-    // Validate input fields
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: "All fields are required!" });
+    // Validate input
+    if (!email || !password || !confPassword) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+    if (password !== confPassword) {
+      return res.status(400).json({ message: "Passwords do not match." });
     }
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already signed up. Please log in!!!" });
+      return res
+        .status(400)
+        .json({ message: "User already signed up. Please log in!!!" });
     }
 
     // Debugging: Log password before hashing
@@ -28,10 +30,10 @@ exports.signup = async (req, res) => {
 
     // Create a new user
     const newUser = new User({
-      username,
       email,
       password: hashedPassword,
-      firstTime: true
+      refId,
+      firstTime: true,
     });
 
     await newUser.save();
@@ -43,19 +45,21 @@ exports.signup = async (req, res) => {
   }
 };
 
-
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // Find user by email
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found. Please Signup!!!" });
+    if (!user)
+      return res
+        .status(400)
+        .json({ message: "User not found. Please Signup!!!" });
 
-    // Compare passwords
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect)
-      return res.status(400).json({ message: "Invalid credentials." });
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials!" });
 
     // Check if it's the first-time login
     if (user.firstTime) {
@@ -65,47 +69,64 @@ exports.login = async (req, res) => {
         success: true,
         message: "Welcome, first-time login!",
         firstTime: false,
-        user: { email: user.email, mobileNumber: user.mobileNumber, savedPassword: user.savedPassword }
+        user: { email: user.email, mobileNumber: user.mobileNumber },
       });
     }
 
-    // Send user data including mobileNumber and savedPassword
+    // Send user data including mobileNumber
     res.json({
       success: true,
       message: "Login successful!",
-      user: { email: user.email, mobileNumber: user.mobileNumber, savedPassword: user.savedPassword }
+      user: { email: user.email, mobileNumber: user.mobileNumber,savedPassword:user.savedPassword },
     });
   } catch (error) {
     res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
 
+exports.checkemail = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (user) {
+    res.json({ exists: true });
+  } else {
+    res.json({ exists: false });
+  }
+};
+
 exports.update = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
+    const { token, newPassword ,email} = req.body;
     console.log("Received password update request:", req.body);
+    console.log(typeof(newPassword));
     // Validate input
     if (!email || !newPassword) {
-      return res.status(400).json({ message: "Email and new password are required." });
+      return res
+        .status(400)
+        .json({ message: "Valid email and new password are required." });
     }
 
     // Find user in DB
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found." });
 
-    // Hash new password
+    // Hash new password correctly
     const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    console.log("Hashed password:", hashedPassword);
 
     // Update password in DB
     user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: "Password updated successfully!" });
+    res.json({ success: true });
   } catch (error) {
     console.error("Password update error:", error.message);
-    res.status(500).json({ message: "Password update failed." });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 exports.updateSavedPassword = async (req, res) => {
   try {
@@ -114,15 +135,21 @@ exports.updateSavedPassword = async (req, res) => {
 
     // Validate input
     if (!email || !newPassword) {
-      return res.status(400).json({ message: "Email and new password are required." });
+      return res
+        .status(400)
+        .json({ message: "Email and new password are required." });
     }
 
     // Find user in DB
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found." });
 
+    const hashedPassword = await bcrypt.hash(newPassword.toString(), 10);
+
+    console.log("Hashed password:", hashedPassword);
+
     // Update savedPassword in DB
-    user.savedPassword = newPassword;
+    user.savedPassword = hashedPassword;
     await user.save();
 
     res.json({ message: "Saved password updated successfully!" });

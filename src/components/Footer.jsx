@@ -17,7 +17,7 @@ const Footer = () => {
         <div className="copyright">
           © 2025, Focus Engineering Products Pvt. Ltd. All Rights Reserved.
         </div>
-        
+        <div className="support-button-container">
         <button 
           className="support-button"
           onClick={() => setIsPopupOpen(true)}
@@ -38,6 +38,7 @@ const Footer = () => {
           </svg>
           Contact Support
         </button>
+        </div>
       </div>
 
       {isPopupOpen && (
