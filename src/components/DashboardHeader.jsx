@@ -12,6 +12,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled }) => {
   });
   const [showPopup, setShowPopup] = useState(false);
   const [daysLeft, setDaysLeft] = useState(null);
+  const [isSubscriptionActive, setIsSubscriptionActive] = useState(false); // New state to track subscription status
 
   useEffect(() => {
     const fetchSubscriptionDetails = async () => {
@@ -42,12 +43,14 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled }) => {
 
         setDaysLeft(remainingDays);
 
+        // Update subscription status (active if renewal date is in the future)
+        setIsSubscriptionActive(remainingDays > 0);
+
         // Fix: Correct the key name and type check
-        const popupDismissed = localStorage.getItem("popupDismissed"); 
+        const popupDismissed = localStorage.getItem("popupDismissed");
         if (remainingDays > 0 && remainingDays < 3 && popupDismissed !== "true") {
           setShowPopup(true);
         }
-
       } catch (error) {
         console.error("Error fetching subscription details:", error.response?.data || error.message);
         setSubscriptionDetails({ renewal_date: "Unavailable", status: "Unavailable", unique_id: "Unavailable" });
@@ -56,6 +59,16 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled }) => {
 
     fetchSubscriptionDetails();
   }, []);
+
+  // Prevent starting the script if the subscription is expired
+  const handleStartScript = () => {
+    if (!isSubscriptionActive) {
+      alert("Your subscription has expired. Please renew to start the script.");
+      navigate("/plans"); // Redirect to subscription page
+      return;
+    }
+    handleStart(); // Call the actual handleStart function if subscription is active
+  };
 
   // When popup is closed, store the dismissal in localStorage
   const handleClosePopup = () => {
@@ -71,8 +84,12 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled }) => {
           <div className={styles.popupContent}>
             <h2>⚠️ Subscription Expiring Soon!</h2>
             <p>Your subscription will expire in {daysLeft} day(s). Please renew it to continue using the service.</p>
-            <button onClick={() => navigate("/plans")} className={styles.renewButton}>Renew Now</button>
-            <button onClick={handleClosePopup} className={styles.closeButton}>Close</button>
+            <button onClick={() => navigate("/plans")} className={styles.renewButton}>
+              Renew Now
+            </button>
+            <button onClick={handleClosePopup} className={styles.closeButton}>
+              Close
+            </button>
           </div>
         </div>
       )}
@@ -80,7 +97,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled }) => {
       <div className={styles.statusSection}>
         <div className={styles.statusLabel}>Status: {status}</div>
         <div className={styles.startStopButtons}>
-          <button className={styles.startButton} onClick={handleStart}>Start</button>
+          <button className={styles.startButton} onClick={handleStartScript}>Start</button>
           <button className={styles.stopButton} onClick={handleStop} disabled={!isDisabled}>
             Stop
           </button>
