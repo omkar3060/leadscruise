@@ -17,8 +17,8 @@ const ProfileCredentials = ({isProfilePage}) => {
 
   useEffect(() => {
     // Fetch credentials from localStorage
-    const storedMobile = localStorage.getItem("mobileNumber") || "9579797269";
-    const storedEmail = localStorage.getItem("userEmail") || "omkargouda306@gmail.com";
+    const storedMobile = localStorage.getItem("mobileNumber") || "";
+    const storedEmail = localStorage.getItem("userEmail") || "";
 
     setMobileNumber(storedMobile);
     setEmail(maskEmail(storedEmail));

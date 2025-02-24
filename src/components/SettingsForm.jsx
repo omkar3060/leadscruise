@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./SettingsForm.css"; // Contains both header and form styling
+import "./SettingsForm.css";
 import ProfileCredentials from "./ProfileCredentials";
-import Sidebar from "./Sidebar"; // Import Sidebar component
+import Sidebar from "./Sidebar";
 import axios from "axios";
+import DashboardHeader from "./DashboardHeader";
 
 const SettingsForm = () => {
   const [settings, setSettings] = useState({
@@ -17,15 +18,28 @@ const SettingsForm = () => {
     status: "Loading...",
   });
 
+  const [isDisabled, setIsDisabled] = useState(false);
+  const navigate = useNavigate();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+
+  // Handle responsive sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setSidebarOpen(window.innerWidth > 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     const storedSubscription = localStorage.getItem("subscriptionDetails");
     if (storedSubscription) {
       setSubscriptionDetails(JSON.parse(storedSubscription));
     }
   }, []);
-
-  const [isDisabled, setIsDisabled] = useState(false); // Controls sidebar settings access
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -52,9 +66,9 @@ const SettingsForm = () => {
   }, []);
 
   // Modal States
-  const [modalType, setModalType] = useState(""); // Which modal is open? ("sentences", "wordArray", "h2WordArray")
-  const [modalData, setModalData] = useState([]); // Stores the items inside the modal
-  const [newItem, setNewItem] = useState(""); // Stores input for new item
+  const [modalType, setModalType] = useState("");
+  const [modalData, setModalData] = useState([]);
+  const [newItem, setNewItem] = useState("");
 
   // Open modal
   const openModal = (type) => {
@@ -74,14 +88,12 @@ const SettingsForm = () => {
       setModalData([...modalData, newItem.trim()]);
       setNewItem("");
 
-      // Add animation class to the last item after a short delay
       setTimeout(() => {
         const listItems = document.querySelectorAll('.modal-content li');
         if (listItems.length > 0) {
           const lastItem = listItems[listItems.length - 1];
           lastItem.classList.add('item-added');
 
-          // Remove the class after animation completes
           setTimeout(() => {
             lastItem.classList.remove('item-added');
           }, 1500);
@@ -110,7 +122,7 @@ const SettingsForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const userEmail = localStorage.getItem("userEmail"); // Ensure userEmail is stored in localStorage
+    const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
       alert("User email not found!");
       return;
@@ -150,36 +162,28 @@ const SettingsForm = () => {
     }
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
-    <div className="settings-page-wrapper">
-      {/* Sidebar Component */}
-      <Sidebar isDisabled={isDisabled} />
+    <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
+      {/* Conditional Sidebar Component */}
+      {(windowWidth > 768 || sidebarOpen) && (
+        <Sidebar isDisabled={isDisabled} />
+      )}
 
       {/* Fixed Dashboard Header */}
-      <header className="dashboard-header">
-        <div className="header-content">
-          <div className="status-section">
-            <div className="status-label" onClick={() => navigate("/dashboard")}>
-              Return to Dashboard
-            </div>
-            <div className="start-stop-buttons">
-              <button className="start-button"onClick={handleSubmit}>Save All</button>
-              <button className="stop-button" onClick={handleRevert}>Revert All</button>
-            </div>
-          </div>
-          <div className="profile-section">
-            <button className="profile-button" onClick={() => navigate("/profile")}>Profile</button>
-            <div>
-              <p className="renewal-text">
-                Subscription Status: {subscriptionDetails.status}
-              </p>
-              <p className="renewal-text">
-                Subscription next renewal date: {subscriptionDetails.renewal_date}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader 
+        handleSubmit={handleSubmit} 
+        handleRevert={handleRevert} 
+        style={windowWidth <= 768 ? { 
+          left: 0, 
+          width: '100%',
+          marginLeft: 0,
+          padding: '15px'
+        } : {}}
+      />
 
       {/* Scrollable Settings Container */}
       <div className="settings-scroll-container">
@@ -197,9 +201,9 @@ const SettingsForm = () => {
               <p>No sentences added.</p>
             )}
             <div className="edit-button-container">
-            <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
-              Edit
-            </button>
+              <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
+                Edit
+              </button>
             </div>
           </div>
 
@@ -216,9 +220,9 @@ const SettingsForm = () => {
               <p>No categories added.</p>
             )}
             <div className="edit-button-container">
-            <button type="button" className="edit-button" onClick={() => openModal("wordArray")}>
-              Edit
-            </button>
+              <button type="button" className="edit-button" onClick={() => openModal("wordArray")}>
+                Edit
+              </button>
             </div>
           </div>
 
@@ -235,9 +239,9 @@ const SettingsForm = () => {
               <p>No rejected leads added.</p>
             )}
             <div className="edit-button-container">
-            <button type="button" className="edit-button" onClick={() => openModal("h2WordArray")}>
-              Edit
-            </button>
+              <button type="button" className="edit-button" onClick={() => openModal("h2WordArray")}>
+                Edit
+              </button>
             </div>
           </div>
 

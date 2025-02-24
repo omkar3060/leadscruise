@@ -323,8 +323,17 @@ const SignIn = () => {
         navigate("/check-number");
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to sign in. Please try again.");
-      navigate("/signup");
+      if (error.response && error.response.status === 400) {
+        if (
+          error.response.data.message === "User not found. Please Signup!!!"
+        ) {
+          alert("Email not registered. Please sign up!");
+        } else {
+          alert(error.response.data.message || "Invalid credentials!");
+        }
+      } else {
+        alert("Failed to sign in. Please try again.");
+      }
     }
   };
   const handleForgotPassword = async () => {
@@ -460,6 +469,11 @@ const SignIn = () => {
             onChange={(e) => setPassword(e.target.value)}
             name="password"
             autoComplete="current-password"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSignIn(); // Trigger sign-in when Enter is pressed
+                }}}
           />
 
           <div className="fp-cont">

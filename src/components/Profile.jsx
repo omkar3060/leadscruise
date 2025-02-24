@@ -4,6 +4,7 @@ import styles from "./Profile.module.css"; // Importing module CSS
 import Sidebar from "./Sidebar";
 import ProfileCredentials from "./ProfileCredentials";
 import axios from "axios";
+import DashboardHeader from "./DashboardHeader";
 const Profile = () => {
   const navigate = useNavigate();
   const userEmail = localStorage.getItem("userEmail");
@@ -149,40 +150,7 @@ const Profile = () => {
       <Sidebar />
 
       {/* Fixed Dashboard Header */}
-      <header className={styles["dashboard-header"]}>
-        <div className={styles["header-content"]}>
-          <div className={styles["status-section"]}>
-            <div className={styles["status-label"]} onClick={() => navigate("/dashboard")}>
-              Return to Dashboard
-            </div>
-          </div>
-          <div className={styles["profile-section"]}>
-            <button
-              className={styles.subscriptionButton}
-              onClick={() => navigate("/plans")}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-            >
-              <div className={styles.buttonContent}>
-                <div className={styles.daysInfo}>
-                  <span className={styles.daysText}>
-                    {isHovering ? "Renew now" : (daysLeft !== null ? `${daysLeft} days left` : "Loading...")}
-                  </span>
-                </div>
-              </div>
-            </button>
-
-            <div>
-              <p className={styles["renewal-text"]}>
-                Subscription Status: {subscriptionDetails.status}
-              </p>
-              <p className={styles["renewal-text"]}>
-                Subscription next renewal date: {subscriptionDetails.renewal_date}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader />
 
       {/* Scrollable Profile Container */}
       <div className={styles["profile-scroll-container"]}>

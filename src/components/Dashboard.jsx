@@ -6,7 +6,7 @@ import styles from "./Dashboard.module.css"; // Import CSS module
 import { useNavigate } from "react-router-dom";
 const Dashboard = () => {
   const [leads, setLeads] = useState([]);
-  const [status, setStatus] = useState("Not Running");
+  const [status, setStatus] = useState("Stopped");
   const [isDisabled, setIsDisabled] = useState(false);
   const [timer, setTimer] = useState(0);
   const navigate = useNavigate();
@@ -32,6 +32,42 @@ const Dashboard = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) {
+          console.error("Email not found in localStorage.");
+          return;
+        }
+  
+        const response = await axios.get(`http://localhost:5000/api/get-status/${userEmail}`);
+        setStatus(response.data.status || "Stopped");
+  
+        if (response.data.startTime) {
+          const startTime = new Date(response.data.startTime);
+          const currentTime = new Date();
+          const timeElapsed = Math.floor((currentTime - startTime) / 1000); // Time elapsed in seconds
+  
+          if (timeElapsed < 300) {
+            setIsDisabled(true);
+            setTimer(300 - timeElapsed);
+          } else {
+            setIsDisabled(false);
+          }
+        } else {
+          setIsDisabled(false);
+        }
+      } catch (error) {
+        console.error("Error fetching script status:", error);
+      }
+    };
+  
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 5000); // Refresh status every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+  
   useEffect(() => {
     fetchLeads();
     const interval = setInterval(fetchLeads, 10000);
@@ -76,7 +112,7 @@ const Dashboard = () => {
       totalLeadsCaptured: leads.length,
     };
   };
-
+  
   const metrics = calculateMetrics();
 
   const handleStart = async () => {
@@ -117,9 +153,7 @@ const Dashboard = () => {
       }
       console.log("Sending the following settings to backend:", userSettings);
       // Start process
-      setStatus("Running");
-      setIsDisabled(true);
-      setTimer(300);
+
   
       // Send the fetched settings instead of using the state
       const cycleResponse = await axios.post("http://localhost:5000/api/cycle", {
@@ -128,8 +162,11 @@ const Dashboard = () => {
         h2WordArray: userSettings.h2WordArray,
         mobileNumber,
         password,
-        uniqueId
+        uniqueId,
+        userEmail,
       });
+
+      setStatus("Running");
   
       alert(cycleResponse.data.message || "Task started successfully!");
     } catch (error) {
@@ -185,6 +222,7 @@ const Dashboard = () => {
             <table className={styles.leadsTable}>
               <thead>
                 <tr>
+                  <th>Product</th>
                   <th>Name</th>
                   <th>Mobile Number</th>
                   <th>Email</th>
@@ -195,6 +233,7 @@ const Dashboard = () => {
                 {leads.length > 0 ? (
                   leads.map((lead, index) => (
                     <tr key={index}>
+                      <td>{lead.lead_bought}</td>
                       <td>{lead.name}</td>
                       <td>{lead.mobile}</td>
                       <td>{lead.email}</td>

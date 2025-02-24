@@ -300,7 +300,7 @@ app.get("/api/get-max-captures", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ 
+    res.json({
       maxCaptures: user.maxCaptures,
       lastUpdatedMaxCaptures: user.lastUpdatedMaxCaptures
     });
@@ -311,11 +311,10 @@ app.get("/api/get-max-captures", async (req, res) => {
 });
 
 const cron = require("node-cron");
-
 async function resetLeadCounters() {
   try {
     console.log("Checking if lead counters need reset...");
-    
+
     // Get the last reset time from one document
     const lastResetEntry = await UserLeadCounter.findOne({}, "lastReset");
 
@@ -339,7 +338,6 @@ async function resetLeadCounters() {
   }
 }
 
-// Run on server startup
 resetLeadCounters();
 
 // Schedule cron job to run every day at 7 AM
@@ -349,7 +347,7 @@ const activePythonProcesses = new Map(); // Store active processes by user_mobil
 
 app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
-  let { sentences, wordArray, h2WordArray, mobileNumber, password, uniqueId } = req.body;
+  let { sentences, wordArray, h2WordArray, mobileNumber, password, uniqueId, userEmail } = req.body;
 
   if (!req.body || Object.keys(req.body).length === 0) {
     return res.status(400).json({ status: "error", message: "Empty request body. Ensure the request has a JSON payload." });
@@ -364,12 +362,22 @@ app.post("/api/cycle", async (req, res) => {
     });
   }
 
-  if (!mobileNumber || !password) {
+  if (!mobileNumber || !password || !userEmail) {
     return res.status(400).json({
       status: "error",
-      message: "Mobile number and password are required.",
+      message: "Mobile number, Email, and password are required.",
     });
   }
+
+  // Get current time
+  const startTime = new Date();
+
+  // Update user status to "Running" and store the start time
+  await User.findOneAndUpdate(
+    { email: userEmail },
+    { status: "Running", startTime },
+    { new: true, upsert: true }
+  );
 
   let userCounter = await UserLeadCounter.findOne({ user_mobile_number: mobileNumber });
 
@@ -382,7 +390,6 @@ app.post("/api/cycle", async (req, res) => {
     return res.status(403).json({ status: "error", message: "Lead limit reached. Cannot capture more leads today." });
   }
 
-  // Prepare data for Python script
   const inputData = JSON.stringify({
     sentences,
     wordArray,
@@ -429,11 +436,18 @@ app.post("/api/cycle", async (req, res) => {
     }
   }, 3000); // Check every 3 seconds
 
-  pythonProcess.on("close", (code) => {
+  pythonProcess.on("close", async (code) => {
     clearInterval(leadCheckInterval); // Stop checking when script completes
     activePythonProcesses.delete(mobileNumber); // Remove from tracking
 
     console.log(`Python script exited with code: ${code}`);
+
+    // Reset user status and remove startTime when the script stops
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      { status: "Stopped", startTime: null },
+      { new: true }
+    );
 
     if (code === 0) {
       res.json({ status: "success", message: result.trim() });
@@ -452,6 +466,7 @@ const leadSchema = new mongoose.Schema({
   email: { type: String },
   mobile: { type: String, required: true },
   user_mobile_number: { type: String, required: true },
+  lead_bought: { type: String },
   createdAt: { type: Date, default: Date.now } // Store the current date
 });
 
@@ -460,9 +475,9 @@ const Lead = mongoose.model("Lead", leadSchema);
 // Endpoint to receive lead data from Selenium script and store in DB
 app.post("/api/store-lead", async (req, res) => {
   try {
-    const { name, email, mobile, user_mobile_number } = req.body;
+    const { name, email, mobile, user_mobile_number, lead_bought } = req.body;
 
-    if (!name || !mobile || !user_mobile_number) {
+    if (!name || !mobile || !user_mobile_number || !lead_bought) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -480,7 +495,7 @@ app.post("/api/store-lead", async (req, res) => {
     }
 
     // Store the new lead
-    const newLead = new Lead({ name, email, mobile, user_mobile_number, createdAt: new Date() });
+    const newLead = new Lead({ name, email, mobile, user_mobile_number, lead_bought, createdAt: new Date() });
     await newLead.save();
 
     // Increment lead count

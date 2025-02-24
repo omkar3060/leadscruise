@@ -1,12 +1,13 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 /* Dashboard Container */
 .dashboardContainer {
   display: flex;
   height: 100vh;
-  background-image: url('https://static.zohocdn.com/iam/v2/components/images/bg.49756b7c711696d95133fa95451f8e13.svg');
-  background-size: cover; /* Ensures the image covers the entire area */
-  background-position: center; /* Centers the image */
-  background-repeat: no-repeat; /* Prevents repeating */
-  background-attachment: fixed; /* Keeps the background fixed while scrolling */
+  width: 100vw;
 }
 
 /* Main Content */
@@ -14,26 +15,25 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-top: 5px;
-  margin-left: 50px;
+  padding: 10px;
+  margin-left: 65px; /* Remove margin */
 }
 
-/* Metrics Section */
+/* Metrics Section - Responsive Grid */
 .metricsSection {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Dynamic grid */
   gap: 10px;
   margin-bottom: 20px;
 }
 
+/* Individual Metric Box */
 .metricBox {
   background: #f9f9f9;
   border-radius: 8px;
   text-align: center;
-  padding: 20px;
-  font-size: 24px;
+  padding: 15px;
+  font-size: 20px;
   font-weight: bold;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   color: #333;
@@ -41,6 +41,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-width: 150px;
 }
 
 .metricBox span {
@@ -49,20 +50,24 @@
   color: #666;
 }
 
+/* Leads Section */
 .leadsSection {
   border-radius: 8px;
-  overflow: hidden;
-  height: 400px; /* Fixed height to ensure internal scrolling */
+  max-height: 400px; /* Prevents unwanted shrinking */
   display: flex;
   flex-direction: column;
 }
 
+/* Table Wrapper */
 .tableWrapper {
-  overflow-y: auto; /* Enables vertical scrolling */
-  max-height: 340px; /* Leaves space for the header */
+  overflow-y: auto;
+  overflow-x: auto; /* Allows horizontal scrolling if needed */
   z-index: 0;
+
+
 }
 
+/* Table Header */
 .tableHeader {
   background: #007bff;
   color: white;
@@ -71,14 +76,17 @@
   font-weight: bold;
   position: sticky;
   top: 0;
-  z-index: 0; /* Ensures the header stays visible */
+  z-index: 0;
 }
 
+/* Leads Table */
 .leadsTable {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px; /* Prevents column shrink on small screens */
 }
 
+/* Table Cells */
 .leadsTable th,
 .leadsTable td {
   border: 1px solid #ddd;
@@ -87,6 +95,7 @@
   font-size: 14px;
 }
 
+/* Sticky Header */
 .leadsTable th {
   background: #f1f1f1;
   font-weight: bold;
@@ -101,4 +110,75 @@
 
 .leadsTable tr:hover {
   background: #f9f9f9;
+}
+
+/* ✅ Responsive Fixes for Small Screens */
+@media (max-width: 1024px) {
+  .dashboardContainer {
+    flex-direction: column; /* Stack items vertically */
+    align-items: center;
+    max-width: 100%;
+    height: calc(100vh - 20px);
+  }
+
+  .dashboardContent {
+    margin-left: 0;
+    padding: 10px;
+  }
+
+  .metricsSection {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Adjust columns */
+  }
+}
+
+@media (max-width: 768px) {
+  .metricsSection {
+    grid-template-columns: repeat(3, minmax(100px, 1fr)); /* Smaller boxes */
+  }
+
+  /* Make Table Scrollable */
+  .tableWrapper {
+    overflow-x: auto; /* Horizontal scroll for small screens */
+  }
+
+  .leadsTable {
+    min-width: 600px; /* Prevents column collapse */
+  }
+}
+
+@media (max-width: 480px) {
+
+  .metricBox {
+    font-size: 18px;
+    padding: 10px;
+  }
+
+  .tableHeader {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .leadsSection{
+    width: 100%;
+    
+  }
+  
+  .leadsTable th,
+  .leadsTable td {
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .metricsSection {
+    grid-template-columns: repeat(2,1fr); /* Single column for small screens */
+    
+  }
+
+  .dashboardContainer {
+    flex-direction: column; /* Stack sidebar and content */
+  }
+
+  .dashboardContent {
+    width: 100%;
+  }
 }

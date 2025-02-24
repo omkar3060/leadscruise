@@ -190,3 +190,17 @@ exports.updateSavedPassword = async (req, res) => {
     res.status(500).json({ message: "Saved password update failed." });
   }
 };
+
+exports.getStatus= async (req, res) => {
+  const user = await User.findOne({ email: req.params.email });
+
+  if (!user) {
+    return res.json({ status: "Stopped", startTime: null });
+  }
+
+  res.json({
+    status: user.status || "Stopped",
+    startTime: user.startTime || null,
+  });
+};
+

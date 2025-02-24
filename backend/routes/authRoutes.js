@@ -8,6 +8,7 @@ const {
   update,
   updateSavedPassword,
   checkemail,
+  getStatus,
 } = require("../controllers/authController");
 const Payment = require("../models/Payment");
 
@@ -29,7 +30,7 @@ router.post("/login", login);
 router.post("/reset-password", update);
 router.post("/update-saved-password", updateSavedPassword);
 router.post("/check-email", checkemail);
-
+router.get("/get-status/:email", getStatus);
 router.get("/get-latest-id", async (req, res) => {
   try {
     const latestPayment = await Payment.findOne().sort({ unique_id: -1 });
@@ -84,6 +85,8 @@ router.post("/send-reset-email", async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+
 
 // router.post("/reset-password", async (req, res) => {
 //   const { token, newPassword, email } = req.body;
