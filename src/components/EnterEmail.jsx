@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
-import successImage from "../images/success.png";
-import errorImage from "../images/error.png";
-import loadingGif from "../images/loading.gif";
-import { useNavigate } from "react-router-dom";
+import "./styles.css";
+import "./Signin.css";
+
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
+import successImage from "../images/success.png";
+import errorImage from "../images/error.png";
+import loadingGif from "../images/loading.gif";
 
-import "./styles.css";
-import "./TaskExecutor.css";
-
-const TaskExecutor = () => {
-  const mobileNumber = localStorage.getItem("mobileNumber");
-  const [password, setPassword] = useState("");
-  const [status, setStatus] = useState("idle"); // 'idle', 'loading', 'success', or 'error'
-  const [message, setMessage] = useState("");
+const EnterEmail = () => {
+  const [status, setStatus] = useState("idle");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
-  const [showBanner, setShowBanner] = useState(true);
+  const location = useLocation();
+
   const [selected, setSelected] = useState(0);
 
   useEffect(() => {
@@ -28,103 +29,55 @@ const TaskExecutor = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleTaskExecution = async () => {
-    const email = localStorage.getItem("userEmail");
-
-    if (!mobileNumber || !password || !email) {
-      setMessage("All fields are required.");
+  const handleForgotPassword = async () => {
+    if (!email) {
+      alert("Please enter your email first.");
       return;
     }
 
     setStatus("loading");
-    setMessage("");
 
     try {
-      localStorage.setItem("password", password);
+      const response = await fetch("https://api.leadscruise.com/api/check-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
-      const response = await axios.post(
-        "https://api.leadscruise.com/api/execute-task",
+      const data = await response.json();
+      if (!data.exists) {
+        alert("Email is not registered.");
+        return;
+      }
+
+      const resetResponse = await fetch(
+        "https://api.leadscruise.com/api/send-reset-email",
         {
-          mobileNumber,
-          password,
-          email,
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
         }
       );
 
-      if (response.data.status === "success") {
+      const resetData = await resetResponse.json();
+      if (resetData.success) {
         setStatus("success");
-        setMessage("Task executed successfully! Details saved.");
       } else {
-        setStatus("error");
-        setMessage("Task execution failed.");
+        alert("Failed to send reset email. Please try again.");
       }
     } catch (error) {
-      setStatus("error");
-      setMessage("An error occurred while executing the task.");
+      alert("Error sending reset email: " + error.message);
     }
   };
 
   return (
     <div className="signin-container">
       <div className="center-div">
-        {/* Main Task Execution Screens */}
         <div className="signin-left">
-          {status === "idle" && (
-            <div className="task-input-screen">
-              <h4 className="te-tis-h4">
-                Connect Your LeadsProvider Account to LeadsCruise
-              </h4>
-              <div className="instr-wrapper">
-                <div className="para">
-                  <p className="te-tis-p">
-                    Enter the login Number and Password
-                  </p>
-                </div>
-                <div className="red-divs">
-                  <div className="red-cont">
-                    Do Not Quit the screen from here Until you are promted to..
-                  </div>
-                  <div className="red-cont">
-                    Once you click next this cant be Undone please input details
-                    correctly !!
-                  </div>
-                </div>
-              </div>
-              <input
-                type="text"
-                placeholder="Mobile Number"
-                value={mobileNumber}
-                className="input-field"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
-              />
-
-              <p className="confirm">
-                By Clicking next you confirm to connect to LeadsCruise
-              </p>
-
-              <button onClick={handleTaskExecution} className="execute-button">
-                Next
-              </button>
-
-              <div className="end-block">
-                <p className="gback" onClick={() => window.location.reload()}>
-                  Go Back
-                </p>
-                <p className="logout-link">
-                  Wish to <span onClick={() => navigate("/")}>Logout</span>?
-                </p>
-              </div>
-
-              {message && <p className="response-message">{message}</p>}
-            </div>
-          )}
-
           {status === "loading" && (
             <div className="loading-screen">
               <img
@@ -132,42 +85,49 @@ const TaskExecutor = () => {
                 alt="Loading"
                 className="loading-gif"
                 style={{
-                  width: "175px",
-                  height: "130px",
-                  marginBottom: "20px",
+                  width: "200px",
+                  height: "200px",
+                  marginTop: "40px",
+                  marginBottom: "40px",
                 }}
               />
-              <p>Please, wait while AI processes your task.</p>
-              <div className="end-block">
-                <p className="gback" onClick={() => window.location.reload()}>
-                  Go Back
-                </p>
-                <p className="logout-link">
-                  Wish to <span onClick={() => navigate("/")}>Logout</span>?
-                </p>
-              </div>
+              <p
+                style={{ color: "black", fontWeight: "500", fontSize: "20px" }}
+              >
+                Please, wait while we send you a Mail.
+              </p>
             </div>
           )}
-
           {status === "success" && (
             <div className="success-screen">
-              <h2>Task Status</h2>
-              <div className="success-icon">
-                <img
-                  src={successImage}
-                  alt="Success"
-                  style={{ width: "175px", height: "125px" }}
-                />
+              <div className="icon-cont">
+                <h2>Email Sent</h2>
+                <div className="success-icon">
+                  <img
+                    src={successImage}
+                    alt="Success"
+                    style={{ width: "175px", height: "125px" }}
+                  />
+                </div>
+                <p>An email has been sent to your provided email id.</p>
               </div>
-              <p>Great! Your task was executed successfully.</p>
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="next-button"
+              <p
+                className="instruction"
+                style={{
+                  color: "black",
+                  fontWeight: "500",
+                  fontSize: "18px",
+                  textAlign: "center",
+                }}
               >
-                Next
+                Use the link to reset the password.
+              </p>
+              <button className="next-button" onClick={() => navigate("/")}>
+                Sign In
               </button>
+
               <div className="end-block">
-                <p className="gback" onClick={() => window.location.reload()}>
+                <p className="gback" onClick={() => navigate("/")}>
                   Go Back
                 </p>
                 <p className="logout-link">
@@ -179,7 +139,7 @@ const TaskExecutor = () => {
 
           {status === "error" && (
             <div className="error-screen">
-              <h2>Task Status</h2>
+              <h2>Check Status</h2>
               <div className="error-icon">
                 <img
                   src={errorImage}
@@ -188,7 +148,8 @@ const TaskExecutor = () => {
                 />
               </div>
               <p>
-                Oops, the task execution failed. Try again or contact support.
+                Oops! There was a Problem Updating Your Password, Try Again to
+                Update Your Password.
               </p>
               <button
                 onClick={() => setStatus("idle")}
@@ -196,7 +157,62 @@ const TaskExecutor = () => {
               >
                 Try Again
               </button>
-              <div className="end-block">
+              <p className="logout-link">
+                Wish to <span onClick={() => navigate("/")}>Logout?</span>
+              </p>
+            </div>
+          )}
+
+          {status === "idle" && (
+            <div>
+              <div className="signin-logo-class">
+                <img
+                  src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
+                  alt="zohologo"
+                />
+                <div className="smart-scan" onClick={() => navigate("/")}>
+                  {/* <img
+                src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
+                alt=""
+                className="scan-icon"
+              /> */}
+                  <img
+                    src="https://icons.veryicon.com/png/o/miscellaneous/esgcc-basic-icon-library/1-login.png"
+                    alt=""
+                  />
+                  <span>Sign In</span>
+                </div>
+              </div>
+              <h2 className="signin-tag">Enter your Email id</h2>
+              <p
+                style={{
+                  color: "black",
+                  fontSize: "18px",
+                  fontWeight: "500",
+                  marginTop: "40px",
+                  marginBottom: "40px",
+                }}
+              >
+                If you have forgotten email id then feel free to contact our
+                Support Team.
+              </p>
+              <input
+                type="email"
+                placeholder="Enter Your Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                autoComplete="email"
+              />
+
+              <button onClick={handleForgotPassword}>Next</button>
+
+              <div
+                className="end-block"
+                style={{
+                  marginTop: "40px",
+                }}
+              >
                 <p className="gback" onClick={() => window.location.reload()}>
                   Go Back
                 </p>
@@ -322,4 +338,4 @@ const TaskExecutor = () => {
   );
 };
 
-export default TaskExecutor;
+export default EnterEmail;

@@ -1,85 +1,206 @@
 /* Header */
 .dashboardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    background-color: white;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 10px;
-    border-radius: 8px;
-  }
-  
-  .statusSection {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .startStopButtons {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .startButton,
-  .stopButton {
-    padding: 15px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    width: 20vh;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
-  }
-  
-  .startButton {
-    background: #28a745;
-    color: white;
-  }
-  
-  .stopButton {
-    background: #dc3545;
-    color: white;
-  }
-  
-  .statusLabel {
-    background-color: #007bff;
-    color: #ffffff;
-    font-weight: bold;
-    padding: 15px 20px;
-    border-radius: 5px;
-    text-align: center;
-    width: 36vh;
-    margin-top: 15px;
-    margin-bottom: 10px;
-  }
-  
-  .profileSection {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-  }
-  
-  .profileButton {
-    padding: 15px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #007bff;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    /* margin-top: 15px; */
-    margin-bottom: 15px;
-    font-size: 16px;
-  }
-  
-  .renewalText {
-    font-size: 12px;
-    color: #555;
-    margin: 3px;
-  }
-  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background-color: white;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 10px;
+  border-radius: 8px;
+}
+
+.statusSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.startStopButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.startButton,
+.stopButton {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 20vh;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+}
+
+.startButton {
+  background: #28a745;
+  color: white;
+}
+
+.stopButton {
+  background: #dc3545;
+  color: white;
+}
+
+.statusLabel {
+  background-color: #007bff;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 15px 20px;
+  border-radius: 5px;
+  text-align: center;
+  width: 36vh;
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+.profileSection {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.profileButton {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* margin-top: 15px; */
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.renewalText {
+  font-size: 12px;
+  color: #555;
+  margin: 3px;
+}
+
+/* Advanced Popup Styling */
+.popupOverlay {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: rgba(0, 0, 0, 0.6);
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 1000;
+backdrop-filter: blur(5px);
+animation: fadeIn 0.3s ease-out;
+}
+
+.popupContent {
+background: linear-gradient(135deg, #ffffff, #f5f7fa);
+border-radius: 12px;
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 1px 8px rgba(0, 0, 0, 0.15);
+padding: 30px;
+max-width: 460px;
+width: 90%;
+position: relative;
+animation: slideUp 0.4s ease-out;
+border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.popupContent h2 {
+margin-top: 0;
+color: #e74c3c;
+font-size: 22px;
+font-weight: 600;
+border-bottom: 1px solid #eee;
+padding-bottom: 12px;
+display: flex;
+align-items: center;
+}
+
+.popupContent h2::before {
+content: "⚠️";
+margin-right: 8px;
+font-size: 20px;
+}
+
+.popupContent p {
+color: #4a5568;
+line-height: 1.6;
+margin: 18px 0 25px;
+font-size: 16px;
+}
+
+.renewButton {
+background: linear-gradient(to right, #4a90e2, #5e6cea);
+color: white;
+border: none;
+padding: 12px 24px;
+border-radius: 6px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.2s ease;
+box-shadow: 0 4px 8px rgba(94, 108, 234, 0.3);
+}
+
+.renewButton:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 12px rgba(94, 108, 234, 0.4);
+}
+
+.renewButton:active {
+transform: translateY(0);
+box-shadow: 0 2px 4px rgba(94, 108, 234, 0.2);
+}
+
+.closeButton {
+background: transparent;
+color: #718096;
+border: 1px solid #e2e8f0;
+padding: 12px 20px;
+border-radius: 6px;
+font-weight: 500;
+cursor: pointer;
+margin-left: 12px;
+transition: all 0.2s;
+}
+
+.closeButton:hover {
+background-color: #f7fafc;
+color: #4a5568;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+@keyframes slideUp {
+from {
+  opacity: 0;
+  transform: translateY(30px);
+}
+to {
+  opacity: 1;
+  transform: translateY(0);
+}
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+.popupContent {
+  padding: 20px;
+  width: 85%;
+}
+
+.renewButton, .closeButton {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+}
+}

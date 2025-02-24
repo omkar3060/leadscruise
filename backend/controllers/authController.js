@@ -1,21 +1,27 @@
 const User = require("../models/userModel");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+require("dotenv").config(); // Import dotenv at the top
+
+const SECRET_KEY = process.env.SECRET_KEY; // Load from .env file
 exports.signup = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { refId, email, password, confPassword } = req.body;
 
-    // Debugging: Log received data
-    console.log("Received signup request:", req.body);
-
-    // Validate input fields
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: "All fields are required!" });
+    // Validate input
+    if (!email || !password || !confPassword) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+    if (password !== confPassword) {
+      return res.status(400).json({ message: "Passwords do not match." });
     }
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already signed up. Please log in!!!" });
+      return res
+        .status(400)
+        .json({ message: "User already signed up. Please log in!!!" });
     }
 
     // Debugging: Log password before hashing
@@ -28,21 +34,23 @@ exports.signup = async (req, res) => {
 
     // Create a new user
     const newUser = new User({
-      username,
       email,
       password: hashedPassword,
-      firstTime: true
+      refId,
+      firstTime: true,
     });
 
     await newUser.save();
+    const token = jwt.sign({ email: newUser.email }, SECRET_KEY, {
+      expiresIn: "1h",
+    });
 
-    res.json({ message: "Sign-up successful!" });
+    res.json({ message: "Sign-up successful!", token });
   } catch (error) {
     console.error("Sign-up error:", error.message);
     res.status(500).json({ message: "Sign-up failed", error: error.message });
   }
 };
-
 
 exports.login = async (req, res) => {
   try {
@@ -50,14 +58,23 @@ exports.login = async (req, res) => {
 
     // Find user by email
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found. Please Signup!!!" });
+    if (!user)
+      return res
+        .status(400)
+        .json({ message: "User not found. Please Signup!!!" });
 
-    // Compare passwords
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect)
-      return res.status(400).json({ message: "Invalid credentials." });
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials!" });
 
-    // Check if it's the first-time login
+    
+    // ✅ Generate JWT token
+    const token = jwt.sign({ email: user.email }, SECRET_KEY, {
+      expiresIn: "1h",
+    });
+
+    // ✅ Handle first-time login
     if (user.firstTime) {
       user.firstTime = false;
       await user.save();
@@ -65,46 +82,82 @@ exports.login = async (req, res) => {
         success: true,
         message: "Welcome, first-time login!",
         firstTime: false,
-        user: { email: user.email, mobileNumber: user.mobileNumber, savedPassword: user.savedPassword }
+        token,
+        user: { email: user.email, mobileNumber: user.mobileNumber },
       });
     }
 
-    // Send user data including mobileNumber and savedPassword
     res.json({
       success: true,
       message: "Login successful!",
-      user: { email: user.email, mobileNumber: user.mobileNumber, savedPassword: user.savedPassword }
+      token,
+      user: {
+        email: user.email,
+        mobileNumber: user.mobileNumber,
+        savedPassword: user.savedPassword,
+      },
     });
   } catch (error) {
+    console.error("Login error:", error.message);
     res.status(500).json({ message: "Login failed", error: error.message });
+  }
+};
+
+exports.checkemail = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (user) {
+    res.json({ exists: true });
+  } else {
+    res.json({ exists: false });
   }
 };
 
 exports.update = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
+    const { token, newPassword ,email} = req.body;
     console.log("Received password update request:", req.body);
+    console.log(typeof(newPassword));
     // Validate input
     if (!email || !newPassword) {
-      return res.status(400).json({ message: "Email and new password are required." });
+      return res
+        .status(400)
+        .json({ message: "Valid email and new password are required." });
     }
 
     // Find user in DB
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found." });
 
-    // Hash new password
+    // Hash new password correctly
     const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    console.log("Hashed password:", hashedPassword);
 
     // Update password in DB
     user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: "Password updated successfully!" });
+    res.json({ success: true });
   } catch (error) {
     console.error("Password update error:", error.message);
-    res.status(500).json({ message: "Password update failed." });
+    res.status(500).json({ success: false, message: error.message });
   }
+};
+
+// ✅ Middleware for Authentication
+exports.authenticateUser = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(403).json({ message: "Forbidden" });
+
+    req.user = decoded; // Attach user data to request
+    next();
+  });
 };
 
 exports.updateSavedPassword = async (req, res) => {
@@ -114,15 +167,21 @@ exports.updateSavedPassword = async (req, res) => {
 
     // Validate input
     if (!email || !newPassword) {
-      return res.status(400).json({ message: "Email and new password are required." });
+      return res
+        .status(400)
+        .json({ message: "Email and new password are required." });
     }
 
     // Find user in DB
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found." });
 
+    const hashedPassword = await bcrypt.hash(newPassword.toString(), 10);
+
+    console.log("Hashed password:", hashedPassword);
+
     // Update savedPassword in DB
-    user.savedPassword = newPassword;
+    user.savedPassword = hashedPassword;
     await user.save();
 
     res.json({ message: "Saved password updated successfully!" });

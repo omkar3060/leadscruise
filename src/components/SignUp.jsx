@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -29,7 +30,7 @@ const SignUp = () => {
 
   const handleSignUp = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/api/signup", {
+      const res = await axios.post("https://api.leadscruise.com/api/signup", {
         refId,
         email,
         password,

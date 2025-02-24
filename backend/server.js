@@ -29,6 +29,8 @@ mongoose
 
 //RazorPay handlers
 
+
+
 app.post("/order", async (req, res) => {
   try {
     const razorpay = new Razorpay({
@@ -312,30 +314,52 @@ app.get("/api/get-max-captures", async (req, res) => {
 
 const cron = require("node-cron");
 
-cron.schedule("0 7 * * *", async () => {
+async function resetLeadCounters() {
   try {
-    console.log("Resetting lead counters at 7:00 AM...");
-    await UserLeadCounter.updateMany({}, { leadCount: 0, lastReset: new Date() });
-    console.log("Lead counters reset successfully.");
+    console.log("Checking if lead counters need reset...");
+    
+    // Get the last reset time from one document
+    const lastResetEntry = await UserLeadCounter.findOne({}, "lastReset");
+
+    const lastResetDate = lastResetEntry ? new Date(lastResetEntry.lastReset) : null;
+    const now = new Date();
+
+    // Get today's 7:00 AM
+    const today7AM = new Date();
+    today7AM.setHours(7, 0, 0, 0);
+
+    // If last reset was before today's 7 AM, reset counters
+    if (!lastResetDate || lastResetDate < today7AM) {
+      console.log("Resetting lead counters...");
+      await UserLeadCounter.updateMany({}, { leadCount: 0, lastReset: now });
+      console.log("Lead counters reset successfully.");
+    } else {
+      console.log("Lead counters were already reset today. No action needed.");
+    }
   } catch (error) {
     console.error("Error resetting lead counters:", error);
   }
-});
+}
 
-app.post("/api/cycle", async(req, res) => {
+// Run on server startup
+resetLeadCounters();
+
+// Schedule cron job to run every day at 7 AM
+cron.schedule("0 7 * * *", resetLeadCounters);
+
+const activePythonProcesses = new Map(); // Store active processes by user_mobile_number
+
+app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
-  let { sentences, wordArray, h2WordArray, mobileNumber, password } = req.body;
+  let { sentences, wordArray, h2WordArray, mobileNumber, password, uniqueId } = req.body;
 
   if (!req.body || Object.keys(req.body).length === 0) {
     return res.status(400).json({ status: "error", message: "Empty request body. Ensure the request has a JSON payload." });
   }
 
-  // Log the received request
   console.log("Received data for /api/cycle:", req.body);
 
-  // Validate input data
   if (!Array.isArray(sentences) || !Array.isArray(wordArray) || !Array.isArray(h2WordArray)) {
-    console.log("Invalid input: sentences, wordArray, and h2WordArray should be arrays.");
     return res.status(400).json({
       status: "error",
       message: "Invalid input format. sentences, wordArray, and h2WordArray should be arrays.",
@@ -343,7 +367,6 @@ app.post("/api/cycle", async(req, res) => {
   }
 
   if (!mobileNumber || !password) {
-    console.log("Missing required fields: mobileNumber or password.");
     return res.status(400).json({
       status: "error",
       message: "Mobile number and password are required.",
@@ -352,15 +375,13 @@ app.post("/api/cycle", async(req, res) => {
 
   let userCounter = await UserLeadCounter.findOne({ user_mobile_number: mobileNumber });
 
-  // If the user has no entry, create one
   if (!userCounter) {
     userCounter = new UserLeadCounter({ user_mobile_number: mobileNumber, leadCount: 0 });
     await userCounter.save();
   }
 
-  // Check if user has exceeded daily limit
   if (userCounter.leadCount >= userCounter.maxCaptures) {
-    return res.status(403).json({ status: "error", message: "Daily lead limit reached. Try again tomorrow." });
+    return res.status(403).json({ status: "error", message: "Lead limit reached. Cannot capture more leads today." });
   }
 
   // Prepare data for Python script
@@ -370,14 +391,16 @@ app.post("/api/cycle", async(req, res) => {
     h2WordArray,
     mobileNumber,
     password,
+    uniqueId,
   });
 
-  console.log("Spawning Python process for 'final_inside_script.py'...");
+  console.log("Spawning Python process for 'final_inside_script_server.py'...");
 
-  // Spawn the Python process
-  const pythonProcess = spawn("python3", ["final_inside_script.py"]);
+  const pythonProcess = spawn("python3", ["final_inside_script_server.py"]);
 
-  // Send JSON data to the Python script
+  // Store the Python process reference
+  activePythonProcesses.set(mobileNumber, pythonProcess);
+
   console.log("Sending data to Python script:", inputData);
   pythonProcess.stdin.write(inputData + "\n");
   pythonProcess.stdin.end();
@@ -385,27 +408,38 @@ app.post("/api/cycle", async(req, res) => {
   let result = "";
   let error = "";
 
-  // Capture Python script output
   pythonProcess.stdout.on("data", (data) => {
     console.log("Python script stdout:", data.toString());
     result += data.toString();
   });
 
-  // Capture Python script error output
   pythonProcess.stderr.on("data", (data) => {
     console.error("Python script stderr:", data.toString());
     error += data.toString();
   });
 
-  // Handle script completion
+  // Periodically check if lead limit is exceeded
+  const leadCheckInterval = setInterval(async () => {
+    let updatedUserCounter = await UserLeadCounter.findOne({ user_mobile_number: mobileNumber });
+
+    if (updatedUserCounter.leadCount >= updatedUserCounter.maxCaptures) {
+      console.log("Lead limit exceeded! Killing Python script...");
+      pythonProcess.kill("SIGTERM"); // Kill the script
+      activePythonProcesses.delete(mobileNumber);
+      clearInterval(leadCheckInterval);
+      res.status(403).json({ status: "error", message: "Lead limit reached. Cannot capture more leads today." });
+    }
+  }, 3000); // Check every 3 seconds
+
   pythonProcess.on("close", (code) => {
+    clearInterval(leadCheckInterval); // Stop checking when script completes
+    activePythonProcesses.delete(mobileNumber); // Remove from tracking
+
     console.log(`Python script exited with code: ${code}`);
 
     if (code === 0) {
-      console.log("Python script executed successfully. Sending response to client...");
       res.json({ status: "success", message: result.trim() });
     } else {
-      console.error("Python script execution failed. Sending error response to client...");
       res.status(500).json({
         status: "error",
         message: `Python script failed: ${error.trim()}`,
@@ -442,7 +476,7 @@ app.post("/api/store-lead", async (req, res) => {
     }
 
     // Stop script if limit is reached
-    if (userCounter.leadCount >= 5) {
+    if (userCounter.leadCount >= userCounter.maxCaptures) {
       console.log("Lead limit reached for user:", user_mobile_number);
       return res.status(403).json({ error: "Lead limit reached. Cannot capture more leads today." });
     }
@@ -454,6 +488,10 @@ app.post("/api/store-lead", async (req, res) => {
     // Increment lead count
     userCounter.leadCount += 1;
     await userCounter.save();
+    if (userCounter.leadCount >= userCounter.maxCaptures) {
+      console.log("Lead limit reached for user:", user_mobile_number);
+      return res.status(403).json({ error: "Lead limit reached. Cannot capture more leads today." });
+    }
 
     console.log("Lead Data Stored:", newLead);
     res.json({ message: "Lead data stored successfully", lead: newLead });
@@ -493,7 +531,9 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
   }
 });
 
+app.get("/hi/good",(req,res)=>{
+  res.status(200).json({message: "hi"});
+})
 
-
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

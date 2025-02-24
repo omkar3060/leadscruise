@@ -25,7 +25,7 @@ const Dashboard = () => {
         return;
       }
   
-      const response = await axios.get(`http://localhost:5000/api/get-leads/${mobileNumber}`);
+      const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
       setLeads(response.data);
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -84,7 +84,7 @@ const Dashboard = () => {
       const mobileNumber = localStorage.getItem("mobileNumber");
       const password = localStorage.getItem("password");
       const userEmail = localStorage.getItem("userEmail");
-  
+      const uniqueId=localStorage.getItem("unique_id");
       if (!mobileNumber || !password) {
         alert("Mobile number or password not found in local storage!");
         return;
@@ -96,7 +96,7 @@ const Dashboard = () => {
       }
   
       // Fetch settings
-      const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
+      const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
       const userSettings = response.data;
   
       if (!userSettings) {
@@ -122,18 +122,19 @@ const Dashboard = () => {
       setTimer(300);
   
       // Send the fetched settings instead of using the state
-      const cycleResponse = await axios.post("http://localhost:5000/api/cycle", {
+      const cycleResponse = await axios.post("https://api.leadscruise.com/api/cycle", {
         sentences: userSettings.sentences,
         wordArray: userSettings.wordArray,
         h2WordArray: userSettings.h2WordArray,
         mobileNumber,
         password,
+        uniqueId
       });
   
       alert(cycleResponse.data.message || "Task started successfully!");
     } catch (error) {
       console.error("Error:", error.response?.data?.message || error.message);
-      alert("Failed to start task.");
+      alert(error.response?.data?.message || error.message);
     }
   };
   
@@ -151,6 +152,7 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboardContainer}>
+      
       {/* Sidebar Component */}
       <Sidebar isDisabled={isDisabled} />
 

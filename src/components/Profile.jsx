@@ -11,7 +11,7 @@ const Profile = () => {
     renewal_date: "Loading...",
     status: "Loading...",
   });
-
+  const [isHovering, setIsHovering] = useState(false);
   const [billingDetails, setBillingDetails] = useState({
     email: userEmail,
     phone: "",
@@ -51,7 +51,7 @@ const Profile = () => {
     // Fetch billing history
     const fetchBillingHistory = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/payments?email=${userEmail}`);
+        const response = await fetch(`https://api.leadscruise.com/api/payments?email=${userEmail}`);
         const data = await response.json();
         setBillingHistory(data);
       } catch (error) {
@@ -62,7 +62,7 @@ const Profile = () => {
     // Fetch billing details
     const fetchBillingDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/billing/${userEmail}`);
+        const response = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
         const result = await response.json();
         if (result.success) {
           setBillingDetails(result.data); // Set existing billing details
@@ -85,7 +85,7 @@ const Profile = () => {
   // Save Updated Billing Details
   const handleSave = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/billing/update", {
+      const response = await fetch("https://api.leadscruise.com/api/billing/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(billingDetails),
@@ -105,7 +105,7 @@ const Profile = () => {
 
   const handleDownloadInvoice = async (orderId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/get-invoice/${orderId}`, {
+      const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${orderId}`, {
         responseType: "blob", // Get binary data
       });
 
@@ -157,19 +157,20 @@ const Profile = () => {
             </div>
           </div>
           <div className={styles["profile-section"]}>
-            <div className={styles["status-box-header"]}>
-              <div className={styles["left-content"]}>
-                <div className={styles["days-info"]}>
-                  <p className={styles["days-left"]}>Days till end:</p>
-                  <h2 className={styles["days-left-count"]}>
-                    {daysLeft !== null ? `${daysLeft} days left` : "Loading..."}
-                  </h2>
+            <button
+              className={styles.subscriptionButton}
+              onClick={() => navigate("/plans")}
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+            >
+              <div className={styles.buttonContent}>
+                <div className={styles.daysInfo}>
+                  <span className={styles.daysText}>
+                    {isHovering ? "Renew now" : (daysLeft !== null ? `${daysLeft} days left` : "Loading...")}
+                  </span>
                 </div>
               </div>
-              <button className={styles["renew-button"]} onClick={() => navigate("/plans")}>
-                Renew now
-              </button>
-            </div>
+            </button>
 
             <div>
               <p className={styles["renewal-text"]}>
@@ -190,12 +191,11 @@ const Profile = () => {
           <div className={styles["left-section"]}>
             {/* Billing History Table */}
             <div className={styles["table-container"]}>
-              <h2>My Billing History</h2>
               <table className={styles["billing-table"]}>
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Subscription Type</th>
+                    <th>My Billing History</th>
                     <th>Start Date</th>
                     <th>End Date</th>
                     <th>Amount Paid</th>
@@ -267,7 +267,6 @@ const Profile = () => {
                           <textarea name="address" value={billingDetails.address} onChange={handleChange}></textarea>
                         </p>
                       </div>
-
                       <button className={styles["save-button"]} onClick={handleSave}>Save</button>
                       <button className={styles["cancel-button"]} onClick={() => setIsEditing(false)}>Cancel</button>
                     </>
@@ -288,9 +287,11 @@ const Profile = () => {
                       <div className={styles["billing-address"]}>
                         <p className={styles["billing-address-text"]}><strong>Name:</strong> {billingDetails.name}</p>
                         <p className={styles["billing-address-text"]}><strong>Address:</strong> {billingDetails.address}</p>
+                        <p className={styles["billing-address-text"]}><strong>Email:</strong> {billingDetails.email}</p>
                       </div>
-
+                      <div className={styles["edit-button-container"]}>
                       <button className={styles["edit-button"]} onClick={() => setIsEditing(true)}>Edit my Details</button>
+                      </div>
                     </>
                   )}
                 </div>
@@ -301,7 +302,7 @@ const Profile = () => {
           </div>
 
           {/* Right Section: Profile Credentials */}
-          <ProfileCredentials isProfilePage={true}/>
+          <ProfileCredentials isProfilePage={true} />
         </div>
       </div>
     </div>

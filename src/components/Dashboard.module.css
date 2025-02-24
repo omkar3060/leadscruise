@@ -60,6 +60,7 @@
 .tableWrapper {
   overflow-y: auto; /* Enables vertical scrolling */
   max-height: 340px; /* Leaves space for the header */
+  z-index: 0;
 }
 
 .tableHeader {
@@ -70,7 +71,7 @@
   font-weight: bold;
   position: sticky;
   top: 0;
-  z-index: 10; /* Ensures the header stays visible */
+  z-index: 0; /* Ensures the header stays visible */
 }
 
 .leadsTable {

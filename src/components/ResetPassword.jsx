@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import axios from "axios";
 import "./styles.css";
 import "./Signin.css";
 
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
-import hmimg from "../images/home-img-new.png";
+import successImage from "../images/success.png";
+import errorImage from "../images/error.png";
+import loadingGif from "../images/loading.gif";
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [searchParams] = useSearchParams();
@@ -53,7 +55,7 @@ const ResetPassword = () => {
     console.log({ token, newPassword, email });
 
     try {
-      const response = await fetch("http://localhost:5000/api/reset-password", {
+      const response = await fetch("https://api.leadscruise.com/api/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -69,11 +71,10 @@ const ResetPassword = () => {
 
       if (data.success) {
         setSuccess(true);
-        setTimeout(() => {
-          navigate("/");
-        }, 3000);
+        setStatus("success");
       } else {
         setError(data.message || "Password reset failed");
+        setStatus("error");
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
@@ -84,54 +85,142 @@ const ResetPassword = () => {
     <div className="signin-container">
       <div className="center-div">
         <div className="signin-left">
-          <div className="signin-logo-class">
-            <img
-              src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
-              alt="zohologo"
-            />
-            <div className="smart-scan" onClick={() => navigate("/")}>
-              {/* <img
+          {status === "loading" && (
+            <div className="loading-screen">
+              <img
+                src={loadingGif}
+                alt="Loading"
+                className="loading-gif"
+                style={{
+                  width: "150px",
+                  height: "125px",
+                  marginBottom: "20px",
+                }}
+              />
+              <p>Please, wait....</p>
+              <p className="logout-link">
+                Wish to <span onClick={() => navigate("/")}>Logout?</span>
+              </p>
+            </div>
+          )}
+
+          {status === "success" && (
+            <div className="success-screen">
+              <div className="icon-cont">
+                <h2>Password Changed</h2>
+                <div className="success-icon">
+                  <img
+                    src={successImage}
+                    alt="Success"
+                    style={{ width: "175px", height: "125px" }}
+                  />
+                </div>
+                <p>Great!! Password Succesfully Updated.</p>
+              </div>
+              <p
+                className="instruction"
+                style={{
+                  color: "black",
+                  fontWeight: "500",
+                  fontSize: "17px",
+                  textAlign: "center",
+                }}
+              >
+                You can now signin with new password clicking next.
+              </p>
+              <button className="next-button" onClick={() => navigate("/")}>
+                Sign In
+              </button>
+
+              <div className="end-block">
+                <p className="gback" onClick={() => window.location.reload()}>
+                  Go Back
+                </p>
+                <p className="logout-link">
+                  Wish to <span onClick={() => navigate("/")}>Logout</span>?
+                </p>
+              </div>
+            </div>
+          )}
+
+          {status === "error" && (
+            <div className="error-screen">
+              <h2>Check Status</h2>
+              <div className="error-icon">
+                <img
+                  src={errorImage}
+                  alt="Error"
+                  style={{ width: "225px", height: "125px" }}
+                />
+              </div>
+              <p>
+                Oops! There was a Problem Updating Your Password, Try Again to
+                Update Your Password.
+              </p>
+              <button
+                onClick={() => setStatus("idle")}
+                className="try-again-button"
+              >
+                Try Again
+              </button>
+              <p className="logout-link">
+                Wish to <span onClick={() => navigate("/")}>Logout?</span>
+              </p>
+            </div>
+          )}
+
+          {status === "idle" && (
+            <div>
+              <div className="signin-logo-class">
+                <img
+                  src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
+                  alt="zohologo"
+                />
+                <div className="smart-scan" onClick={() => navigate("/")}>
+                  {/* <img
                 src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
                 alt=""
                 className="scan-icon"
               /> */}
-              <img
-                src="https://icons.veryicon.com/png/o/miscellaneous/esgcc-basic-icon-library/1-login.png"
-                alt=""
+                  <img
+                    src="https://icons.veryicon.com/png/o/miscellaneous/esgcc-basic-icon-library/1-login.png"
+                    alt=""
+                  />
+                  <span>Sign In</span>
+                </div>
+              </div>
+              <h2 className="signin-tag">Reset Your Password</h2>
+              <p className="signin-descriptor">to access Leads Cruise Home</p>
+              <input
+                type="email"
+                placeholder="Enter Your Email Address"
+                value={email}
+                name="email"
+                autoComplete="email"
+                readOnly
               />
-              <span>Sign In</span>
+
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                name="password"
+                autoComplete="current-password"
+              />
+
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                name="confirmpassword"
+                autoComplete="current-password"
+              />
+
+              <button onClick={handleResetPassword}>Next</button>
             </div>
-          </div>
-          <h2 className="signin-tag">Reset Your Password</h2>
-          <p className="signin-descriptor">to access Leads Cruise Home</p>
-          <input
-            type="email"
-            placeholder="Enter Your Email Address"
-            value={email}
-            name="email"
-            autoComplete="email"
-            readOnly
-          />
-
-          <input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            name="password"
-            autoComplete="current-password"
-          />
-
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            name="confirmpassword"
-            autoComplete="current-password"
-          />
-
-          <button onClick={handleResetPassword}>Next</button>
+          )}
         </div>
 
         <div className="signin-right">

@@ -1,21 +1,24 @@
+
 /* Footer.css */
 .footer {     text-align: center;     font-size: 14px;     color: #666;          position: fixed;     bottom: 0;     width: 100%;   } 
 
 .footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  
+  margin: 0 auto; 
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 15px;
+  width: 100%;
 }
 
 .copyright {
+  width: 60%;
   font-size: 14px;
   color: #666;
-  margin-left:25em;
+  display: flex;
+  align-items: center;
+  justify-content:flex-end;
 }
 
 .support-button {
@@ -25,20 +28,18 @@
   padding: 8px 16px;
   border: none;
   background: transparent;
-  color: #666;
+  background-color: #6a8fe6;
   font-size: 14px;
   cursor: pointer;
   font-weight: bolder;
   transition: all 0.3s ease;
   border-radius: 4px;
   margin-bottom: 0px;
-  margin-left: 15em;
   width: fit-content;
 }
 
 .support-button:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #333;
+  background-color: #0056b3;
   transform: translateY(-1px);
 }
 
@@ -60,7 +61,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1001;
+  z-index: 1000;
   animation: fadeIn 0.3s ease;
 }
 
@@ -183,4 +184,10 @@
   .support-button {
     order: 1;
   }
+}
+
+.support-button-container{
+  display: flex;
+  justify-content: center;
+  margin-right: 15px;
 }

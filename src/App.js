@@ -7,25 +7,83 @@ import TaskExecutor from "./components/TaskExecutor";
 import Dashboard from "./components/Dashboard";
 import SettingsForm from "./components/SettingsForm";
 import Profile from "./components/Profile";
-import Footer from "./components/Footer"; // Import Footer
+import Footer from "./components/Footer";
 import Master from "./components/Master";
 import Plans from "./components/Plans";
+import EnterEmail from "./components/EnterEmail";
+import ResetPassword from "./components/ResetPassword";
+import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
+
 function App() {
   return (
     <Router>
       <div className="container">
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/check-number" element={<CheckNumber />} />
-          <Route path="/execute-task" element={<TaskExecutor />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/settings" element={<SettingsForm />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/master" element={<Master />} />
-          <Route path="/plans" element={<Plans />} />
+          <Route path="/enter-email" element={<EnterEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Protected Routes */}
+          <Route
+            path="/check-number"
+            element={
+              <ProtectedRoute>
+                <CheckNumber />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/execute-task"
+            element={
+              <ProtectedRoute>
+                <TaskExecutor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/master"
+            element={
+              <ProtectedRoute>
+                <Master />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/plans"
+            element={
+              <ProtectedRoute>
+                <Plans />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-        <Footer /> {/* Footer will be displayed on all pages */}
+        <Footer />
       </div>
     </Router>
   );

@@ -5,6 +5,9 @@ import "./styles.css";
 import "./Plans.css";
 import "@fontsource/norwester"; // Defaults to weight 400
 import "@fontsource/norwester/400.css"; // Specify weight
+import bgImage1 from "../images/values-1.png";
+import bgImage2 from "../images/values-2.png";
+import bgImage3 from "../images/values-3.png";
 
 const Plans = () => {
   const [selected, setSelected] = useState(0);
@@ -18,6 +21,19 @@ const Plans = () => {
     }, 5000); // Change every 5 seconds
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => {
+      console.log("Razorpay script loaded successfully");
+    };
+    script.onerror = () => {
+      console.error("Failed to load Razorpay script");
+    };
+    document.body.appendChild(script);
   }, []);
 
   const handlePlanSelect = (plan, price) => {
@@ -35,34 +51,40 @@ const Plans = () => {
     try {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = paymentData;
       const selectedPlan = localStorage.getItem("selectedPlan");
-
-      const userDetails = {
-        email: localStorage.getItem("userEmail"),
-        contact: localStorage.getItem("mobileNumber"),
-      };
+      const email = localStorage.getItem("userEmail");
+      const contact = localStorage.getItem("mobileNumber");
   
-      await axios.post("http://localhost:5000/api/save-payment", {
+      await axios.post("https://api.leadscruise.com/api/save-payment", {
         unique_id: await getNextPaymentId(),
-        email: userDetails.email,
-        contact: userDetails.contact,
+        email,
+        contact,
         order_id: razorpay_order_id,
         payment_id: razorpay_payment_id,
         signature: razorpay_signature,
         order_amount: amount,
-        subscription_type: selectedPlan, // Include subscription type
+        subscription_type: selectedPlan,
       });
-  
-      navigate("/execute-task");
+
+            // Check if the user has previous payments
+      const response = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      const hasPreviousPayments = response.data.length > 1; // More than one payment means user already subscribed
+      
+      // Redirect based on payment history
+      if (hasPreviousPayments) {
+        alert("Subscription successful!!!");
+        navigate("/dashboard");
+      } else {
+        navigate("/execute-task");
+      }
     } catch (error) {
       console.error("Error saving payment details:", error);
       setPaymentError("Payment unsuccessful. Please try again.");
       setTimeout(() => navigate("/check-number"), 2000);
     }
-  };
-  
+  };  
 
   const getNextPaymentId = async () => {
-    const response = await axios.get("http://localhost:5000/api/get-latest-id");
+    const response = await axios.get("https://api.leadscruise.com/api/get-latest-id");
     return response.data.latestId;
   };
 
@@ -70,7 +92,7 @@ const Plans = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/order", {
+      const response = await fetch("https://api.leadscruise.com/order", {
         method: "POST",
         body: JSON.stringify({ amount, currency, receipt: receiptId }),
         headers: { "Content-Type": "application/json" },
@@ -121,7 +143,7 @@ const Plans = () => {
     try {
       const body = { ...response };
       const validateResponse = await fetch(
-        "http://localhost:5000/order/validate",
+        "https://api.leadscruise.com/order/validate",
         {
           method: "POST",
           body: JSON.stringify(body),
@@ -185,33 +207,113 @@ const Plans = () => {
           </div>
         </div>
 
+        
         <div className="signin-right">
           <div className="banner-container">
-            <div className={`banner overlapBanner ${selected === 0 ? "active" : ""}`}>
+            {/* First Banner */}
+            <div
+              className={`banner overlapBanner ${
+                selected === 0 ? "active" : ""
+              }`}
+            >
               <div className="rightbanner">
                 <div
                   className="banner1_img"
                   style={{
-                    backgroundImage: "url('https://static.zohocdn.com/iam/v2/components/images/Passwordless_illustration.svg')",
+                    backgroundImage: `url(${bgImage1})`,
                   }}
                 ></div>
-                <div className="banner1_heading">Passwordless Sign-in</div>
-                <div className="banner1_content">Move away from risky passwords and experience one-tap access to Zoho.</div>
+                <div className="banner1_heading">
+                  Intergrate AI to your Business
+                </div>
+                <div className="banner1_content">
+                  Let our AI do all the work even while you sleep. With
+                  leadscruise all the software tasks are now automated with AI
+                </div>
+                <a
+                  className="banner1_href"
+                  href="https://zoho.to/za_signin_oa_rp"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Learn more
+                </a>
               </div>
             </div>
 
-            <div className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}>
-              <div className="product_img"></div>
-              <div className="banner1_heading">Keep Your Account Secure</div>
-              <div className="banner2_content">Shield your Zoho account with OneAuth now.</div>
+            {/* Second Banner */}
+            <div
+              className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}
+            >
+              <div
+                className="product_img"
+                style={{
+                  width: "300px",
+                  height: "240px",
+                  margin: "auto",
+                  backgroundSize: "100%",
+                  backgroundRepeat: "no-repeat",
+                  backgroundImage: `url(${bgImage2})`,
+                }}
+              ></div>
+              <div className="banner1_heading">A Rocket for your Business</div>
+              <div className="banner2_content">
+                Get to customers within the blink of opponent's eyes,
+                LeadsCruise provides 100% uptime utilising FA cloud systems
+              </div>
+              <a
+                className="banner2_href"
+                href="https://zoho.to/za_signin_oa_rp"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Learn more
+              </a>
             </div>
 
-            <div className="pagination-container">
-              {[0, 1].map((num) => (
-                <div key={num} className={`pagination-dot ${selected === num ? "selected" : ""}`}>
-                  <div className="progress-fill"></div>
+            <div
+              className={`banner taskBanner ${selected === 2 ? "active" : ""}`}
+            >
+              <div className="rightbanner">
+                <div
+                  className="banner3_img"
+                  style={{
+                    backgroundImage: `url(${bgImage3})`,
+                  }}
+                ></div>
+                <div className="banner1_heading">All tasks on time</div>
+                <div className="banner1_content">
+                  With leadscruise all the tasks are now automated so that you
+                  no more need to do them manually
                 </div>
-              ))}
+                <a
+                  className="banner1_href"
+                  href="https://zoho.to/za_signin_oa_rp"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Learn more
+                </a>
+              </div>
+            </div>
+
+            {/* Pagination Dots */}
+            <div className="pagination-container">
+              <div
+                className={`pagination-dot ${selected === 0 ? "selected" : ""}`}
+              >
+                <div className="progress-fill"></div>
+              </div>
+              <div
+                className={`pagination-dot ${selected === 1 ? "selected" : ""}`}
+              >
+                <div className="progress-fill"></div>
+              </div>
+              <div
+                className={`pagination-dot ${selected === 2 ? "selected" : ""}`}
+              >
+                <div className="progress-fill"></div>
+              </div>
             </div>
           </div>
         </div>

@@ -98,7 +98,7 @@ router.post("/upload-invoice/:order_id", upload.single("invoice"), async (req, r
   
       res.json({
         renewal_date: renewalDate.toISOString().split("T")[0], // Format: YYYY-MM-DD
-        status: status,
+        status: status,unique_id:subscription.unique_id
       });
     } catch (error) {
       console.error("Error fetching subscription details:", error);
