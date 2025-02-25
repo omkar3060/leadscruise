@@ -6,6 +6,23 @@ import Sidebar from "./Sidebar";
 import axios from "axios";
 import DashboardHeader from "./DashboardHeader";
 
+// Import styles for loading screen (adjust this if you're using a different approach)
+import styles from "./Dashboard.module.css"; // This should match what you use in Dashboard
+
+const LoadingScreen = () => (
+  <div className={styles["loading-overlay"]}>
+    <div className={styles["loading-container"]}>
+      <div className={styles["loading-spinner"]}></div>
+      <p className={styles["loading-text"]}>Loading...</p>
+      <div className={styles["loading-progress-dots"]}>
+        <div className={styles["loading-dot"]}></div>
+        <div className={styles["loading-dot"]}></div>
+        <div className={styles["loading-dot"]}></div>
+      </div>
+    </div>
+  </div>
+);
+
 const SettingsForm = () => {
   const [settings, setSettings] = useState({
     sentences: [],
@@ -19,6 +36,7 @@ const SettingsForm = () => {
   });
 
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
@@ -43,9 +61,11 @@ const SettingsForm = () => {
 
   useEffect(() => {
     const fetchSettings = async () => {
+      setIsLoading(true); // Start loading
       const userEmail = localStorage.getItem("userEmail");
       if (!userEmail) {
         alert("User email not found!");
+        setIsLoading(false);
         return;
       }
 
@@ -59,6 +79,8 @@ const SettingsForm = () => {
       } catch (error) {
         console.error("Error fetching settings:", error);
         alert("Failed to fetch settings.");
+      } finally {
+        setIsLoading(false); // End loading regardless of success/failure
       }
     };
 
@@ -121,10 +143,12 @@ const SettingsForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true); // Start loading
 
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
       alert("User email not found!");
+      setIsLoading(false);
       return;
     }
 
@@ -140,6 +164,8 @@ const SettingsForm = () => {
     } catch (error) {
       console.error("Error saving settings:", error);
       alert("Failed to save settings.");
+    } finally {
+      setIsLoading(false); // End loading
     }
   };
 
@@ -151,6 +177,7 @@ const SettingsForm = () => {
     }
 
     if (window.confirm("Are you sure you want to revert all settings?")) {
+      setIsLoading(true); // Start loading
       try {
         await axios.delete(`http://localhost:5000/api/delete-settings/${userEmail}`);
         setSettings({ sentences: [], wordArray: [], h2WordArray: [] });
@@ -158,6 +185,8 @@ const SettingsForm = () => {
       } catch (error) {
         console.error("Error reverting settings:", error);
         alert("Failed to revert settings.");
+      } finally {
+        setIsLoading(false); // End loading
       }
     }
   };
@@ -168,6 +197,9 @@ const SettingsForm = () => {
 
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
+      {/* Loading Screen */}
+      {isLoading && <LoadingScreen />}
+
       {/* Conditional Sidebar Component */}
       {(windowWidth > 768 || sidebarOpen) && (
         <Sidebar isDisabled={isDisabled} />

@@ -178,7 +178,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
             </>
           ) : location.pathname !== "/profile" ? ( // Hide buttons on profile page
             <>
-              <button className={styles.startButton} onClick={handleStartScript}>
+              <button className={styles.startButton} disabled={status === "Running"} onClick={handleStartScript}>
                 <FaPlay className={styles.iconOnly} /> <span className={styles.buttonText}>Start</span>
               </button>
               <button className={styles.stopButton} onClick={handleStop} disabled={!isDisabled}>

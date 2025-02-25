@@ -23,7 +23,7 @@ const EnterEmail = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setSelected((prev) => (prev + 1) % 2);
+      setSelected((prev) => (prev + 1) % 3);
     }, 5000); // Change every 5 seconds
 
     return () => clearInterval(interval);
@@ -106,7 +106,12 @@ const EnterEmail = () => {
                   <img
                     src={successImage}
                     alt="Success"
-                    style={{ width: "175px", height: "125px" }}
+                    style={{
+                      width: "150px",
+                      height: "125px",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
                   />
                 </div>
                 <p>An email has been sent to your provided email id.</p>
@@ -127,7 +132,7 @@ const EnterEmail = () => {
               </button>
 
               <div className="end-block">
-                <p className="gback" onClick={() => navigate("/")}>
+                <p className="gback" onClick={() => window.location.reload()}>
                   Go Back
                 </p>
                 <p className="logout-link">
@@ -168,6 +173,7 @@ const EnterEmail = () => {
               <div className="signin-logo-class">
                 <img
                   src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
+                  className="logo-img"
                   alt="zohologo"
                 />
                 <div className="smart-scan" onClick={() => navigate("/")}>
@@ -213,9 +219,10 @@ const EnterEmail = () => {
                   marginTop: "40px",
                 }}
               >
-                <p className="gback" onClick={() => window.location.reload()}>
+                <p className="gback" onClick={() => window.history.back()}>
                   Go Back
                 </p>
+
                 <p className="logout-link">
                   Wish to <span onClick={() => navigate("/")}>Logout</span>?
                 </p>

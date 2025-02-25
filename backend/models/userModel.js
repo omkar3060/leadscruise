@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   mobileNumber: { type: String, unique: true, sparse: true },
   savedPassword: { type: String }, // Store encrypted password
   status: { type: String, default: "Stopped" },
+  role: { type: String, enum: ["admin", "user"], default: "user" },
 });
 
 const User = mongoose.model("User", userSchema);

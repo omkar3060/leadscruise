@@ -69,7 +69,7 @@ function App() {
           <Route
             path="/master"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly={true}>
                 <Master />
               </ProtectedRoute>
             }

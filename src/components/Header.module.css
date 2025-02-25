@@ -316,6 +316,12 @@
   .profileSection {
       align-items: flex-end; /* Keep profile section aligned to the right */
   }
+
+  .renewalText {
+    font-size: 8px;
+    color: #555;
+    margin: 3px;
+  }
 }
 
 /* Profile Dropdown Styles - Only visible on small screens */

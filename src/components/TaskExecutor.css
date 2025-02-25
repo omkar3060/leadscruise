@@ -1,7 +1,6 @@
 .task-input-screen .te-tis-h4 {
   margin-bottom: 10px;
-  font-size: 0.9em;
-  font-weight: bolder;
+  font-size: 17px;
 }
 
 .task-input-screen .instr-wrapper {
@@ -15,13 +14,13 @@
 .task-input-screen .instr-wrapper .para {
   width: 50%;
   display: flex;
-  align-items: center;
+  margin-top: 5px;
 }
 
 .task-input-screen .instr-wrapper .para .te-tis-p {
   margin-bottom: 0px;
   color: rgb(80, 79, 79);
-  font-size: 1.0em;
+  font-size: 15px;
 }
 
 .task-input-screen .instr-wrapper .red-divs {
@@ -38,7 +37,6 @@
   padding: 5px;
   border-radius: 4px;
   font-weight: 500;
-  margin-bottom: 0.4em;
 }
 
 .task-input-screen .confirm {

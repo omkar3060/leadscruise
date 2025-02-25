@@ -5,7 +5,9 @@ import errorImage from "../images/error.png";
 import loadingGif from "../images/loading.gif";
 import { useNavigate } from "react-router-dom";
 import "./styles.css";
-
+import bgImage1 from "../images/values-1.png";
+import bgImage2 from "../images/values-2.png";
+import bgImage3 from "../images/values-3.png";
 import "./CheckNumber.css";
 
 const CheckNumber = () => {
@@ -145,9 +147,21 @@ const CheckNumber = () => {
                 Next
               </button>
               {message && <p className="response-message">{message}</p>}
-              <p className="logout-link">
-                Wish to <span>Logout</span>?
-              </p>
+              <div
+                className="end-block"
+                style={{
+                  marginTop: "30px",
+                  height: "30px",
+                }}
+              >
+                <p className="gback" onClick={() => window.history.back()}>
+                  Go Back
+                </p>
+
+                <p className="logout-link">
+                  Wish to <span onClick={() => navigate("/")}>Logout</span>?
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -156,19 +170,24 @@ const CheckNumber = () => {
         <div className="signin-right">
           <div className="banner-container">
             {/* First Banner */}
-            <div className={`banner overlapBanner ${selected === 0 ? "active" : ""}`}>
+            <div
+              className={`banner overlapBanner ${
+                selected === 0 ? "active" : ""
+              }`}
+            >
               <div className="rightbanner">
                 <div
                   className="banner1_img"
                   style={{
-                    backgroundImage:
-                      "url('https://static.zohocdn.com/iam/v2/components/images/Passwordless_illustration.5c0b2b6048ba19d2dec9f1fba38291c9.svg')",
+                    backgroundImage: `url(${bgImage1})`,
                   }}
                 ></div>
-                <div className="banner1_heading">Passwordless sign-in</div>
+                <div className="banner1_heading">
+                  Intergrate AI to your Business
+                </div>
                 <div className="banner1_content">
-                  Move away from risky passwords and experience one-tap access
-                  to Zoho. Download and install OneAuth.
+                  Let our AI do all the work even while you sleep. With
+                  leadscruise all the software tasks are now automated with AI
                 </div>
                 <a
                   className="banner1_href"
@@ -182,7 +201,9 @@ const CheckNumber = () => {
             </div>
 
             {/* Second Banner */}
-            <div className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}>
+            <div
+              className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}
+            >
               <div
                 className="product_img"
                 style={{
@@ -191,14 +212,13 @@ const CheckNumber = () => {
                   margin: "auto",
                   backgroundSize: "100%",
                   backgroundRepeat: "no-repeat",
-                  backgroundImage:
-                    "url('https://static.zohocdn.com/iam/v2/components/images/MFA_illustration.1afa6dddd07d21ad33a652ec63d146d6.svg')",
+                  backgroundImage: `url(${bgImage2})`,
                 }}
               ></div>
-              <div className="banner1_heading">Keep your account secure</div>
+              <div className="banner1_heading">A Rocket for your Business</div>
               <div className="banner2_content">
-                Zoho OneAuth is our new in-house multi-factor authentication
-                app. Shield your Zoho account with OneAuth now.
+                Get to customers within the blink of opponent's eyes,
+                LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
               <a
                 className="banner2_href"
@@ -210,12 +230,47 @@ const CheckNumber = () => {
               </a>
             </div>
 
+            <div
+              className={`banner taskBanner ${selected === 2 ? "active" : ""}`}
+            >
+              <div className="rightbanner">
+                <div
+                  className="banner3_img"
+                  style={{
+                    backgroundImage: `url(${bgImage3})`,
+                  }}
+                ></div>
+                <div className="banner1_heading">All tasks on time</div>
+                <div className="banner1_content">
+                  With leadscruise all the tasks are now automated so that you
+                  no more need to do them manually
+                </div>
+                <a
+                  className="banner1_href"
+                  href="https://zoho.to/za_signin_oa_rp"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Learn more
+                </a>
+              </div>
+            </div>
+
             {/* Pagination Dots */}
             <div className="pagination-container">
-              <div className={`pagination-dot ${selected === 0 ? "selected" : ""}`}>
+              <div
+                className={`pagination-dot ${selected === 0 ? "selected" : ""}`}
+              >
                 <div className="progress-fill"></div>
               </div>
-              <div className={`pagination-dot ${selected === 1 ? "selected" : ""}`}>
+              <div
+                className={`pagination-dot ${selected === 1 ? "selected" : ""}`}
+              >
+                <div className="progress-fill"></div>
+              </div>
+              <div
+                className={`pagination-dot ${selected === 2 ? "selected" : ""}`}
+              >
                 <div className="progress-fill"></div>
               </div>
             </div>

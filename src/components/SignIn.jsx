@@ -302,6 +302,7 @@ const SignIn = () => {
       alert(res.data.message);
       localStorage.setItem("userEmail", email);
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.user.role);
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
 

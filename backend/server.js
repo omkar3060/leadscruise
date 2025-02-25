@@ -249,6 +249,8 @@ const UserLeadCounter = mongoose.model("UserLeadCounter", userLeadCounterSchema)
 
 app.post("/api/update-max-captures", async (req, res) => {
   try {
+    console.log("Received Data:", req.body); // Debugging
+    
     const { user_mobile_number, maxCaptures } = req.body;
 
     if (!user_mobile_number || maxCaptures < 1) {
@@ -258,29 +260,31 @@ app.post("/api/update-max-captures", async (req, res) => {
     const user = await UserLeadCounter.findOne({ user_mobile_number });
 
     if (user) {
-      // Check if 24 hours have passed since last update
-      const lastUpdated = user.lastUpdatedMaxCaptures;
+      // Ensure lastUpdated is a valid Date
+      const lastUpdated = user.lastUpdatedMaxCaptures ? new Date(user.lastUpdatedMaxCaptures) : null;
       const now = new Date();
+
       if (lastUpdated && now - lastUpdated < 24 * 60 * 60 * 1000) {
         return res.status(403).json({
           message: "You can update Max Captures only once every 24 hours.",
         });
       }
 
-      // Update maxCaptures and lastUpdatedMaxCaptures timestamp
       user.maxCaptures = maxCaptures;
       user.lastUpdatedMaxCaptures = now;
-      await user.save();
+      user.markModified("maxCaptures");
+      await user.save({ validateBeforeSave: false }); // Force update
 
+      console.log("Updated User:", user); // Debugging
       return res.json({ message: "Max captures updated successfully", user });
     } else {
-      // Create a new user record if not found
       const newUser = new UserLeadCounter({
         user_mobile_number,
         maxCaptures,
         lastUpdatedMaxCaptures: new Date(),
       });
       await newUser.save();
+      console.log("New User Created:", newUser); // Debugging
 
       return res.json({ message: "Max captures set successfully", user: newUser });
     }
@@ -289,6 +293,7 @@ app.post("/api/update-max-captures", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 app.get("/api/get-max-captures", async (req, res) => {
   try {
@@ -458,6 +463,70 @@ app.post("/api/cycle", async (req, res) => {
       });
     }
   });
+});
+
+app.post("/api/cycle", async (req, res) => {
+  console.log("Received raw data:", JSON.stringify(req.body, null, 2));
+  let { sentences, wordArray, h2WordArray, mobileNumber, password, uniqueId, userEmail } = req.body;
+
+  if (!mobileNumber || !password || !userEmail) {
+    return res.status(400).json({ status: "error", message: "Mobile number, Email, and password are required." });
+  }
+
+  // Get current time and update status
+  const startTime = new Date();
+  await User.findOneAndUpdate({ email: userEmail }, { status: "Running", startTime }, { new: true, upsert: true });
+
+  // Start Python script
+  const pythonProcess = spawn("python3", ["final_inside_script_server.py"]);
+  activePythonProcesses.set(mobileNumber, { process: pythonProcess, startTime });
+
+  console.log("Python script started for", mobileNumber);
+
+  pythonProcess.on("close", async (code) => {
+    activePythonProcesses.delete(mobileNumber); // Remove process from tracking
+    console.log(`Python script exited with code: ${code}`);
+
+    // Reset user status when script stops
+    await User.findOneAndUpdate({ email: userEmail }, { status: "Stopped", startTime: null }, { new: true });
+
+    res.json({ status: "stopped", message: "Python script stopped successfully." });
+  });
+
+  res.json({ status: "success", message: "Script started successfully." });
+});
+
+// API to stop the script
+app.post("/api/stop", async (req, res) => {
+  const { userEmail, mobileNumber } = req.body;
+  if (!mobileNumber || !userEmail) {
+    return res.status(400).json({ status: "error", message: "Mobile number and Email are required." });
+  }
+
+  const processData = activePythonProcesses.get(mobileNumber);
+  if (!processData) {
+    return res.status(404).json({ status: "error", message: "No running process found for this user." });
+  }
+
+  const startTime = processData.startTime;
+  const currentTime = new Date();
+  const elapsedTime = Math.floor((currentTime - startTime) / 1000); // in seconds
+
+  if (elapsedTime < 300) { // Less than 5 minutes
+    return res.status(403).json({ 
+      status: "error", 
+      message: `Please wait at least ${Math.ceil((300 - elapsedTime) / 60)} more minutes before stopping.` 
+    });
+  }
+
+  console.log("Stopping Python script...");
+  processData.process.kill("SIGTERM"); // Kill the process
+  activePythonProcesses.delete(mobileNumber); // Remove from tracking
+
+  // Reset user status
+  await User.findOneAndUpdate({ email: userEmail }, { status: "Stopped", startTime: null }, { new: true });
+
+  res.json({ status: "success", message: "Script stopped successfully after 5 minutes." });
 });
 
 // Define Schema
