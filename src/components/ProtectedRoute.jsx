@@ -76,12 +76,12 @@ const styles = {
   `
 };
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, adminOnly = false }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const token = localStorage.getItem("token");
-
+  const userRole = localStorage.getItem("role");
   useEffect(() => {
     // Insert the CSS animations into the document
     const styleElement = document.createElement('style');
@@ -157,6 +157,11 @@ const ProtectedRoute = ({ children }) => {
         )}
       </div>
     );
+  }
+
+  if (adminOnly && userRole !== "admin") {
+    alert("Access denied. Admins only.");
+    return <Navigate to="/" />; // Redirect normal users
   }
 
   return children;

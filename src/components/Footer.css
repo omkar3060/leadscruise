@@ -1,4 +1,3 @@
-
 /* Footer.css */
 .footer {     text-align: center;     font-size: 14px;     color: #666;          position: fixed;     bottom: 0;     width: 100%;   } 
 
@@ -171,18 +170,73 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .footer-content {
     flex-direction: column;
-    text-align: center;
+    gap: 10px;
+    padding: 0 15px;
   }
   
   .copyright {
-    order: 2;
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
   }
   
   .support-button {
-    order: 1;
+    display: none; /* Hide support button on mobile */
+  }
+}
+
+@media (max-width: 600px) {
+  .popup-content {
+    width: 95%;
+    margin: 10px;
+  }
+  
+  .popup-header {
+    padding: 15px 15px 0 15px;
+  }
+  
+  .popup-body {
+    padding: 15px;
+  }
+  
+  .email-button,
+  .whatsapp-button {
+    padding: 10px 15px;
+    font-size: 13px;
+  }
+  
+  .popup-body p {
+    font-size: 13px;
+  }
+  
+  .response-time {
+    font-size: 11px;
+  }
+}
+
+@media (max-height: 600px) {
+  .popup-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* For very small devices */
+@media (max-width: 320px) {
+  .footer {
+    padding: 8px 0;
+  }
+  
+  .copyright {
+    font-size: 11px;
+  }
+  
+  .popup-header h2 {
+    font-size: 18px;
   }
 }
 
@@ -190,4 +244,54 @@
   display: flex;
   justify-content: center;
   margin-right: 15px;
+}
+
+/* Additional CSS styles to add to Footer.css */
+.contact-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.whatsapp-button {
+  width: 100%;
+  padding: 12px 20px;
+  background: #25D366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+.whatsapp-button:hover {
+  background: #128C7E;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.whatsapp-icon {
+  transition: transform 0.3s ease;
+}
+
+.whatsapp-button:hover .whatsapp-icon {
+  transform: scale(1.1);
+}
+
+/* Update existing email-button styles to match the new layout */
+.email-button {
+  background: #007bff;
+}
+
+.email-button:hover {
+  background: #0056b3;
 }

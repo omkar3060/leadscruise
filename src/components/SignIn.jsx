@@ -86,6 +86,103 @@ const SignIn = () => {
     setSavedCredentials(latest);
   };
 
+  // const handleGoogleSignIn = async () => {
+  //   try {
+  //     const result = await signInWithPopup(auth, provider);
+  //     const user = result.user;
+  //     localStorage.setItem("user", JSON.stringify(user));
+
+  //     navigate("/dashboard");
+  //   } catch (error) {
+  //     console.error("Google Sign-In Error:", error);
+  //     alert("Google sign-in failed!");
+  //   }
+  // };
+
+  // const handleGitHubSignIn = async () => {
+  //   try {
+  //     const result = await signInWithPopup(auth, githubProvider);
+  //     const user = result.user;
+  //     localStorage.setItem("user", JSON.stringify(user));
+  //     navigate("/dashboard");
+  //   } catch (error) {
+  //     console.log("Full error details:", error);
+
+  //     if (error.code === "auth/account-exists-with-different-credential") {
+  //       const email = error.customData?.email;
+  //       console.log("Conflicting email:", email);
+
+  //       // Force a new fetch of sign-in methods with error handling
+  //       try {
+  //         const methods = await fetchSignInMethodsForEmail(auth, email);
+  //         console.log("Raw auth methods:", methods);
+
+  //         // Store the GitHub credential
+  //         const pendingGithubCred =
+  //           GithubAuthProvider.credentialFromError(error);
+
+  //         // Always try Google sign-in for this error since we know it's likely a Google account
+  //         const shouldTryGoogle = window.confirm(
+  //           `An account with ${email} already exists. Would you like to sign in with Google and connect your GitHub account?`
+  //         );
+
+  //         if (shouldTryGoogle) {
+  //           try {
+  //             // Sign in with Google
+  //             const googleResult = await signInWithPopup(auth, provider);
+
+  //             // After successful Google sign-in, link the GitHub credential
+  //             if (pendingGithubCred) {
+  //               try {
+  //                 await linkWithCredential(
+  //                   googleResult.user,
+  //                   pendingGithubCred
+  //                 );
+  //                 alert(
+  //                   "Successfully connected your GitHub account! You can now use either method to sign in."
+  //                 );
+  //               } catch (linkError) {
+  //                 if (linkError.code === "auth/provider-already-linked") {
+  //                   console.log("Accounts already linked");
+  //                 } else {
+  //                   console.error("Linking error:", linkError);
+  //                   alert("Error connecting accounts: " + linkError.message);
+  //                 }
+  //               }
+  //             }
+
+  //             localStorage.setItem("user", JSON.stringify(googleResult.user));
+  //             navigate("/dashboard");
+  //           } catch (googleError) {
+  //             console.error("Google sign-in error:", googleError);
+  //             alert("Error signing in with Google: " + googleError.message);
+  //           }
+  //         }
+  //       } catch (methodError) {
+  //         console.error("Error fetching sign-in methods:", methodError);
+  //         // If we can't fetch the methods, we'll still try Google sign-in
+  //         const shouldTryGoogle = window.confirm(
+  //           `Would you like to try signing in with Google instead?`
+  //         );
+
+  //         if (shouldTryGoogle) {
+  //           try {
+  //             const googleResult = await signInWithPopup(auth, provider);
+  //             localStorage.setItem("user", JSON.stringify(googleResult.user));
+  //             navigate("/dashboard");
+  //           } catch (googleError) {
+  //             console.error("Google sign-in error:", googleError);
+  //             alert("Error signing in with Google: " + googleError.message);
+  //           }
+  //         }
+  //       }
+  //     } else {
+  //       console.error("GitHub Sign-In Error:", error);
+  //       alert("Error signing in with GitHub: " + error.message);
+  //     }
+  //   }
+  // };
+
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -205,6 +302,7 @@ const SignIn = () => {
       alert(res.data.message);
       localStorage.setItem("userEmail", email);
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.user.role);
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
 
@@ -220,14 +318,23 @@ const SignIn = () => {
       // If mobileNumber and savedPassword exist, proceed to dashboard
       if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
-        localStorage.setItem("password", res.data.user.savedPassword);
+        localStorage.setItem("savedPassword", res.data.user.savedPassword);
         navigate("/dashboard");
       }else {
         navigate("/check-number");
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to sign in. Please try again.");
-      navigate("/signup");
+      if (error.response && error.response.status === 400) {
+        if (
+          error.response.data.message === "User not found. Please Signup!!!"
+        ) {
+          alert("Email not registered. Please sign up!");
+        } else {
+          alert(error.response.data.message || "Invalid credentials!");
+        }
+      } else {
+        alert("Failed to sign in. Please try again.");
+      }
     }
   };
   const handleForgotPassword = async () => {
@@ -363,6 +470,11 @@ const SignIn = () => {
             onChange={(e) => setPassword(e.target.value)}
             name="password"
             autoComplete="current-password"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSignIn(); // Trigger sign-in when Enter is pressed
+                }}}
           />
 
           <div className="fp-cont">

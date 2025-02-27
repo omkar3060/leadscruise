@@ -25,8 +25,6 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding-right: 10px;
-  max-width: 400px;
 }
 
 .error-screen h1 {
@@ -60,7 +58,6 @@
 .error-screen .logout-link {
   font-size: 14px;
   color: #000;
-  margin-top: 10px;
 }
 
 .error-screen .logout-link span {
@@ -103,12 +100,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.success-screen .success-icon img {
-  max-width: 100%;
-  max-height: 100%;
-  display: block;
 }
 
 .success-screen p {

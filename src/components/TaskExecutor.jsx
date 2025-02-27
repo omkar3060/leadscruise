@@ -10,6 +10,7 @@ import bgImage3 from "../images/values-3.png";
 
 import "./styles.css";
 import "./TaskExecutor.css";
+import "./Plans.css";
 
 const TaskExecutor = () => {
   const mobileNumber = localStorage.getItem("mobileNumber");
@@ -40,7 +41,7 @@ const TaskExecutor = () => {
     setMessage("");
 
     try {
-      localStorage.setItem("password", password);
+      localStorage.setItem("savedpassword", password);
 
       const response = await axios.post(
         "https://api.leadscruise.com/api/execute-task",
@@ -132,34 +133,38 @@ const TaskExecutor = () => {
                 alt="Loading"
                 className="loading-gif"
                 style={{
-                  width: "175px",
-                  height: "130px",
-                  marginBottom: "20px",
+                  width: "200px",
+                  height: "200px",
+                  marginTop: "40px",
+                  marginBottom: "40px",
                 }}
               />
-              <p>Please, wait while AI processes your task.</p>
-              <div className="end-block">
-                <p className="gback" onClick={() => window.location.reload()}>
-                  Go Back
-                </p>
-                <p className="logout-link">
-                  Wish to <span onClick={() => navigate("/")}>Logout</span>?
-                </p>
-              </div>
+              <p
+                style={{ color: "black", fontWeight: "500", fontSize: "20px" }}
+              >
+                Please, wait while AI processes your task.
+              </p>
             </div>
           )}
 
           {status === "success" && (
             <div className="success-screen">
-              <h2>Task Status</h2>
-              <div className="success-icon">
-                <img
-                  src={successImage}
-                  alt="Success"
-                  style={{ width: "175px", height: "125px" }}
-                />
+              <div className="icon-cont" style={{ marginBottom: "10px" }}>
+                <h2>Task Executed</h2>
+                <div className="success-icon">
+                  <img
+                    src={successImage}
+                    alt="Success"
+                    style={{
+                      width: "150px",
+                      height: "125px",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  />
+                </div>
+                <p>Great! Your task was executed successfully.</p>
               </div>
-              <p>Great! Your task was executed successfully.</p>
               <button
                 onClick={() => navigate("/dashboard")}
                 className="next-button"
@@ -179,7 +184,7 @@ const TaskExecutor = () => {
 
           {status === "error" && (
             <div className="error-screen">
-              <h2>Task Status</h2>
+              <h2>Task Execution Failed</h2>
               <div className="error-icon">
                 <img
                   src={errorImage}
@@ -187,7 +192,13 @@ const TaskExecutor = () => {
                   style={{ width: "225px", height: "125px" }}
                 />
               </div>
-              <p>
+              <p
+                style={{
+                  marginTop: "10px",
+                  fontSize: "14px",
+                  marginBottom: "15px",
+                }}
+              >
                 Oops, the task execution failed. Try again or contact support.
               </p>
               <button

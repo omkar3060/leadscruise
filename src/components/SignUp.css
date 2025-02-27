@@ -1,8 +1,53 @@
 .signin-left .pass-cont {
   display: flex;
   justify-content: space-between;
+  position: relative;
 }
 
 .signin-left .pass-cont input {
   width: 48%;
+}
+
+.terms-div {
+  display: flex;
+  align-items: center;
+  height: 4vh;
+  justify-content: center;
+}
+
+.terms-div #remember {
+  height: 14px;
+  width: 14px;
+  margin-right: 3px;
+}
+
+.terms-div .agree {
+  margin-bottom: 0px;
+  color: black;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.signup-btn {
+  margin-bottom: 20px;
+}
+
+.terms-div .agree span {
+  color: rgb(3, 102, 250);
+  cursor: pointer;
+  margin-right: 1px;
+  margin-left: 1px;
+}
+
+.terms-div .agree span:hover {
+  text-decoration: underline;
+}
+
+.signup-btn.dimmed {
+  background-color: #9ecaec;
+  cursor: not-allowed;
+}
+
+.signup-btn.dimmed:hover {
+  background-color: #9ecaec;
 }

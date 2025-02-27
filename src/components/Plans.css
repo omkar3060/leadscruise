@@ -1,20 +1,29 @@
 .signin-left .plans {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  height: 350px;
-  box-sizing: border-box;
+  justify-content: flex-start;
+  height: 360px;
+  overflow-y: auto;
+  gap: 15px;
+}
+
+.signin-left .plan-div {
+  margin-bottom: 10px;
 }
 
 .signin-left .plans .common {
   display: flex;
   background-color: #f2f2f2;
   border-radius: 10px;
-  height: 100px;
-  padding: 10px;
+  padding: 7px;
+  min-height: 100px;
   box-sizing: border-box;
   overflow: hidden;
   cursor: pointer;
+}
+
+.signin-left .plans::-webkit-scrollbar {
+  display: none;
 }
 
 .signin-left .plans .selected {
@@ -31,14 +40,20 @@
   flex-direction: column;
 }
 
-.signin-left .plans .common .part-2 {
-  width: 30%;
-  display: flex;
-  flex-direction: column;
+.signin-left .plans .common .part-2 .tag-1 {
+  height: 30px;
 }
 
-.signin-left .plans .common .part-2 .tag {
-  min-height: 30px;
+.signin-left .plans .common .part-2 .tag-2 {
+  height: 30px;
+}
+
+.signin-left .plans .common .part-2 .tag-3 {
+  height: 30px;
+}
+
+.signin-left .plans .common .part-2 .tag-4 {
+  height: 30px;
 }
 
 .signin-left .plans .common .part-2 .prices {
@@ -90,6 +105,7 @@
   align-items: center;
   justify-content: space-between;
   margin-top: 5px;
+  width: 100%;
 }
 
 .signin-left .end-block .gback {

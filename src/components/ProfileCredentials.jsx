@@ -12,13 +12,11 @@ const ProfileCredentials = ({isProfilePage}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingSavedPassword, setIsEditingSavedPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [messageSavedPassword, setMessageSavedPassword] = useState("");
 
   useEffect(() => {
     // Fetch credentials from localStorage
-    const storedMobile = localStorage.getItem("mobileNumber") || "9579797269";
-    const storedEmail = localStorage.getItem("userEmail") || "omkargouda306@gmail.com";
+    const storedMobile = localStorage.getItem("mobileNumber") || "";
+    const storedEmail = localStorage.getItem("userEmail") || "";
 
     setMobileNumber(storedMobile);
     setEmail(maskEmail(storedEmail));
@@ -39,7 +37,7 @@ const ProfileCredentials = ({isProfilePage}) => {
   const handleSaveMaxCaptures = async () => {
     try {
       const userMobileNumber = localStorage.getItem("mobileNumber");
-  
+      console.log("userMobileNumber", userMobileNumber);
       const response = await axios.post("https://api.leadscruise.com/api/update-max-captures", {
         user_mobile_number: userMobileNumber,
         maxCaptures: tempCaptures,
@@ -49,7 +47,7 @@ const ProfileCredentials = ({isProfilePage}) => {
       setIsEditingMaxCaptures(false);
       alert(response.data.message);
     } catch (error) {
-      if (error.response && error.response.status === 403) {
+      if (error.response.status === 403) {
         alert(error.response.data.message); // Display "24-hour restriction" message
       } else {
         console.error("Failed to update max captures:", error);
@@ -88,7 +86,7 @@ const ProfileCredentials = ({isProfilePage}) => {
   const handlePasswordUpdate = async () => {
     try {
       if (newPassword.trim().length < 6) {
-        setMessage("Password must be at least 6 characters long.");
+        alert("Password must be at least 6 characters long.");
         return;
       }
 
@@ -97,17 +95,17 @@ const ProfileCredentials = ({isProfilePage}) => {
         newPassword,
       });
 
-      setMessage(response.data.message);
+      alert(response.data.message);
       setIsEditing(false);
     } catch (error) {
-      setMessage("Failed to update password. Try again.");
+      alert("Failed to update password. Try again.");
     }
   };
 
   const handleSavedPasswordUpdate = async () => {
     try {
       if (newPassword.trim().length < 6) {
-        setMessageSavedPassword("Password must be at least 6 characters long.");
+        alert("Password must be at least 6 characters long.");
         return;
       }
 
@@ -116,10 +114,10 @@ const ProfileCredentials = ({isProfilePage}) => {
         newPassword,
       });
 
-      setMessageSavedPassword(response.data.message);
+      alert(response.data.message);
       setIsEditingSavedPassword(false);
     } catch (error) {
-      setMessageSavedPassword("Failed to update password. Try again.");
+      alert("Failed to update password. Try again.");
     }
   };
 
@@ -142,7 +140,7 @@ const ProfileCredentials = ({isProfilePage}) => {
                   onChange={(e) => setTempCaptures(Number(e.target.value))}
                   min="1"
                 />
-                <button className="edit-max-captures" onClick={handleSaveMaxCaptures}>Save</button>
+                <button className="edit-max-captures" onClick={(e) => { e.preventDefault(); handleSaveMaxCaptures(); }}>Save</button>
               </>
             ) : (
               <button className="edit-max-captures" onClick={() => setIsEditingMaxCaptures(true)}>Edit</button>
@@ -160,9 +158,9 @@ const ProfileCredentials = ({isProfilePage}) => {
             <div className="mobile">
               <span>{mobileNumber}</span>
               <div className="icon-group">
-                <span className="lock-icon">🔒</span>
-                <span className="info-icon">ⓘ</span>
-              </div>
+  <span className="lock-icon">🔒</span>
+  <span className="info-icon" data-tooltip="Registered mobile number cannot be updated.">ⓘ</span>
+</div>
             </div>
           </div>
           <div className="credential-group">
@@ -179,16 +177,18 @@ const ProfileCredentials = ({isProfilePage}) => {
                 <span>************</span>
               )}
               {isEditingSavedPassword ? (
-                <button type="button" className="save-button" onClick={handleSavedPasswordUpdate}>
+                <div className="edit-button-container">
+                <button className="save-button" onClick={(e) => { e.preventDefault(); handleSavedPasswordUpdate(); }}>
                   Save
                 </button>
+                <button className="cancel-button" onClick={() => setIsEditingSavedPassword(false)}>Cancel</button>
+                </div>
               ) : (
                 <button type="button" className="edit-button" onClick={() => setIsEditingSavedPassword(true)}>
                   Edit
                 </button>
               )}
             </div>
-            {messageSavedPassword && <p className="message">{messageSavedPassword}</p>}
           </div>
         </div>
       </div>
@@ -202,9 +202,10 @@ const ProfileCredentials = ({isProfilePage}) => {
             <div className="credential-value">
               <span>{email}</span>
               <div className="icon-group">
-                <span className="lock-icon">🔒</span>
-                <span className="info-icon">ⓘ</span>
-              </div>
+  <span className="lock-icon">🔒</span>
+  <span className="info-icon" data-tooltip="Registered email ID cannot be updated.">ⓘ</span>
+</div>
+
             </div>
           </div>
           <div className="credential-group">
@@ -221,16 +222,18 @@ const ProfileCredentials = ({isProfilePage}) => {
                 <span>************</span>
               )}
               {isEditing ? (
-                <button className="save-button" onClick={handlePasswordUpdate}>
+                <div className="edit-button-container">
+                <button className="save-button" onClick={(e) => { e.preventDefault(); handlePasswordUpdate(); }}>
                   Save
                 </button>
+                <button className="cancel-button" onClick={() => setIsEditing(false)}>Cancel</button>
+                </div>
               ) : (
-                <button className="edit-button" onClick={() => setIsEditing(true)}>
+                <button className="edit-button" onClick={(e) => {e.preventDefault();setIsEditing(true);}}>
                   Edit
                 </button>
               )}
             </div>
-            {message && <p className="message">{message}</p>}
           </div>
         </div>
       </div>

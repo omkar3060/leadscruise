@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import axios from "axios";
 import "./styles.css";
 import "./Signin.css";
 
@@ -36,7 +37,7 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setSelected((prev) => (prev + 1) % 2);
+      setSelected((prev) => (prev + 1) % 3);
     }, 5000); // Change every 5 seconds
 
     return () => clearInterval(interval);

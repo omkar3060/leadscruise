@@ -162,43 +162,101 @@ const Plans = () => {
   return (
     <div className="signin-container">
       <div className="center-div">
-        <div className="signin-left">
-          <div>Choose From Plans Below</div>
+      <div className="signin-left">
+      <div className="plan-div">Choose From Plans Below</div>
           <div className="plans">
-            {[
-              { name: "One Month", price: 2999, original: 7999 },
-              { name: "6 Months", price: 14999, original: 47999 },
-              { name: "Yearly", price: 29999, original: 95999 },
-            ].map((plan, index) => (
-              <div
-                key={index}
-                className={`common ${selectedPlan === plan.name ? "selected" : ""}`}
-                onClick={() => handlePlanSelect(plan.name, plan.price)}
-              >
-                <div className="part-1">
-                  <h2>{plan.name} Subscription</h2>
-                  <p className="first-p">Unlimited AI Leads Capture</p>
-                  <p>AI Business Monitoring</p>
-                  <p>AI Encryption & Authentication System</p>
-                </div>
-                <div className="part-2">
-                  <div className="tag"></div>
-                  <div className="prices">
-                    <p className="overline prices-p">₹ {plan.original}</p>
-                    <p className="prices-p">62.50% OFF</p>
-                    <h3 className="prices-h3">₹ {plan.price}</h3>
-                  </div>
+            <div
+              className={`one-mo common first-one ${
+                selectedPlan === "one-mo" ? "selected" : ""
+              }`}
+              onClick={() => handlePlanSelect("one-mo", 2999)}
+            >
+              <div className="part-1">
+                <h2>One Month Subscription</h2>
+                <p className="first-p">Unlimited AI Leads Capture</p>
+                <p>AI Business monitoring</p>
+                <p>AI Encryption & Authentication system</p>
+              </div>
+              <div className="part-2">
+                <div className="tag-1"></div>
+                <div className="prices">
+                  <p className="overline prices-p">₹ 7999</p>
+                  <p className="prices-p">62.50% OFF</p>
+                  <h3 className="prices-h3">₹ 2999</h3>
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div
+              className={`one-mo common second-one ${
+                selectedPlan === "three-mo" ? "selected" : ""
+              }`}
+              onClick={() => handlePlanSelect("three-mo", 7999)}
+            >
+              <div className="part-1">
+                <h2>3 Months Subscription</h2>
+                <p className="first-p">Unlimited AI Leads Capture</p>
+                <p>AI Business monitoring</p>
+                <p>AI Encryption & Authentication system</p>
+              </div>
+              <div className="part-2">
+                <div className="tag-2"></div>
+                <div className="prices">
+                  <p className="overline prices-p">₹ 24999</p>
+                  <p className="prices-p">62.50% OFF</p>
+                  <h3 className="prices-h3">₹ 7999</h3>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`six-mo common third-one ${
+                selectedPlan === "six-mo" ? "selected" : ""
+              }`}
+              onClick={() => handlePlanSelect("six-mo", 14999)}
+            >
+              <div className="part-1">
+                <h2>6 Months Subscription</h2>
+                <p className="first-p">Unlimited AI Leads Capture</p>
+                <p>AI Business monitoring</p>
+                <p>AI Encryption & Authentication system</p>
+              </div>
+              <div className="part-2">
+                <div className="tag-3"></div>
+                <div className="prices">
+                  <p className="overline prices-p">₹ 47999</p>
+                  <p className="prices-p">62.50% OFF</p>
+                  <h3 className="prices-h3">₹ 14999</h3>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`year-mo common fourth-one ${
+                selectedPlan === "year-mo" ? "selected" : ""
+              }`}
+              onClick={() => handlePlanSelect("year-mo", 29999)}
+            >
+              <div className="part-1">
+                <h2>Yearly Subscription</h2>
+                <p className="first-p">Unlimited AI Leads Capture</p>
+                <p>AI Business monitoring</p>
+                <p>AI Encryption & Authentication system</p>
+              </div>
+              <div className="part-2">
+                <div className="tag-4"></div>
+                <div className="prices">
+                  <p className="overline prices-p">₹ 95999</p>
+                  <p className="prices-p">62.50% OFF</p>
+                  <h3 className="prices-h3">₹ 29999</h3>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <button className="next-button" onClick={paymentHandler}>
-            Next
-          </button>
-
+          <button className="next-button" onClick={paymentHandler}>Next</button>
           <div className="end-block">
-            <p className="gback" onClick={() => navigate("/check-number")}>
+            <p className="gback" onClick={() => window.history.back()}>
               Go Back
             </p>
             <p className="logout-link">

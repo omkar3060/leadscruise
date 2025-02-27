@@ -58,21 +58,22 @@ exports.login = async (req, res) => {
 
     // Find user by email
     const user = await User.findOne({ email });
-    if (!user)
-      return res
-        .status(400)
-        .json({ message: "User not found. Please Signup!!!" });
+    if (!user) {
+      return res.status(400).json({ message: "User not found. Please Signup!!!" });
+    }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
+    if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials!" });
+    }
 
-    
-    // ✅ Generate JWT token
-    const token = jwt.sign({ email: user.email }, SECRET_KEY, {
-      expiresIn: "1h",
-    });
+    // ✅ Generate JWT token with role
+    const token = jwt.sign(
+      { email: user.email, role: user.role }, // Include role in JWT
+      SECRET_KEY,
+      { expiresIn: "1h" }
+    );
 
     // ✅ Handle first-time login
     if (user.firstTime) {
@@ -83,7 +84,11 @@ exports.login = async (req, res) => {
         message: "Welcome, first-time login!",
         firstTime: false,
         token,
-        user: { email: user.email, mobileNumber: user.mobileNumber },
+        user: {
+          email: user.email,
+          role: user.role, // Send role
+          mobileNumber: user.mobileNumber,
+        },
       });
     }
 
@@ -93,6 +98,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         email: user.email,
+        role: user.role, // Send role
         mobileNumber: user.mobileNumber,
         savedPassword: user.savedPassword,
       },
@@ -188,5 +194,55 @@ exports.updateSavedPassword = async (req, res) => {
   } catch (error) {
     console.error("Saved password update error:", error.message);
     res.status(500).json({ message: "Saved password update failed." });
+  }
+};
+
+exports.getStatus = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email });
+
+    if (!user) {
+      return res.json({ status: "Stopped", startTime: null });
+    }
+
+    res.json({
+      status: user.status || "Stopped",
+      startTime: user.startTime || null,
+    });
+  } catch (error) {
+    console.error("Error fetching user status:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ message: "Email and new password are required." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password in DB
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ message: "Server error. Try again later." });
   }
 };

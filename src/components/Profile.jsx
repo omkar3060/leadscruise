@@ -4,9 +4,12 @@ import styles from "./Profile.module.css"; // Importing module CSS
 import Sidebar from "./Sidebar";
 import ProfileCredentials from "./ProfileCredentials";
 import axios from "axios";
+import DashboardHeader from "./DashboardHeader";
+
 const Profile = () => {
   const navigate = useNavigate();
   const userEmail = localStorage.getItem("userEmail");
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
   const [subscriptionDetails, setSubscriptionDetails] = useState({
     renewal_date: "Loading...",
     status: "Loading...",
@@ -24,56 +27,47 @@ const Profile = () => {
   const [billingHistory, setBillingHistory] = useState([]);
   const [isEditing, setIsEditing] = useState(false); // Toggle edit mode
   const [daysLeft, setDaysLeft] = useState(null);
+  
   useEffect(() => {
-    const storedSubscription = localStorage.getItem("subscriptionDetails");
-    if (storedSubscription) {
-      setSubscriptionDetails(JSON.parse(storedSubscription));
-    }
-  }, []);
-
-  useEffect(() => {
-    const storedSubscription = localStorage.getItem("subscriptionDetails");
-    if (storedSubscription) {
-      const parsedSubscription = JSON.parse(storedSubscription);
-      setSubscriptionDetails(parsedSubscription);
-
-      // Calculate days left
-      const renewalDate = new Date(parsedSubscription.renewal_date);
-      const currentDate = new Date();
-      const timeDifference = renewalDate - currentDate;
-      const remainingDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
-      setDaysLeft(remainingDays);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Fetch billing history
-    const fetchBillingHistory = async () => {
+    // Combined data loading effect
+    const loadData = async () => {
+      setIsLoading(true); // Start loading
+      
       try {
-        const response = await fetch(`https://api.leadscruise.com/api/payments?email=${userEmail}`);
-        const data = await response.json();
-        setBillingHistory(data);
-      } catch (error) {
-        console.error("Error fetching billing history:", error);
-      }
-    };
+        // Load subscription details
+        const storedSubscription = localStorage.getItem("subscriptionDetails");
+        if (storedSubscription) {
+          const parsedSubscription = JSON.parse(storedSubscription);
+          setSubscriptionDetails(parsedSubscription);
 
-    // Fetch billing details
-    const fetchBillingDetails = async () => {
-      try {
-        const response = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
-        const result = await response.json();
-        if (result.success) {
-          setBillingDetails(result.data); // Set existing billing details
+          // Calculate days left
+          const renewalDate = new Date(parsedSubscription.renewal_date);
+          const currentDate = new Date();
+          const timeDifference = renewalDate - currentDate;
+          const remainingDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+          setDaysLeft(remainingDays);
+        }
+
+        // Fetch billing history
+        const historyResponse = await fetch(`https://api.leadscruise.com/api/payments?email=${userEmail}`);
+        const historyData = await historyResponse.json();
+        setBillingHistory(historyData);
+
+        // Fetch billing details
+        const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
+        const detailsResult = await detailsResponse.json();
+        if (detailsResult.success) {
+          setBillingDetails(detailsResult.data);
         }
       } catch (error) {
-        console.error("Error fetching billing details:", error);
+        console.error("Error loading profile data:", error);
+      } finally {
+        // Add a small delay to prevent flickering for fast loads
+        setTimeout(() => setIsLoading(false), 300);
       }
     };
 
-    fetchBillingHistory();
-    fetchBillingDetails();
+    loadData();
   }, [userEmail]);
 
   // Handle Input Changes
@@ -85,6 +79,8 @@ const Profile = () => {
   // Save Updated Billing Details
   const handleSave = async () => {
     try {
+      setIsLoading(true); // Show loading while saving
+      
       const response = await fetch("https://api.leadscruise.com/api/billing/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,11 +96,15 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error updating billing details:", error);
+    } finally {
+      setIsLoading(false); // Hide loading when done
     }
   };
 
   const handleDownloadInvoice = async (orderId) => {
     try {
+      setIsLoading(true); // Show loading while downloading
+      
       const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${orderId}`, {
         responseType: "blob", // Get binary data
       });
@@ -118,6 +118,8 @@ const Profile = () => {
     } catch (error) {
       console.error("Error downloading invoice:", error);
       alert("Invoice not found.");
+    } finally {
+      setIsLoading(false); // Hide loading when done
     }
   };
 
@@ -142,47 +144,31 @@ const Profile = () => {
     return start.toLocaleDateString();
   };
 
+  // Loading Screen Component
+  const LoadingScreen = () => (
+    <div className={styles["loading-overlay"]}>
+      <div className={styles["loading-container"]}>
+        <div className={styles["loading-spinner"]}></div>
+        <p className={styles["loading-text"]}>Loading your profile data...</p>
+        <div className={styles["loading-progress-dots"]}>
+          <div className={styles["loading-dot"]}></div>
+          <div className={styles["loading-dot"]}></div>
+          <div className={styles["loading-dot"]}></div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className={styles["profile-page-wrapper"]}>
+      {/* Show loading overlay when data is being fetched */}
+      {isLoading && <LoadingScreen />}
+      
       {/* Sidebar */}
       <Sidebar />
 
       {/* Fixed Dashboard Header */}
-      <header className={styles["dashboard-header"]}>
-        <div className={styles["header-content"]}>
-          <div className={styles["status-section"]}>
-            <div className={styles["status-label"]} onClick={() => navigate("/dashboard")}>
-              Return to Dashboard
-            </div>
-          </div>
-          <div className={styles["profile-section"]}>
-            <button
-              className={styles.subscriptionButton}
-              onClick={() => navigate("/plans")}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-            >
-              <div className={styles.buttonContent}>
-                <div className={styles.daysInfo}>
-                  <span className={styles.daysText}>
-                    {isHovering ? "Renew now" : (daysLeft !== null ? `${daysLeft} days left` : "Loading...")}
-                  </span>
-                </div>
-              </div>
-            </button>
-
-            <div>
-              <p className={styles["renewal-text"]}>
-                Subscription Status: {subscriptionDetails.status}
-              </p>
-              <p className={styles["renewal-text"]}>
-                Subscription next renewal date: {subscriptionDetails.renewal_date}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader />
 
       {/* Scrollable Profile Container */}
       <div className={styles["profile-scroll-container"]}>
@@ -296,9 +282,7 @@ const Profile = () => {
                   )}
                 </div>
               </div>
-
             </div>
-
           </div>
 
           {/* Right Section: Profile Credentials */}

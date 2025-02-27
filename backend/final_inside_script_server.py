@@ -15,18 +15,24 @@ import sys
 import json
 input_data = json.loads(sys.stdin.read())
 import requests
-
+lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
-    url = "https://api.leadscruise.com/api/store-lead"  # Backend API endpoint
+    global lead_bought  # Access the global variable
+    
+    url = "https://api.leadscruise.com/api/store-lead"
     data = {
         "name": name,
         "mobile": mobile,
-        "user_mobile_number": user_mobile_number  # Store the user's own mobile number
+        "user_mobile_number": user_mobile_number, 
+        "lead_bought": lead_bought if lead_bought else "Not Available"  # Provide default value
     }
     
     if email:
-        data["email"] = email  # Add email only if it's available
-
+        data["email"] = email
+    
+    # Print the data being sent for debugging
+    print(f"Sending data to dashboard: {data}", flush=True)
+    
     try:
         response = requests.post(url, json=data)
         if response.status_code == 200:
@@ -35,8 +41,6 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
             print(f"Failed to send data: {response.text}", flush=True)
     except Exception as e:
         print(f"Error sending data to backend: {e}", flush=True)
-
-
 
 def extend_word_array(word_array):
     """
@@ -172,6 +176,7 @@ def click_contact_buyer_now_button(driver, wait):
         return False  # Return False if an error occurred
     
 def redirect_and_refresh(driver, wait):
+    global lead_bought
     """
     Main function with updated functionality to set the zoom level and perform actions.
     """
@@ -232,7 +237,7 @@ def redirect_and_refresh(driver, wait):
                 print(f"Read data from span: {couplings_text}",flush=True)
 
                 # Check if the extracted text matches any word in the array
-                span_result = couplings_text in word_array
+                span_result = couplings_text.lower() in (word.lower() for word in word_array)
                 print(span_result)
 
             except Exception as e:
@@ -244,6 +249,7 @@ def redirect_and_refresh(driver, wait):
                 time.sleep(3)  # Static wait
                 first_h2 = driver.find_element(By.XPATH, "//h2")
                 first_h2_text = first_h2.text
+                lead_bought=first_h2_text
                 print(f"Read data from the first <h2>: {first_h2_text}",flush=True)
 
                 # Check if the extracted text matches any word in the h2_word_array

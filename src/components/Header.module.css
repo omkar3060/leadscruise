@@ -1,206 +1,708 @@
 /* Header */
 .dashboardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  background-color: white;
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-bottom: 10px;
-  border-radius: 8px;
-}
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    background-color: white;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 10px;
+    border-radius: 8px;
+  }
 
-.statusSection {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  /* Icons */
+.statusIcon {
+  font-size: 18px;
 }
+  .statusSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .startStopButtons {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .startButton,
+  .stopButton {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    width:17.5vh;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+  }
+  
+  .startButton {
+    background: #28a745;
+    color: white;
+  }
+  
+  .stopButton {
+    background: #dc3545;
+    color: white;
+  }
+  
+  .statusLabel {
+    background-color: #007bff;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 15px 20px;
+    border-radius: 5px;
+    text-align: center;
+    width: 36vh;
+    margin-top: 15px;
+    margin-bottom: 10px;
+  }
+  
+  .profileSection {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
+  .profileButton {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* margin-top: 15px; */
+    margin-bottom: 15px;
+    font-size: 16px;
+  }
+  
+  .renewalText {
+    font-size: 12px;
+    color: #555;
+    margin: 3px;
+  }
 
-.startStopButtons {
-  display: flex;
-  gap: 10px;
-}
-
-.startButton,
-.stopButton {
-  padding: 15px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  width: 20vh;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 10px;
-}
-
-.startButton {
-  background: #28a745;
-  color: white;
-}
-
-.stopButton {
-  background: #dc3545;
-  color: white;
-}
-
-.statusLabel {
-  background-color: #007bff;
-  color: #ffffff;
-  font-weight: bold;
-  padding: 15px 20px;
-  border-radius: 5px;
-  text-align: center;
-  width: 36vh;
-  margin-top: 15px;
-  margin-bottom: 10px;
-}
-
-.profileSection {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.profileButton {
-  padding: 15px 20px;
-  border: none;
-  border-radius: 8px;
-  background: #007bff;
-  color: white;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  /* margin-top: 15px; */
-  margin-bottom: 15px;
-  font-size: 16px;
-}
-
-.renewalText {
-  font-size: 12px;
-  color: #555;
-  margin: 3px;
-}
-
-/* Advanced Popup Styling */
+  /* Advanced Popup Styling */
 .popupOverlay {
-position: fixed;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background-color: rgba(0, 0, 0, 0.6);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 1000;
-backdrop-filter: blur(5px);
-animation: fadeIn 0.3s ease-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease-out;
 }
 
 .popupContent {
-background: linear-gradient(135deg, #ffffff, #f5f7fa);
-border-radius: 12px;
-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 1px 8px rgba(0, 0, 0, 0.15);
-padding: 30px;
-max-width: 460px;
-width: 90%;
-position: relative;
-animation: slideUp 0.4s ease-out;
-border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #ffffff, #f5f7fa);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 1px 8px rgba(0, 0, 0, 0.15);
+  padding: 30px;
+  max-width: 460px;
+  width: 90%;
+  position: relative;
+  animation: slideUp 0.4s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .popupContent h2 {
-margin-top: 0;
-color: #e74c3c;
-font-size: 22px;
-font-weight: 600;
-border-bottom: 1px solid #eee;
-padding-bottom: 12px;
-display: flex;
-align-items: center;
+  margin-top: 0;
+  color: #e74c3c;
+  font-size: 22px;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 12px;
+  display: flex;
+  align-items: center;
 }
 
 .popupContent h2::before {
-content: "⚠️";
-margin-right: 8px;
-font-size: 20px;
+  content: "⚠️";
+  margin-right: 8px;
+  font-size: 20px;
 }
 
 .popupContent p {
-color: #4a5568;
-line-height: 1.6;
-margin: 18px 0 25px;
-font-size: 16px;
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 18px 0 25px;
+  font-size: 16px;
 }
 
 .renewButton {
-background: linear-gradient(to right, #4a90e2, #5e6cea);
-color: white;
-border: none;
-padding: 12px 24px;
-border-radius: 6px;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.2s ease;
-box-shadow: 0 4px 8px rgba(94, 108, 234, 0.3);
+  background: linear-gradient(to right, #4a90e2, #5e6cea);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(94, 108, 234, 0.3);
 }
 
 .renewButton:hover {
-transform: translateY(-2px);
-box-shadow: 0 6px 12px rgba(94, 108, 234, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(94, 108, 234, 0.4);
 }
 
 .renewButton:active {
-transform: translateY(0);
-box-shadow: 0 2px 4px rgba(94, 108, 234, 0.2);
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(94, 108, 234, 0.2);
 }
 
 .closeButton {
-background: transparent;
-color: #718096;
-border: 1px solid #e2e8f0;
-padding: 12px 20px;
-border-radius: 6px;
-font-weight: 500;
-cursor: pointer;
-margin-left: 12px;
-transition: all 0.2s;
+  background: transparent;
+  color: #718096;
+  border: 1px solid #e2e8f0;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 12px;
+  transition: all 0.2s;
 }
 
 .closeButton:hover {
-background-color: #f7fafc;
-color: #4a5568;
+  background-color: #f7fafc;
+  color: #4a5568;
 }
 
 /* Animation keyframes */
 @keyframes fadeIn {
-from { opacity: 0; }
-to { opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-from {
-  opacity: 0;
-  transform: translateY(30px);
-}
-to {
-  opacity: 1;
-  transform: translateY(0);
-}
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
-.popupContent {
-  padding: 20px;
-  width: 85%;
+  .popupContent {
+    padding: 20px;
+    width: 85%;
+  }
+  
+  .renewButton, .closeButton {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+  }
 }
 
-.renewButton, .closeButton {
-  display: block;
-  width: 100%;
-  margin: 10px 0;
+@media (max-width: 768px) {
+  .buttonText, .statusText {
+      display: none;
+  }
+
+  .startButton, .stopButton, .profileButton {
+      width: 40px;
+      height: 40px;
+      justify-content: center;
+      min-width: unset;
+      padding: 10px;
+  }
+
+  .statusLabel {
+      width: fit-content;
+      justify-content: center;
+      padding: 10px;
+  }
+
+  .iconOnly {
+    font-size: 18px; /* Ensure icons remain visible */
+    display: block; /* Explicitly show icons */
 }
+}
+
+@media (max-width: 768px) {
+
+  .dashboardHeader {
+      flex-wrap: wrap;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      width: 98vw;
+  }
+
+  .statusSection {
+      flex-direction: column;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+  }
+
+  .startStopButtons {
+    display: flex;
+    flex-direction: row; /* Ensure buttons stay in one line */
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+  .statusLabel {
+      width: auto;
+      text-align: center;
+  }
+
+  .profileButtonGroup {
+    display: flex;
+    flex-direction: row; /* Align items horizontally */
+    align-items: center;
+    justify-content: flex-end; /* Push buttons to the right */
+    gap: 8px; /* Add space between buttons */
+    margin-top: 10px;
+  }
+
+  .subscriptionButton {
+    width: fit-content; /* Reduce width for smaller screens */
+    font-size: 14px !important; /* Reduce font size */
+    padding: 10px !important; /* Adjust padding */
+    height: 40px !important; /* Reduce button height */
+    margin-top:0px !important;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .dashboardHeader {
+      flex-wrap: wrap;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      width: 95vw;
+  }
+
+  .statusSection {
+      flex-direction: column;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+  }
+
+  .startStopButtons {
+    display: flex;
+    flex-direction: row; /* Ensure buttons stay in one line */
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+  .statusLabel {
+      width: auto;
+      text-align: center;
+  }
+
+  .profileSection {
+      align-items: flex-end; /* Keep profile section aligned to the right */
+  }
+
+  .renewalText {
+    font-size: 8px;
+    color: #555;
+    margin: 3px;
+  }
+}
+
+/* Profile Dropdown Styles - Only visible on small screens */
+.profileDropdown {
+  display: none;
+  position: absolute;
+  top: 60px;
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownHeader {
+  background-color: #f0f0f0;
+  padding: 12px 16px;
+  border-bottom: 1px solid #ddd;
+  font-weight: bold;
+  color: #333;
+}
+
+.profileDropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.profileDropdown li {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  color: #444;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.profileDropdown li:hover {
+  background-color: #f5f5f5;
+  color: #007bff;
+}
+
+.profileDropdown li svg {
+  margin-right: 10px;
+  width: 16px;
+  height: 16px;
+  color: #666;
+}
+
+.profileDropdown li:hover svg {
+  color: #007bff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .popupContent {
+    padding: 20px;
+    width: 85%;
+  }
+
+}
+
+@media (max-width: 768px) {
+  .dashboardHeader {
+      flex-wrap: wrap;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      width: 98vw;
+  }
+
+  .statusSection {
+      flex-direction: column;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+  }
+
+  .startStopButtons {
+    display: flex;
+    flex-direction: row; /* Ensure buttons stay in one line */
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .statusLabel {
+      width: auto;
+      text-align: center;
+  }
+
+  .profileSection {
+      align-items: flex-end; /* Keep profile section aligned to the right */
+  }
+}
+
+@media (max-width: 768px) {
+  /* Show profile dropdown on small screens only */
+  .profileDropdown {
+    display: block;
+  }
+  
+}
+
+.subscriptionButton {
+  position: relative;
+  background:#007bff;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  min-width: 160px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.subscriptionButton:hover {
+  background: linear-gradient(135deg, #2c6cbe, #122e5d);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.subscriptionButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+.buttonContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.daysInfo {
+  text-align: center;
+  position: relative;
+}
+
+.daysText {
+  position: relative;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+/* For low days remaining */
+.subscriptionButton[data-days-left="5"] .daysText,
+.subscriptionButton[data-days-left="4"] .daysText,
+.subscriptionButton[data-days-left="3"] .daysText,
+.subscriptionButton[data-days-left="2"] .daysText,
+.subscriptionButton[data-days-left="1"] .daysText {
+  color: #ffcc00;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Optional: Add a glow effect on hover */
+.subscriptionButton:hover::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  pointer-events: none;
+}
+
+.supportItem {
+  color: #6a8fe6 !important;
+  font-weight: 500;
+}
+
+.supportItem:hover {
+  background-color: rgba(106, 143, 230, 0.1) !important;
+}
+
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+  animation: fadeIn 0.3s ease;
+}
+
+.popupContent {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease;
+}
+
+.popupHeader {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popupHeader h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+  font-weight: 600;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.closeButton:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.popupBody {
+  padding: 20px;
+}
+
+.popupBody p {
+  color: #666;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.contactButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.emailButton, .whatsappButton {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  color: white;
+  margin-bottom: 0;
+}
+
+.emailButton {
+  background: #6a8fe6;
+}
+
+.emailButton:hover {
+  background: #5474c7;
+  transform: translateY(-1px);
+}
+
+.whatsappButton {
+  background: #25D366;
+}
+
+.whatsappButton:hover {
+  background: #128C7E;
+  transform: translateY(-1px);
+}
+
+.mailIcon, .whatsappIcon {
+  transition: transform 0.3s ease;
+}
+
+.emailButton:hover .mailIcon,
+.whatsappButton:hover .whatsappIcon {
+  transform: scale(1.1);
+}
+
+.responseTime {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  margin-top: 15px;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .popupContent {
+    width: 95%;
+    margin: 10px;
+  }
+
+  .popupHeader {
+    padding: 15px;
+  }
+
+  .popupBody {
+    padding: 15px;
+  }
+
+  .emailButton, .whatsappButton {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .closeButton {
+    width: 28px;
+    height: 28px;
+  }
 }

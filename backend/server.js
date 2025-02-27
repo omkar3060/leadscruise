@@ -10,6 +10,7 @@ const bcrypt = require("bcrypt");
 const settingsRoutes = require("./routes/settingsRoutes");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const fs = require("fs");
 const Payment = require("./models/Payment");
 const paymentRoutes = require("./routes/paymentRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
@@ -28,8 +29,6 @@ mongoose
   .catch((error) => console.error("MongoDB connection error:", error));
 
 //RazorPay handlers
-
-
 
 app.post("/order", async (req, res) => {
   try {
@@ -251,6 +250,8 @@ const UserLeadCounter = mongoose.model("UserLeadCounter", userLeadCounterSchema)
 
 app.post("/api/update-max-captures", async (req, res) => {
   try {
+    console.log("Received Data:", req.body); // Debugging
+    
     const { user_mobile_number, maxCaptures } = req.body;
 
     if (!user_mobile_number || maxCaptures < 1) {
@@ -260,29 +261,31 @@ app.post("/api/update-max-captures", async (req, res) => {
     const user = await UserLeadCounter.findOne({ user_mobile_number });
 
     if (user) {
-      // Check if 24 hours have passed since last update
-      const lastUpdated = user.lastUpdatedMaxCaptures;
+      // Ensure lastUpdated is a valid Date
+      const lastUpdated = user.lastUpdatedMaxCaptures ? new Date(user.lastUpdatedMaxCaptures) : null;
       const now = new Date();
+
       if (lastUpdated && now - lastUpdated < 24 * 60 * 60 * 1000) {
         return res.status(403).json({
           message: "You can update Max Captures only once every 24 hours.",
         });
       }
 
-      // Update maxCaptures and lastUpdatedMaxCaptures timestamp
       user.maxCaptures = maxCaptures;
       user.lastUpdatedMaxCaptures = now;
-      await user.save();
+      user.markModified("maxCaptures");
+      await user.save({ validateBeforeSave: false }); // Force update
 
+      console.log("Updated User:", user); // Debugging
       return res.json({ message: "Max captures updated successfully", user });
     } else {
-      // Create a new user record if not found
       const newUser = new UserLeadCounter({
         user_mobile_number,
         maxCaptures,
         lastUpdatedMaxCaptures: new Date(),
       });
       await newUser.save();
+      console.log("New User Created:", newUser); // Debugging
 
       return res.json({ message: "Max captures set successfully", user: newUser });
     }
@@ -291,6 +294,7 @@ app.post("/api/update-max-captures", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 app.get("/api/get-max-captures", async (req, res) => {
   try {
@@ -302,7 +306,7 @@ app.get("/api/get-max-captures", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ 
+    res.json({
       maxCaptures: user.maxCaptures,
       lastUpdatedMaxCaptures: user.lastUpdatedMaxCaptures
     });
@@ -313,11 +317,10 @@ app.get("/api/get-max-captures", async (req, res) => {
 });
 
 const cron = require("node-cron");
-
 async function resetLeadCounters() {
   try {
     console.log("Checking if lead counters need reset...");
-    
+
     // Get the last reset time from one document
     const lastResetEntry = await UserLeadCounter.findOne({}, "lastReset");
 
@@ -341,7 +344,6 @@ async function resetLeadCounters() {
   }
 }
 
-// Run on server startup
 resetLeadCounters();
 
 // Schedule cron job to run every day at 7 AM
@@ -351,13 +353,11 @@ const activePythonProcesses = new Map(); // Store active processes by user_mobil
 
 app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
-  let { sentences, wordArray, h2WordArray, mobileNumber, password, uniqueId } = req.body;
+  let { sentences, wordArray, h2WordArray, mobileNumber, password, uniqueId, userEmail } = req.body;
 
   if (!req.body || Object.keys(req.body).length === 0) {
     return res.status(400).json({ status: "error", message: "Empty request body. Ensure the request has a JSON payload." });
   }
-
-  console.log("Received data for /api/cycle:", req.body);
 
   if (!Array.isArray(sentences) || !Array.isArray(wordArray) || !Array.isArray(h2WordArray)) {
     return res.status(400).json({
@@ -366,12 +366,22 @@ app.post("/api/cycle", async (req, res) => {
     });
   }
 
-  if (!mobileNumber || !password) {
+  if (!mobileNumber || !password || !userEmail || !uniqueId) {
     return res.status(400).json({
       status: "error",
-      message: "Mobile number and password are required.",
+      message: "Mobile number, Email, password, and uniqueId are required.",
     });
   }
+
+  // Get current time
+  const startTime = new Date();
+
+  // Update user status to "Running" and store the start time
+  await User.findOneAndUpdate(
+    { email: userEmail },
+    { status: "Running", startTime },
+    { new: true, upsert: true }
+  );
 
   let userCounter = await UserLeadCounter.findOne({ user_mobile_number: mobileNumber });
 
@@ -384,7 +394,6 @@ app.post("/api/cycle", async (req, res) => {
     return res.status(403).json({ status: "error", message: "Lead limit reached. Cannot capture more leads today." });
   }
 
-  // Prepare data for Python script
   const inputData = JSON.stringify({
     sentences,
     wordArray,
@@ -398,8 +407,8 @@ app.post("/api/cycle", async (req, res) => {
 
   const pythonProcess = spawn("python3", ["final_inside_script_server.py"]);
 
-  // Store the Python process reference
-  activePythonProcesses.set(mobileNumber, pythonProcess);
+  // Store the Python process reference using `uniqueId`
+  activePythonProcesses.set(uniqueId, pythonProcess);
 
   console.log("Sending data to Python script:", inputData);
   pythonProcess.stdin.write(inputData + "\n");
@@ -425,17 +434,28 @@ app.post("/api/cycle", async (req, res) => {
     if (updatedUserCounter.leadCount >= updatedUserCounter.maxCaptures) {
       console.log("Lead limit exceeded! Killing Python script...");
       pythonProcess.kill("SIGTERM"); // Kill the script
-      activePythonProcesses.delete(mobileNumber);
+      activePythonProcesses.delete(uniqueId);
       clearInterval(leadCheckInterval);
+      cleanupDisplay(uniqueId); // Cleanup display lock file
       res.status(403).json({ status: "error", message: "Lead limit reached. Cannot capture more leads today." });
     }
   }, 3000); // Check every 3 seconds
 
-  pythonProcess.on("close", (code) => {
+  pythonProcess.on("close", async (code) => {
     clearInterval(leadCheckInterval); // Stop checking when script completes
-    activePythonProcesses.delete(mobileNumber); // Remove from tracking
+    activePythonProcesses.delete(uniqueId); // Remove from tracking
 
     console.log(`Python script exited with code: ${code}`);
+
+    // Cleanup display lock file
+    cleanupDisplay(uniqueId);
+
+    // Reset user status and remove startTime when the script stops
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      { status: "Stopped", startTime: null },
+      { new: true }
+    );
 
     if (code === 0) {
       res.json({ status: "success", message: result.trim() });
@@ -448,12 +468,72 @@ app.post("/api/cycle", async (req, res) => {
   });
 });
 
+// API to stop the script
+app.post("/api/stop", async (req, res) => {
+  const { userEmail, uniqueId } = req.body;
+  if (!uniqueId || !userEmail) {
+    return res.status(400).json({ status: "error", message: "uniqueId and Email are required." });
+  }
+
+  const user = await User.findOne({ email: userEmail });
+  if (!user || !user.startTime) {
+    return res.status(404).json({ status: "error", message: "No running process found for this user." });
+  }
+
+  const startTime = new Date(user.startTime);
+  const currentTime = new Date();
+  const elapsedTime = Math.floor((currentTime - startTime) / 1000); // in seconds
+
+  if (elapsedTime < 300) { // Less than 5 minutes
+    return res.status(403).json({
+      status: "error",
+      message: `Please wait at least ${Math.ceil((300 - elapsedTime) / 60)} more minutes before stopping.`,
+    });
+  }
+
+  const pythonProcess = activePythonProcesses.get(uniqueId);
+  if (pythonProcess) {
+    console.log("Stopping Python script...");
+    pythonProcess.kill("SIGTERM");
+    activePythonProcesses.delete(uniqueId);
+    cleanupDisplay(uniqueId); // Cleanup display lock file
+  }
+
+  // Reset user status and startTime in DB
+  await User.findOneAndUpdate(
+    { email: userEmail },
+    { status: "Stopped", startTime: null },
+    { new: true }
+  );
+
+  res.json({ status: "success", message: "Script stopped successfully after 5 minutes." });
+});
+
+/**
+ * Cleanup function to remove /tmp/.X<DISPLAY>-lock
+ * based on the uniqueId's assigned display number.
+ */
+function cleanupDisplay(uniqueId) {
+  const displayNumber = `X${uniqueId}`; // Assuming `uniqueId` is mapped to display number
+  const lockFilePath = `/tmp/.${displayNumber}-lock`;
+
+  if (fs.existsSync(lockFilePath)) {
+    try {
+      fs.unlinkSync(lockFilePath);
+      console.log(`Removed display lock file: ${lockFilePath}`);
+    } catch (err) {
+      console.error(`Failed to remove ${lockFilePath}:`, err);
+    }
+  }
+}
+
 // Define Schema
 const leadSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String },
   mobile: { type: String, required: true },
   user_mobile_number: { type: String, required: true },
+  lead_bought: { type: String },
   createdAt: { type: Date, default: Date.now } // Store the current date
 });
 
@@ -462,9 +542,9 @@ const Lead = mongoose.model("Lead", leadSchema);
 // Endpoint to receive lead data from Selenium script and store in DB
 app.post("/api/store-lead", async (req, res) => {
   try {
-    const { name, email, mobile, user_mobile_number } = req.body;
+    const { name, email, mobile, user_mobile_number, lead_bought } = req.body;
 
-    if (!name || !mobile || !user_mobile_number) {
+    if (!name || !mobile || !user_mobile_number || !lead_bought) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -482,7 +562,7 @@ app.post("/api/store-lead", async (req, res) => {
     }
 
     // Store the new lead
-    const newLead = new Lead({ name, email, mobile, user_mobile_number, createdAt: new Date() });
+    const newLead = new Lead({ name, email, mobile, user_mobile_number, lead_bought, createdAt: new Date() });
     await newLead.save();
 
     // Increment lead count
@@ -531,9 +611,7 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
   }
 });
 
-app.get("/hi/good",(req,res)=>{
-  res.status(200).json({message: "hi"});
-})
 
-const PORT = process.env.PORT || 5000;
+
+const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

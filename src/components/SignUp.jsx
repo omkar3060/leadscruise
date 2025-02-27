@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -19,6 +18,12 @@ const SignUp = () => {
   const [confPassword, setConfPassword] = useState("");
   const navigate = useNavigate();
   const [selected, setSelected] = useState(0);
+  const [isChecked, setIsChecked] = useState(false);
+  const [error, setError] = useState("");
+  const [showError, setShowError] = useState(false);
+
+  const strongPasswordRegex =
+    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -29,6 +34,11 @@ const SignUp = () => {
   }, []);
 
   const handleSignUp = async () => {
+    if (error) {
+      setShowError(true);
+      return;
+    }
+
     try {
       const res = await axios.post("https://api.leadscruise.com/api/signup", {
         refId,
@@ -45,6 +55,21 @@ const SignUp = () => {
     }
   };
 
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+
+    if (!strongPasswordRegex.test(newPassword)) {
+      setShowError(true);
+      setError(
+        "Password must contain at least 8 characters, an uppercase letter, a lowercase letter, a number, and a special character."
+      );
+    } else {
+      setError("");
+      setShowError(false);
+    }
+  };
+
   return (
     <div className="signin-container">
       <div className="center-div">
@@ -52,6 +77,7 @@ const SignUp = () => {
           <div className="signin-logo-class">
             <img
               src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
+              className="logo-img"
               alt="zohologo"
             />
             <div className="smart-scan" onClick={() => navigate("/")}>
@@ -84,9 +110,11 @@ const SignUp = () => {
               type="password"
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               name="password"
               autoComplete="current-password"
+              onFocus={() => setShowError(true)}
+              onBlur={() => setShowError(false)}
             />
             <input
               className="password"
@@ -95,14 +123,48 @@ const SignUp = () => {
               value={confPassword}
               onChange={(e) => setConfPassword(e.target.value)}
             />
+            {showError && error && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: "0",
+                  background: "#ffdddd",
+                  color: "#d9534f",
+                  padding: "8px",
+                  fontSize: "12px",
+                  marginTop: "5px",
+                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.2)",
+                }}
+              >
+                {error}
+              </div>
+            )}
           </div>
+
           <input
             type="text"
             placeholder="Refferal ID"
             value={refId}
             onChange={(e) => setRefId(e.target.value)}
           />
-          <button onClick={handleSignUp} style={{ marginBottom: "40px" }}>
+          <div className="terms-div">
+            <input
+              type="checkbox"
+              id="remember"
+              name="remember"
+              checked={isChecked}
+              onChange={(e) => setIsChecked(e.target.checked)}
+            />
+            <p className="agree">
+              I agree to <span>Terms & Conditions</span>.
+            </p>
+          </div>
+          <button
+            onClick={handleSignUp}
+            className={`signup-btn ${!isChecked ? "dimmed" : ""}`}
+            disabled={!isChecked}
+          >
             Sign Up
           </button>
           <div className="pri-cont">

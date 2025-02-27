@@ -8,6 +8,7 @@ const {
   update,
   updateSavedPassword,
   checkemail,
+  getStatus,updatePassword
 } = require("../controllers/authController");
 const Payment = require("../models/Payment");
 
@@ -29,6 +30,8 @@ router.post("/login", login);
 router.post("/reset-password", update);
 router.post("/update-saved-password", updateSavedPassword);
 router.post("/check-email", checkemail);
+router.get("/get-status/:email", getStatus);
+router.post("/update-password", updatePassword);
 
 router.get("/get-latest-id", async (req, res) => {
   try {
@@ -57,7 +60,7 @@ router.post("/send-reset-email", async (req, res) => {
     });
 
     // Create your custom reset link
-    const resetLink = `http://147.93.27.142:3000/reset-password?token=${resetToken}&email=${encodeURIComponent(
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}&email=${encodeURIComponent(
       email
     )}`;
 
@@ -85,29 +88,4 @@ router.post("/send-reset-email", async (req, res) => {
   }
 });
 
-// router.post("/reset-password", async (req, res) => {
-//   const { token, newPassword, email } = req.body;
-
-//   // const tokenData = resetTokens.get(token);
-//   // if (!tokenData || tokenData.expires < Date.now()) {
-//   //   return res.status(400).json({
-//   //     success: false,
-//   //     message: "Invalid or expired reset token",
-//   //   });
-//   // }
-
-//   try {
-//     // Update password in your database here
-//     const user = await User.findOne({ email });
-//     user.password = newPassword;
-//     await user.save();
-
-//     // // Remove used token
-//     // resetTokens.delete(token);
-
-//     res.json({ success: true });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// });
 module.exports = router;

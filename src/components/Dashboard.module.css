@@ -1,12 +1,13 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 /* Dashboard Container */
 .dashboardContainer {
   display: flex;
   height: 100vh;
-  background-image: url('https://static.zohocdn.com/iam/v2/components/images/bg.49756b7c711696d95133fa95451f8e13.svg');
-  background-size: cover; /* Ensures the image covers the entire area */
-  background-position: center; /* Centers the image */
-  background-repeat: no-repeat; /* Prevents repeating */
-  background-attachment: fixed; /* Keeps the background fixed while scrolling */
+  width: 100vw;
 }
 
 /* Main Content */
@@ -14,26 +15,25 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-top: 5px;
-  margin-left: 50px;
+  padding: 10px;
+  margin-left: 65px; /* Remove margin */
 }
 
-/* Metrics Section */
+/* Metrics Section - Responsive Grid */
 .metricsSection {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Dynamic grid */
   gap: 10px;
   margin-bottom: 20px;
 }
 
+/* Individual Metric Box */
 .metricBox {
   background: #f9f9f9;
   border-radius: 8px;
   text-align: center;
-  padding: 20px;
-  font-size: 24px;
+  padding: 15px;
+  font-size: 20px;
   font-weight: bold;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   color: #333;
@@ -41,6 +41,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-width: 150px;
 }
 
 .metricBox span {
@@ -49,20 +50,24 @@
   color: #666;
 }
 
+/* Leads Section */
 .leadsSection {
   border-radius: 8px;
-  overflow: hidden;
-  height: 400px; /* Fixed height to ensure internal scrolling */
+  max-height: 400px; /* Prevents unwanted shrinking */
   display: flex;
   flex-direction: column;
 }
 
+/* Table Wrapper */
 .tableWrapper {
-  overflow-y: auto; /* Enables vertical scrolling */
-  max-height: 340px; /* Leaves space for the header */
+  overflow-y: auto;
+  overflow-x: auto; /* Allows horizontal scrolling if needed */
   z-index: 0;
+
+
 }
 
+/* Table Header */
 .tableHeader {
   background: #007bff;
   color: white;
@@ -71,14 +76,17 @@
   font-weight: bold;
   position: sticky;
   top: 0;
-  z-index: 0; /* Ensures the header stays visible */
+  z-index: 0;
 }
 
+/* Leads Table */
 .leadsTable {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px; /* Prevents column shrink on small screens */
 }
 
+/* Table Cells */
 .leadsTable th,
 .leadsTable td {
   border: 1px solid #ddd;
@@ -87,6 +95,7 @@
   font-size: 14px;
 }
 
+/* Sticky Header */
 .leadsTable th {
   background: #f1f1f1;
   font-weight: bold;
@@ -101,4 +110,225 @@
 
 .leadsTable tr:hover {
   background: #f9f9f9;
+}
+
+/* ✅ Responsive Fixes for Small Screens */
+@media (max-width: 1024px) {
+  .dashboardContainer {
+    flex-direction: column; /* Stack items vertically */
+    align-items: center;
+    max-width: 100%;
+    height: calc(100vh - 20px);
+  }
+
+  .dashboardContent {
+    margin-left: 65px;
+    padding: 10px;
+  }
+
+  .metricsSection {
+    grid-template-columns: repeat(4, minmax(120px, 1fr)); /* Adjust columns */
+  }
+}
+
+@media (max-width: 768px) {
+
+  .dashboardContent {
+    margin-left: 0px;
+    padding: 10px;
+  }
+
+  .metricsSection {
+    grid-template-columns: repeat(3, minmax(100px, 1fr)); /* Smaller boxes */
+  }
+
+  /* Make Table Scrollable */
+  .tableWrapper {
+    overflow-x: auto; /* Horizontal scroll for small screens */
+  }
+
+  .leadsTable {
+    min-width: 600px; /* Prevents column collapse */
+  }
+}
+
+@media (max-width: 480px) {
+
+  .metricBox {
+    font-size: 18px;
+    padding: 10px;
+  }
+
+  .tableHeader {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .leadsSection{
+    width: 100%;
+    
+  }
+  
+  .leadsTable th,
+  .leadsTable td {
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .metricsSection {
+    grid-template-columns: repeat(2,1fr); /* Single column for small screens */
+    
+  }
+
+  .dashboardContainer {
+    flex-direction: column; /* Stack sidebar and content */
+  }
+
+  .dashboardContent {
+    width: 100%;
+  }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.loading-container {
+  background-color: white;
+  padding: 30px 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 90%;
+  width: 320px;
+  animation: container-fade 0.4s ease-out;
+  border: 1px solid #e0e0e0;
+}
+
+@keyframes container-fade {
+  0% {
+    opacity: 1;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #6ea8fe;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: 500;
+  position: relative;
+  display: inline-block;
+}
+
+.loading-text:after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #6ea8fe, transparent);
+  animation: underline-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes underline-pulse {
+  0%, 100% { 
+    opacity: 0.3;
+    width: 70%; 
+    left: 15%;
+  }
+  50% { 
+    opacity: 1;
+    width: 100%;
+    left: 0;
+  }
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 480px) {
+  .loading-container {
+    padding: 20px;
+    width: 85%;
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+  }
+  
+  .loading-text {
+    font-size: 14px;
+  }
+}
+
+/* Loading progress indicators - optional enhancement */
+.loading-progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 15px;
+}
+
+.loading-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #6ea8fe;
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+.loading-dot:nth-child(1) {
+  animation: dot-pulse 1.5s infinite ease-in-out;
+}
+
+.loading-dot:nth-child(2) {
+  animation: dot-pulse 1.5s infinite ease-in-out 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation: dot-pulse 1.5s infinite ease-in-out 0.4s;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% { 
+    transform: scale(1.5);
+    opacity: 1;
+  }
 }
