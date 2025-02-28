@@ -295,7 +295,6 @@ app.post("/api/update-max-captures", async (req, res) => {
   }
 });
 
-
 app.get("/api/get-max-captures", async (req, res) => {
   try {
     const { user_mobile_number } = req.query;

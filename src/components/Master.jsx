@@ -3,6 +3,7 @@ import axios from "axios";
 import Sidebar from "./Sidebar";
 import masterstyles from "./Master.module.css"; // Import CSS module
 import BillingModal from "./BillingModal";
+import * as XLSX from "xlsx";
 
 const Master = () => {
   const [isDisabled, setIsDisabled] = useState(false);
@@ -30,7 +31,7 @@ const Master = () => {
 
   const fetchSubscriptionMetrics = async () => {
     try {
-      const response = await axios.get("https://api.leadscruise.com/api/get-subscription-metrics");
+      const response = await axios.get("http://localhost:5000/api/get-subscription-metrics");
       setSubscriptionMetrics(response.data);
     } catch (error) {
       console.error("Error fetching subscription metrics:", error);
@@ -39,12 +40,37 @@ const Master = () => {
 
   const fetchSubscriptions = async () => {
     try {
-      const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions");
+      const response = await axios.get("http://localhost:5000/api/get-all-subscriptions");
       setSubscriptions(response.data);
       fetchUploadedInvoices(response.data);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
     }
+  };
+
+  const handleDownloadExcel = () => {
+    if (subscriptions.length === 0) {
+      alert("No data available to download.");
+      return;
+    }
+
+    const formattedData = subscriptions.map((sub) => ({
+      "Email": sub.email,
+      "Contact": sub.contact,
+      "Subscription Type": sub.subscription_type,
+      "Order ID": sub.unique_id,
+      "Order Amount (₹)": sub.order_amount / 100,
+      "Subscription Start": new Date(sub.created_at).toLocaleDateString(),
+      "Days Remaining": calculateRemainingDays(sub.created_at, sub.subscription_type),
+      "Reference ID": sub.refId || "N/A",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Subscriptions");
+
+    // Generate XLSX and trigger download
+    XLSX.writeFile(workbook, "Subscriptions.xlsx");
   };
 
   const calculatePendingBilling = (subs, invoiceStatus) => {
@@ -61,7 +87,7 @@ const Master = () => {
       await Promise.all(
         subs.map(async (sub) => {
           try {
-            const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${sub.unique_id}`, {
+            const response = await axios.get(`http://localhost:5000/api/get-invoice/${sub.unique_id}`, {
               responseType: "blob", // This is necessary to handle binary PDF data
             });
 
@@ -167,10 +193,17 @@ const Master = () => {
 
         {/* Subscriptions Table */}
         <div className={masterstyles.leadsSection}>
-          <div className={masterstyles.tableHeader}>Active Subscriptions</div>
+          <div className={masterstyles.tableHeader}><span>Active Subscriptions</span>
+            <button
+              className={masterstyles.downloadExcelButton}
+              onClick={handleDownloadExcel}
+            >
+              📥 Download as Excel
+            </button>
+          </div>
           <div className={masterstyles.tableWrapper}>
             <table className={masterstyles.leadsTable}>
-            <thead>
+              <thead>
                 <tr>
                   {[
                     { label: "Email", key: "email" },
@@ -180,6 +213,7 @@ const Master = () => {
                     { label: "Order Amount", key: "order_amount" },
                     { label: "Subscription Start", key: "created_at" },
                     { label: "Days Remaining", key: "days_remaining" },
+                    { label: "Reference Id", key: "refId" },
                   ].map(({ label, key }) => (
                     <th key={key} onClick={() => handleSort(key)} style={{ cursor: "pointer" }}>
                       {label} {sortConfig.key === key ? (sortConfig.direction === "asc" ? "▲" : "▼") : ""}
@@ -197,9 +231,10 @@ const Master = () => {
                       <td>{sub.subscription_type}</td>
                       <td>{sub.unique_id}</td>
                       <td>₹{sub.order_amount / 100}</td>
+
                       <td>{new Date(sub.created_at).toLocaleDateString()}</td>
                       <td>{calculateRemainingDays(sub.created_at, sub.subscription_type)}</td>
-
+                      <td>{sub.refId}</td>
                       <td>
                         {uploadedInvoices[sub.unique_id] !== undefined ? (
                           uploadedInvoices[sub.unique_id] ? (

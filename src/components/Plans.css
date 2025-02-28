@@ -2,15 +2,10 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  height: 360px;
+  height:420px;
   overflow-y: auto;
-  gap: 15px;
+  gap: 5px;
 }
-
-.signin-left .plan-div {
-  margin-bottom: 10px;
-}
-
 .signin-left .plans .common {
   display: flex;
   background-color: #f2f2f2;

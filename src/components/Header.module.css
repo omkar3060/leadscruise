@@ -706,3 +706,42 @@
     height: 28px;
   }
 }
+
+.disabledButton {
+  opacity: 0.6; /* Reduce opacity */
+  cursor: not-allowed; /* Show "not allowed" cursor */
+  pointer-events: none; /* Disable interactions */
+  background-color: #d3d3d3 !important; /* Gray out the button */
+  color: #888 !important; /* Change text color to gray */
+  border: 1px solid #ccc !important; /* Light gray border */
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip Text */
+.tooltip::after {
+  content: attr(data-tooltip);
+  visibility: hidden;
+  opacity: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  text-align: center;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+/* Show Tooltip on Hover */
+.tooltip:hover::after {
+  visibility: visible;
+  opacity: 1;
+}

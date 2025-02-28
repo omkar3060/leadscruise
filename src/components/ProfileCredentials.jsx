@@ -38,7 +38,7 @@ const ProfileCredentials = ({isProfilePage}) => {
     try {
       const userMobileNumber = localStorage.getItem("mobileNumber");
       console.log("userMobileNumber", userMobileNumber);
-      const response = await axios.post("https://api.leadscruise.com/api/update-max-captures", {
+      const response = await axios.post("http://localhost:5000/api/update-max-captures", {
         user_mobile_number: userMobileNumber,
         maxCaptures: tempCaptures,
       });
@@ -60,7 +60,7 @@ const ProfileCredentials = ({isProfilePage}) => {
     const fetchMaxCaptures = async () => {
       try {
         const userMobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`https://api.leadscruise.com/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
+        const response = await axios.get(`http://localhost:5000/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
   
         if (response.data) {
           setMaxCaptures(response.data.maxCaptures);
@@ -90,7 +90,7 @@ const ProfileCredentials = ({isProfilePage}) => {
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-password", {
+      const response = await axios.post("http://localhost:5000/api/update-password", {
         email: localStorage.getItem("userEmail"),
         newPassword,
       });
@@ -109,7 +109,7 @@ const ProfileCredentials = ({isProfilePage}) => {
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-saved-password", {
+      const response = await axios.post("http://localhost:5000/api/update-saved-password", {
         email: localStorage.getItem("userEmail"),
         newPassword,
       });

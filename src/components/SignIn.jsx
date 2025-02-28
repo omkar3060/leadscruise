@@ -289,7 +289,7 @@ const SignIn = () => {
 
   const handleSignIn = async () => {
     try {
-      const res = await axios.post("https://api.leadscruise.com/api/login", {
+      const res = await axios.post("http://localhost:5000/api/login", {
         email,
         password,
       });
@@ -304,7 +304,7 @@ const SignIn = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.user.role);
       // Check if a payment exists for the user
-      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
 
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         // If payment exists but mobileNumber and savedPassword are missing, redirect to execute-task
@@ -344,7 +344,7 @@ const SignIn = () => {
     }
 
     try {
-      const response = await fetch("https://api.leadscruise.com/api/check-email", {
+      const response = await fetch("http://localhost:5000/api/check-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -359,7 +359,7 @@ const SignIn = () => {
       }
 
       const resetResponse = await fetch(
-        "https://api.leadscruise.com/api/send-reset-email",
+        "http://localhost:5000/api/send-reset-email",
         {
           method: "POST",
           headers: {

@@ -23,7 +23,7 @@ const Profile = () => {
     name: "",
     address: "",
   });
-
+  const status = localStorage.getItem("status");
   const [billingHistory, setBillingHistory] = useState([]);
   const [isEditing, setIsEditing] = useState(false); // Toggle edit mode
   const [daysLeft, setDaysLeft] = useState(null);
@@ -49,12 +49,12 @@ const Profile = () => {
         }
 
         // Fetch billing history
-        const historyResponse = await fetch(`https://api.leadscruise.com/api/payments?email=${userEmail}`);
+        const historyResponse = await fetch(`http://localhost:5000/api/payments?email=${userEmail}`);
         const historyData = await historyResponse.json();
         setBillingHistory(historyData);
 
         // Fetch billing details
-        const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
+        const detailsResponse = await fetch(`http://localhost:5000/api/billing/${userEmail}`);
         const detailsResult = await detailsResponse.json();
         if (detailsResult.success) {
           setBillingDetails(detailsResult.data);
@@ -81,7 +81,7 @@ const Profile = () => {
     try {
       setIsLoading(true); // Show loading while saving
       
-      const response = await fetch("https://api.leadscruise.com/api/billing/update", {
+      const response = await fetch("http://localhost:5000/api/billing/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(billingDetails),
@@ -105,7 +105,7 @@ const Profile = () => {
     try {
       setIsLoading(true); // Show loading while downloading
       
-      const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${orderId}`, {
+      const response = await axios.get(`http://localhost:5000/api/get-invoice/${orderId}`, {
         responseType: "blob", // Get binary data
       });
 
@@ -165,7 +165,7 @@ const Profile = () => {
       {isLoading && <LoadingScreen />}
       
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar status={status}/>
 
       {/* Fixed Dashboard Header */}
       <DashboardHeader />

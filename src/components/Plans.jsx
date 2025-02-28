@@ -11,9 +11,13 @@ import bgImage3 from "../images/values-3.png";
 
 const Plans = () => {
   const [selected, setSelected] = useState(0);
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(localStorage.getItem("selectedPlan") || "three-mo");
   const navigate = useNavigate();
   const [paymentError, setPaymentError] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem("selectedPlan", selectedPlan);
+  }, [selectedPlan]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -36,6 +40,8 @@ const Plans = () => {
     document.body.appendChild(script);
   }, []);
 
+
+  
   const handlePlanSelect = (plan, price) => {
     setSelectedPlan(plan);
     localStorage.setItem("selectedPrice", price);
@@ -53,8 +59,8 @@ const Plans = () => {
       const selectedPlan = localStorage.getItem("selectedPlan");
       const email = localStorage.getItem("userEmail");
       const contact = localStorage.getItem("mobileNumber");
-  
-      await axios.post("https://api.leadscruise.com/api/save-payment", {
+
+      await axios.post("http://localhost:5000/api/save-payment", {
         unique_id: await getNextPaymentId(),
         email,
         contact,
@@ -65,10 +71,10 @@ const Plans = () => {
         subscription_type: selectedPlan,
       });
 
-            // Check if the user has previous payments
-      const response = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      // Check if the user has previous payments
+      const response = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
       const hasPreviousPayments = response.data.length > 1; // More than one payment means user already subscribed
-      
+
       // Redirect based on payment history
       if (hasPreviousPayments) {
         alert("Subscription successful!!!");
@@ -81,10 +87,10 @@ const Plans = () => {
       setPaymentError("Payment unsuccessful. Please try again.");
       setTimeout(() => navigate("/check-number"), 2000);
     }
-  };  
+  };
 
   const getNextPaymentId = async () => {
-    const response = await axios.get("https://api.leadscruise.com/api/get-latest-id");
+    const response = await axios.get("http://localhost:5000/api/get-latest-id");
     return response.data.latestId;
   };
 
@@ -92,7 +98,7 @@ const Plans = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("https://api.leadscruise.com/order", {
+      const response = await fetch("http://localhost:5000/order", {
         method: "POST",
         body: JSON.stringify({ amount, currency, receipt: receiptId }),
         headers: { "Content-Type": "application/json" },
@@ -143,7 +149,7 @@ const Plans = () => {
     try {
       const body = { ...response };
       const validateResponse = await fetch(
-        "https://api.leadscruise.com/order/validate",
+        "http://localhost:5000/order/validate",
         {
           method: "POST",
           body: JSON.stringify(body),
@@ -162,13 +168,12 @@ const Plans = () => {
   return (
     <div className="signin-container">
       <div className="center-div">
-      <div className="signin-left">
-      <div className="plan-div">Choose From Plans Below</div>
+        <div className="signin-left">
+          <div className="plan-div">Choose From Plans Below</div>
           <div className="plans">
             <div
-              className={`one-mo common first-one ${
-                selectedPlan === "one-mo" ? "selected" : ""
-              }`}
+              className={`one-mo common first-one ${selectedPlan === "one-mo" ? "selected" : ""
+                }`}
               onClick={() => handlePlanSelect("one-mo", 2999)}
             >
               <div className="part-1">
@@ -188,9 +193,8 @@ const Plans = () => {
             </div>
 
             <div
-              className={`one-mo common second-one ${
-                selectedPlan === "three-mo" ? "selected" : ""
-              }`}
+              className={`one-mo common second-one ${selectedPlan === "three-mo" ? "selected" : ""
+                }`}
               onClick={() => handlePlanSelect("three-mo", 7999)}
             >
               <div className="part-1">
@@ -210,9 +214,8 @@ const Plans = () => {
             </div>
 
             <div
-              className={`six-mo common third-one ${
-                selectedPlan === "six-mo" ? "selected" : ""
-              }`}
+              className={`six-mo common third-one ${selectedPlan === "six-mo" ? "selected" : ""
+                }`}
               onClick={() => handlePlanSelect("six-mo", 14999)}
             >
               <div className="part-1">
@@ -232,9 +235,8 @@ const Plans = () => {
             </div>
 
             <div
-              className={`year-mo common fourth-one ${
-                selectedPlan === "year-mo" ? "selected" : ""
-              }`}
+              className={`year-mo common fourth-one ${selectedPlan === "year-mo" ? "selected" : ""
+                }`}
               onClick={() => handlePlanSelect("year-mo", 29999)}
             >
               <div className="part-1">
@@ -265,14 +267,13 @@ const Plans = () => {
           </div>
         </div>
 
-        
+
         <div className="signin-right">
           <div className="banner-container">
             {/* First Banner */}
             <div
-              className={`banner overlapBanner ${
-                selected === 0 ? "active" : ""
-              }`}
+              className={`banner overlapBanner ${selected === 0 ? "active" : ""
+                }`}
             >
               <div className="rightbanner">
                 <div

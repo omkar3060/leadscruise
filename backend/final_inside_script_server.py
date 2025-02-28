@@ -19,7 +19,7 @@ lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
     global lead_bought  # Access the global variable
     
-    url = "https://api.leadscruise.com/api/store-lead"
+    url = "http://localhost:5000/api/store-lead"
     data = {
         "name": name,
         "mobile": mobile,

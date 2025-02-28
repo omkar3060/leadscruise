@@ -44,7 +44,7 @@ const TaskExecutor = () => {
       localStorage.setItem("savedpassword", password);
 
       const response = await axios.post(
-        "https://api.leadscruise.com/api/execute-task",
+        "http://localhost:5000/api/execute-task",
         {
           mobileNumber,
           password,

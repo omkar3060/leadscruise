@@ -38,22 +38,31 @@ exports.getPaymentsByEmail = async (req, res) => {
 
 exports.getAllSubscriptions = async (req, res) => {
   try {
+    // Fetch all payments
     const subscriptions = await Payment.find().sort({ createdAt: -1 });
 
-    // Convert invoice PDFs to base64
-    const subscriptionsWithInvoices = subscriptions.map((sub) => ({
-      ...sub.toObject(),
-      invoiceBase64: sub.invoice_pdf?.data
-        ? `data:${sub.invoice_pdf.contentType};base64,${sub.invoice_pdf.data.toString("base64")}`
-        : null,
-    }));
+    // Fetch user details and attach refId
+    const subscriptionsWithRefId = await Promise.all(
+      subscriptions.map(async (sub) => {
+        const user = await User.findOne({ email: sub.email }, "refId"); // Get only refId
 
-    res.status(200).json(subscriptionsWithInvoices);
+        return {
+          ...sub.toObject(),
+          refId: user && user.refId ? user.refId : "N/A", // Ensure "N/A" if refId is missing
+          invoiceBase64: sub.invoice_pdf?.data
+            ? `data:${sub.invoice_pdf.contentType};base64,${sub.invoice_pdf.data.toString("base64")}`
+            : null,
+        };
+      })
+    );
+
+    res.status(200).json(subscriptionsWithRefId);
   } catch (error) {
     console.error("Error fetching subscriptions:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 const isWithinDays = (date, days) => {
   const now = new Date();
