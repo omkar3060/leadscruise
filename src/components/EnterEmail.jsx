@@ -38,7 +38,7 @@ const EnterEmail = () => {
     setStatus("loading");
 
     try {
-      const response = await fetch("http://localhost:5000/api/check-email", {
+      const response = await fetch("https://api.leadscruise.com/api/check-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,7 +53,7 @@ const EnterEmail = () => {
       }
 
       const resetResponse = await fetch(
-        "http://localhost:5000/api/send-reset-email",
+        "https://api.leadscruise.com/api/send-reset-email",
         {
           method: "POST",
           headers: {

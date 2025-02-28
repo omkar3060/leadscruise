@@ -30,7 +30,7 @@ const CheckNumber = () => {
     try {
       localStorage.setItem("mobileNumber", mobileNumber);
       const response = await axios.post(
-        "http://localhost:5000/api/check-number",
+        "https://api.leadscruise.com/api/check-number",
         { mobileNumber }
       );
       if (response.data.exists) {

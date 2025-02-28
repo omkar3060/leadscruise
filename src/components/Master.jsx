@@ -31,7 +31,7 @@ const Master = () => {
 
   const fetchSubscriptionMetrics = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/get-subscription-metrics");
+      const response = await axios.get("https://api.leadscruise.com/api/get-subscription-metrics");
       setSubscriptionMetrics(response.data);
     } catch (error) {
       console.error("Error fetching subscription metrics:", error);
@@ -40,7 +40,7 @@ const Master = () => {
 
   const fetchSubscriptions = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/get-all-subscriptions");
+      const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions");
       setSubscriptions(response.data);
       fetchUploadedInvoices(response.data);
     } catch (error) {
@@ -87,7 +87,7 @@ const Master = () => {
       await Promise.all(
         subs.map(async (sub) => {
           try {
-            const response = await axios.get(`http://localhost:5000/api/get-invoice/${sub.unique_id}`, {
+            const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${sub.unique_id}`, {
               responseType: "blob", // This is necessary to handle binary PDF data
             });
 
