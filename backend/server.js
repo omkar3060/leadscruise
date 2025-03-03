@@ -150,12 +150,6 @@ app.use("/api", settingsRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api/billing", billingDetailsRoutes);
 
-const numberSchema = new mongoose.Schema({
-  number: { type: Number, required: true, unique: true },
-});
-
-const NumberModel = mongoose.model("Number", numberSchema);
-
 // API Endpoint to check if a number exists in the database
 app.post("/api/check-number", async (req, res) => {
   try {
@@ -166,19 +160,33 @@ app.post("/api/check-number", async (req, res) => {
       return res.status(400).json({ message: "Mobile number is required." });
     }
 
-    // Check if the number exists in the database
-    const existingNumber = await NumberModel.findOne({ number: mobileNumber });
+    // Check if the number exists in the userSchema
+    const existingUser = await User.findOne({ mobileNumber });
 
-    if (existingNumber) {
-      return res.json({ exists: true, message: "Number is subscribed with us earlier." });
+    if (existingUser) {
+      return res.json({
+        exists: true,
+        message: "Number is subscribed with us earlier.",
+        user: {
+          refId: existingUser.refId,
+          username: existingUser.username,
+          email: existingUser.email,
+          status: existingUser.status,
+          role: existingUser.role,
+        },
+      });
     } else {
       return res.json({ exists: false, message: "Number is not subscribed." });
     }
   } catch (error) {
     console.error("Error checking number:", error.message);
-    res.status(500).json({ message: "Error occurred while checking the number.", error: error.message });
+    res.status(500).json({
+      message: "Error occurred while checking the number.",
+      error: error.message,
+    });
   }
 });
+
 
 app.post("/api/execute-task", async (req, res) => {
   const { mobileNumber, password, email } = req.body;
@@ -220,7 +228,7 @@ app.post("/api/execute-task", async (req, res) => {
         }
 
         user.mobileNumber = mobileNumber;
-        user.savedPassword = password; // Store hashed password
+        user.savedPassword = password; 
 
         await user.save();
 

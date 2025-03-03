@@ -169,7 +169,6 @@ const Plans = () => {
     <div className="signin-container">
       <div className="center-div">
         <div className="signin-left">
-          <div className="plan-div">Choose From Plans Below</div>
           <div className="plans">
             <div
               className={`one-mo common first-one ${selectedPlan === "one-mo" ? "selected" : ""

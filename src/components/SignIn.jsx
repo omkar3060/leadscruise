@@ -86,185 +86,144 @@ const SignIn = () => {
     setSavedCredentials(latest);
   };
 
-  // const handleGoogleSignIn = async () => {
-  //   try {
-  //     const result = await signInWithPopup(auth, provider);
-  //     const user = result.user;
-  //     localStorage.setItem("user", JSON.stringify(user));
-
-  //     navigate("/dashboard");
-  //   } catch (error) {
-  //     console.error("Google Sign-In Error:", error);
-  //     alert("Google sign-in failed!");
-  //   }
-  // };
-
-  // const handleGitHubSignIn = async () => {
-  //   try {
-  //     const result = await signInWithPopup(auth, githubProvider);
-  //     const user = result.user;
-  //     localStorage.setItem("user", JSON.stringify(user));
-  //     navigate("/dashboard");
-  //   } catch (error) {
-  //     console.log("Full error details:", error);
-
-  //     if (error.code === "auth/account-exists-with-different-credential") {
-  //       const email = error.customData?.email;
-  //       console.log("Conflicting email:", email);
-
-  //       // Force a new fetch of sign-in methods with error handling
-  //       try {
-  //         const methods = await fetchSignInMethodsForEmail(auth, email);
-  //         console.log("Raw auth methods:", methods);
-
-  //         // Store the GitHub credential
-  //         const pendingGithubCred =
-  //           GithubAuthProvider.credentialFromError(error);
-
-  //         // Always try Google sign-in for this error since we know it's likely a Google account
-  //         const shouldTryGoogle = window.confirm(
-  //           `An account with ${email} already exists. Would you like to sign in with Google and connect your GitHub account?`
-  //         );
-
-  //         if (shouldTryGoogle) {
-  //           try {
-  //             // Sign in with Google
-  //             const googleResult = await signInWithPopup(auth, provider);
-
-  //             // After successful Google sign-in, link the GitHub credential
-  //             if (pendingGithubCred) {
-  //               try {
-  //                 await linkWithCredential(
-  //                   googleResult.user,
-  //                   pendingGithubCred
-  //                 );
-  //                 alert(
-  //                   "Successfully connected your GitHub account! You can now use either method to sign in."
-  //                 );
-  //               } catch (linkError) {
-  //                 if (linkError.code === "auth/provider-already-linked") {
-  //                   console.log("Accounts already linked");
-  //                 } else {
-  //                   console.error("Linking error:", linkError);
-  //                   alert("Error connecting accounts: " + linkError.message);
-  //                 }
-  //               }
-  //             }
-
-  //             localStorage.setItem("user", JSON.stringify(googleResult.user));
-  //             navigate("/dashboard");
-  //           } catch (googleError) {
-  //             console.error("Google sign-in error:", googleError);
-  //             alert("Error signing in with Google: " + googleError.message);
-  //           }
-  //         }
-  //       } catch (methodError) {
-  //         console.error("Error fetching sign-in methods:", methodError);
-  //         // If we can't fetch the methods, we'll still try Google sign-in
-  //         const shouldTryGoogle = window.confirm(
-  //           `Would you like to try signing in with Google instead?`
-  //         );
-
-  //         if (shouldTryGoogle) {
-  //           try {
-  //             const googleResult = await signInWithPopup(auth, provider);
-  //             localStorage.setItem("user", JSON.stringify(googleResult.user));
-  //             navigate("/dashboard");
-  //           } catch (googleError) {
-  //             console.error("Google sign-in error:", googleError);
-  //             alert("Error signing in with Google: " + googleError.message);
-  //           }
-  //         }
-  //       }
-  //     } else {
-  //       console.error("GitHub Sign-In Error:", error);
-  //       alert("Error signing in with GitHub: " + error.message);
-  //     }
-  //   }
-  // };
-
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-
-      // After successful Google sign-in, check if GitHub linking is possible
-      const shouldLinkGithub = window.confirm(
-        "Would you like to connect your GitHub account as well? " +
-          "This will allow you to sign in with either method."
-      );
-
-      if (shouldLinkGithub) {
-        try {
-          // Try GitHub sign-in to link accounts
-          const githubResult = await signInWithPopup(auth, githubProvider);
-
-          // If we get here, the GitHub account was successfully linked
-          alert("Successfully connected your GitHub account!");
-        } catch (githubError) {
-          if (githubError.code === "auth/credential-already-in-use") {
-            // This GitHub account is already linked to another account
-            alert(
-              "This GitHub account is already connected to a different email address. Please try another GitHub account or continue without linking."
-            );
-          } else if (githubError.code === "auth/provider-already-linked") {
-            alert("Your GitHub account is already connected!");
-          } else {
-            console.error("GitHub linking error:", githubError);
-            alert("Error connecting GitHub account: " + githubError.message);
-          }
+      const email = user.email;
+  
+      console.log("Google Sign-In User:", user);
+      console.log("Google Sign-In Email:", email);
+  
+      // Send request to backend for login/signup processing
+      const res = await axios.post("https://api.leadscruise.com/api/login", { email });
+  
+      // Store user info and token
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.user.role);
+  
+      // Check if a payment exists for the user
+      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+  
+      if (paymentRes.status === 200 && paymentRes.data.length > 0) {
+        if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
+          localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+          navigate("/execute-task");
+          return;
         }
       }
-
-      localStorage.setItem("user", JSON.stringify(user));
-      navigate("/dashboard");
+  
+      // If mobileNumber and savedPassword exist, proceed to dashboard
+      if (res.data.user.mobileNumber && res.data.user.savedPassword) {
+        localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
+        localStorage.setItem("savedPassword", res.data.user.savedPassword);
+        navigate("/dashboard");
+      } else {
+        navigate("/check-number");
+      }
     } catch (error) {
       console.error("Google Sign-In Error:", error);
-      alert("Google sign-in failed: " + error.message);
+  
+      // Handling 'auth/account-exists-with-different-credential' error for Google
+      if (error.code === "auth/account-exists-with-different-credential") {
+        const email = error.customData?.email;
+        console.log("Conflicting email:", email);
+  
+        const shouldTryGitHub = window.confirm(
+          `An account with ${email} already exists with GitHub. Would you like to sign in with GitHub and connect your Google account?`
+        );
+  
+        if (shouldTryGitHub) {
+          try {
+            // Step 1: Sign in with GitHub
+            const githubResult = await signInWithPopup(auth, githubProvider);
+  
+            // Step 2: Retrieve pending Google credentials
+            const pendingGoogleCred = GoogleAuthProvider.credentialFromError(error);
+  
+            if (pendingGoogleCred) {
+              // Step 3: Link Google with GitHub account
+              await linkWithCredential(githubResult.user, pendingGoogleCred);
+              alert("Successfully connected your Google account! You can now use either method to sign in.");
+            }
+  
+            localStorage.setItem("user", JSON.stringify(githubResult.user));
+            navigate("/dashboard");
+          } catch (githubError) {
+            console.error("GitHub sign-in error:", githubError);
+            alert("Error signing in with GitHub: " + githubError.message);
+          }
+        }
+      } else {
+        alert(error.response?.data?.message || "Google sign-in failed. Please try again.");
+      }
     }
   };
+  
 
   const handleGitHubSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, githubProvider);
       const user = result.user;
-      localStorage.setItem("user", JSON.stringify(user));
-      navigate("/dashboard");
+      const email = user.email;
+  
+      console.log("GitHub Sign-In User:", user);
+      console.log("GitHub Sign-In Email:", email);
+  
+      // Send request to backend for login/signup processing
+      const res = await axios.post("https://api.leadscruise.com/api/login", { email });
+  
+      // Store user info and token
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.user.role);
+  
+      // Check if a payment exists for the user
+      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+  
+      if (paymentRes.status === 200 && paymentRes.data.length > 0) {
+        if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
+          localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+          navigate("/execute-task");
+          return;
+        }
+      }
+  
+      // If mobileNumber and savedPassword exist, proceed to dashboard
+      if (res.data.user.mobileNumber && res.data.user.savedPassword) {
+        localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
+        localStorage.setItem("savedPassword", res.data.user.savedPassword);
+        navigate("/dashboard");
+      } else {
+        navigate("/check-number");
+      }
     } catch (error) {
-      console.log("Full error details:", error);
-
+      console.error("GitHub Sign-In Error:", error);
+  
+      // Handling 'auth/account-exists-with-different-credential' error
       if (error.code === "auth/account-exists-with-different-credential") {
         const email = error.customData?.email;
         console.log("Conflicting email:", email);
-
+  
         const shouldTryGoogle = window.confirm(
           `An account with ${email} already exists with Google. Would you like to sign in with Google and connect your GitHub account?`
         );
-
+  
         if (shouldTryGoogle) {
           try {
-            // Sign in with Google
+            // Step 1: Sign in with Google
             const googleResult = await signInWithPopup(auth, provider);
-
-            // After Google sign-in, try to link the GitHub account
-            try {
-              const pendingGithubCred =
-                GithubAuthProvider.credentialFromError(error);
-              if (pendingGithubCred) {
-                await linkWithCredential(googleResult.user, pendingGithubCred);
-                alert(
-                  "Successfully connected your GitHub account! You can now use either method to sign in."
-                );
-              }
-            } catch (linkError) {
-              if (linkError.code === "auth/provider-already-linked") {
-                alert("Your accounts are already connected!");
-              } else {
-                console.error("Linking error:", linkError);
-                alert("Error connecting accounts: " + linkError.message);
-              }
+  
+            // Step 2: Retrieve pending GitHub credentials
+            const pendingGithubCred = GithubAuthProvider.credentialFromError(error);
+  
+            if (pendingGithubCred) {
+              // Step 3: Link GitHub with Google account
+              await linkWithCredential(googleResult.user, pendingGithubCred);
+              alert("Successfully connected your GitHub account! You can now use either method to sign in.");
             }
-
+  
             localStorage.setItem("user", JSON.stringify(googleResult.user));
             navigate("/dashboard");
           } catch (googleError) {
@@ -273,11 +232,11 @@ const SignIn = () => {
           }
         }
       } else {
-        console.error("GitHub Sign-In Error:", error);
-        alert("Error signing in with GitHub: " + error.message);
+        alert(error.response?.data?.message || "GitHub sign-in failed. Please try again.");
       }
     }
   };
+  
 
   useEffect(() => {
     const interval = setInterval(() => {

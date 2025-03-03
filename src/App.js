@@ -13,6 +13,7 @@ import Plans from "./components/Plans";
 import EnterEmail from "./components/EnterEmail";
 import ResetPassword from "./components/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
+import ComingSoonFeature from "./components/ComingSoon";
 
 function App() {
   return (
@@ -82,6 +83,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/whatsapp" element={<ProtectedRoute><ComingSoonFeature/></ProtectedRoute>} />
+          <Route path="/sheets" element={<ProtectedRoute><ComingSoonFeature/></ProtectedRoute>} />
         </Routes>
         <Footer />
       </div>
