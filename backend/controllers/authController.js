@@ -54,7 +54,7 @@ exports.signup = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, emailVerified } = req.body;
 
     // Find user by email
     const user = await User.findOne({ email });
@@ -62,18 +62,20 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "User not found. Please Signup!!!" });
     }
 
-    // Check password
-    if(password)
-    {
-      const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials!" });
+    // ✅ Enforce password check only for manual sign-in
+    if (!emailVerified && !password) {
+      return res.status(400).json({ message: "Password is required for manual login!" });
     }
-  }
+    else if (password && !emailVerified) {
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Invalid credentials!" });
+      }
+    }
 
     // ✅ Generate JWT token with role
     const token = jwt.sign(
-      { email: user.email, role: user.role }, // Include role in JWT
+      { email: user.email, role: user.role },
       SECRET_KEY,
       { expiresIn: "1h" }
     );
@@ -84,12 +86,12 @@ exports.login = async (req, res) => {
       await user.save();
       return res.json({
         success: true,
-        message: "Welcome, first-time login!",
+        message: "Welcome to LeadsCruise!",
         firstTime: false,
         token,
         user: {
           email: user.email,
-          role: user.role, // Send role
+          role: user.role,
           mobileNumber: user.mobileNumber,
         },
       });
@@ -101,7 +103,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         email: user.email,
-        role: user.role, // Send role
+        role: user.role,
         mobileNumber: user.mobileNumber,
         savedPassword: user.savedPassword,
       },
@@ -125,9 +127,9 @@ exports.checkemail = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const { token, newPassword ,email} = req.body;
+    const { token, newPassword, email } = req.body;
     console.log("Received password update request:", req.body);
-    console.log(typeof(newPassword));
+    console.log(typeof (newPassword));
     // Validate input
     if (!email || !newPassword) {
       return res

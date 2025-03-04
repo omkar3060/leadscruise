@@ -91,12 +91,13 @@ const SignIn = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const email = user.email;
-  
+      const emailVerified = result.user.emailVerified;
+      const password="NULL";
       console.log("Google Sign-In User:", user);
       console.log("Google Sign-In Email:", email);
   
       // Send request to backend for login/signup processing
-      const res = await axios.post("https://api.leadscruise.com/api/login", { email });
+      const res = await axios.post("https://api.leadscruise.com/api/login", { email,password,emailVerified });
   
       // Store user info and token
       localStorage.setItem("userEmail", email);
@@ -167,12 +168,13 @@ const SignIn = () => {
       const result = await signInWithPopup(auth, githubProvider);
       const user = result.user;
       const email = user.email;
-  
+      const emailVerified = result.user.emailVerified;
+      const password="NULL";
       console.log("GitHub Sign-In User:", user);
       console.log("GitHub Sign-In Email:", email);
   
       // Send request to backend for login/signup processing
-      const res = await axios.post("https://api.leadscruise.com/api/login", { email });
+      const res = await axios.post("https://api.leadscruise.com/api/login", { email,password,emailVerified });
   
       // Store user info and token
       localStorage.setItem("userEmail", email);
