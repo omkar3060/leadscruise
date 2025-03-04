@@ -51,6 +51,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
   }
   
   /* Table Wrapper */
@@ -117,15 +118,6 @@
   border-bottom: 1px solid #ddd;
 }
 
-/* Alternating Row Colors
-.leadsTable tr:nth-child(even) {
-  background: #f9f9f9;
-}
-
-.leadsTable tr:nth-child(odd) {
-  background: #ffffff;
-} */
-  
   /* File Upload & Download Buttons */
   .fileInput {
     display: none;
@@ -238,4 +230,75 @@
 .downloadExcelButton:active {
   background-color: #1e7e34;
   transform: scale(1);
+}
+
+/* ✅ Mobile & Small Screens */
+@media (max-width: 768px) {
+  .dashboardContainer {
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      padding: 10px;
+  }
+
+  .dashboardContent {
+      margin-left: 0;
+      padding: 10px;
+  }
+
+  .metricsSection {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+  }
+
+  .metricBox {
+      font-size: 30px;
+      padding: 15px;
+  }
+
+  .metricBox p {
+      font-size: 14px;
+      margin-bottom: 0;
+  }
+
+  .tableWrapper {
+      max-height: 300px;
+  }
+
+  .tableHeader {
+      font-size: 14px;
+      padding: 10px;
+  }
+
+  .leadsTable th,
+  .leadsTable td {
+      font-size: 12px;
+      padding: 8px;
+  }
+
+  .uploadButton,
+  .downloadButton {
+      font-size: 12px;
+      padding: 8px 6px;
+  }
+
+  .downloadExcelButton {
+      font-size: 14px;
+      padding: 5px;
+  }
+}
+
+/* ✅ Tablet Screens */
+@media (max-width: 1024px) {
+  .metricsSection {
+      grid-template-columns: repeat(3, 1fr);
+  }
+
+  .metricBox {
+      font-size: 50px;
+  }
+
+  .tableWrapper {
+      max-height: 350px;
+  }
 }

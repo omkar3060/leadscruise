@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Navigate,useLocation  } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Styled component approach using template literals and CSS-in-JS
 const styles = {
@@ -78,69 +78,101 @@ const styles = {
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const [showAlert, setShowAlert] = useState(false);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
   const location = useLocation();
-
-  useEffect(() => {
-    if (!token) {
-      setShowAlert(true);
-      const redirectTimer = setTimeout(() => setShouldRedirect(true), 3000);
-      return () => clearTimeout(redirectTimer);
-    }
-  }, [token]);
+  const navigate = useNavigate(); // Add this line
+  const [isHovering, setIsHovering] = useState(false);
 
   const handleDismiss = () => {
     setShowAlert(false);
-    setShouldRedirect(true);
+    navigate(-1);
   };
 
-  if (userRole === "admin" && location.pathname !== "/master") {
-    alert("Admins are redirected to the Master Page.");
-    return <Navigate to="/master" />;
-  }
+  useEffect(() => {
+    // Handle unauthorized access scenarios
+    if (!token) {
+      setAlertMessage("You must be signed in to access this page!");
+      setShowAlert(true);
 
-  // Restrict access to "Master Page" for non-admin users
-  if (adminOnly && userRole !== "admin") {
-    alert("Access denied. Admins only.");
-    return <Navigate to="/dashboard" />; // Redirect normal users to the dashboard
-  }
+      const redirectTimer = setTimeout(() => {
+        setShowAlert(false);
+        navigate('/'); // Use navigate instead of redirect
+      }, 3000);
 
-  // Redirect if token is missing
-  if (!token) {
-    if (shouldRedirect && !showAlert) return <Navigate to="/" />;
+      return () => clearTimeout(redirectTimer);
+    }
+
+    if (adminOnly && userRole !== "admin") {
+      setAlertMessage("Access denied. Admins only.");
+      setShowAlert(true);
+
+      const redirectTimer = setTimeout(() => {
+        setShowAlert(false);
+        navigate('/dashboard');
+      }, 3000);
+
+      return () => clearTimeout(redirectTimer);
+    }
+
+
+    if (userRole === "admin" && location.pathname !== "/master") {
+      setAlertMessage("Admins are redirected to the Master Page.");
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
+        navigate("/master"); // Redirect admin to master page
+      }, 2000);
+    }
+  }, [token, userRole, adminOnly, location.pathname, navigate]);
+
+
+  // Render alert component
+  const renderAlert = () => {
+    if (!showAlert) return null;
+
     return (
-      showAlert && (
-        <div style={{ cssText: styles.alertContainer }}>
-          <div style={{ cssText: styles.alertBox }}>
-            <div style={{ cssText: styles.alertContent }}>
-              <div style={{ cssText: styles.iconContainer }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 8V12" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="16" r="1" fill="#e53e3e"/>
-                </svg>
-              </div>
-              <div style={{ cssText: styles.messageContainer }}>
-                <h3 style={{ cssText: styles.alertTitle }}>Authentication Required</h3>
-                <p>You must be signed in to access this page!</p>
-                <button
-                  type="button"
-                  onClick={handleDismiss}
-                  onMouseEnter={() => setIsHovering(true)}
-                  onMouseLeave={() => setIsHovering(false)}
-                  style={{ cssText: `${styles.dismissButton} ${isHovering ? styles.dismissButtonHover : ''}` }}
-                >
-                  Dismiss
-                </button>
-              </div>
+      <div style={{ cssText: styles.alertContainer }}>
+        <div style={{ cssText: styles.alertBox }}>
+          <div style={{ cssText: styles.alertContent }}>
+            <div style={{ cssText: styles.iconContainer }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 8V12" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="12" cy="16" r="1" fill="#e53e3e" />
+              </svg>
+            </div>
+            <div style={{ cssText: styles.messageContainer }}>
+              <h3 style={{ cssText: styles.alertTitle }}>Authentication Required</h3>
+              <p>{alertMessage}</p>
+              <button
+                type="button"
+                onClick={handleDismiss}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                style={{ cssText: `${styles.dismissButton} ${isHovering ? styles.dismissButtonHover : ''}` }}
+              >
+                Dismiss
+              </button>
             </div>
           </div>
         </div>
-      )
+      </div>
     );
+  };
+
+  // Remove hardcoded alerts and use more robust navigation
+  if (!token) {
+    return renderAlert();
+  }
+
+  if (adminOnly && userRole !== "admin") {
+    return renderAlert();
+  }
+
+  if (userRole === "admin" && location.pathname !== "/master") {
+    return renderAlert();
   }
 
   return children;
