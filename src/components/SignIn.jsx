@@ -249,6 +249,7 @@ const SignIn = () => {
   }, []);
 
   const handleSignIn = async () => {
+    
     try {
       const res = await axios.post("https://api.leadscruise.com/api/login", {
         email,
@@ -260,13 +261,16 @@ const SignIn = () => {
         // Clear last used credentials if remember me is not checked
         localStorage.removeItem("lastUsedCredentials");
       }
-      alert(res.data.message);
+      // alert(res.data.message);
       localStorage.setItem("userEmail", email);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.user.role);
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
-
+      if(email==="support@focusengg.com" && password==="Focus@123"){
+        navigate("/master");
+        return;
+      }
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         // If payment exists but mobileNumber and savedPassword are missing, redirect to execute-task
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {

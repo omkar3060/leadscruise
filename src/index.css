@@ -16,6 +16,12 @@ body {
   background-image: url('https://static.zohocdn.com/iam/v2/components/images/bg.49756b7c711696d95133fa95451f8e13.svg');
   height: 100vh;
   width: 100vw;
+  background-size: cover;   /* Ensures the image covers the full screen */
+  background-position: center;  /* Centers the image */
+  background-repeat: no-repeat; /* Prevents repeating */
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevents scrolling due to image overflow */
 }
 
 .container {

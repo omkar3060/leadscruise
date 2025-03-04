@@ -216,7 +216,7 @@ const Master = () => {
                     { label: "Reference Id", key: "refId" },
                   ].map(({ label, key }) => (
                     <th key={key} onClick={() => handleSort(key)} style={{ cursor: "pointer" }}>
-                      {label} {sortConfig.key === key ? (sortConfig.direction === "asc" ? "▲" : "▼") : ""}
+                      {label} {sortConfig.key === key ? (sortConfig.direction === "asc" ? "🔼" : "🔽") : ""}
                     </th>
                   ))}
                   <th>Billing</th>

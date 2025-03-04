@@ -15,35 +15,45 @@ const Sidebar = ({ status }) => {
     navigate("/");
   };
 
+  const handleNavigation = () => {
+    if (location.pathname.includes("/master")) {
+      navigate("/master");
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
   return (
     <div className={styles.sidebar}>
       <div className={styles.group}>
-        <div className={styles.sidebarIcon} onClick={() => navigate("/dashboard")}>
+        <div className={styles.sidebarIcon} onClick={handleNavigation}>
           <AiOutlineHome className={styles.icon} />
         </div>
 
         {location.pathname !== "/master" && (
-          <div
-            className={`${styles.sidebarIcon} ${status === "Running" ? styles.disabled : ""}`}
-            onClick={() => {
-              if (status === "Running") {
-                alert("You cannot go to settings while the script is running!");
-              } else {
-                navigate("/settings");
-              }
-            }}
-          >
-            <FiSettings className={styles.icon} />
-          </div>
+          <>
+            <div
+              className={`${styles.sidebarIcon} ${status === "Running" ? styles.disabled : ""}`}
+              onClick={() => {
+                if (status === "Running") {
+                  alert("You cannot go to settings while the script is running!");
+                } else {
+                  navigate("/settings");
+                }
+              }}
+            >
+              <FiSettings className={styles.icon} />
+            </div>
+
+            <div className={styles.sidebarIcon} onClick={() => navigate("/whatsapp")}>
+              <FaWhatsapp className={styles.icon} />
+            </div>
+
+            <div className={styles.sidebarIcon} onClick={() => navigate("/sheets")}>
+              <SiGooglesheets className={styles.icon} />
+            </div>
+          </>
         )}
-
-        <div className={styles.sidebarIcon} onClick={() => navigate("/whatsapp")}>
-          <FaWhatsapp className={styles.icon} />
-        </div>
-
-        <div className={styles.sidebarIcon} onClick={() => navigate("/sheets")}>
-          <SiGooglesheets className={styles.icon} />
-        </div>
       </div>
 
       <div className={styles.sidebarIcon} onClick={handleLogout}>

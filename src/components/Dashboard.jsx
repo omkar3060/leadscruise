@@ -123,21 +123,21 @@ const Dashboard = () => {
       try {
         const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
         const userSettings = response.data // Extracting 'settings' from response
-  
+
         if (!userSettings) {
           alert("No settings found, please configure them first.");
           navigate("/settings");
           return;
         }
-  
+
         setSettings(userSettings);
       } catch (error) {
         console.error("Error fetching settings:", error);
       }
     };
-  
+
     fetchSettings();
-  }, [ navigate]); 
+  }, [navigate]);
 
   // Calculate metrics based on leads data
   const calculateMetrics = () => {
@@ -220,7 +220,7 @@ const Dashboard = () => {
       });
       alert("Task started successfully!!! You can stop the task after 5 minutes.");
       setStatus("Running");
-      
+
     } catch (error) {
       console.error("Error:", error.response?.data?.message || error.message);
       alert(error.response?.data?.message || error.message);
@@ -234,22 +234,22 @@ const Dashboard = () => {
       alert(`You cannot stop the script until ${Math.ceil(timer / 60)} min are completed.`);
       return;
     }
-  
+
     if (window.confirm("Are you sure you want to stop the script?")) {
       setIsLoading(true); // Show loading when stopping
-  
+
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
-  
+
       if (!userEmail || !uniqueId) {
         alert("User email or mobile number is missing!");
         setIsLoading(false);
         return;
       }
-  
+
       try {
         const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
-  
+
         alert(response.data.message);
         setStatus("Stopped");
         setIsDisabled(false);
@@ -262,6 +262,32 @@ const Dashboard = () => {
       }
     }
   };
+
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc"); // "asc" | "desc"
+
+  // Function to handle sorting
+  const handleSort = (field) => {
+    const newSortOrder = sortField === field && sortOrder === "asc" ? "desc" : "asc";
+    setSortField(field);
+    setSortOrder(newSortOrder);
+  };
+
+  // Sorting logic
+  const sortedLeads = [...leads].sort((a, b) => {
+    const valueA = a[sortField] || ""; // Handle empty values
+    const valueB = b[sortField] || "";
+
+    if (sortField === "createdAt") {
+      return sortOrder === "asc"
+        ? new Date(valueA) - new Date(valueB)
+        : new Date(valueB) - new Date(valueA);
+    } else {
+      return sortOrder === "asc"
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
+    }
+  });
 
   return (
     <div className={styles.dashboardContainer}>
@@ -303,29 +329,33 @@ const Dashboard = () => {
             <table className={styles.leadsTable}>
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th>Name</th>
-                  <th>Mobile Number</th>
-                  <th>Email</th>
-                  <th>Purchase Date</th>
+                  {[
+                    { label: "Product", field: "lead_bought" },
+                    { label: "Name", field: "name" },
+                    { label: "Mobile Number", field: "mobile" },
+                    { label: "Email", field: "email" },
+                    { label: "Purchase Date", field: "createdAt" },
+                  ].map(({ label, field }) => (
+                    <th key={field} onClick={() => handleSort(field)} style={{ cursor: "pointer" }}>
+                      {label} {sortField === field && (sortOrder === "asc" ? "🔼" : "🔽")}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {leads.length > 0 ? (
-                  leads.map((lead, index) => (
+                {sortedLeads.length > 0 ? (
+                  sortedLeads.map((lead, index) => (
                     <tr key={index}>
-                      <td>{lead.lead_bought}</td>
-                      <td>{lead.name}</td>
-                      <td>{lead.mobile}</td>
-                      <td>{lead.email}</td>
-                      <td>{new Date(lead.createdAt).toLocaleDateString()}</td>
+                      <td>{lead.lead_bought || "N/A"}</td>
+                      <td>{lead.name || "N/A"}</td>
+                      <td>{lead.mobile || "N/A"}</td>
+                      <td>{lead.email || "N/A"}</td>
+                      <td>{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "N/A"}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: "center" }}>
-                      No leads available
-                    </td>
+                    <td colSpan="5" style={{ textAlign: "center" }}>No leads available</td>
                   </tr>
                 )}
               </tbody>

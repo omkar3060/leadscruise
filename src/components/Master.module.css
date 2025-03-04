@@ -60,7 +60,7 @@
     border-radius: 12px;
     box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
-    background: #ffffff;
+    /* background: #ffffff; */
 }
 
   
@@ -96,7 +96,7 @@
     font-size: 14px;
   }
   .leadsTable th {
-    background: linear-gradient(135deg, #ffffff, #ffffff);
+    /* background: linear-gradient(135deg, #ffffff, #ffffff); */
     color: black;
     font-weight: bold;
     padding: 14px;
@@ -117,14 +117,14 @@
   border-bottom: 1px solid #ddd;
 }
 
-/* Alternating Row Colors */
+/* Alternating Row Colors
 .leadsTable tr:nth-child(even) {
   background: #f9f9f9;
 }
 
 .leadsTable tr:nth-child(odd) {
   background: #ffffff;
-}
+} */
   
   /* File Upload & Download Buttons */
   .fileInput {
