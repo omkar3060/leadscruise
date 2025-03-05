@@ -14,7 +14,7 @@ import EnterEmail from "./components/EnterEmail";
 import ResetPassword from "./components/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 import ComingSoonFeature from "./components/ComingSoon";
-
+import NotFound from "./components/NotFound";
 function App() {
   return (
     <Router>
@@ -85,6 +85,8 @@ function App() {
           />
           <Route path="/whatsapp" element={<ProtectedRoute><ComingSoonFeature/></ProtectedRoute>} />
           <Route path="/sheets" element={<ProtectedRoute><ComingSoonFeature/></ProtectedRoute>} />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
       </div>

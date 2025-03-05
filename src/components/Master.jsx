@@ -4,7 +4,7 @@ import Sidebar from "./Sidebar";
 import masterstyles from "./Master.module.css"; // Import CSS module
 import BillingModal from "./BillingModal";
 import * as XLSX from "xlsx";
-
+import styles from "./Profile.module.css";
 const Master = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const [subscriptionMetrics, setSubscriptionMetrics] = useState({
@@ -23,28 +23,34 @@ const Master = () => {
   const [uploadedInvoices, setUploadedInvoices] = useState({});
   const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-
+  const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     fetchSubscriptionMetrics();
     fetchSubscriptions();
   }, []);
 
   const fetchSubscriptionMetrics = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get("https://api.leadscruise.com/api/get-subscription-metrics");
       setSubscriptionMetrics(response.data);
     } catch (error) {
       console.error("Error fetching subscription metrics:", error);
+    } finally{
+      setIsLoading(false);
     }
   };
 
   const fetchSubscriptions = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions");
       setSubscriptions(response.data);
       fetchUploadedInvoices(response.data);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
+    } finally{
+      setIsLoading(false);
     }
   };
 
@@ -82,6 +88,7 @@ const Master = () => {
   };
 
   const fetchUploadedInvoices = async (subs) => {
+    setIsLoading(true);
     try {
       const invoiceStatus = {};
       await Promise.all(
@@ -109,6 +116,9 @@ const Master = () => {
       calculatePendingBilling(subs, invoiceStatus);
     } catch (error) {
       console.error("Error fetching uploaded invoices:", error);
+    }
+    finally{
+      setIsLoading(false);
     }
   };
 
@@ -148,10 +158,12 @@ const Master = () => {
 
 
   const handleOpenModal = (email, id) => {
+    setIsLoading(true);
     setSelectedUserEmail(email);
     setSelectedOrderId(id);
     setSelectedInvoiceUrl(uploadedInvoices[id] || null);
     setIsModalOpen(true);
+    setIsLoading(false);
   };
 
   const calculateRemainingDays = (createdAt, subscriptionType) => {
@@ -173,8 +185,24 @@ const Master = () => {
     return remainingDays > 0 ? remainingDays : "Expired";
   };
 
+    // Loading Screen Component
+    const LoadingScreen = () => (
+      <div className={styles["loading-overlay"]}>
+        <div className={styles["loading-container"]}>
+          <div className={styles["loading-spinner"]}></div>
+          <p className={styles["loading-text"]}>Loading your profile data...</p>
+          <div className={styles["loading-progress-dots"]}>
+            <div className={styles["loading-dot"]}></div>
+            <div className={styles["loading-dot"]}></div>
+            <div className={styles["loading-dot"]}></div>
+          </div>
+        </div>
+      </div>
+    );
+
   return (
     <div className={masterstyles.dashboardContainer}>
+      {isLoading && <LoadingScreen />}
       {/* Sidebar Component */}
       <Sidebar isDisabled={isDisabled} />
 
@@ -188,7 +216,7 @@ const Master = () => {
           <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringWithinThreeDays} <br /><p>Expiring Within 3 Days</p></div>
           <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringToday} <br /><p>Expiring Today</p></div>
           <div className={masterstyles.metricBox}>{subscriptionMetrics.totalActiveUsers} <br /><p>Total Active Users</p></div>
-          <div className={masterstyles.metricBox}>{subscriptionMetrics.totalUsers} <br /><p>Total Users</p></div>
+          <div className={masterstyles.metricBox}>{subscriptionMetrics.totalUsers-1} <br /><p>Total Users</p></div>
         </div>
 
         {/* Subscriptions Table */}
