@@ -15,13 +15,15 @@ import ResetPassword from "./components/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 import ComingSoonFeature from "./components/ComingSoon";
 import NotFound from "./components/NotFound";
+import LandingPage from "./components/LandingPage";
 function App() {
   return (
     <Router>
       <div className="container">
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<SignIn />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/enter-email" element={<EnterEmail />} />
           <Route path="/reset-password" element={<ResetPassword />} />

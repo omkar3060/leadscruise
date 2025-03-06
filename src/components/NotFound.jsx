@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // Bounce Animation
 const bounceAnimation = keyframes`
@@ -16,7 +16,6 @@ const PageContainer = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-//   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 20px;
   font-family: 'Arial', sans-serif;
   width: 100vw;
@@ -67,65 +66,41 @@ const ButtonContainer = styled.div`
   flex-wrap: wrap;
 `;
 
-const StyledLink = styled(Link)`
-  display: inline-block;
+const GoBackButton = styled.button`
   padding: 12px 24px;
   border-radius: 8px;
-  text-decoration: none;
   font-weight: bold;
+  font-size: 16px;
+  background-color: #4299e1;
+  color: white;
+  border: none;
+  cursor: pointer;
   transition: all 0.3s ease;
-  
-  &.dashboard {
-    background-color: #4299e1;
-    color: white;
-    
-    &:hover {
-      background-color: #3182ce;
-      transform: translateY(-3px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-  }
-  
-  &.home {
-    background-color: #e2e8f0;
-    color: #2d3748;
-    
-    &:hover {
-      background-color: #cbd5e0;
-      transform: translateY(-3px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
+
+  &:hover {
+    background-color: #3182ce;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
 `;
 
 const NotFound = () => {
+  const navigate = useNavigate();
+
   return (
     <PageContainer>
       <ErrorCard>
         <ErrorIcon>⚠️</ErrorIcon>
-        
         <ErrorTitle>404</ErrorTitle>
-        
         <ErrorSubtitle>Page Not Found</ErrorSubtitle>
-        
         <ErrorMessage>
           Oops! The page you're looking for doesn't exist. Make sure you typed the correct URL.
         </ErrorMessage>
-        
+
         <ButtonContainer>
-          <StyledLink 
-            to="/dashboard" 
-            className="dashboard"
-          >
-            Return to Dashboard
-          </StyledLink>
-          
-          <StyledLink 
-            to="/" 
-            className="home"
-          >
-            Go to Home
-          </StyledLink>
+          <GoBackButton onClick={() => navigate(-1)}>
+            Go Back
+          </GoBackButton>
         </ButtonContainer>
       </ErrorCard>
     </PageContainer>

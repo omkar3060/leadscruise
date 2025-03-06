@@ -7,6 +7,8 @@ import "./Signin.css";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
+import logo from "../images/logo_front.png";
+import { FaUserPlus } from "react-icons/fa";
 
 import {
   auth,
@@ -92,21 +94,21 @@ const SignIn = () => {
       const user = result.user;
       const email = user.email;
       const emailVerified = result.user.emailVerified;
-      const password="NULL";
+      const password = "NULL";
       console.log("Google Sign-In User:", user);
       console.log("Google Sign-In Email:", email);
-  
+
       // Send request to backend for login/signup processing
-      const res = await axios.post("https://api.leadscruise.com/api/login", { email,password,emailVerified });
-  
+      const res = await axios.post("https://api.leadscruise.com/api/login", { email, password, emailVerified });
+
       // Store user info and token
       localStorage.setItem("userEmail", email);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.user.role);
-  
+
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
-  
+
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
           localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
@@ -114,7 +116,7 @@ const SignIn = () => {
           return;
         }
       }
-  
+
       // If mobileNumber and savedPassword exist, proceed to dashboard
       if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
@@ -125,30 +127,30 @@ const SignIn = () => {
       }
     } catch (error) {
       console.error("Google Sign-In Error:", error);
-  
+
       // Handling 'auth/account-exists-with-different-credential' error for Google
       if (error.code === "auth/account-exists-with-different-credential") {
         const email = error.customData?.email;
         console.log("Conflicting email:", email);
-  
+
         const shouldTryGitHub = window.confirm(
           `An account with ${email} already exists with GitHub. Would you like to sign in with GitHub and connect your Google account?`
         );
-  
+
         if (shouldTryGitHub) {
           try {
             // Step 1: Sign in with GitHub
             const githubResult = await signInWithPopup(auth, githubProvider);
-  
+
             // Step 2: Retrieve pending Google credentials
             const pendingGoogleCred = GoogleAuthProvider.credentialFromError(error);
-  
+
             if (pendingGoogleCred) {
               // Step 3: Link Google with GitHub account
               await linkWithCredential(githubResult.user, pendingGoogleCred);
               alert("Successfully connected your Google account! You can now use either method to sign in.");
             }
-  
+
             localStorage.setItem("user", JSON.stringify(githubResult.user));
             navigate("/dashboard");
           } catch (githubError) {
@@ -161,7 +163,7 @@ const SignIn = () => {
       }
     }
   };
-  
+
 
   const handleGitHubSignIn = async () => {
     try {
@@ -169,21 +171,21 @@ const SignIn = () => {
       const user = result.user;
       const email = user.email;
       const emailVerified = result.user.emailVerified;
-      const password="NULL";
+      const password = "NULL";
       console.log("GitHub Sign-In User:", user);
       console.log("GitHub Sign-In Email:", email);
-  
+
       // Send request to backend for login/signup processing
-      const res = await axios.post("https://api.leadscruise.com/api/login", { email,password,emailVerified });
-  
+      const res = await axios.post("https://api.leadscruise.com/api/login", { email, password, emailVerified });
+
       // Store user info and token
       localStorage.setItem("userEmail", email);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.user.role);
-  
+
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
-  
+
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
           localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
@@ -191,7 +193,7 @@ const SignIn = () => {
           return;
         }
       }
-  
+
       // If mobileNumber and savedPassword exist, proceed to dashboard
       if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
@@ -202,30 +204,30 @@ const SignIn = () => {
       }
     } catch (error) {
       console.error("GitHub Sign-In Error:", error);
-  
+
       // Handling 'auth/account-exists-with-different-credential' error
       if (error.code === "auth/account-exists-with-different-credential") {
         const email = error.customData?.email;
         console.log("Conflicting email:", email);
-  
+
         const shouldTryGoogle = window.confirm(
           `An account with ${email} already exists with Google. Would you like to sign in with Google and connect your GitHub account?`
         );
-  
+
         if (shouldTryGoogle) {
           try {
             // Step 1: Sign in with Google
             const googleResult = await signInWithPopup(auth, provider);
-  
+
             // Step 2: Retrieve pending GitHub credentials
             const pendingGithubCred = GithubAuthProvider.credentialFromError(error);
-  
+
             if (pendingGithubCred) {
               // Step 3: Link GitHub with Google account
               await linkWithCredential(googleResult.user, pendingGithubCred);
               alert("Successfully connected your GitHub account! You can now use either method to sign in.");
             }
-  
+
             localStorage.setItem("user", JSON.stringify(googleResult.user));
             navigate("/dashboard");
           } catch (googleError) {
@@ -238,7 +240,7 @@ const SignIn = () => {
       }
     }
   };
-  
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -249,7 +251,7 @@ const SignIn = () => {
   }, []);
 
   const handleSignIn = async () => {
-    
+
     try {
       const res = await axios.post("https://api.leadscruise.com/api/login", {
         email,
@@ -267,7 +269,7 @@ const SignIn = () => {
       localStorage.setItem("role", res.data.user.role);
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
-      if(email==="support@leadscruise.com" && password==="Focus@123"){
+      if (email === "support@leadscruise.com" && password === "Focus@123") {
         navigate("/master");
         return;
       }
@@ -278,14 +280,14 @@ const SignIn = () => {
           navigate("/execute-task");
           return;
         }
-      } 
+      }
 
       // If mobileNumber and savedPassword exist, proceed to dashboard
       if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
         localStorage.setItem("savedPassword", res.data.user.savedPassword);
         navigate("/dashboard");
-      }else {
+      } else {
         navigate("/check-number");
       }
     } catch (error) {
@@ -367,21 +369,14 @@ const SignIn = () => {
       <div className="center-div">
         <div className="signin-left">
           <div className="signin-logo-class">
-            <img
-              src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
-              alt="zohologo"
-              onClick={() => navigate("/")}
-            />
+          <img
+      src={logo} // Use the imported image
+      alt="LeadsCruise Logo"
+      onClick={() => navigate("/")} // Navigate to home when clicked
+       // Add styling if needed
+    />
             <div className="smart-scan" onClick={() => navigate("/signup")}>
-              {/* <img
-                src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
-                alt=""
-                className="scan-icon"
-              /> */}
-              <img
-                src="https://uxwing.com/wp-content/themes/uxwing/download/editing-user-action/signup-icon.png"
-                alt=""
-              />
+              <FaUserPlus className="scan-icon" />
               <span>Sign Up</span>
             </div>
           </div>
@@ -439,7 +434,8 @@ const SignIn = () => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 handleSignIn(); // Trigger sign-in when Enter is pressed
-                }}}
+              }
+            }}
           />
 
           <div className="fp-cont">
@@ -504,9 +500,8 @@ const SignIn = () => {
           <div className="banner-container">
             {/* First Banner */}
             <div
-              className={`banner overlapBanner ${
-                selected === 0 ? "active" : ""
-              }`}
+              className={`banner overlapBanner ${selected === 0 ? "active" : ""
+                }`}
             >
               <div className="rightbanner">
                 <div
