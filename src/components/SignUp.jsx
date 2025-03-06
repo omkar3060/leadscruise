@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import logo from "../images/logo_front.png";
 import axios from "axios";
 import "./styles.css";
 import "./PaginationSlider.css";
@@ -75,12 +75,13 @@ const SignUp = () => {
       <div className="center-div">
         <div className="signin-left">
           <div className="signin-logo-class">
-            <img
-              src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
-              className="logo-img"
-              alt="zohologo"
-            />
-            <div className="smart-scan" onClick={() => navigate("/")}>
+          <img
+      src={logo} // Use the imported image
+      alt="LeadsCruise Logo"
+      onClick={() => navigate("/")} // Navigate to home when clicked
+       // Add styling if needed
+    />
+            <div className="smart-scan" onClick={() => navigate("/login")}>
               {/* <img
                 src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
                 alt=""
