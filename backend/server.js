@@ -311,16 +311,19 @@ app.get("/api/get-max-captures", async (req, res) => {
   try {
     const { user_mobile_number } = req.query;
 
-    const user = await UserLeadCounter.findOne({ user_mobile_number });
+    let user = await UserLeadCounter.findOne({ user_mobile_number });
 
+    // ✅ If the user is not found, create a new record with default values
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      user = new UserLeadCounter({ user_mobile_number });
+      await user.save();
     }
 
     res.json({
       maxCaptures: user.maxCaptures,
-      lastUpdatedMaxCaptures: user.lastUpdatedMaxCaptures
+      lastUpdatedMaxCaptures: user.lastUpdatedMaxCaptures,
     });
+
   } catch (error) {
     console.error("Error fetching max captures:", error);
     res.status(500).json({ message: "Server error" });

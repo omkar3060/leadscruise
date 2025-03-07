@@ -105,7 +105,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     }
   
     // Restrict access for non-admin users when admin-only is required
-    if (userRole !== "admin") {
+    if (userRole !== "admin" && adminOnly) {
       setAlertMessage("Access denied. Admins only.");
       setShowAlert(true);
   

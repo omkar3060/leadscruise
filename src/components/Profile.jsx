@@ -29,99 +29,127 @@ const Profile = () => {
   const [daysLeft, setDaysLeft] = useState(null);
   
   useEffect(() => {
-    // Combined data loading effect
     const loadData = async () => {
       setIsLoading(true); // Start loading
-      
+  
       try {
-        // Load subscription details
+        // Load subscription details from localStorage
         const storedSubscription = localStorage.getItem("subscriptionDetails");
         if (storedSubscription) {
-          const parsedSubscription = JSON.parse(storedSubscription);
-          setSubscriptionDetails(parsedSubscription);
-
-          // Calculate days left
-          const renewalDate = new Date(parsedSubscription.renewal_date);
-          const currentDate = new Date();
-          const timeDifference = renewalDate - currentDate;
-          const remainingDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-          setDaysLeft(remainingDays);
+          try {
+            const parsedSubscription = JSON.parse(storedSubscription);
+            setSubscriptionDetails(parsedSubscription);
+  
+            // Calculate days left
+            const renewalDate = new Date(parsedSubscription.renewal_date);
+            const currentDate = new Date();
+            const timeDifference = renewalDate - currentDate;
+            const remainingDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+  
+            setDaysLeft(remainingDays);
+          } catch (error) {
+            console.error("Error parsing subscription data:", error);
+          }
         }
-
+  
         // Fetch billing history
-        const historyResponse = await fetch(`http://localhost:5000/api/payments?email=${userEmail}`);
+        const historyResponse = await fetch(`https://api.leadscruise.com/api/payments?email=${userEmail}`);
+        if (!historyResponse.ok) throw new Error("Failed to fetch billing history");
+        
         const historyData = await historyResponse.json();
         setBillingHistory(historyData);
-
+        
+      } catch (error) {
+        console.error("Error loading billing history:", error);
+        setBillingHistory([]); // Fallback to empty array
+      }
+  
+      try {
         // Fetch billing details
-        const detailsResponse = await fetch(`http://localhost:5000/api/billing/${userEmail}`);
+        const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
+        if (!detailsResponse.ok) throw new Error("Failed to fetch billing details");
+        
         const detailsResult = await detailsResponse.json();
         if (detailsResult.success) {
           setBillingDetails(detailsResult.data);
+        } else {
+          throw new Error(detailsResult.message || "Billing details not available");
         }
+        
       } catch (error) {
-        console.error("Error loading profile data:", error);
+        console.error("Error loading billing details:", error);
+        setBillingDetails({}); // Fallback to empty object
       } finally {
-        // Add a small delay to prevent flickering for fast loads
-        setTimeout(() => setIsLoading(false), 300);
+        setIsLoading(false); // Ensure loading state is off after a delay
       }
+  
+      // Ensure loading state is off after a delay
+      setTimeout(() => setIsLoading(false), 300);
     };
-
+  
     loadData();
   }, [userEmail]);
-
+  
   // Handle Input Changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setBillingDetails({ ...billingDetails, [name]: value });
   };
-
+  
   // Save Updated Billing Details
   const handleSave = async () => {
     try {
       setIsLoading(true); // Show loading while saving
-      
-      const response = await fetch("http://localhost:5000/api/billing/update", {
+  
+      const response = await fetch("https://api.leadscruise.com/api/billing/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(billingDetails),
       });
-
+  
       const result = await response.json();
-      if (result.success) {
+      if (response.ok && result.success) {
         alert("Billing details updated successfully!");
         setIsEditing(false); // Exit edit mode
       } else {
-        alert("Failed to update billing details.");
+        throw new Error(result.message || "Failed to update billing details.");
       }
     } catch (error) {
       console.error("Error updating billing details:", error);
+      alert(`Error: ${error.message}`);
     } finally {
       setIsLoading(false); // Hide loading when done
     }
   };
-
+  
+  // Download Invoice
   const handleDownloadInvoice = async (orderId) => {
     try {
       setIsLoading(true); // Show loading while downloading
-      
-      const response = await axios.get(`http://localhost:5000/api/get-invoice/${orderId}`, {
+  
+      const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${orderId}`, {
         responseType: "blob", // Get binary data
       });
-
+  
+      if (response.status !== 200) {
+        throw new Error("Invoice download failed.");
+      }
+  
       const fileURL = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = fileURL;
       link.setAttribute("download", `invoice-${orderId}.pdf`);
       document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link); // Clean up after download
+  
     } catch (error) {
       console.error("Error downloading invoice:", error);
-      alert("Invoice not found.");
+      alert("Invoice not found");
     } finally {
       setIsLoading(false); // Hide loading when done
     }
-  };
+  };  
 
   const calculateEndDate = (startDate, subscriptionType) => {
     const start = new Date(startDate);
@@ -260,20 +288,20 @@ const Profile = () => {
                     <>
                       <div className={styles["billing-row"]}>
                         <div className={styles["billing-item"]}>
-                          <strong>Phone:</strong> <span>{billingDetails.phone}</span>
+                          <strong>Phone:</strong> <span>{billingDetails.phone || 'N/A'}</span>
                         </div>
                         <div className={styles["billing-item"]}>
-                          <strong>GST:</strong> <span>{billingDetails.gst}</span>
+                          <strong>GST:</strong> <span>{billingDetails.gst || 'N/A'}</span>
                         </div>
                         <div className={styles["billing-item"]}>
-                          <strong>PAN:</strong> <span>{billingDetails.pan}</span>
+                          <strong>PAN:</strong> <span>{billingDetails.pan || 'N/A'}</span>
                         </div>
                       </div>
 
                       <div className={styles["billing-address"]}>
-                        <p className={styles["billing-address-text"]}><strong>Name:</strong> {billingDetails.name}</p>
-                        <p className={styles["billing-address-text"]}><strong>Address:</strong> {billingDetails.address}</p>
-                        <p className={styles["billing-address-text"]}><strong>Email:</strong> {billingDetails.email}</p>
+                        <p className={styles["billing-address-text"]}><strong>Name:</strong> {billingDetails.name || 'N/A'}</p>
+                        <p className={styles["billing-address-text"]}><strong>Address:</strong> {billingDetails.address || 'N/A'}</p>
+                        <p className={styles["billing-address-text"]}><strong>Email:</strong> {billingDetails.email || 'N/A'}</p>
                       </div>
                       <div className={styles["edit-button-container"]}>
                       <button className={styles["edit-button"]} onClick={() => setIsEditing(true)}>Edit my Details</button>
