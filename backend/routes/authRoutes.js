@@ -8,7 +8,8 @@ const {
   update,
   updateSavedPassword,
   checkemail,
-  getStatus,updatePassword
+  getStatus,updatePassword,
+  getAllUsers,
 } = require("../controllers/authController");
 const Payment = require("../models/Payment");
 
@@ -32,7 +33,7 @@ router.post("/update-saved-password", updateSavedPassword);
 router.post("/check-email", checkemail);
 router.get("/get-status/:email", getStatus);
 router.post("/update-password", updatePassword);
-
+router.get("/users", getAllUsers);
 router.get("/get-latest-id", async (req, res) => {
   try {
     const latestPayment = await Payment.findOne().sort({ unique_id: -1 });

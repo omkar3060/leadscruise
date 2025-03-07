@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./styles.css";
 import "./PaginationSlider.css";
@@ -99,7 +99,7 @@ const SignIn = () => {
       console.log("Google Sign-In Email:", email);
 
       // Send request to backend for login/signup processing
-      const res = await axios.post("https://api.leadscruise.com/api/login", { email, password, emailVerified });
+      const res = await axios.post("http://localhost:5000/api/login", { email, password, emailVerified });
 
       // Store user info and token
       localStorage.setItem("userEmail", email);
@@ -107,7 +107,7 @@ const SignIn = () => {
       localStorage.setItem("role", res.data.user.role);
 
       // Check if a payment exists for the user
-      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
 
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
@@ -176,7 +176,7 @@ const SignIn = () => {
       console.log("GitHub Sign-In Email:", email);
 
       // Send request to backend for login/signup processing
-      const res = await axios.post("https://api.leadscruise.com/api/login", { email, password, emailVerified });
+      const res = await axios.post("http://localhost:5000/api/login", { email, password, emailVerified });
 
       // Store user info and token
       localStorage.setItem("userEmail", email);
@@ -184,7 +184,7 @@ const SignIn = () => {
       localStorage.setItem("role", res.data.user.role);
 
       // Check if a payment exists for the user
-      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
 
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
@@ -253,7 +253,7 @@ const SignIn = () => {
   const handleSignIn = async () => {
 
     try {
-      const res = await axios.post("https://api.leadscruise.com/api/login", {
+      const res = await axios.post("http://localhost:5000/api/login", {
         email,
         password,
       });
@@ -268,7 +268,7 @@ const SignIn = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.user.role);
       // Check if a payment exists for the user
-      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
       if (email === "support@leadscruise.com" && password === "Focus@123") {
         navigate("/master");
         return;
@@ -311,7 +311,7 @@ const SignIn = () => {
     }
 
     try {
-      const response = await fetch("https://api.leadscruise.com/api/check-email", {
+      const response = await fetch("http://localhost:5000/api/check-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -326,7 +326,7 @@ const SignIn = () => {
       }
 
       const resetResponse = await fetch(
-        "https://api.leadscruise.com/api/send-reset-email",
+        "http://localhost:5000/api/send-reset-email",
         {
           method: "POST",
           headers: {
@@ -369,12 +369,12 @@ const SignIn = () => {
       <div className="center-div">
         <div className="signin-left">
           <div className="signin-logo-class">
-          <img
-      src={logo} // Use the imported image
-      alt="LeadsCruise Logo"
-      onClick={() => navigate("/")} // Navigate to home when clicked
-       // Add styling if needed
-    />
+            <img
+              src={logo} // Use the imported image
+              alt="LeadsCruise Logo"
+              onClick={() => navigate("/")} // Navigate to home when clicked
+            // Add styling if needed
+            />
             <div className="smart-scan" onClick={() => navigate("/signup")}>
               <FaUserPlus className="scan-icon" />
               <span>Sign Up</span>
@@ -494,6 +494,12 @@ const SignIn = () => {
             Don't have a Zoho account?
             <span onClick={() => navigate("/signup")}>Sign up now</span>
           </p> */}
+          <div className="end-block">
+                <p className="gback" onClick={() => navigate("/")}>
+                  Go Back
+                </p>
+                
+              </div>
         </div>
 
         <div className="signin-right">
@@ -517,14 +523,9 @@ const SignIn = () => {
                   Let our AI do all the work even while you sleep. With
                   leadscruise all the software tasks are now automated with AI
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link className="banner1_href" to="/notfound">
                   Learn more
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -548,14 +549,9 @@ const SignIn = () => {
                 Get to customers within the blink of opponent's eyes,
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
-              <a
-                className="banner2_href"
-                href="https://zoho.to/za_signin_oa_rp"
-                target="_blank"
-                rel="noreferrer"
-              >
+              <Link className="banner1_href" to="/notfound">
                 Learn more
-              </a>
+              </Link>
             </div>
 
             <div
@@ -573,14 +569,9 @@ const SignIn = () => {
                   With leadscruise all the tasks are now automated so that you
                   no more need to do them manually
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link className="banner1_href" to="/notfound">
                   Learn more
-                </a>
+                </Link>
               </div>
             </div>
 

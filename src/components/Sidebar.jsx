@@ -30,7 +30,7 @@ const Sidebar = ({ status }) => {
           <AiOutlineHome className={styles.icon} />
         </div>
 
-        {location.pathname !== "/master" && (
+        {!location.pathname.includes("/master") && (
           <>
             <div
               className={`${styles.sidebarIcon} ${status === "Running" ? styles.disabled : ""}`}

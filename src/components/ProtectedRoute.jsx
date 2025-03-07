@@ -95,38 +95,39 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     if (!token) {
       setAlertMessage("You must be signed in to access this page!");
       setShowAlert(true);
-
+  
       const redirectTimer = setTimeout(() => {
         setShowAlert(false);
-        navigate('/'); // Use navigate instead of redirect
+        navigate('/'); // Redirect to home page
       }, 3000);
-
+  
       return () => clearTimeout(redirectTimer);
     }
-
-    if (adminOnly && userRole !== "admin") {
+  
+    // Restrict access for non-admin users when admin-only is required
+    if (userRole !== "admin") {
       setAlertMessage("Access denied. Admins only.");
       setShowAlert(true);
-
+  
       const redirectTimer = setTimeout(() => {
         setShowAlert(false);
         navigate('/dashboard');
       }, 3000);
-
+  
       return () => clearTimeout(redirectTimer);
     }
-
-
-    if (userRole === "admin" && location.pathname !== "/master") {
+  
+    // Redirect admins to "/master" only if they are not already on an admin-allowed page
+    if (userRole === "admin" && !location.pathname.includes("master")) {
       setAlertMessage("Admins are redirected to the Master Page.");
       setShowAlert(true);
+  
       setTimeout(() => {
         setShowAlert(false);
-        navigate("/master"); // Redirect admin to master page
+        navigate("/master");
       }, 2000);
     }
-  }, [token, userRole, adminOnly, location.pathname, navigate]);
-
+  }, [token, userRole, adminOnly, location.pathname, navigate]);  
 
   // Render alert component
   const renderAlert = () => {
@@ -171,7 +172,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     return renderAlert();
   }
 
-  if (userRole === "admin" && location.pathname !== "/master") {
+  if (userRole === "admin" && !location.pathname.includes("master")) {
     return renderAlert();
   }
 

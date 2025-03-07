@@ -3,7 +3,7 @@ import axios from "axios";
 import successImage from "../images/success.png";
 import errorImage from "../images/error.png";
 import loadingGif from "../images/loading.gif";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
@@ -44,7 +44,7 @@ const TaskExecutor = () => {
       localStorage.setItem("savedpassword", password);
 
       const response = await axios.post(
-        "https://api.leadscruise.com/api/execute-task",
+        "http://localhost:5000/api/execute-task",
         {
           mobileNumber,
           password,
@@ -223,9 +223,8 @@ const TaskExecutor = () => {
           <div className="banner-container">
             {/* First Banner */}
             <div
-              className={`banner overlapBanner ${
-                selected === 0 ? "active" : ""
-              }`}
+              className={`banner overlapBanner ${selected === 0 ? "active" : ""
+                }`}
             >
               <div className="rightbanner">
                 <div
@@ -241,14 +240,9 @@ const TaskExecutor = () => {
                   Let our AI do all the work even while you sleep. With
                   leadscruise all the software tasks are now automated with AI
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link className="banner1_href" to="/notfound">
                   Learn more
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -272,14 +266,9 @@ const TaskExecutor = () => {
                 Get to customers within the blink of opponent's eyes,
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
-              <a
-                className="banner2_href"
-                href="https://zoho.to/za_signin_oa_rp"
-                target="_blank"
-                rel="noreferrer"
-              >
+              <Link className="banner1_href" to="/notfound">
                 Learn more
-              </a>
+              </Link>
             </div>
 
             <div
@@ -297,14 +286,9 @@ const TaskExecutor = () => {
                   With leadscruise all the tasks are now automated so that you
                   no more need to do them manually
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link className="banner1_href" to="/notfound">
                   Learn more
-                </a>
+                </Link>
               </div>
             </div>
 

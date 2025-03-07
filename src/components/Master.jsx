@@ -5,6 +5,7 @@ import masterstyles from "./Master.module.css"; // Import CSS module
 import BillingModal from "./BillingModal";
 import * as XLSX from "xlsx";
 import styles from "./Profile.module.css";
+import { useNavigate } from "react-router-dom";
 const Master = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const [subscriptionMetrics, setSubscriptionMetrics] = useState({
@@ -24,6 +25,7 @@ const Master = () => {
   const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   useEffect(() => {
     fetchSubscriptionMetrics();
     fetchSubscriptions();
@@ -32,7 +34,7 @@ const Master = () => {
   const fetchSubscriptionMetrics = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("https://api.leadscruise.com/api/get-subscription-metrics");
+      const response = await axios.get("http://localhost:5000/api/get-subscription-metrics");
       setSubscriptionMetrics(response.data);
     } catch (error) {
       console.error("Error fetching subscription metrics:", error);
@@ -44,7 +46,7 @@ const Master = () => {
   const fetchSubscriptions = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions");
+      const response = await axios.get("http://localhost:5000/api/get-all-subscriptions");
       setSubscriptions(response.data);
       fetchUploadedInvoices(response.data);
     } catch (error) {
@@ -94,7 +96,7 @@ const Master = () => {
       await Promise.all(
         subs.map(async (sub) => {
           try {
-            const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${sub.unique_id}`, {
+            const response = await axios.get(`http://localhost:5000/api/get-invoice/${sub.unique_id}`, {
               responseType: "blob", // This is necessary to handle binary PDF data
             });
 
@@ -190,7 +192,7 @@ const Master = () => {
       <div className={styles["loading-overlay"]}>
         <div className={styles["loading-container"]}>
           <div className={styles["loading-spinner"]}></div>
-          <p className={styles["loading-text"]}>Loading your profile data...</p>
+          <p className={styles["loading-text"]}>Loading...</p>
           <div className={styles["loading-progress-dots"]}>
             <div className={styles["loading-dot"]}></div>
             <div className={styles["loading-dot"]}></div>
@@ -199,6 +201,10 @@ const Master = () => {
         </div>
       </div>
     );
+
+    const handleViewAllUsers = () => {
+      navigate('/master/users');
+    };
 
   return (
     <div className={masterstyles.dashboardContainer}>
@@ -216,7 +222,14 @@ const Master = () => {
           <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringWithinThreeDays} <br /><p>Expiring Within 3 Days</p></div>
           <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringToday} <br /><p>Expiring Today</p></div>
           <div className={masterstyles.metricBox}>{subscriptionMetrics.totalActiveUsers} <br /><p>Total Active Users</p></div>
-          <div className={masterstyles.metricBox}>{subscriptionMetrics.totalUsers-1} <br /><p>Total Users</p></div>
+          <div 
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+            onClick={handleViewAllUsers}
+          >
+            {subscriptionMetrics.totalUsers - 1} 
+            <br />
+            <p>Total Users</p>
+          </div>
         </div>
 
         {/* Subscriptions Table */}

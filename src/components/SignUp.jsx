@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import logo from "../images/logo_front.png";
 import axios from "axios";
 import "./styles.css";
@@ -21,6 +21,7 @@ const SignUp = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [error, setError] = useState("");
   const [showError, setShowError] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState("");
 
   const strongPasswordRegex =
     /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -40,9 +41,10 @@ const SignUp = () => {
     }
 
     try {
-      const res = await axios.post("https://api.leadscruise.com/api/signup", {
+      const res = await axios.post("http://localhost:5000/api/signup", {
         refId,
         email,
+        mobileNumber,
         password,
         confPassword,
       });
@@ -75,12 +77,12 @@ const SignUp = () => {
       <div className="center-div">
         <div className="signin-left">
           <div className="signin-logo-class">
-          <img
-      src={logo} // Use the imported image
-      alt="LeadsCruise Logo"
-      onClick={() => navigate("/")} // Navigate to home when clicked
-       // Add styling if needed
-    />
+            <img
+              src={logo} // Use the imported image
+              alt="LeadsCruise Logo"
+              onClick={() => navigate("/")} // Navigate to home when clicked
+            // Add styling if needed
+            />
             <div className="smart-scan" onClick={() => navigate("/login")}>
               {/* <img
                 src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
@@ -105,6 +107,13 @@ const SignUp = () => {
             name="email"
             autoComplete="email"
           />
+          <input
+                type="text"
+                placeholder="Mobile number"
+                value={mobileNumber}
+                onChange={(e) => setMobileNumber(e.target.value)}
+                className="mobile-number-input"
+              />
           <div className="pass-cont">
             <input
               className="password"
@@ -183,9 +192,8 @@ const SignUp = () => {
           <div className="banner-container">
             {/* First Banner */}
             <div
-              className={`banner overlapBanner ${
-                selected === 0 ? "active" : ""
-              }`}
+              className={`banner overlapBanner ${selected === 0 ? "active" : ""
+                }`}
             >
               <div className="rightbanner">
                 <div
@@ -201,14 +209,9 @@ const SignUp = () => {
                   Let our AI do all the work even while you sleep. With
                   leadscruise all the software tasks are now automated with AI
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link className="banner1_href" to="/notfound">
                   Learn more
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -232,14 +235,9 @@ const SignUp = () => {
                 Get to customers within the blink of opponent's eyes,
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
-              <a
-                className="banner2_href"
-                href="https://zoho.to/za_signin_oa_rp"
-                target="_blank"
-                rel="noreferrer"
-              >
+              <Link className="banner1_href" to="/notfound">
                 Learn more
-              </a>
+              </Link>
             </div>
 
             <div
@@ -257,14 +255,9 @@ const SignUp = () => {
                   With leadscruise all the tasks are now automated so that you
                   no more need to do them manually
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link className="banner1_href" to="/notfound">
                   Learn more
-                </a>
+                </Link>
               </div>
             </div>
 

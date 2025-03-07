@@ -17,7 +17,12 @@ const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: 'https://app.leadscruise.com' }));
+app.use(
+  cors({
+    origin: ["https://app.leadscruise.com", "http://localhost:3000"],
+    credentials: true,
+  })
+);
 const User = require("./models/userModel");
 // MongoDB Connection
 mongoose
@@ -142,8 +147,6 @@ function getSubscriptionDuration(subscription_type) {
   }
 }
 
-
-
 // Routes
 app.use("/api", authRoutes);
 app.use("/api", settingsRoutes);
@@ -198,41 +201,42 @@ app.post("/api/execute-task", async (req, res) => {
     });
   }
 
-  // Spawn a new Python process to validate credentials
+  // Spawn a new Python process to execute the task
   const pythonProcess = spawn("python3", ["login_check.py", mobileNumber, password]);
 
   let result = "";
   let error = "";
 
-  // Collect Python script output
+  // Capture standard output (stdout)
   pythonProcess.stdout.on("data", (data) => {
     result += data.toString();
   });
 
-  // Collect Python script errors
+  // Capture standard error (stderr)
   pythonProcess.stderr.on("data", (data) => {
     error += data.toString();
   });
 
-  // Handle script execution completion
+  // Handle Python script execution completion
   pythonProcess.on("close", async (code) => {
     if (code === 0) {
       try {
-        // Hash password before saving
+        const extractedApiKey = result.trim(); // Get the API key from Python script output
+        console.log("Extracted API Key:", extractedApiKey);
 
-        // Find user by email and update mobileNumber and password
         let user = await User.findOne({ email });
 
         if (!user) {
           return res.status(404).json({ status: "error", message: "User not found" });
         }
 
+        // ✅ **Update user record with API Key**
         user.mobileNumber = mobileNumber;
-        user.savedPassword = password; 
-
+        user.savedPassword = password;
+        user.apiKey = extractedApiKey; // ✅ Store extracted API key
         await user.save();
 
-        return res.json({ status: "success", message: "Task executed and details saved!" });
+        return res.json({ status: "success", message: "API Key extracted and saved!", apiKey: extractedApiKey });
       } catch (dbError) {
         console.error("Database error:", dbError);
         return res.status(500).json({ status: "error", message: "Database error" });

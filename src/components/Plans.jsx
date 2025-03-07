@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "./styles.css";
 import "./Plans.css";
 import "@fontsource/norwester"; // Defaults to weight 400
@@ -41,7 +41,7 @@ const Plans = () => {
   }, []);
 
 
-  
+
   const handlePlanSelect = (plan, price) => {
     setSelectedPlan(plan);
     localStorage.setItem("selectedPrice", price);
@@ -60,7 +60,7 @@ const Plans = () => {
       const email = localStorage.getItem("userEmail");
       const contact = localStorage.getItem("mobileNumber");
 
-      await axios.post("https://api.leadscruise.com/api/save-payment", {
+      await axios.post("http://localhost:5000/api/save-payment", {
         unique_id: await getNextPaymentId(),
         email,
         contact,
@@ -72,7 +72,7 @@ const Plans = () => {
       });
 
       // Check if the user has previous payments
-      const response = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      const response = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
       const hasPreviousPayments = response.data.length > 1; // More than one payment means user already subscribed
 
       // Redirect based on payment history
@@ -90,7 +90,7 @@ const Plans = () => {
   };
 
   const getNextPaymentId = async () => {
-    const response = await axios.get("https://api.leadscruise.com/api/get-latest-id");
+    const response = await axios.get("http://localhost:5000/api/get-latest-id");
     return response.data.latestId;
   };
 
@@ -98,7 +98,7 @@ const Plans = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("https://api.leadscruise.com/order", {
+      const response = await fetch("http://localhost:5000/order", {
         method: "POST",
         body: JSON.stringify({ amount, currency, receipt: receiptId }),
         headers: { "Content-Type": "application/json" },
@@ -149,7 +149,7 @@ const Plans = () => {
     try {
       const body = { ...response };
       const validateResponse = await fetch(
-        "https://api.leadscruise.com/order/validate",
+        "http://localhost:5000/order/validate",
         {
           method: "POST",
           body: JSON.stringify(body),
@@ -265,8 +265,6 @@ const Plans = () => {
             </p>
           </div>
         </div>
-
-
         <div className="signin-right">
           <div className="banner-container">
             {/* First Banner */}
@@ -288,14 +286,9 @@ const Plans = () => {
                   Let our AI do all the work even while you sleep. With
                   leadscruise all the software tasks are now automated with AI
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link className="banner1_href" to="/notfound">
                   Learn more
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -319,14 +312,9 @@ const Plans = () => {
                 Get to customers within the blink of opponent's eyes,
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
-              <a
-                className="banner2_href"
-                href="https://zoho.to/za_signin_oa_rp"
-                target="_blank"
-                rel="noreferrer"
-              >
+              <Link className="banner1_href" to="/notfound">
                 Learn more
-              </a>
+              </Link>
             </div>
 
             <div
@@ -344,14 +332,9 @@ const Plans = () => {
                   With leadscruise all the tasks are now automated so that you
                   no more need to do them manually
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link className="banner1_href" to="/notfound">
                   Learn more
-                </a>
+                </Link>
               </div>
             </div>
 

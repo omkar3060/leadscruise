@@ -2,8 +2,8 @@ import React from 'react';
 import './Footer.css';
 
 const Footer = () => {
-  const supportEmail = "support@focusengineering.com";
-  const whatsappNumber = "+911234567890"; // Replace with actual support number
+  const supportEmail = "support@leadscruise.com";
+  const whatsappNumber = "+919579797269"; // Replace with actual support number
   
   const handleEmailClick = () => {
     window.location.href = `mailto:${supportEmail}`;

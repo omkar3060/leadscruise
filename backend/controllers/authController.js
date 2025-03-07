@@ -2,15 +2,15 @@ const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Import dotenv at the top
-
+const Payment = require("../models/Payment");
 const SECRET_KEY = process.env.SECRET_KEY; // Load from .env file
 exports.signup = async (req, res) => {
   try {
-    const { refId, email, password, confPassword } = req.body;
-
+    const { refId, email, mobileNumber, password, confPassword } = req.body;
+    console.log("Received sign-up request:", req.body);
     // Validate input
     if (!email || !password || !confPassword) {
-      return res.status(400).json({ message: "All fields are required." });
+      return res.status(400).json({ message: "Email and password are required." });
     }
     if (password !== confPassword) {
       return res.status(400).json({ message: "Passwords do not match." });
@@ -38,6 +38,7 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       refId,
       firstTime: true,
+      phoneNumber: mobileNumber,
     });
 
     await newUser.save();
@@ -79,7 +80,8 @@ exports.login = async (req, res) => {
       SECRET_KEY,
       { expiresIn: "1h" }
     );
-
+    user.lastLogin = Date.now();
+    await user.save();
     // ✅ Handle first-time login
     if (user.firstTime) {
       user.firstTime = false;
@@ -107,6 +109,8 @@ exports.login = async (req, res) => {
         savedPassword: user.savedPassword,
       },
     });
+    
+    
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(500).json({ message: "Login failed", error: error.message });
@@ -242,11 +246,51 @@ exports.updatePassword = async (req, res) => {
 
     // Update password in DB
     user.password = hashedPassword;
+    
     await user.save();
 
     res.json({ message: "Password updated successfully." });
   } catch (error) {
     console.error("Error updating password:", error);
     res.status(500).json({ message: "Server error. Try again later." });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    // Fetch all users without passwords
+    const users = await User.find({}, "-password -savedPassword");
+
+    // Fetch payment details for each user and determine subscription status
+    const usersWithStatus = await Promise.all(
+      users.map(async (user) => {
+        // Find the most recent payment for the user
+        const latestPayment = await Payment.findOne({ email: user.email })
+          .sort({ created_at: -1 }) // Get the latest payment
+          .lean(); // Convert Mongoose document to plain object
+
+        // Determine subscription status
+        let subscriptionStatus = "Not Active"; // Default
+        if (latestPayment) {
+          // Assuming a 30-day subscription period for simplicity
+          const expiryDate = new Date(latestPayment.created_at);
+          expiryDate.setDate(expiryDate.getDate() + 30);
+
+          if (expiryDate > new Date()) {
+            subscriptionStatus = "Active"; // Subscription is still valid
+          }
+        }
+
+        return {
+          ...user.toObject(),
+          subscriptionStatus,
+        };
+      })
+    );
+
+    res.status(200).json(usersWithStatus);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
