@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     firstTime: { type: Boolean, default: true },
     mobileNumber: { type: String, unique: true, sparse: true },
     savedPassword: { type: String }, // Store encrypted password
-    status: { type: String, default: "Stopped", enum: ["Active", "Stopped"] },
+    status: { type: String, default: "Stopped" },
     role: { type: String, enum: ["admin", "user"], default: "user" },
     startTime: { type: Date },
     apiKey: { type: String },

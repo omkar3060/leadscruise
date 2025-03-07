@@ -184,6 +184,12 @@ const Dashboard = () => {
         return;
       }
 
+      const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
+        if (!detailsResponse.ok) {
+          alert("Please add your billing details first to start.");
+          return;
+        }
+
       // Fetch settings
       const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
       const userSettings = response.data;
@@ -197,9 +203,9 @@ const Dashboard = () => {
 
       // Check if all settings arrays are empty
       if (
-        (!userSettings.sentences || userSettings.sentences.length === 0) &&
-        (!userSettings.wordArray || userSettings.wordArray.length === 0) &&
-        (!userSettings.h2WordArray || userSettings.h2WordArray.length === 0)
+        (!userSettings.sentences || userSettings.sentences.length <=1 ) &&
+        (!userSettings.wordArray || userSettings.wordArray.length <=1 ) &&
+        (!userSettings.h2WordArray || userSettings.h2WordArray.length <=1)
       ) {
         alert("Please configure your settings first.");
         navigate("/settings");
