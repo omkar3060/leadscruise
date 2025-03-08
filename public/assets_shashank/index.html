@@ -560,9 +560,9 @@
 
             <div class="faq-container">
 
-              <div class="faq-item">
+              <div class="faq-item faq-active">
                 <h3>Terms and Conditions</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p><strong>Terms of Service</strong></p>
 
                   <p>Welcome to LeadsCruise! By using our services, you agree to the following terms and conditions.</p>
@@ -604,7 +604,7 @@
 
               <div class="faq-item">
                 <h3>LeadsCruise Refund Policy</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p>LeadsCruise is committed to providing a seamless experience for its users and has a fair refund policy in place. Under this policy:<br>
 
                     <strong>* </strong>Refunds are available only for new subscribers who request a refund within <strong>7 days</strong> of subscription activation. Refund requests made after this period will not be entertained.<br>
@@ -628,7 +628,7 @@
 
               <div class="faq-item">
                 <h3>LeadsCruise Privacy Policy</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p><strong>PRIVACY POLICY</strong></p>
 
                   <p><strong>SECTION 1 - WHAT DO WE DO WITH YOUR INFORMATION?</strong></p>
@@ -692,9 +692,9 @@
                 <i class="faq-toggle bi bi-chevron-right"></i>
               </div>
 
-              <div class="faq-item faq-active">
+              <div class="faq-item">
                 <h3>Can i Buy multiple Subscriptions for my leads provider account?</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p>Purchasing Multiple subscription for only one leads provider account is a self declared act, No
                     refunds or renumerations will be provided for the transactions made to this act.</p>
                 </div>
@@ -703,7 +703,7 @@
 
               <div class="faq-item">
                 <h3>What if i want to change my current subscription to another plan?</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p>User can change the plan status from current plan to any selected plan, However they are only
                     allowed to downgrade for free. If at all the user have to upgrade to the plan all and Whole fees is
                     payable.</p>
@@ -722,7 +722,7 @@
 
               <div class="faq-item">
                 <h3>Shipping & Delivery Policy</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p>For International buyers, orders are shipped and delivered through registered international courier
                     companies and/or International speed post only. For domestic buyers, orders are shipped through
                     registered domestic courier companies and /or speed post only. Orders are shipped within 0-7 days or
@@ -740,7 +740,7 @@
 
               <div class="faq-item">
                 <h3>What if i want to change my account linking with my current subscription?</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p>The change of account connection with the current subscription is allowed only once. We understand
                     the things might go wrong once in a while so we also provide the support to change the linked
                     account withing the 28 days of subscription.</p>
@@ -751,7 +751,7 @@
               <div class="faq-item">
                 <h3>Can i cancel my subscription? and is my fees refundable if i need to opt out of the LeadsCruise?
                 </h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p>yes we do not provide an access for our users to opt out of LeadsCruise but unfortunately, we will
                     be unable to refund any ammount of money from the fees paid to our services.</p>
                 </div>
@@ -760,7 +760,7 @@
 
               <div class="faq-item">
                 <h3>Is leadscruise partenered up with my leads provider?</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p>LeadsCruise is not a pheriperal/partnered/accociated to any of the Leads provider of the user, any
                     ill occurences that occur during the use of our software is purely unaddresseable by LeadsCruise.com
                   </p>
@@ -770,7 +770,7 @@
 
               <div class="faq-item">
                 <h3>Who is reponsible for LeadsCruise terms and condition violations?</h3>
-                <div class="faq-content">
+                <div class="faq-content" style="display: none;">
                   <p>As mentioned in the Terms and conditions of LeadsCruise.com any violations in the rules and
                     regulations may lead to suspension of the subscription, all the tasks carried out in LeadsCruise is
                     purely intended by the user itself LeadsCruise is not responsible for any losses occured during this
@@ -946,6 +946,33 @@
         preloader.style.visibility = 'hidden';
       }, 1500); // Adjust time as needed (in milliseconds)
     });
+  </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get all FAQ items
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    // Add click event listener to each FAQ item
+    faqItems.forEach(item => {
+      const header = item.querySelector('h3');
+      
+      header.addEventListener('click', function() {
+        // Toggle active class
+        item.classList.toggle('faq-active');
+        
+        // Get the content container
+        const content = item.querySelector('.faq-content');
+        
+        // Toggle display
+        if (item.classList.contains('faq-active')) {
+          content.style.display = 'block';
+        } else {
+          content.style.display = 'none';
+        }
+      });
+    });
+  });
   </script>
 
 </body>

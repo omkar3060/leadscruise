@@ -1430,6 +1430,10 @@ section,
   cursor: pointer;
 }
 
+.faq-item.faq-active .faq-content {
+  display: block !important;
+}
+
 .faq .faq-container .faq-item .faq-toggle:hover {
   color: var(--accent-color);
 }
