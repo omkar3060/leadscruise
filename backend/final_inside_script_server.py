@@ -13,13 +13,23 @@ import time
 import subprocess
 import sys
 import json
+import signal
+
+# Define the signal handler
+def stop_execution(signum, frame):
+    print("Received stop signal. Exiting gracefully...", flush=True)
+    sys.exit(0)  # Exit script immediately
+
+# Bind signal handler
+signal.signal(signal.SIGINT, stop_execution)
+
 input_data = json.loads(sys.stdin.read())
 import requests
 lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
     global lead_bought  # Access the global variable
     
-    url = "http://localhost:5000/api/store-lead"
+    url = "https://api.leadscruise.com/api/store-lead"
     data = {
         "name": name,
         "mobile": mobile,
@@ -482,4 +492,5 @@ def main():
         print("Browser closed.",flush=True)
 
 if __name__ == "__main__":
-    main() 
+    main()
+    

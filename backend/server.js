@@ -447,7 +447,7 @@ app.post("/api/cycle", async (req, res) => {
 
     if (updatedUserCounter.leadCount >= updatedUserCounter.maxCaptures) {
       console.log("Lead limit exceeded! Killing Python script...");
-      pythonProcess.kill("SIGTERM"); // Kill the script
+      pythonProcess.kill("SIGINT");// Kill the script
       activePythonProcesses.delete(uniqueId);
       clearInterval(leadCheckInterval);
       cleanupDisplay(uniqueId); // Cleanup display lock file
@@ -498,7 +498,7 @@ app.post("/api/stop", async (req, res) => {
   const currentTime = new Date();
   const elapsedTime = Math.floor((currentTime - startTime) / 1000); // in seconds
 
-  if (elapsedTime < 300) { // Less than 5 minutes
+  if (elapsedTime < 30) {
     return res.status(403).json({
       status: "error",
       message: `Please wait at least ${Math.ceil((300 - elapsedTime) / 60)} more minutes before stopping.`,
@@ -507,10 +507,10 @@ app.post("/api/stop", async (req, res) => {
 
   const pythonProcess = activePythonProcesses.get(uniqueId);
   if (pythonProcess) {
-    console.log("Stopping Python script...");
-    pythonProcess.kill("SIGTERM");
+    console.log("Sending SIGINT (Ctrl+C) to Python script...");
     activePythonProcesses.delete(uniqueId);
-    cleanupDisplay(uniqueId); // Cleanup display lock file
+    cleanupDisplay(uniqueId);
+    pythonProcess.kill("SIGINT"); // Send SIGINT to allow graceful shutdown
   }
 
   // Reset user status and startTime in DB
@@ -520,7 +520,7 @@ app.post("/api/stop", async (req, res) => {
     { new: true }
   );
 
-  res.json({ status: "success", message: "Script stopped successfully after 5 minutes." });
+  res.json({ status: "success", message: "Stopped Sucessfully" });
 });
 
 /**
