@@ -47,7 +47,7 @@ const Dashboard = () => {
         return;
       }
 
-      const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
+      const response = await axios.get(`http://localhost:5000/api/get-leads/${mobileNumber}`);
       setLeads(response.data);
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -63,7 +63,7 @@ const Dashboard = () => {
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-status/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-status/${userEmail}`);
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
         if (response.data.startTime) {
@@ -127,7 +127,7 @@ const Dashboard = () => {
         return;
       }
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
         const userSettings = response.data // Extracting 'settings' from response
 
         if (!userSettings) {
@@ -189,14 +189,14 @@ const Dashboard = () => {
         alert("User email not found!");
         return;
       }
-      const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
+      const detailsResponse = await fetch(`http://localhost:5000/api/billing/${userEmail}`);
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
         return;
       }
 
       // Fetch settings
-      const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+      const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
       setSettings(response.data);
@@ -220,7 +220,7 @@ const Dashboard = () => {
       // Start process
 
       // Send the fetched settings instead of using the state
-      const cycleResponse = await axios.post("https://api.leadscruise.com/api/cycle", {
+      const cycleResponse = await axios.post("http://localhost:5000/api/cycle", {
         sentences: userSettings.sentences,
         wordArray: userSettings.wordArray,
         h2WordArray: userSettings.h2WordArray,
@@ -259,7 +259,7 @@ const Dashboard = () => {
       }
 
       try {
-        const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
+        const response = await axios.post("http://localhost:5000/api/stop", { userEmail, uniqueId });
 
         alert(response.data.message);
         setStatus("Stopped");

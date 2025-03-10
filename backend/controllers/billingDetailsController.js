@@ -2,8 +2,8 @@ const BillingDetails = require("../models/billingDetails");
 
 // 🔹 Update or Insert Billing Details
 exports.updateBillingDetails = async (req, res) => {
-  const { email, phone, gst, pan, name, address } = req.body;
-
+  const { email, phone, gst, pan, name, address, billingEmail } = req.body;
+  console.log("body",req.body);
   if (!email) {
     return res.status(400).json({ success: false, message: "Email is required!" });
   }
@@ -11,10 +11,10 @@ exports.updateBillingDetails = async (req, res) => {
   try {
     const updatedBilling = await BillingDetails.findOneAndUpdate(
       { email }, // Find by email
-      { phone, gst, pan, name, address }, // Update fields
+      { phone, gst, pan, name, address, billingEmail }, // Update fields
       { new: true, upsert: true } // Create if not exists
     );
-
+    console.log("updatedBilling",updatedBilling);
     res.status(200).json({ success: true, message: "Billing details updated successfully!", data: updatedBilling });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error updating billing details", error });

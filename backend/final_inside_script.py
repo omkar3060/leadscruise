@@ -11,7 +11,7 @@ input_data = json.loads(sys.stdin.read())
 import requests
 
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
-    url = "https://api.leadscruise.com/api/store-lead"  # Backend API endpoint
+    url = "http://localhost:5000/api/store-lead"  # Backend API endpoint
     data = {
         "name": name,
         "mobile": mobile,

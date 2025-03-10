@@ -20,6 +20,7 @@ const SignUp = () => {
   const [selected, setSelected] = useState(0);
   const [isChecked, setIsChecked] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [showError, setShowError] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
 
@@ -35,22 +36,26 @@ const SignUp = () => {
   }, []);
 
   const handleSignUp = async () => {
+    setIsLoading(true);
     if (error) {
       setShowError(true);
+      setIsLoading(false);
       return;
     }
 
     try {
-      const res = await axios.post("https://api.leadscruise.com/api/signup", {
+      const res = await axios.post("http://localhost:5000/api/signup", {
         refId,
         email,
         mobileNumber,
         password,
         confPassword,
       });
+      setIsLoading(false);
       alert(res.data.message);
       navigate("/login"); // Redirect to SignIn page after successful signup
     } catch (error) {
+      setIsLoading(false);
       alert(
         error.response.data.message || "Failed to sign up. Please try again."
       );
@@ -74,6 +79,25 @@ const SignUp = () => {
 
   return (
     <div className="signin-container">
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="spinner">
+              <div className="double-bounce1"></div>
+              <div className="double-bounce2"></div>
+            </div>
+            <div className="loading-text">
+              <h3>Authenticating</h3>
+              <div className="loading-dots">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </div>
+            </div>
+            <p className="loading-message">Please wait while we securely sign you up</p>
+          </div>
+        </div>
+      )}
       <div className="center-div">
         <div className="signin-left">
           <div className="signin-logo-class">

@@ -76,7 +76,7 @@ const SettingsForm = () => {
       }
 
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
         if (response.data && response.data.sentences) {
           setSettings(response.data);
         } else {
@@ -159,7 +159,7 @@ const SettingsForm = () => {
     }
 
     try {
-      await axios.post("https://api.leadscruise.com/api/save-settings", {
+      await axios.post("http://localhost:5000/api/save-settings", {
         userEmail,
         sentences: settings.sentences,
         wordArray: settings.wordArray,
@@ -185,7 +185,7 @@ const SettingsForm = () => {
     if (window.confirm("Are you sure you want to revert all settings?")) {
       setIsLoading(true); // Start loading
       try {
-        await axios.delete(`https://api.leadscruise.com/api/delete-settings/${userEmail}`);
+        await axios.delete(`http://localhost:5000/api/delete-settings/${userEmail}`);
         setSettings({ sentences: [], wordArray: [], h2WordArray: [] });
         alert("Settings reverted successfully!");
       } catch (error) {
