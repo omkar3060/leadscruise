@@ -33,6 +33,7 @@ const SignIn = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [savedCredentials, setSavedCredentials] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const passwordInputRef = useRef(null);
   const timeoutRef = useRef(null);
 
@@ -90,6 +91,7 @@ const SignIn = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      setIsLoading(true);
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const email = user.email;
@@ -126,7 +128,9 @@ const SignIn = () => {
         navigate("/check-number");
       }
     } catch (error) {
+      setIsLoading(false);
       console.error("Google Sign-In Error:", error);
+      
 
       // Handling 'auth/account-exists-with-different-credential' error for Google
       if (error.code === "auth/account-exists-with-different-credential") {
@@ -139,6 +143,7 @@ const SignIn = () => {
 
         if (shouldTryGitHub) {
           try {
+            setIsLoading(true);
             // Step 1: Sign in with GitHub
             const githubResult = await signInWithPopup(auth, githubProvider);
 
@@ -155,6 +160,7 @@ const SignIn = () => {
             navigate("/dashboard");
           } catch (githubError) {
             console.error("GitHub sign-in error:", githubError);
+            setIsLoading(false);
             alert("Error signing in with GitHub: " + githubError.message);
           }
         }
@@ -167,6 +173,7 @@ const SignIn = () => {
 
   const handleGitHubSignIn = async () => {
     try {
+      setIsLoading(true);
       const result = await signInWithPopup(auth, githubProvider);
       const user = result.user;
       const email = user.email;
@@ -204,6 +211,7 @@ const SignIn = () => {
       }
     } catch (error) {
       console.error("GitHub Sign-In Error:", error);
+      setIsLoading(false);
 
       // Handling 'auth/account-exists-with-different-credential' error
       if (error.code === "auth/account-exists-with-different-credential") {
@@ -216,6 +224,7 @@ const SignIn = () => {
 
         if (shouldTryGoogle) {
           try {
+            setIsLoading(true);
             // Step 1: Sign in with Google
             const googleResult = await signInWithPopup(auth, provider);
 
@@ -232,6 +241,7 @@ const SignIn = () => {
             navigate("/dashboard");
           } catch (googleError) {
             console.error("Google sign-in error:", googleError);
+            setIsLoading(false);
             alert("Error signing in with Google: " + googleError.message);
           }
         }
@@ -251,8 +261,8 @@ const SignIn = () => {
   }, []);
 
   const handleSignIn = async () => {
-
     try {
+      setIsLoading(true);
       const res = await axios.post("https://api.leadscruise.com/api/login", {
         email,
         password,
@@ -291,6 +301,7 @@ const SignIn = () => {
         navigate("/check-number");
       }
     } catch (error) {
+      setIsLoading(false);
       if (error.response && error.response.status === 400) {
         if (
           error.response.data.message === "User not found. Please Signup!!!"
@@ -304,6 +315,7 @@ const SignIn = () => {
       }
     }
   };
+  
   const handleForgotPassword = async () => {
     if (!email) {
       alert("Please enter your email first.");
@@ -311,6 +323,7 @@ const SignIn = () => {
     }
 
     try {
+      setIsLoading(true);
       const response = await fetch("https://api.leadscruise.com/api/check-email", {
         method: "POST",
         headers: {
@@ -321,6 +334,7 @@ const SignIn = () => {
 
       const data = await response.json();
       if (!data.exists) {
+        setIsLoading(false);
         alert("Email is not registered.");
         return;
       }
@@ -337,12 +351,14 @@ const SignIn = () => {
       );
 
       const resetData = await resetResponse.json();
+      setIsLoading(false);
       if (resetData.success) {
         alert("Password reset email sent! Check your inbox.");
       } else {
         alert("Failed to send reset email. Please try again.");
       }
     } catch (error) {
+      setIsLoading(false);
       alert("Error sending reset email: " + error.message);
     }
   };
@@ -366,6 +382,26 @@ const SignIn = () => {
 
   return (
     <div className="signin-container">
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="spinner">
+              <div className="double-bounce1"></div>
+              <div className="double-bounce2"></div>
+            </div>
+            <div className="loading-text">
+              <h3>Authenticating</h3>
+              <div className="loading-dots">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </div>
+            </div>
+            <p className="loading-message">Please wait while we securely log you in</p>
+          </div>
+        </div>
+      )}
+      
       <div className="center-div">
         <div className="signin-left">
           <div className="signin-logo-class">

@@ -6,15 +6,21 @@ import styles from "./Dashboard.module.css"; // Import CSS module
 import { useNavigate } from "react-router-dom";
 
 const LoadingScreen = () => (
-  <div className={styles["loading-overlay"]}>
-    <div className={styles["loading-container"]}>
-      <div className={styles["loading-spinner"]}></div>
-      <p className={styles["loading-text"]}>Loading...</p>
-      <div className={styles["loading-progress-dots"]}>
-        <div className={styles["loading-dot"]}></div>
-        <div className={styles["loading-dot"]}></div>
-        <div className={styles["loading-dot"]}></div>
+  <div className="loading-overlay">
+    <div className="loading-container">
+      <div className="spinner">
+        <div className="double-bounce1"></div>
+        <div className="double-bounce2"></div>
       </div>
+      <div className="loading-text">
+        <h3>Loading...</h3>
+        <div className="loading-dots">
+          <span className="dot"></span>
+          <span className="dot"></span>
+          <span className="dot"></span>
+        </div>
+      </div>
+      <p className="loading-message">Please wait</p>
     </div>
   </div>
 );
@@ -183,12 +189,11 @@ const Dashboard = () => {
         alert("User email not found!");
         return;
       }
-
       const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
-        if (!detailsResponse.ok) {
-          alert("Please add your billing details first to start.");
-          return;
-        }
+      if (!detailsResponse.ok) {
+        alert("Please add your billing details first to start.");
+        return;
+      }
 
       // Fetch settings
       const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
@@ -203,9 +208,9 @@ const Dashboard = () => {
 
       // Check if all settings arrays are empty
       if (
-        (!userSettings.sentences || userSettings.sentences.length <=1 ) &&
-        (!userSettings.wordArray || userSettings.wordArray.length <=1 ) &&
-        (!userSettings.h2WordArray || userSettings.h2WordArray.length <=1)
+        (!userSettings.sentences || userSettings.sentences.length < 1) &&
+        (!userSettings.wordArray || userSettings.wordArray.length < 1) &&
+        (!userSettings.h2WordArray || userSettings.h2WordArray.length < 1)
       ) {
         alert("Please configure your settings first.");
         navigate("/settings");
@@ -319,7 +324,7 @@ const Dashboard = () => {
           <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Total Leads Today</span></div>
           <div className={styles.metricBox}>{metrics.totalLeadsThisWeek} <br /><span>Total Leads This Week</span></div>
           <div className={styles.metricBox}>
-          {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
+            {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
             <span>Replies Sent Today</span>
           </div>
           <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>WhatsApp Messages Sent Today</span></div>

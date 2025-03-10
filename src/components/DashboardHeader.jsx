@@ -16,13 +16,13 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const [showPopup, setShowPopup] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef(null);
-  const [daysLeft, setDaysLeft] = useState(null);
+  const [daysLeft, setDaysLeft] = useState(0);
   const [isSubscriptionActive, setIsSubscriptionActive] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const supportEmail = "support@focusengineering.com";
-  const whatsappNumber = "+911234567890"; // Replace with actual number
+  const supportEmail = "support@leadscruise.com";
+  const whatsappNumber = "+919579797269"; // Replace with actual number
 
   const handleEmailClick = () => {
     window.location.href = `mailto:${supportEmail}`;
@@ -63,40 +63,65 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           console.warn("No user email found in localStorage.");
           return;
         }
-
+  
         const response = await axios.get(`https://api.leadscruise.com/api/get-subscription/${userEmail}`);
         const { renewal_date, status, unique_id } = response.data;
-
+  
         if (!unique_id) {
           console.warn("Unique ID is missing from the response.");
         } else {
           localStorage.setItem("unique_id", unique_id);
         }
-
+  
         setSubscriptionDetails({ renewal_date, status, unique_id });
         localStorage.setItem("subscriptionDetails", JSON.stringify(response.data));
-
+  
+        if (!renewal_date) {
+          console.warn("Invalid renewal date received.");
+          return;
+        }
+  
         // Calculate days left for renewal
         const renewalDate = new Date(renewal_date);
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
         const diffTime = renewalDate - today;
         const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+  
         setDaysLeft(remainingDays);
         setIsSubscriptionActive(remainingDays > 0);
-
-        const popupDismissed = localStorage.getItem("popupDismissed");
-        if (remainingDays > 0 && remainingDays < 3 && popupDismissed !== "true") {
+  
+        // Show popup only once after login
+        const hasSeenPopup = localStorage.getItem("hasSeenPopup");
+        if (remainingDays > 0 && remainingDays < 3 && !hasSeenPopup) {
           setShowPopup(true);
+        } else {
+          setShowPopup(false);
         }
       } catch (error) {
         console.error("Error fetching subscription details:", error.response?.data || error.message);
-        setSubscriptionDetails({ renewal_date: "Unavailable", status: "Unavailable", unique_id: "Unavailable" });
+  
+        if (error.response?.data?.message === "No subscription found") {
+          const today = new Date().toISOString().split("T")[0];
+          setSubscriptionDetails({ renewal_date: today, status: "Expired", unique_id: "Unavailable" });
+          localStorage.setItem("subscriptionDetails", JSON.stringify({ renewal_date: today, status: "Expired", unique_id: "Unavailable" }));
+  
+          setDaysLeft(0);
+          setIsSubscriptionActive(false);
+  
+          // Show popup only once after login for expired subscriptions
+          const hasSeenPopup = localStorage.getItem("hasSeenPopup");
+          if (!hasSeenPopup) {
+            setShowPopup(true);
+          } else {
+            setShowPopup(false);
+          }
+        }
       }
     };
-
+  
     fetchSubscriptionDetails();
-  }, []);
+  }, []);  
 
   const handleStartScript = () => {
     if (!isSubscriptionActive) {
@@ -109,7 +134,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    localStorage.setItem("popupDismissed", "true");
+    localStorage.setItem("hasSeenPopup", "true");
   };
 
   // Toggle profile dropdown
@@ -224,7 +249,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 <div className={styles.buttonContent}>
                   <div className={styles.daysInfo}>
                     <span className={styles.daysText}>
-                      {isHovering ? "Renew now" : daysLeft !== null ? `${daysLeft} days left` : "Loading..."}
+                      {isHovering ? "Renew now" : daysLeft !== null ? `${daysLeft} days left` : "0 days left"}
                     </span>
                   </div>
                 </div>

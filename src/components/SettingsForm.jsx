@@ -10,17 +10,23 @@ import DashboardHeader from "./DashboardHeader";
 import styles from "./Dashboard.module.css"; // This should match what you use in Dashboard
 
 const LoadingScreen = () => (
-  <div className={styles["loading-overlay"]}>
-    <div className={styles["loading-container"]}>
-      <div className={styles["loading-spinner"]}></div>
-      <p className={styles["loading-text"]}>Loading...</p>
-      <div className={styles["loading-progress-dots"]}>
-        <div className={styles["loading-dot"]}></div>
-        <div className={styles["loading-dot"]}></div>
-        <div className={styles["loading-dot"]}></div>
-      </div>
-    </div>
-  </div>
+  <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="spinner">
+              <div className="double-bounce1"></div>
+              <div className="double-bounce2"></div>
+            </div>
+            <div className="loading-text">
+              <h3>Loading...</h3>
+              <div className="loading-dots">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </div>
+            </div>
+            <p className="loading-message">Please wait</p>
+          </div>
+        </div>
 );
 
 const SettingsForm = () => {

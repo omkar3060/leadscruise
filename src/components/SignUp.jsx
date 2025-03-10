@@ -49,7 +49,7 @@ const SignUp = () => {
         confPassword,
       });
       alert(res.data.message);
-      navigate("/"); // Redirect to SignIn page after successful signup
+      navigate("/login"); // Redirect to SignIn page after successful signup
     } catch (error) {
       alert(
         error.response.data.message || "Failed to sign up. Please try again."

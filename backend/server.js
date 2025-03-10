@@ -41,14 +41,14 @@ app.post("/order", async (req, res) => {
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_SECRET,
     });
-
+    console.log("Order request options:", req.body);
     const options = req.body;
     const order = await razorpay.orders.create(options);
 
     if (!order) {
       return res.status(500).send("Error");
     }
-
+    console.log("Generated order:", order);
     res.json(order);
   } catch (err) {
     console.log(err);

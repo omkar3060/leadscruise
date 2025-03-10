@@ -107,7 +107,7 @@ const Plans = () => {
       const order = await response.json();
 
       var options = {
-        key: "rzp_test_WK0GdfgogeZ8Cy",
+        key: "rzp_live_febmpQBBFIuphK",
         amount,
         currency,
         name: "Focus Engineering",

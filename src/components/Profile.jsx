@@ -17,6 +17,7 @@ const Profile = () => {
   const [isHovering, setIsHovering] = useState(false);
   const [billingDetails, setBillingDetails] = useState({
     email: userEmail,
+    billingEmail: "",
     phone: "",
     gst: "",
     pan: "",
@@ -68,17 +69,24 @@ const Profile = () => {
         // Fetch billing details
         const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
         if (!detailsResponse.ok) throw new Error("Failed to fetch billing details");
-        
+
         const detailsResult = await detailsResponse.json();
         if (detailsResult.success) {
-          setBillingDetails(detailsResult.data);
+          setBillingDetails(prevDetails => ({
+            ...prevDetails,
+            ...detailsResult.data,
+            email: userEmail, // Ensure email is always set
+          }));
         } else {
           throw new Error(detailsResult.message || "Billing details not available");
         }
         
       } catch (error) {
         console.error("Error loading billing details:", error);
-        setBillingDetails({}); // Fallback to empty object
+        setBillingDetails(prevDetails => ({
+          ...prevDetails,
+          email: userEmail, // Ensure fallback email
+        }));
       } finally {
         setIsLoading(false); // Ensure loading state is off after a delay
       }
@@ -109,6 +117,7 @@ const Profile = () => {
   
       const result = await response.json();
       if (response.ok && result.success) {
+        localStorage.setItem("billingEmail", billingDetails.email);
         alert("Billing details updated successfully!");
         setIsEditing(false); // Exit edit mode
       } else {
@@ -174,17 +183,23 @@ const Profile = () => {
 
   // Loading Screen Component
   const LoadingScreen = () => (
-    <div className={styles["loading-overlay"]}>
-      <div className={styles["loading-container"]}>
-        <div className={styles["loading-spinner"]}></div>
-        <p className={styles["loading-text"]}>Loading your profile data...</p>
-        <div className={styles["loading-progress-dots"]}>
-          <div className={styles["loading-dot"]}></div>
-          <div className={styles["loading-dot"]}></div>
-          <div className={styles["loading-dot"]}></div>
+    <div className="loading-overlay">
+    <div className="loading-container">
+      <div className="spinner">
+        <div className="double-bounce1"></div>
+        <div className="double-bounce2"></div>
+      </div>
+      <div className="loading-text">
+        <h3>Loading...</h3>
+        <div className="loading-dots">
+          <span className="dot"></span>
+          <span className="dot"></span>
+          <span className="dot"></span>
         </div>
       </div>
+      <p className="loading-message">Please wait</p>
     </div>
+  </div>
   );
 
   return (
@@ -280,6 +295,10 @@ const Profile = () => {
                           <strong>Address:</strong>
                           <textarea name="address" value={billingDetails.address} onChange={handleChange}></textarea>
                         </p>
+                        <p className={styles["billing-address-text"]}>
+                          <strong>billing Email:</strong>
+                          <input type="email" name="billingEmail" value={billingDetails.billingEmail} onChange={handleChange} />
+                        </p>
                       </div>
                       <button className={styles["save-button"]} onClick={handleSave}>Save</button>
                       <button className={styles["cancel-button"]} onClick={() => setIsEditing(false)}>Cancel</button>
@@ -302,6 +321,7 @@ const Profile = () => {
                         <p className={styles["billing-address-text"]}><strong>Name:</strong> {billingDetails.name || 'N/A'}</p>
                         <p className={styles["billing-address-text"]}><strong>Address:</strong> {billingDetails.address || 'N/A'}</p>
                         <p className={styles["billing-address-text"]}><strong>Email:</strong> {billingDetails.email || 'N/A'}</p>
+                        <p className={styles["billing-address-text"]}><strong>Billing Email:</strong> {billingDetails.billingEmail || 'N/A'}</p>
                       </div>
                       <div className={styles["edit-button-container"]}>
                       <button className={styles["edit-button"]} onClick={() => setIsEditing(true)}>Edit my Details</button>

@@ -63,11 +63,30 @@ const UsersList = () => {
     return '';
   };
 
-  if (loading) return <div className={styles.loadingContainer}><div className={styles.spinner}></div></div>;
   if (error) return <div className={styles.errorMessage}>Error: {error}</div>;
 
   return (
+
     <div className={styles.usersListContainer}>
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="spinner">
+              <div className="double-bounce1"></div>
+              <div className="double-bounce2"></div>
+            </div>
+            <div className="loading-text">
+              <h3>loading...</h3>
+              <div className="loading-dots">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </div>
+            </div>
+            <p className="loading-message">Please wait</p>
+          </div>
+        </div>
+      )}
         <Sidebar isDisabled={isDisabled} />
       <div className={styles.header}>
         <h1>All Users</h1>

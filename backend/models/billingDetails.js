@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 
 const BillingDetailsSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true }, // Unique user identifier
+  email: { type: String, required: true, unique: true },
+  billingEmail: {type: String, required: true}, // Unique user identifier
   phone: { type: String, required: true },
   gst: { type: String, required: true },
   pan: { type: String, required: true },
