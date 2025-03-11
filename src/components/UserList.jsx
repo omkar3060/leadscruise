@@ -1,9 +1,10 @@
-// UsersList.js - New component for displaying all users
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import styles from './UsersList.module.css';
 import Sidebar from './Sidebar';
+import * as XLSX from 'xlsx';
+
 const UsersList = () => {
   const [users, setUsers] = useState([]);
   const [isDisabled, setIsDisabled] = useState(false);
@@ -17,7 +18,7 @@ const UsersList = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:5000/api/users', {
+        const response = await axios.get('https://api.leadscruise.com/api/users', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -51,7 +52,7 @@ const UsersList = () => {
     return 0;
   });
 
-  const filteredUsers = sortedUsers.filter(user => 
+  const filteredUsers = sortedUsers.filter(user =>
     user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -63,10 +64,31 @@ const UsersList = () => {
     return '';
   };
 
+  // Function to download users list as Excel file
+  const downloadExcel = () => {
+    // Prepare data for Excel
+    const worksheet = XLSX.utils.json_to_sheet(
+      filteredUsers.map(user => ({
+        Email: user.email || '',
+        'Referral ID': user.refId || 'N/A',
+        'Phone Number': user.phoneNumber || 'N/A',
+        'IndiaMart Phone Number': user.mobileNumber || 'N/A',
+        'Subscription Status': user.subscriptionStatus || 'Not Active',
+        'Last Login': user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'N/A'
+      }))
+    );
+    
+    // Create workbook and add the worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+    
+    // Generate Excel file and download
+    XLSX.writeFile(workbook, 'users_list.xlsx');
+  };
+
   if (error) return <div className={styles.errorMessage}>Error: {error}</div>;
 
   return (
-
     <div className={styles.usersListContainer}>
       {loading && (
         <div className="loading-overlay">
@@ -87,14 +109,23 @@ const UsersList = () => {
           </div>
         </div>
       )}
-        <Sidebar isDisabled={isDisabled} />
+      <Sidebar isDisabled={isDisabled} />
       <div className={styles.header}>
         <h1>All Users</h1>
-        <button className={styles.backButton} onClick={() => navigate(-1)}>
-          Back to Dashboard
-        </button>
+        <div className={styles.headerButtons}>
+          <button 
+            className={styles.downloadButton} 
+            onClick={downloadExcel}
+            disabled={loading || filteredUsers.length === 0}
+          >
+            Download as Excel
+          </button>
+          <button className={styles.backButton} onClick={() => navigate(-1)}>
+            Back to Dashboard
+          </button>
+        </div>
       </div>
-      
+
       <div className={styles.searchContainer}>
         <input
           type="text"
@@ -104,12 +135,11 @@ const UsersList = () => {
           className={styles.searchInput}
         />
       </div>
-      
+
       <div className={styles.tableContainer}>
         <table className={styles.usersTable}>
           <thead>
             <tr>
-              
               <th onClick={() => handleSort('email')}>
                 Email {getSortIndicator('email')}
               </th>
@@ -139,17 +169,16 @@ const UsersList = () => {
                   <td>{user.phoneNumber || 'N/A'}</td>
                   <td>{user.mobileNumber || 'N/A'}</td>
                   <td>
-  <span >
-    {user.subscriptionStatus || 'Not Active'}
-  </span>
-</td>
+                    <span>
+                      {user.subscriptionStatus || 'Not Active'}
+                    </span>
+                  </td>
                   <td>{new Date(user.lastLogin).toLocaleString() || 'N/A'}</td>
-                  
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="5" className={styles.noResults}>No users found</td>
+                <td colSpan="6" className={styles.noResults}>No users found</td>
               </tr>
             )}
           </tbody>

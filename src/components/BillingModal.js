@@ -11,7 +11,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     if (isOpen && userEmail) {
       // Fetch billing details
       axios
-        .get(`http://localhost:5000/api/billing/${userEmail}`)
+        .get(`https://api.leadscruise.com/api/billing/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setBillingDetails(response.data.data);
@@ -23,7 +23,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
 
       // Fetch API Key from Users Collection
       axios
-        .get(`http://localhost:5000/api/get-api-key/${userEmail}`) // New API call
+        .get(`https://api.leadscruise.com/api/get-api-key/${userEmail}`) // New API call
         .then((response) => {
           if (response.data.success) {
             setApiKey(response.data.user.apiKey || "Not Available");
@@ -52,7 +52,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     formData.append("invoice", selectedFile);
 
     try {
-      await axios.post(`http://localhost:5000/api/upload-invoice/${unique_id}`, formData, {
+      await axios.post(`https://api.leadscruise.com/api/upload-invoice/${unique_id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       alert("Invoice uploaded successfully!");
