@@ -2,9 +2,9 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import styles from "./Header.module.css";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaUser, FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaCog, FaWhatsapp, FaFileExcel, FaSignOutAlt, FaArrowLeft, FaSave, FaUndo, FaHeadset } from "react-icons/fa";
+import { FaCheck, FaUser, FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaCog, FaWhatsapp, FaFileExcel, FaSignOutAlt, FaArrowLeft, FaSave, FaUndo, FaHeadset } from "react-icons/fa";
 
-const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSubmit, handleRevert, timer }) => {
+const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSubmit, handleRevert, timer, isStarting }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -64,7 +64,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           return;
         }
   
-        const response = await axios.get(`https://api.leadscruise.com/api/get-subscription/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-subscription/${userEmail}`);
         const { renewal_date, status, unique_id } = response.data;
   
         if (!unique_id) {
@@ -203,29 +203,44 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
             </>
           ) : location.pathname !== "/profile" ? ( // Hide buttons on profile page
             <>
-              
-                <div className={status === "Running" ? styles.tooltip : ""} data-tooltip="You have already started the script">
-                  <button
-                    className={`${styles.startButton} ${status === "Running" ? styles.disabledButton : ""}`}
-                    onClick={handleStartScript}
-                    disabled={status === "Running"}
-                  >
-                    <FaPlay className={styles.iconOnly} />
-                    <span className={styles.buttonText}>Start</span>
-                  </button>
-                </div>
-
-                <div className={isDisabled ? styles.tooltip : ""} data-tooltip={`You have to wait ${timer} seconds to stop the script`}>
-                  <button
-                    className={`${styles.stopButton} ${isDisabled ? styles.disabledButton : ""}`}
-                    onClick={handleStop}
-                    disabled={isDisabled}
-                  >
-                    <FaStop className={styles.iconOnly} />
-                    <span className={styles.buttonText}>Stop</span>
-                  </button>
-                </div>
-            </>
+    <div className={status === "Running" || isStarting ? styles.tooltip : ""} 
+         data-tooltip={status === "Running" ? "You have already started the script" : "Starting the script..."}>
+      <button
+        className={`${styles.startButton} ${status === "Running" || isStarting ? styles.disabledButton : ""}`}
+        onClick={handleStartScript}
+        disabled={status === "Running" || isStarting}
+      >
+        {isStarting && status !== "Running" ? (
+          <>
+            <div className={styles.spinnerSmall}></div>
+            <span className={styles.buttonText}>Starting</span>
+          </>
+        ) : status === "Running" ? (
+          <>
+            <FaCheck className={styles.iconOnly} />
+            <span className={styles.buttonText}>Started</span>
+          </>
+        ) : (
+          <>
+            <FaPlay className={styles.iconOnly} />
+            <span className={styles.buttonText}>Start</span>
+          </>
+        )}
+      </button>
+    </div>
+    
+    <div className={isDisabled ? styles.tooltip : ""} 
+         data-tooltip={`You have to wait ${timer} seconds to stop the script`}>
+      <button
+        className={`${styles.stopButton} ${isDisabled ? styles.disabledButton : ""}`}
+        onClick={handleStop}
+        disabled={isDisabled || (!status === "Running" && !isStarting)}
+      >
+        <FaStop className={styles.iconOnly} />
+        <span className={styles.buttonText}>Stop</span>
+      </button>
+    </div>
+  </>
           ) : null}
         </div>
       </div>

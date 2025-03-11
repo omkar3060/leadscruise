@@ -27,6 +27,7 @@ const LoadingScreen = () => (
 
 const Dashboard = () => {
   const [leads, setLeads] = useState([]);
+  const [isStarting, setIsStarting] = useState(false);
   const [status, setStatus] = useState("Stopped");
   const [isDisabled, setIsDisabled] = useState(false);
   const [timer, setTimer] = useState(0);
@@ -47,7 +48,7 @@ const Dashboard = () => {
         return;
       }
 
-      const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
+      const response = await axios.get(`http://localhost:5000/api/get-leads/${mobileNumber}`);
       setLeads(response.data);
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -63,7 +64,7 @@ const Dashboard = () => {
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-status/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-status/${userEmail}`);
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
         if (response.data.startTime) {
@@ -127,7 +128,7 @@ const Dashboard = () => {
         return;
       }
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
         const userSettings = response.data // Extracting 'settings' from response
 
         if (!userSettings) {
@@ -176,36 +177,46 @@ const Dashboard = () => {
 
   const handleStart = async () => {
     try {
+      // Set a "Starting" state
+      setIsStarting(true);
+      
       const mobileNumber = localStorage.getItem("mobileNumber");
       const password = localStorage.getItem("savedPassword");
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
+      
       if (!mobileNumber || !password) {
         alert("Mobile number or password not found in local storage!");
+        setIsStarting(false); // Reset starting state on error
         return;
       }
-
+      
       if (!userEmail) {
         alert("User email not found!");
+        setIsStarting(false); // Reset starting state on error
         return;
       }
-      const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
+      
+      const detailsResponse = await fetch(`http://localhost:5000/api/billing/${userEmail}`);
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
+        setIsStarting(false); // Reset starting state on error
         return;
       }
-
+      
       // Fetch settings
-      const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+      const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
       setSettings(response.data);
+      
       if (!userSettings) {
         alert("No settings found, please configure them first.");
         navigate("/settings");
+        setIsStarting(false); // Reset starting state on error
         return;
       }
-
+      
       // Check if all settings arrays are empty
       if (
         (!userSettings.sentences || userSettings.sentences.length < 1) &&
@@ -214,13 +225,14 @@ const Dashboard = () => {
       ) {
         alert("Please configure your settings first.");
         navigate("/settings");
+        setIsStarting(false); // Reset starting state on error
         return;
       }
+      
       console.log("Sending the following settings to backend:", userSettings);
-      // Start process
-
+      
       // Send the fetched settings instead of using the state
-      const cycleResponse = await axios.post("https://api.leadscruise.com/api/cycle", {
+      const cycleResponse = await axios.post("http://localhost:5000/api/cycle", {
         sentences: userSettings.sentences,
         wordArray: userSettings.wordArray,
         h2WordArray: userSettings.h2WordArray,
@@ -229,12 +241,14 @@ const Dashboard = () => {
         uniqueId,
         userEmail,
       });
-      alert("Task started successfully!!! You can stop the task after 5 minutes.");
+      setIsStarting(false); // Reset starting state after process completes
       setStatus("Running");
-
+      // Note: we don't reset isStarting here because the status is now "Running"
+      
     } catch (error) {
       console.error("Error:", error.response?.data?.message || error.message);
       alert(error.response?.data?.message || error.message);
+      setIsStarting(false); // Reset starting state on error
     } finally {
       setIsLoading(false); // Hide loading after process completes or fails
     }
@@ -259,7 +273,7 @@ const Dashboard = () => {
       }
 
       try {
-        const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
+        const response = await axios.post("http://localhost:5000/api/stop", { userEmail, uniqueId });
 
         alert(response.data.message);
         setStatus("Stopped");
@@ -317,6 +331,7 @@ const Dashboard = () => {
           handleStop={handleStop}
           isDisabled={isDisabled}
           timer={timer}
+          isStarting={isStarting}
         />
 
         {/* Metrics Section */}

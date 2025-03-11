@@ -17,7 +17,7 @@ const UsersList = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('https://api.leadscruise.com/api/users', {
+        const response = await axios.get('http://localhost:5000/api/users', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }

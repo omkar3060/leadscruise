@@ -5,11 +5,13 @@ import styles from "./BillingModal.module.css";
 const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [billingDetails, setBillingDetails] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [apiKey, setApiKey] = useState(""); // Store API key
 
   useEffect(() => {
     if (isOpen && userEmail) {
+      // Fetch billing details
       axios
-        .get(`https://api.leadscruise.com/api/billing/${userEmail}`)
+        .get(`http://localhost:5000/api/billing/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setBillingDetails(response.data.data);
@@ -18,8 +20,21 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
           }
         })
         .catch((error) => console.error("Error fetching billing details:", error));
+
+      // Fetch API Key from Users Collection
+      axios
+        .get(`http://localhost:5000/api/get-api-key/${userEmail}`) // New API call
+        .then((response) => {
+          if (response.data.success) {
+            setApiKey(response.data.user.apiKey || "Not Available");
+          } else {
+            setApiKey("Not Available");
+          }
+        })
+        .catch((error) => console.error("Error fetching API Key:", error));
     } else {
       setBillingDetails(null); // Reset billing details when modal is closed
+      setApiKey(""); // Reset API Key
     }
   }, [isOpen, userEmail]);
 
@@ -37,7 +52,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     formData.append("invoice", selectedFile);
 
     try {
-      await axios.post(`https://api.leadscruise.com/api/upload-invoice/${unique_id}`, formData, {
+      await axios.post(`http://localhost:5000/api/upload-invoice/${unique_id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       alert("Invoice uploaded successfully!");
@@ -82,6 +97,9 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
             <p><strong>Company Name:</strong> {billingDetails.name}</p>
             <p><strong>Address:</strong> {billingDetails.address}</p>
             <p><strong>Billing Email ID:</strong> {billingDetails.email}</p>
+
+            {/* Display API Key */}
+            <p><strong>API Key:</strong> {apiKey}</p>
 
             {/* File Upload Section */}
             <div className={styles.fileUploadSection}>

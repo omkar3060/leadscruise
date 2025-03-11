@@ -472,11 +472,11 @@ app.post("/api/cycle", async (req, res) => {
     );
 
     if (code === 0) {
-      res.json({ status: "success", message: result.trim() });
+      res.json({ status: "success", message: "Successfully executed!!" });
     } else {
       res.status(500).json({
         status: "error",
-        message: `Python script failed: ${error.trim()}`,
+        message: `Python script failed`,
       });
     }
   });
