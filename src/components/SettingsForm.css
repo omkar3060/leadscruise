@@ -30,7 +30,7 @@ body {
 
 .sheets-container {
   display: flex;
-  
+  height: 100%;
   gap: 20px;
   width: 100%;
 }
@@ -575,6 +575,11 @@ body {
 @media (max-width: 1200px) {
   .settings-form {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .sheets-container{
+    display: grid;
+    height: 100%;
   }
 }
 

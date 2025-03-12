@@ -201,7 +201,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 <FaUndo className={styles.iconOnly} /> <span className={styles.buttonText}>Revert All</span>
               </button>
             </>
-          ) : location.pathname !== "/profile" ? ( // Hide buttons on profile page
+          ) : location.pathname !== "/profile" && location.pathname !== "/sheets" ? ( // Hide buttons on profile page
             <>
     <div className={status === "Running" || isStarting ? styles.tooltip : ""} 
          data-tooltip={status === "Running" ? "You have already started the script" : "Starting the script..."}>
@@ -272,9 +272,13 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
             </div>
           </>
         ) : (
-          <button className={styles.profileButton} onClick={toggleProfileDropdown}>
-            <FaUser className={styles.iconOnly} /> <span className={styles.buttonText}>Profile</span>
-          </button>
+          <button 
+          className={styles.profileButton} 
+          onClick={toggleProfileDropdown} 
+          style={location.pathname === "/sheets" ? { marginTop: "15px" } : {}}
+        >
+          <FaUser className={styles.iconOnly} /> <span className={styles.buttonText}>Profile</span>
+        </button>
         )}
 
         {showProfileDropdown && (
