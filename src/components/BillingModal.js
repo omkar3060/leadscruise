@@ -6,12 +6,25 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [billingDetails, setBillingDetails] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [apiKey, setApiKey] = useState(""); // Store API key
+  const [sheetsId, setSheetsId] = useState(""); // New state for Sheets ID
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     if (isOpen && userEmail) {
-      // Fetch billing details
       axios
-        .get(`https://api.leadscruise.com/api/billing/${userEmail}`)
+        .post("https://api.leadscruise.com/api/check-script-status", { email: userEmail })
+        .then((response) => {
+          if (response.data.success) {
+            setIsRunning(response.data.isRunning);
+          }
+        })
+        .catch((error) => console.error("Error checking script status:", error));
+    }
+  }, [isOpen, userEmail]);
+
+  useEffect(() => {
+    if (isOpen && userEmail) {
+      axios.get(`https://api.leadscruise.com/api/billing/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setBillingDetails(response.data.data);
@@ -21,20 +34,20 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
         })
         .catch((error) => console.error("Error fetching billing details:", error));
 
-      // Fetch API Key from Users Collection
-      axios
-        .get(`https://api.leadscruise.com/api/get-api-key/${userEmail}`) // New API call
+      axios.get(`https://api.leadscruise.com/api/get-api-key/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setApiKey(response.data.user.apiKey || "Not Available");
+            setSheetsId(response.data.user.sheetsId || ""); // Fetch existing Sheets ID
           } else {
             setApiKey("Not Available");
           }
         })
         .catch((error) => console.error("Error fetching API Key:", error));
     } else {
-      setBillingDetails(null); // Reset billing details when modal is closed
-      setApiKey(""); // Reset API Key
+      setBillingDetails(null);
+      setApiKey("");
+      setSheetsId("");
     }
   }, [isOpen, userEmail]);
 
@@ -68,6 +81,43 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     onClose();
   };
 
+  const handleUpdate = async () => {
+    try {
+      const response = await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
+        email: userEmail,
+        apiKey,
+        sheetsId,
+      });
+
+      if (response.data.success) {
+        alert("Updated successfully! Triggering Python script...");
+        setIsRunning(true); // Set running state to true
+      } else {
+        alert("Failed to update.");
+      }
+    } catch (error) {
+      console.error("Error updating Sheets ID:", error);
+      alert("Error updating details.");
+    }
+  };
+
+  const handleStop = async () => {
+    try {
+      const response = await axios.post("https://api.leadscruise.com/api/stop-api-script", {
+        email: userEmail,
+      });
+
+      if (response.data.success) {
+        alert("Script stopped successfully!");
+        setIsRunning(false);
+      } else {
+        alert("Failed to stop script.");
+      }
+    } catch (error) {
+      console.error("Error stopping script:", error);
+      alert("Error stopping script.");
+    }
+  };
   if (!isOpen) return null;
 
   return (
@@ -101,6 +151,23 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
             {/* Display API Key */}
             <p><strong>API Key:</strong> {apiKey}</p>
 
+            {/* New Sheets ID Input Field */}
+            <div className={styles.inputGroup}>
+              <strong><label htmlFor="sheetsId">Google Sheets ID:</label></strong>
+              <input
+                type="text"
+                id="sheetsId"
+                value={sheetsId}
+                onChange={(e) => setSheetsId(e.target.value)}
+                placeholder="Enter Google Sheets ID"
+              />
+              <button
+                onClick={isRunning ? handleStop : handleUpdate}
+                className={styles.attachBillLabel}
+              >
+                {isRunning ? "Stop" : "Update"}
+              </button>
+            </div>
             {/* File Upload Section */}
             <div className={styles.fileUploadSection}>
               <label htmlFor="fileUpload" className={styles.attachBillLabel}>

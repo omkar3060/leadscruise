@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["admin", "user"], default: "user" },
     startTime: { type: Date },
     apiKey: { type: String },
+    sheetsId: { type: String }, // New field
     phoneNumber: { type: String },
     lastLogin: { type: Date },
   },

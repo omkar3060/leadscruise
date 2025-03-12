@@ -28,6 +28,13 @@ body {
   width: 100%;
 }
 
+.sheets-container {
+  display: flex;
+  
+  gap: 20px;
+  width: 100%;
+}
+
 .edit-button-container {
   display: flex;
   justify-content: center;

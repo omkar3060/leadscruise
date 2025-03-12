@@ -5,7 +5,7 @@ import "./ProfileCredentials.css";
 
 const ProfileCredentials = ({ isProfilePage }) => {
   const location = useLocation();
-  const isSettingsPage = location.pathname === "/settings";
+  const isSettingsPage = location.pathname === "/settings" || location.pathname === "/sheets";
   const [shakeError, setShakeError] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [email, setEmail] = useState("");

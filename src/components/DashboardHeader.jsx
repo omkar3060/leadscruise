@@ -173,7 +173,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
 
       <div className={styles.statusSection}>
         {/* If the user is in settings or profile, show 'Return to Dashboard' */}
-        {location.pathname === "/settings" || location.pathname === "/profile" ? (
+        {location.pathname === "/settings" || location.pathname === "/profile" || location.pathname === "/sheets" ? (
           <div className={styles.statusLabel} onClick={() => navigate("/dashboard")}>
             <FaArrowLeft className={styles.iconOnly} /> <span className={styles.statusText}>Return to Dashboard</span>
           </div>

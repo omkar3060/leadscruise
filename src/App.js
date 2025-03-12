@@ -17,6 +17,7 @@ import ComingSoonFeature from "./components/ComingSoon";
 import NotFound from "./components/NotFound";
 import LandingPage from "./components/LandingPage";
 import UsersList from "./components/UserList";
+import Sheets from "./components/Sheets";
 
 const Layout = () => {
   const location = useLocation();
@@ -101,7 +102,7 @@ const Layout = () => {
           }
         />
         <Route path="/whatsapp" element={<ProtectedRoute><ComingSoonFeature /></ProtectedRoute>} />
-        <Route path="/sheets" element={<ProtectedRoute><ComingSoonFeature /></ProtectedRoute>} />
+        <Route path="/sheets" element={<ProtectedRoute><Sheets /></ProtectedRoute>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

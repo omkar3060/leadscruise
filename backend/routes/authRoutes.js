@@ -10,6 +10,9 @@ const {
   checkemail,
   getStatus,updatePassword,
   getAllUsers,
+  updateSheetsId,
+  checkScriptStatus,
+  stopScript,
 } = require("../controllers/authController");
 const Payment = require("../models/Payment");
 
@@ -34,6 +37,10 @@ router.post("/check-email", checkemail);
 router.get("/get-status/:email", getStatus);
 router.post("/update-password", updatePassword);
 router.get("/users", getAllUsers);
+router.post("/update-sheets-id",updateSheetsId);
+router.post("/check-script-status", checkScriptStatus);
+router.post("/stop-api-script",stopScript);
+
 router.get("/get-latest-id", async (req, res) => {
   try {
     const latestPayment = await Payment.findOne().sort({ unique_id: -1 });
