@@ -12,7 +12,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   useEffect(() => {
     if (isOpen && userEmail) {
       axios
-        .post("https://api.leadscruise.com/api/check-script-status", { email: userEmail })
+        .post("http://localhost:5000/api/check-script-status", { email: userEmail })
         .then((response) => {
           if (response.data.success) {
             setIsRunning(response.data.isRunning);
@@ -24,7 +24,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
 
   useEffect(() => {
     if (isOpen && userEmail) {
-      axios.get(`https://api.leadscruise.com/api/billing/${userEmail}`)
+      axios.get(`http://localhost:5000/api/billing/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setBillingDetails(response.data.data);
@@ -34,7 +34,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
         })
         .catch((error) => console.error("Error fetching billing details:", error));
 
-      axios.get(`https://api.leadscruise.com/api/get-api-key/${userEmail}`)
+      axios.get(`http://localhost:5000/api/get-api-key/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setApiKey(response.data.user.apiKey || "Not Available");
@@ -65,7 +65,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     formData.append("invoice", selectedFile);
 
     try {
-      await axios.post(`https://api.leadscruise.com/api/upload-invoice/${unique_id}`, formData, {
+      await axios.post(`http://localhost:5000/api/upload-invoice/${unique_id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       alert("Invoice uploaded successfully!");
@@ -83,7 +83,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
 
   const handleUpdate = async () => {
     try {
-      const response = await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
+      const response = await axios.post("http://localhost:5000/api/update-sheets-id", {
         email: userEmail,
         apiKey,
         sheetsId,
@@ -103,7 +103,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
 
   const handleStop = async () => {
     try {
-      const response = await axios.post("https://api.leadscruise.com/api/stop-api-script", {
+      const response = await axios.post("http://localhost:5000/api/stop-api-script", {
         email: userEmail,
       });
 

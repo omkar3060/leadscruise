@@ -405,6 +405,12 @@ app.post("/api/cycle", async (req, res) => {
   }
 
   if (userCounter.leadCount >= userCounter.maxCaptures) {
+    console.log("Lead limit reached. Cannot capture more leads today.");
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      { status: "Stopped", startTime: null },
+      { new: true }
+    );
     return res.status(403).json({ status: "error", message: "Lead limit reached. Cannot capture more leads today." });
   }
 
@@ -447,6 +453,11 @@ app.post("/api/cycle", async (req, res) => {
 
     if (updatedUserCounter.leadCount >= updatedUserCounter.maxCaptures) {
       console.log("Lead limit exceeded! Killing Python script...");
+      await User.findOneAndUpdate(
+        { email: userEmail },
+        { status: "Stopped", startTime: null },
+        { new: true }
+      );
       pythonProcess.kill("SIGINT");// Kill the script
       activePythonProcesses.delete(uniqueId);
       clearInterval(leadCheckInterval);
@@ -498,7 +509,7 @@ app.post("/api/stop", async (req, res) => {
   const currentTime = new Date();
   const elapsedTime = Math.floor((currentTime - startTime) / 1000); // in seconds
 
-  if (elapsedTime < 30) {
+  if (elapsedTime < 300) {
     return res.status(403).json({
       status: "error",
       message: `Please wait at least ${Math.ceil((300 - elapsedTime) / 60)} more minutes before stopping.`,

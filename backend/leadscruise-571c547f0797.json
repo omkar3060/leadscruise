@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "leadscruise",
+  "private_key_id": "571c547f079788460e8cbe2901d0d58574fcd4e0",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDYOMJT7wKmtCAC\ngkMMfGbNufNTDvVAQwxzVzA3by1i4V/3N1aXzkNUdCeSzKaRk3NyhJXvrFYv253v\nTNRJ5N3sYWWpW1kKoCQ7E17taATInSWKB2RaIrNq+5zpCwQcYCdqK3RSyYgWchjL\npIy4mbI05ya6poHgZn0T1hEPg6wPdapqYwcyNvafK4G09qzNvDHlMo6Yir9FtdmF\nMVLSwYeByt7+du/nPjHcaAU5WfuCEP6oFQk/5I42Qkm5QmYJ02oKRmXgLdUuc3ic\nb6zP1+mP1+z+ZcsP8V5erKHVlJBJ0+IenslRSjA0LXt0wOjthpmYhav7d5x56GyD\n0JEneG6bAgMBAAECggEAFEnjJigPuh+9vy6E5xeHN/eiVuFY7vI7qVj9i74RZq1a\nKWLWa8EtfS+3BOXSHWfWFeFOBmLH5Y64d5tgchyZHFSZSvZo2P/k1mw/ZIx1onNo\ncda2umR2LGw2sYFYnecB28r/C8OgUuba38TtdWbqm18zOaFlH27Ofr1/9VI4I20N\naGuQq1iyYL5JlFyEzJBTZQK0JcYY5UVTdtF6WgbvP2px5prd4L/9s1h7TrgdYbxL\n8iGgBL0V4sjIfdNoodGUm5bxUclLoo3FTTNvKO1ShKk+y1zF/KmXNpghF/qb1bMf\nxLT0jCzo6yAS0uoM2vyYkEAqf+00YoaeytDwqLrRMQKBgQDyA7/KQ4L5+bMdrqof\nX0E4riABZUd3fZDZpUtEB+ETeV5hF0lC4KScU9IHxNi4Dqq8BxjQLKXlYoPkEW56\nIMJwP/E/rRgnHHx318tnbvVyv2bO/XkzIZKDlKFR/59412IOHm8iif15CxqLOahn\n98jcweimOuRH09eqLYTq5NsvUQKBgQDkt3ECJ8hVlw9DVt5fosL+fPF9wbVb1PUI\nXGokC0lOZ/nfdZ+DHvVmWnlHvAG08FJlPyc4SjZJav9D2RRdl0F0zFQnZbOFZ48P\ndujnIqDrwHyhLGHpUbyWoltreSLe8W/UzHkd5UZM9l6kwdr22lSJvqASYgbRhv0o\nxNUsV2i8KwKBgEWb8nQYyvlfardk36W6XiYRXz9HhDDIOvt+4ZEluwVA6XZ/niDQ\nQEh+i3CUm8kE3vLKD8cAsI6zsT/OC7qw5XwnyBoKjWHifaJyvRx4+7wPdWCf41Zj\nl6KlA2l0XsgBG0D4W/rROciw+ueEo/2TdYCZfXMiiTpnoiZehVaSkMChAoGAby8p\n9aVHQyxbFB4/nfgumK4+aybmtgyxTW43fuwpp77t/o5ci85Z93bV7GRd5ArL00I/\nG6Mf/tLP4ri9qL2l6VSHOFu9SIXOSvNAR1RTLCf3rhY4RscgSY4FqRpLNFvkRGte\nGYVihnliCu/eNRBv9kI/6I/Uxri7ir0c8CBR3t8CgYEAxo4Blbjb07n29T9jqG4Z\nnhXvLh7sx99tmR7WDvey4PA5Sa4TGFXxWC3l4KDEtGKos7+Uc0GxcmMxXU8W/gU9\nJECmKPJfs0haxafi3Kr+qTi6HFg/q54g49Prg5MVkWZp7iOp1bSvQcf14oTeGy53\nzHVbsSYecfRzDN7oFGZuMBQ=\n-----END PRIVATE KEY-----\n",
+  "client_email": "leadscruise@leadscruise.iam.gserviceaccount.com",
+  "client_id": "113572572858971518725",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/leadscruise%40leadscruise.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

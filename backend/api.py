@@ -32,7 +32,7 @@ sys.stderr = Unbuffered(sys.stderr)
 EXTERNAL_API_URL = "https://mapi.indiamart.com/wservce/crm/crmListing/v2/"
 
 # Google Sheets API Configuration
-SERVICE_ACCOUNT_FILE = r"C:\Users\omkar\Downloads\leadscruise-571c547f0797.json"
+SERVICE_ACCOUNT_FILE = r"leadscruise-571c547f0797.json"
 SPREADSHEET_ID = sys.argv[2]
 RANGE_NAME = "Sheet1!A2"  
 # Start from row 2 to skip headers

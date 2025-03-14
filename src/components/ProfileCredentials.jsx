@@ -71,16 +71,24 @@ const ProfileCredentials = ({ isProfilePage }) => {
   const handleSaveMaxCaptures = async () => {
     try {
       const userMobileNumber = localStorage.getItem("mobileNumber");
-      const response = await axios.post("https://api.leadscruise.com/api/update-max-captures", {
+  
+      // Prevent API call if maxCaptures is the same
+      if (tempCaptures === maxCaptures) {
+        alert("Max captures value is unchanged.");
+        setIsEditingMaxCaptures(false);
+        return;
+      }
+  
+      const response = await axios.post("http://localhost:5000/api/update-max-captures", {
         user_mobile_number: userMobileNumber,
         maxCaptures: tempCaptures,
       });
-
+  
       setMaxCaptures(tempCaptures);
       setIsEditingMaxCaptures(false);
       alert(response.data.message);
     } catch (error) {
-      if (error.response.status === 403) {
+      if (error.response?.status === 403) {
         alert(error.response.data.message);
       } else {
         console.error("Failed to update max captures:", error);
@@ -88,12 +96,13 @@ const ProfileCredentials = ({ isProfilePage }) => {
       }
     }
   };
+  
 
   useEffect(() => {
     const fetchMaxCaptures = async () => {
       try {
         const userMobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`https://api.leadscruise.com/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
+        const response = await axios.get(`http://localhost:5000/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
 
         if (response.data) {
           setMaxCaptures(response.data.maxCaptures);
@@ -125,7 +134,7 @@ const ProfileCredentials = ({ isProfilePage }) => {
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-password", {
+      const response = await axios.post("http://localhost:5000/api/update-password", {
         email: localStorage.getItem("userEmail"),
         newPassword,
       });
@@ -149,7 +158,7 @@ const ProfileCredentials = ({ isProfilePage }) => {
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-saved-password", {
+      const response = await axios.post("http://localhost:5000/api/update-saved-password", {
         email: localStorage.getItem("userEmail"),
         newPassword: savedNewPassword,
       });

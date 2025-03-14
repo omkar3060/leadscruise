@@ -64,7 +64,7 @@ const Sheets = () => {
   const userEmail = localStorage.getItem("userEmail");
   useEffect(() => {
     const fetchUserData = async () => {
-      axios.get(`https://api.leadscruise.com/api/get-api-key/${userEmail}`)
+      axios.get(`http://localhost:5000/api/get-api-key/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setApiKey(response.data.user.apiKey || "Not Available");
