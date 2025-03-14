@@ -1,6 +1,8 @@
 const express = require("express");
 const nodemailer = require("nodemailer");
 const User = require("../models/userModel");
+const cron = require("node-cron");
+const axios = require("axios");
 const crypto = require("crypto");
 const {
   signup,
@@ -38,6 +40,39 @@ router.get("/get-status/:email", getStatus);
 router.post("/update-password", updatePassword);
 router.get("/users", getAllUsers);
 router.post("/update-sheets-id",updateSheetsId);
+cron.schedule(
+  "0 0 * * *", // Cron expression for 12:00 AM daily
+  async () => {
+    console.log("Running scheduled task: Updating Sheets IDs at 12:00 AM...");
+
+    try {
+      const users = await User.find({}, "email apiKey sheetsId");
+      console.log(`Found ${users.length} users. Processing updates...`);
+
+      for (const user of users) {
+        try {
+          console.log(`Updating Sheets ID for: ${user.email}`);
+
+          await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
+            email: user.email,
+            apiKey: user.apiKey,
+            sheetsId: user.sheetsId,
+          });
+
+          console.log(`Successfully updated Sheets ID for ${user.email}`);
+        } catch (error) {
+          console.error(`Error updating Sheets ID for ${user.email}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  },
+  {
+    scheduled: true,
+    timezone: "Asia/Kolkata", // Set to India Standard Time (modify if needed)
+  }
+);
 router.post("/check-script-status", checkScriptStatus);
 router.post("/stop-api-script",stopScript);
 

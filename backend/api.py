@@ -32,7 +32,7 @@ sys.stderr = Unbuffered(sys.stderr)
 EXTERNAL_API_URL = "https://mapi.indiamart.com/wservce/crm/crmListing/v2/"
 
 # Google Sheets API Configuration
-SERVICE_ACCOUNT_FILE = r"leadscruise-571c547f0797.json"
+SERVICE_ACCOUNT_FILE = r"C:\Users\omkar\Downloads\leadscruise-b27bbd2cf575.json"
 SPREADSHEET_ID = sys.argv[2]
 RANGE_NAME = "Sheet1!A2"  
 # Start from row 2 to skip headers
@@ -119,24 +119,82 @@ def write_to_sheets(data):
         print(f" Error writing to Google Sheets: {e}")
         sys.exit(1)  # Stop execution immediately
 
+def get_last_entry_date():
+    """Fetches the last lead's date from Google Sheets to determine the starting point."""
+    
+    creds = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    )
+    service = build("sheets", "v4", credentials=creds)
+
+    try:
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range="Sheet1!A2:C",  # Ensure this matches the actual range
+            majorDimension="COLUMNS"
+        ).execute()
+
+        values = result.get("values", [])
+        # print(values)
+        if not values or len(values) < 3 or not values[2]:  # Check if the third column exists
+            print("No valid last entry date found in Google Sheets.")
+            return None  
+
+        # Extract all dates from the third column
+        date_strings = values[2]  # Third column contains date values
+
+        # Convert to datetime objects (assuming format: "YYYY-MM-DD HH:MM:SS")
+        try:
+            date_objects = [datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S") for date_str in date_strings if date_str]
+        except ValueError as e:
+            print(f"Date format error: {e}")
+            return None  # If format is incorrect, return None
+        
+        if not date_objects:
+            print("No valid dates found in the column.")
+            return None
+
+        # Get the most recent (max) date
+        last_date = max(date_objects)
+        print(f"Last entry date found: {last_date.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        return last_date
+
+    except Exception as e:
+        print(f"Error fetching last entry date: {e}")
+        sys.exit(1)  # Exit to prevent running incorrect fetch
+
 # Main function to fetch data starting from the newest and moving backward
 if __name__ == "__main__":
     print("Starting IndiaMART Lead Scraper...")
-    clear_google_sheet()  # **Clear the sheet at the start**
+    # clear_google_sheet()  # **Clear the sheet at the start**
     
     today = datetime.now()
+    last_date = get_last_entry_date()
     days_back = 0  # Start from the current week
 
-    while days_back < 360:
-        end_date = today - timedelta(days=days_back)  # X (latest date)
-        start_date = today - timedelta(days=days_back + 7)  # X-7 (previous week)
+    if last_date is None:
 
-        leads_data = get_external_data(start_date, end_date)
-        write_to_sheets(leads_data)  # Inserts **at the top** to maintain order
+        while days_back < 360:
+            end_date = today - timedelta(days=days_back)  # X (latest date)
+            start_date = today - timedelta(days=days_back + 7)  # X-7 (previous week)
 
-        days_back += 7  # Move 7 days back
-        print(f"Processed {days_back} days back, waiting 6 minutes before next request...")
+            leads_data = get_external_data(start_date, end_date)
+            write_to_sheets(leads_data)  # Inserts **at the top** to maintain order
 
-        time.sleep(360)  # Wait for 6 minutes (360 seconds)
+            days_back += 7  # Move 7 days back
+            print(f"⏳ Processed {days_back} days back, waiting 6 minutes before next request...")
 
-    print("Completed fetching data for the last 360 days.")
+            time.sleep(360)
+    else:
+        # Subsequent runs: Fetch only new leads since last recorded date
+        start_date = last_date + timedelta(days=1)  # Start from next day after last recorded
+        end_date = today.date()
+        print(start_date, end_date)
+        if start_date.date() >= end_date:
+            print(f"Skipping API call: Dates {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')} include today or future dates.")
+        else:
+            leads_data = get_external_data(start_date, today)
+            write_to_sheets(leads_data)
+
+    print("Lead fetching completed successfully.")
