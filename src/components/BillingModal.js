@@ -108,14 +108,14 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
       });
 
       if (response.data.success) {
-        alert("Script stopped successfully!");
+        alert("AI stopped successfully!");
         setIsRunning(false);
       } else {
-        alert("Failed to stop script.");
+        alert("Failed to stop AI.");
       }
     } catch (error) {
       console.error("Error stopping script:", error);
-      alert("Error stopping script.");
+      alert("Error stopping AI.");
     }
   };
   if (!isOpen) return null;

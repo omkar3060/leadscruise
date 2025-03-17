@@ -35,6 +35,7 @@ const Sidebar = ({ status }) => {
             <div
               className={`${styles.sidebarIcon} ${status === "Running" ? styles.disabled : ""}`}
               onClick={() => {
+                console.log("Status in Sidebar:", status);
                 if (status === "Running") {
                   alert("You cannot go to settings while the script is running!");
                 } else {

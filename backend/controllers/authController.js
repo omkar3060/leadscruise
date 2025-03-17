@@ -315,7 +315,7 @@ exports.updateSheetsId = async (req, res) => {
 
     // If a script is already running for this user, prevent duplicate execution
     if (runningProcesses.has(email)) {
-      return res.status(400).json({ success: false, message: "Script already running" });
+      return res.status(400).json({ success: false, message: "AI already running" });
     }
 
     // Trigger Python Script
@@ -326,7 +326,7 @@ exports.updateSheetsId = async (req, res) => {
 
     if (!process) {
       console.error("Failed to start Python script.");
-      return res.status(500).json({ success: false, message: "Failed to start script" });
+      return res.status(500).json({ success: false, message: "Failed to start AI" });
     }
 
     // Capture and log stdout
@@ -347,7 +347,7 @@ exports.updateSheetsId = async (req, res) => {
 
     // Store process reference
     runningProcesses.set(email, process);
-    res.json({ success: true, message: "Updated and script started successfully." });
+    res.json({ success: true, message: "Updated and AI started successfully." });
   } catch (error) {
     console.error("Error updating Sheets ID:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -388,7 +388,7 @@ exports.stopScript = async (req, res) => {
     res.json({ success: true, message: "Script stopping signal sent." });
   } catch (error) {
     console.error(`Error stopping script for ${email}:`, error);
-    res.status(500).json({ success: false, message: "Failed to stop script" });
+    res.status(500).json({ success: false, message: "Failed to stop AI" });
   }
 };
 

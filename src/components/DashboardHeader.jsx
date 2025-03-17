@@ -204,7 +204,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           ) : location.pathname !== "/profile" && location.pathname !== "/sheets" ? ( // Hide buttons on profile page
             <>
     <div className={status === "Running" || isStarting ? styles.tooltip : ""} 
-         data-tooltip={status === "Running" ? "You have already started the script" : "Starting the script..."}>
+         data-tooltip={status === "Running" ? "You have already started the AI" : "Starting the AI..."}>
       <button
         className={`${styles.startButton} ${status === "Running" || isStarting ? styles.disabledButton : ""}`}
         onClick={handleStartScript}

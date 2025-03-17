@@ -259,11 +259,11 @@ const Dashboard = () => {
 
   const handleStop = async () => {
     if (isDisabled && timer > 0) {
-      alert(`You cannot stop the script until ${Math.ceil(timer / 60)} min are completed.`);
+      alert(`You cannot stop the AI until ${Math.ceil(timer / 60)} min are completed.`);
       return;
     }
 
-    if (window.confirm("Are you sure you want to stop the script?")) {
+    if (window.confirm("Are you sure you want to stop the AI?")) {
       setIsLoading(true); // Show loading when stopping
 
       const userEmail = localStorage.getItem("userEmail");

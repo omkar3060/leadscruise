@@ -215,7 +215,7 @@ const ProfileCredentials = ({ isProfilePage }) => {
 
       {/* IndiaMart Account Credentials */}
       <div className="credentials-section">
-        <h3 className="credentials-header">IndiaMart account credentials</h3>
+        <h3 className="credentials-header">Provider account credentials</h3>
         <div className="credentials-content">
           <div className="credential-group">
             <label>Registered mobile number</label>

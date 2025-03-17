@@ -30,7 +30,8 @@ const Sheets = () => {
     renewal_date: "Loading...",
     status: "Loading...",
   });
-
+  const status=localStorage.getItem("status");
+  console.log("Status in Sidebar:", status);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -78,7 +79,7 @@ const Sheets = () => {
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
       {isLoading && <LoadingScreen />}
-      {(windowWidth > 768 || sidebarOpen) && <Sidebar isDisabled={isDisabled} />}
+      {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status}/>}
       <DashboardHeader
         style={windowWidth <= 768 ? {
           left: 0,
