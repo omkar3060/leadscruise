@@ -300,7 +300,7 @@ exports.getAllUsers = async (req, res) => {
 const runningProcesses = new Map(); // Store running processes (email -> process)
 
 exports.updateSheetsId = async (req, res) => {
-  const { email, apiKey, sheetsId } = req.body;
+  const { email, apiKey, sheetsId, throughUpdate } = req.body;
   console.log("Received update request:", req.body);
   try {
     const user = await User.findOneAndUpdate(
@@ -319,7 +319,7 @@ exports.updateSheetsId = async (req, res) => {
     }
 
     // Trigger Python Script
-    const process = spawn("python3", ["api.py", apiKey, sheetsId], {
+    const process = spawn("python3", ["api.py", apiKey, sheetsId, throughUpdate], {
       detached: true, // Allow it to run independently
       stdio: "pipe", // Prevent keeping Node.js process alive
     });

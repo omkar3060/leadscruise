@@ -48,7 +48,7 @@ cron.schedule(
     try {
       const users = await User.find({}, "email apiKey sheetsId");
       console.log(`Found ${users.length} users. Processing updates...`);
-
+      const throughUpdate=0;
       for (const user of users) {
         try {
           console.log(`Updating Sheets ID for: ${user.email}`);
@@ -57,6 +57,7 @@ cron.schedule(
             email: user.email,
             apiKey: user.apiKey,
             sheetsId: user.sheetsId,
+            throughUpdate,
           });
 
           console.log(`Successfully updated Sheets ID for ${user.email}`);

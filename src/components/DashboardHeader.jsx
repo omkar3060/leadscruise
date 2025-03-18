@@ -63,34 +63,34 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           console.warn("No user email found in localStorage.");
           return;
         }
-  
+
         const response = await axios.get(`https://api.leadscruise.com/api/get-subscription/${userEmail}`);
         const { renewal_date, status, unique_id } = response.data;
-  
+
         if (!unique_id) {
           console.warn("Unique ID is missing from the response.");
         } else {
           localStorage.setItem("unique_id", unique_id);
         }
-  
+
         setSubscriptionDetails({ renewal_date, status, unique_id });
         localStorage.setItem("subscriptionDetails", JSON.stringify(response.data));
-  
+
         if (!renewal_date) {
           console.warn("Invalid renewal date received.");
           return;
         }
-  
+
         // Calculate days left for renewal
         const renewalDate = new Date(renewal_date);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
         const diffTime = renewalDate - today;
         const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+
         setDaysLeft(remainingDays);
         setIsSubscriptionActive(remainingDays > 0);
-  
+
         // Show popup only once after login
         const hasSeenPopup = localStorage.getItem("hasSeenPopup");
         if (remainingDays > 0 && remainingDays < 3 && !hasSeenPopup) {
@@ -100,15 +100,15 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         }
       } catch (error) {
         console.error("Error fetching subscription details:", error.response?.data || error.message);
-  
+
         if (error.response?.data?.message === "No subscription found") {
           const today = new Date().toISOString().split("T")[0];
           setSubscriptionDetails({ renewal_date: today, status: "Expired", unique_id: "Unavailable" });
           localStorage.setItem("subscriptionDetails", JSON.stringify({ renewal_date: today, status: "Expired", unique_id: "Unavailable" }));
-  
+
           setDaysLeft(0);
           setIsSubscriptionActive(false);
-  
+
           // Show popup only once after login for expired subscriptions
           const hasSeenPopup = localStorage.getItem("hasSeenPopup");
           if (!hasSeenPopup) {
@@ -119,9 +119,9 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         }
       }
     };
-  
+
     fetchSubscriptionDetails();
-  }, []);  
+  }, []);
 
   const handleStartScript = () => {
     if (!isSubscriptionActive) {
@@ -203,44 +203,44 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
             </>
           ) : location.pathname !== "/profile" && location.pathname !== "/sheets" ? ( // Hide buttons on profile page
             <>
-    <div className={status === "Running" || isStarting ? styles.tooltip : ""} 
-         data-tooltip={status === "Running" ? "You have already started the AI" : "Starting the AI..."}>
-      <button
-        className={`${styles.startButton} ${status === "Running" || isStarting ? styles.disabledButton : ""}`}
-        onClick={handleStartScript}
-        disabled={status === "Running" || isStarting}
-      >
-        {isStarting && status !== "Running" ? (
-          <>
-            <div className={styles.spinnerSmall}></div>
-            <span className={styles.buttonText}>Starting</span>
-          </>
-        ) : status === "Running" ? (
-          <>
-            <FaCheck className={styles.iconOnly} />
-            <span className={styles.buttonText}>Started</span>
-          </>
-        ) : (
-          <>
-            <FaPlay className={styles.iconOnly} />
-            <span className={styles.buttonText}>Start</span>
-          </>
-        )}
-      </button>
-    </div>
-    
-    <div className={isDisabled ? styles.tooltip : ""} 
-         data-tooltip={`You have to wait ${timer} seconds to stop the script`}>
-      <button
-        className={`${styles.stopButton} ${isDisabled ? styles.disabledButton : ""}`}
-        onClick={handleStop}
-        disabled={isDisabled || (!status === "Running" && !isStarting)}
-      >
-        <FaStop className={styles.iconOnly} />
-        <span className={styles.buttonText}>Stop</span>
-      </button>
-    </div>
-  </>
+              <div className={status === "Running" || isStarting ? styles.tooltip : ""}
+                data-tooltip={status === "Running" ? "You have already started the AI" : "Starting the AI..."}>
+                <button
+                  className={`${styles.startButton} ${status === "Running" || isStarting ? styles.disabledButton : ""}`}
+                  onClick={handleStartScript}
+                  disabled={status === "Running" || isStarting}
+                >
+                  {isStarting && status !== "Running" ? (
+                    <>
+                      <div className={styles.spinnerSmall}></div>
+                      <span className={styles.buttonText}>Starting</span>
+                    </>
+                  ) : status === "Running" ? (
+                    <>
+                      <FaCheck className={styles.iconOnly} />
+                      <span className={styles.buttonText}>Started</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaPlay className={styles.iconOnly} />
+                      <span className={styles.buttonText}>Start</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className={isDisabled ? styles.tooltip : ""}
+                data-tooltip={`You have to wait ${timer} seconds to stop the AI`}>
+                <button
+                  className={`${styles.stopButton} ${isDisabled ? styles.disabledButton : ""}`}
+                  onClick={handleStop}
+                  disabled={isDisabled || (!status === "Running" && !isStarting)}
+                >
+                  <FaStop className={styles.iconOnly} />
+                  <span className={styles.buttonText}>Stop</span>
+                </button>
+              </div>
+            </>
           ) : null}
         </div>
       </div>
@@ -272,13 +272,13 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
             </div>
           </>
         ) : (
-          <button 
-          className={styles.profileButton} 
-          onClick={toggleProfileDropdown} 
-          style={location.pathname === "/sheets" ? { marginTop: "15px" } : {}}
-        >
-          <FaUser className={styles.iconOnly} /> <span className={styles.buttonText}>Profile</span>
-        </button>
+          <button
+            className={styles.profileButton}
+            onClick={toggleProfileDropdown}
+            style={location.pathname === "/sheets" ? { marginTop: "15px" } : {}}
+          >
+            <FaUser className={styles.iconOnly} /> <span className={styles.buttonText}>Profile</span>
+          </button>
         )}
 
         {showProfileDropdown && (

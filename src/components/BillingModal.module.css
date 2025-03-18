@@ -288,6 +288,37 @@ input[type="file"] {
     background-color: #f9f9f9;
     margin-right: 5px;
   }
+
+  .updating {
+    /* background-color: #f0ad4e; */
+    position: relative;
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .spinnerIcon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .inputGroup input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
   
   .inputGroup input:focus {
     border-color: #007bff;

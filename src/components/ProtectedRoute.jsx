@@ -76,21 +76,34 @@ const styles = {
   `
 };
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
+const ProtectedRoute = ({ children, adminOnly = false}) => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
   const location = useLocation();
-  const navigate = useNavigate(); // Add this line
+  const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
-
+  const status=localStorage.getItem("status");
   const handleDismiss = () => {
     setShowAlert(false);
     navigate(-1);
   };
 
   useEffect(() => {
+    // Check if trying to access settings while script is running
+    if (status === "Running" && location.pathname === "/settings") {
+      setAlertMessage("You cannot access settings while the script is running!");
+      setShowAlert(true);
+      
+      const redirectTimer = setTimeout(() => {
+        setShowAlert(false);
+        navigate('/dashboard');
+      }, 3000);
+      
+      return () => clearTimeout(redirectTimer);
+    }
+    
     // Handle unauthorized access scenarios
     if (!token) {
       setAlertMessage("You must be signed in to access this page!");
@@ -122,12 +135,14 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
       setAlertMessage("Admins are redirected to the Master Page.");
       setShowAlert(true);
   
-      setTimeout(() => {
+      const redirectTimer = setTimeout(() => {
         setShowAlert(false);
         navigate("/master");
       }, 2000);
+      
+      return () => clearTimeout(redirectTimer);
     }
-  }, [token, userRole, adminOnly, location.pathname, navigate]);  
+  }, [token, userRole, adminOnly, location.pathname, navigate, status]);  
 
   // Render alert component
   const renderAlert = () => {
@@ -162,6 +177,11 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
       </div>
     );
   };
+
+  // Check if script is running and trying to access settings
+  if (status === "Running" && location.pathname === "/settings") {
+    return renderAlert();
+  }
 
   // Remove hardcoded alerts and use more robust navigation
   if (!token) {

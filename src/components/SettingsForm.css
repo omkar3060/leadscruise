@@ -30,7 +30,7 @@ body {
 
 .sheets-container {
   display: flex;
-  justify-content: space-between;
+  /* justify-content: space-between; */
   height: 100%;
   gap: 20px;
   width: 100%;

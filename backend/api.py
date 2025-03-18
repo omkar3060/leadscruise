@@ -36,7 +36,7 @@ SERVICE_ACCOUNT_FILE = r"leadscruise-b27bbd2cf575.json"
 SPREADSHEET_ID = sys.argv[2]
 RANGE_NAME = "Sheet1!A2"  
 # Start from row 2 to skip headers
-
+THROUGH_UPDATE=sys.argv[3]
 # Prompt user for API Key at runtime
 EXTERNAL_API_KEY = sys.argv[1]
 
@@ -167,14 +167,12 @@ def get_last_entry_date():
 # Main function to fetch data starting from the newest and moving backward
 if __name__ == "__main__":
     print("Starting IndiaMART Lead Scraper...")
-    # clear_google_sheet()  # **Clear the sheet at the start**
-    
+    # print(type(THROUGH_UPDATE))
     today = datetime.now()
     last_date = get_last_entry_date()
     days_back = 0  # Start from the current week
-
-    if last_date is None:
-
+    if THROUGH_UPDATE == '1':
+        clear_google_sheet()  # **Clear the sheet at the start**
         while days_back < 360:
             end_date = today - timedelta(days=days_back)  # X (latest date)
             start_date = today - timedelta(days=days_back + 7)  # X-7 (previous week)
@@ -183,18 +181,32 @@ if __name__ == "__main__":
             write_to_sheets(leads_data)  # Inserts **at the top** to maintain order
 
             days_back += 7  # Move 7 days back
-            print(f"⏳ Processed {days_back} days back, waiting 6 minutes before next request...")
+            print(f"Processed {days_back} days back, waiting 6 minutes before next request...")
 
             time.sleep(360)
     else:
-        # Subsequent runs: Fetch only new leads since last recorded date
-        start_date = last_date + timedelta(days=1)  # Start from next day after last recorded
-        end_date = today.date()
-        print(start_date, end_date)
-        if start_date.date() >= end_date:
-            print(f"Skipping API call: Dates {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')} include today or future dates.")
+        
+        if last_date is None:
+            while days_back < 360:
+                end_date = today - timedelta(days=days_back)  # X (latest date)
+                start_date = today - timedelta(days=days_back + 7)  # X-7 (previous week)
+
+                leads_data = get_external_data(start_date, end_date)
+                write_to_sheets(leads_data)  # Inserts **at the top** to maintain order
+
+                days_back += 7  # Move 7 days back
+                print(f"Processed {days_back} days back, waiting 6 minutes before next request...")
+
+                time.sleep(360)
         else:
-            leads_data = get_external_data(start_date, today)
-            write_to_sheets(leads_data)
+            # Subsequent runs: Fetch only new leads since last recorded date
+            start_date = last_date + timedelta(days=1)  # Start from next day after last recorded
+            end_date = today.date()
+            print(start_date, end_date)
+            if start_date.date() >= end_date:
+                print(f"Skipping API call: Dates {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')} include today or future dates.")
+            else:
+                leads_data = get_external_data(start_date, today)
+                write_to_sheets(leads_data)
 
     print("Lead fetching completed successfully.")

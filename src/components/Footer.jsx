@@ -20,7 +20,7 @@ const Footer = () => {
     <footer className="footer">
       <div className="footer-content">
         <div className="copyright">
-          © 2025, Focus Engineering Products Pvt. Ltd. All Rights Reserved.
+          © 2025, Leadscruise, Managed by Focus Engineering Products. All Rights Reserved.
         </div>
         <div className="support-button-container">
           <button 

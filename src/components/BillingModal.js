@@ -8,17 +8,20 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [apiKey, setApiKey] = useState(""); // Store API key
   const [sheetsId, setSheetsId] = useState(""); // New state for Sheets ID
   const [isRunning, setIsRunning] = useState(false);
-
   useEffect(() => {
-    if (isOpen && userEmail) {
-      axios
-        .post("https://api.leadscruise.com/api/check-script-status", { email: userEmail })
-        .then((response) => {
-          if (response.data.success) {
-            setIsRunning(response.data.isRunning);
-          }
-        })
-        .catch((error) => console.error("Error checking script status:", error));
+    if (userEmail) {
+      const interval = setInterval(() => {
+        axios
+          .post("https://api.leadscruise.com/api/check-script-status", { email: userEmail })
+          .then((response) => {
+            if (response.data.success) {
+              setIsRunning(response.data.isRunning);
+            }
+          })
+          .catch((error) => console.error("Error checking script status:", error));
+      }, 3000); // Polling every 3 seconds
+  
+      return () => clearInterval(interval); // Cleanup when component unmounts
     }
   }, [isOpen, userEmail]);
 
@@ -82,11 +85,13 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   };
 
   const handleUpdate = async () => {
+    const throughUpdate=1;
     try {
       const response = await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
         email: userEmail,
         apiKey,
         sheetsId,
+        throughUpdate,
       });
 
       if (response.data.success) {
