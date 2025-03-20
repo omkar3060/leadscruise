@@ -4,8 +4,9 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Import dotenv at the top
 const Payment = require("../models/Payment");
 const { spawn } = require("child_process");
-
+const { Server } = require("socket.io");
 const SECRET_KEY = process.env.SECRET_KEY; // Load from .env file
+const io = new Server(5001, { cors: { origin: "*" } });
 exports.signup = async (req, res) => {
   try {
     const { refId, email, mobileNumber, password, confPassword } = req.body;
@@ -302,6 +303,7 @@ const runningProcesses = new Map(); // Store running processes (email -> process
 exports.updateSheetsId = async (req, res) => {
   const { email, apiKey, sheetsId, throughUpdate } = req.body;
   console.log("Received update request:", req.body);
+
   try {
     const user = await User.findOneAndUpdate(
       { email },
@@ -313,47 +315,58 @@ exports.updateSheetsId = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // If a script is already running for this user, prevent duplicate execution
     if (runningProcesses.has(email)) {
       return res.status(400).json({ success: false, message: "AI already running" });
     }
 
+    // ✅ SEND SUCCESS RESPONSE IMMEDIATELY
+    res.status(200).json({ success: true, message: "AI started successfully" });
+
     // Trigger Python Script
     const process = spawn("python3", ["api.py", apiKey, sheetsId, throughUpdate], {
-      detached: true, // Allow it to run independently
-      stdio: "pipe", // Prevent keeping Node.js process alive
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe"],
     });
 
     if (!process) {
       console.error("Failed to start Python script.");
-      return res.status(500).json({ success: false, message: "Failed to start AI" });
+      return;
     }
 
-    // Capture and log stdout
-    process.stdout.on('data', (data) => {
-      console.log(`[${email}] ${data.toString().trim()}`);
+    let errorMessage = "";
+
+    // Capture stdout
+    process.stdout.on("data", (data) => {
+      const outputText = data.toString().trim();
+      console.log(`[${email}] stdout: ${outputText}`);
+
+      if (outputText.includes("API Error") || outputText.toLowerCase().includes("error")) {
+        errorMessage += outputText + "\n";
+        io.emit("error", { email, error: errorMessage }); // 🔥 Emit error to frontend
+      }
     });
-    
-    // Capture and log stderr
-    process.stderr.on('data', (data) => {
-      console.error(`[${email} ERROR] ${data.toString().trim()}`);
+
+    // Capture stderr
+    process.stderr.on("data", (data) => {
+      const errorText = data.toString().trim();
+      console.error(`[${email} ERROR] ${errorText}`);
+      errorMessage += errorText + "\n";
+      io.emit("error", { email, error: errorMessage }); // 🔥 Emit error to frontend
     });
-    
-    // Handle process exit
-    process.on('exit', (code) => {
-      console.log(`[${email}] Process exited with code ${code}`);
+
+    // Handle process close
+    process.on("close", (code) => {
+      console.log(`[${email}] Process closed with code ${code}`);
       runningProcesses.delete(email);
     });
 
-    // Store process reference
     runningProcesses.set(email, process);
-    res.json({ success: true, message: "Updated and AI started successfully." });
+
   } catch (error) {
     console.error("Error updating Sheets ID:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
-
 exports.stopScript = async (req, res) => {
   const { email } = req.body;
 

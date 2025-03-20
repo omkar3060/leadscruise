@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./BillingModal.module.css";
+import io from "socket.io-client";
 
 const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [billingDetails, setBillingDetails] = useState(null);
@@ -8,6 +9,23 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [apiKey, setApiKey] = useState(""); // Store API key
   const [sheetsId, setSheetsId] = useState(""); // New state for Sheets ID
   const [isRunning, setIsRunning] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const socket = io("http://localhost:5001");
+
+  
+  useEffect(() => {
+    // Listen for errors
+    socket.on("error", (data) => {
+      setErrorMessage(data.error);
+      alert(`Error from AI: ${data.error}`);
+    });
+
+    return () => {
+      socket.off("error"); // Cleanup on unmount
+    };
+  }, []);
+
   useEffect(() => {
     if (userEmail) {
       const interval = setInterval(() => {
@@ -20,7 +38,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
           })
           .catch((error) => console.error("Error checking script status:", error));
       }, 3000); // Polling every 3 seconds
-  
+
       return () => clearInterval(interval); // Cleanup when component unmounts
     }
   }, [isOpen, userEmail]);
@@ -85,7 +103,8 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   };
 
   const handleUpdate = async () => {
-    const throughUpdate=1;
+    setLoading(true); // Start spinner until update completes
+    const throughUpdate = 1;
     try {
       const response = await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
         email: userEmail,
@@ -95,14 +114,24 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
       });
 
       if (response.data.success) {
-        alert("Updated successfully! Triggering Python script...");
-        setIsRunning(true); // Set running state to true
+        alert("Updated successfully! Starting AI...");
+        setLoading(false);
+        setIsRunning(true);
+        
       } else {
-        alert("Failed to update.");
+        setLoading(false);
+        alert(`Error:\n${response.data.error || "Failed to update."}`);
+        
       }
     } catch (error) {
-      console.error("Error updating Sheets ID:", error);
-      alert("Error updating details.");
+      console.log("Error updating Sheets ID:", error.response);
+      const errorMessage =
+        error.response?.data?.error || "Error updating details.";
+      setLoading(false);
+      alert(errorMessage);
+      
+    } finally {
+      setLoading(false); // Stop spinner once update is complete
     }
   };
 
@@ -115,6 +144,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
       if (response.data.success) {
         alert("AI stopped successfully!");
         setIsRunning(false);
+        
       } else {
         alert("Failed to stop AI.");
       }
@@ -158,7 +188,9 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
 
             {/* New Sheets ID Input Field */}
             <div className={styles.inputGroup}>
-              <strong><label htmlFor="sheetsId">Google Sheets ID:</label></strong>
+              <strong>
+                <label htmlFor="sheetsId">Google Sheets ID:</label>
+              </strong>
               <input
                 type="text"
                 id="sheetsId"
@@ -168,9 +200,17 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
               />
               <button
                 onClick={isRunning ? handleStop : handleUpdate}
-                className={styles.attachBillLabel}
+                className={`${styles.attachBillLabel} ${isRunning ? styles.running : ""}`}
+                disabled={loading}
+                title={isRunning ? "AI already started, click to stop" : ""}
               >
-                {isRunning ? "Stop" : "Update"}
+                {loading ? (
+                  <div className={styles.spinner}></div>
+                ) : isRunning ? (
+                  "Stop"
+                ) : (
+                  "Update"
+                )}
               </button>
             </div>
             {/* File Upload Section */}
