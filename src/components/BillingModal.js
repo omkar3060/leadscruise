@@ -11,9 +11,13 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const socket = io("http://localhost:5001");
+  const socket = io("https://api.leadscruise.com", {
+    path: "/socket.io/", // ✅ Ensure correct path
+    transports: ["websocket"], // ✅ Force WebSocket
+    secure: true,
+    reconnection: true,
+});
 
-  
   useEffect(() => {
     // Listen for errors
     socket.on("error", (data) => {

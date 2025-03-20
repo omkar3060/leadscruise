@@ -4,9 +4,9 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Import dotenv at the top
 const Payment = require("../models/Payment");
 const { spawn } = require("child_process");
-const { Server } = require("socket.io");
 const SECRET_KEY = process.env.SECRET_KEY; // Load from .env file
-const io = new Server(5001, { cors: { origin: "*" } });
+
+
 exports.signup = async (req, res) => {
   try {
     const { refId, email, mobileNumber, password, confPassword } = req.body;
@@ -301,6 +301,7 @@ exports.getAllUsers = async (req, res) => {
 const runningProcesses = new Map(); // Store running processes (email -> process)
 
 exports.updateSheetsId = async (req, res) => {
+  const io = req.app.get("io");
   const { email, apiKey, sheetsId, throughUpdate } = req.body;
   console.log("Received update request:", req.body);
 

@@ -14,6 +14,20 @@ const fs = require("fs");
 const Payment = require("./models/Payment");
 const paymentRoutes = require("./routes/paymentRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
+
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+
+const server = createServer(app); // ✅ Create HTTP server
+const io = new Server(server, {
+  path: "/socket.io/",
+  cors: {
+    origin: "https://app.leadscruise.com",
+    methods: ["GET", "POST"],
+  },
+});
+app.set("io", io);
+
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
