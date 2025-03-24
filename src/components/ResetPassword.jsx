@@ -20,7 +20,7 @@ const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-
+  const [showError, setShowError] = useState(false);
   const [selected, setSelected] = useState(0);
 
   const token = searchParams.get("token");
@@ -79,6 +79,23 @@ const ResetPassword = () => {
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
+    }
+  };
+  const strongPasswordRegex =
+  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setNewPassword(newPassword);
+
+    if (!strongPasswordRegex.test(newPassword)) {
+      setShowError(true);
+      setError(
+        "Password must contain at least 8 characters, an uppercase letter, a lowercase letter, a number, and a special character."
+      );
+    } else {
+      setError("");
+      setShowError(false);
     }
   };
 
@@ -205,9 +222,12 @@ const ResetPassword = () => {
                 type="password"
                 placeholder="New Password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 name="password"
                 autoComplete="current-password"
+                
+              onFocus={() => setShowError(true)}
+              onBlur={() => setShowError(false)}
               />
 
               <input

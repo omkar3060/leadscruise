@@ -711,3 +711,12 @@ button:hover {
     transform: scale(1.0);
   }
 }
+
+.password-container {
+  display: flex;
+}
+
+.password-container button{
+  width: fit-content;
+  margin: 10px 0;
+}

@@ -208,6 +208,14 @@ const Master = () => {
     </div>
     );
 
+    const handleViewTodaySubscriptions = () => {
+      navigate('/master/subscriptions-today');  
+    }
+
+    const handleViewWeekSubscriptions = () => {
+      navigate('/master/subscriptions-week'); 
+    }
+
     const handleViewAllUsers = () => {
       navigate('/master/users');
     };
@@ -222,8 +230,22 @@ const Master = () => {
       <div className={masterstyles.dashboardContent}>
         {/* Metrics Section */}
         <div className={masterstyles.metricsSection}>
-          <div className={masterstyles.metricBox}>{subscriptionMetrics.subscriptionsToday} <br /><p>Subscriptions Today</p></div>
-          <div className={masterstyles.metricBox}>{subscriptionMetrics.subscriptionsThisWeek} <br /><p>Subscriptions This Week</p></div>
+        <div 
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+            onClick={handleViewTodaySubscriptions}
+          >
+            {subscriptionMetrics.subscriptionsToday } 
+            <br />
+            <p>Subscriptions Today</p>
+          </div>
+          <div 
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+            onClick={handleViewWeekSubscriptions}
+          >
+            {subscriptionMetrics.subscriptionsThisWeek} 
+            <br />
+            <p>Subscriptions This Week</p>
+          </div>
           <div className={masterstyles.metricBox}>{subscriptionMetrics.pendingBilling} <br /><p>Pending Billing</p></div>
           <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringWithinThreeDays} <br /><p>Expiring Within 3 Days</p></div>
           <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringToday} <br /><p>Expiring Today</p></div>

@@ -6,7 +6,7 @@ import "./styles.css";
 import "./PaginationSlider.css";
 import "./Signin.css";
 import "./SignUp.css";
-
+import { Eye, EyeOff } from "lucide-react";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
@@ -16,6 +16,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confPassword, setConfPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [selected, setSelected] = useState(0);
   const [isChecked, setIsChecked] = useState(false);
@@ -141,7 +142,7 @@ const SignUp = () => {
           <div className="pass-cont">
             <input
               className="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={handlePasswordChange}
@@ -150,13 +151,20 @@ const SignUp = () => {
               onFocus={() => setShowError(true)}
               onBlur={() => setShowError(false)}
             />
+            
             <input
               className="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Confirm Password"
               value={confPassword}
               onChange={(e) => setConfPassword(e.target.value)}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             {showError && error && (
               <div
                 style={{

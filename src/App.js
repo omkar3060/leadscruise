@@ -18,6 +18,8 @@ import NotFound from "./components/NotFound";
 import LandingPage from "./components/LandingPage";
 import UsersList from "./components/UserList";
 import Sheets from "./components/Sheets";
+import TodaySubscriptions from "./components/SubscriptionsToday";
+import SubscriptionsThisWeek from "./components/SubscriptionsThisWeek";
 
 const Layout = () => {
   const location = useLocation();
@@ -89,6 +91,24 @@ const Layout = () => {
           element={
             <ProtectedRoute adminOnly={true}>
               <UsersList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/master/subscriptions-today"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <TodaySubscriptions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/master/subscriptions-week"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <SubscriptionsThisWeek />
             </ProtectedRoute>
           }
         />

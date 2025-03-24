@@ -9,7 +9,7 @@ import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
 import logo from "../images/logo_front.png";
 import { FaUserPlus } from "react-icons/fa";
-
+import { Eye, EyeOff } from "lucide-react";
 import {
   auth,
   provider,
@@ -36,7 +36,7 @@ const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const passwordInputRef = useRef(null);
   const timeoutRef = useRef(null);
-
+  const [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
     const saved = localStorage.getItem("savedCredentials");
     if (saved) {
@@ -130,7 +130,7 @@ const SignIn = () => {
     } catch (error) {
       setIsLoading(false);
       console.error("Google Sign-In Error:", error);
-      
+
 
       // Handling 'auth/account-exists-with-different-credential' error for Google
       if (error.code === "auth/account-exists-with-different-credential") {
@@ -315,7 +315,7 @@ const SignIn = () => {
       }
     }
   };
-  
+
   const handleForgotPassword = async () => {
     if (!email) {
       alert("Please enter your email first.");
@@ -401,7 +401,7 @@ const SignIn = () => {
           </div>
         </div>
       )}
-      
+
       <div className="center-div">
         <div className="signin-left">
           <div className="signin-logo-class">
@@ -457,23 +457,29 @@ const SignIn = () => {
               </div>
             )}
           </div>
-
-          <input
-            type="password"
-            ref={passwordInputRef}
-            placeholder="Enter Your Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            name="password"
-            autoComplete="current-password"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSignIn(); // Trigger sign-in when Enter is pressed
-              }
-            }}
-          />
-
+          <div className="password-container">
+            <input
+              type={showPassword ? "text" : "password"}
+              ref={passwordInputRef}
+              placeholder="Enter Your Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              autoComplete="current-password"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSignIn(); // Trigger sign-in when Enter is pressed
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
           <div className="fp-cont">
             <div className="cb-cont">
               <input
@@ -531,11 +537,11 @@ const SignIn = () => {
             <span onClick={() => navigate("/signup")}>Sign up now</span>
           </p> */}
           <div className="end-block">
-                <p className="gback" onClick={() => navigate("/")}>
-                  Go Back
-                </p>
-                
-              </div>
+            <p className="gback" onClick={() => navigate("/")}>
+              Go Back
+            </p>
+
+          </div>
         </div>
 
         <div className="signin-right">

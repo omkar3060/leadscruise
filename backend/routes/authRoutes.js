@@ -41,7 +41,7 @@ router.post("/update-password", updatePassword);
 router.get("/users", getAllUsers);
 router.post("/update-sheets-id",updateSheetsId);
 cron.schedule(
-  "0 0 * * *", // Cron expression for 12:00 AM daily
+  "30 18 * * *", // Cron expression for 12:00 AM daily
   async () => {
     console.log("Running scheduled task: Updating Sheets IDs at 12:00 AM...");
 
@@ -104,7 +104,7 @@ router.post("/send-reset-email", async (req, res) => {
     });
 
     // Create your custom reset link
-    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}&email=${encodeURIComponent(
+    const resetLink = `https://app.leadscruise.com/reset-password?token=${resetToken}&email=${encodeURIComponent(
       email
     )}`;
 

@@ -51,3 +51,8 @@
 .signup-btn.dimmed:hover {
   background-color: #9ecaec;
 }
+
+.pass-cont button{
+  width: fit-content;
+  margin: 10px 0;
+}

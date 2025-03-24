@@ -653,4 +653,6 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
 
 
 const PORT = 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
