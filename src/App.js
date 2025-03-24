@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import CheckNumber from "./components/CheckNumber";
@@ -23,14 +23,25 @@ import SubscriptionsThisWeek from "./components/SubscriptionsThisWeek";
 
 const Layout = () => {
   const location = useLocation();
-  const isLandingPage = location.pathname === "/";
+  const [isAppDomain, setIsAppDomain] = useState(false);
+
+  useEffect(() => {
+    // Check if the app is running on app.leadscruise.com
+    setIsAppDomain(window.location.hostname === "app.leadscruise.com");
+  }, []);
 
   return (
     <div className="container">
       <Routes>
+        {/* Redirect "/" to "/login" if on app.leadscruise.com */}
+        {isAppDomain ? (
+          <Route path="/" element={<SignIn />} />
+        ) : (
+          <Route path="/" element={<LandingPage />} />
+        )}
+
         {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<SignIn />} />
+        {/* <Route path="/login" element={<SignIn />} /> */}
         <Route path="/signup" element={<SignUp />} />
         <Route path="/enter-email" element={<EnterEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -77,7 +88,7 @@ const Layout = () => {
           }
         />
 
-        {/* ✅ FIXED: Nested Routes for Master */}
+        {/* Admin Routes */}
         <Route
           path="/master/*"
           element={
@@ -94,7 +105,6 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/master/subscriptions-today"
           element={
@@ -103,7 +113,6 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/master/subscriptions-week"
           element={
@@ -126,7 +135,9 @@ const Layout = () => {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {!isLandingPage && <Footer />}
+      
+      {/* Show Footer except on Landing Page */}
+      {isAppDomain && <Footer />}
     </div>
   );
 };

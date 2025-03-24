@@ -719,4 +719,5 @@ button:hover {
 .password-container button{
   width: fit-content;
   margin: 10px 0;
+  margin-left: 3px;
 }
