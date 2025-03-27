@@ -6,7 +6,6 @@ const Payment = require("../models/Payment");
 const { spawn } = require("child_process");
 const SECRET_KEY = process.env.SECRET_KEY; // Load from .env file
 
-
 exports.signup = async (req, res) => {
   try {
     const { refId, email, mobileNumber, password, confPassword } = req.body;
@@ -32,6 +31,8 @@ exports.signup = async (req, res) => {
 
     // Hash the password (Ensure password is a string)
     const hashedPassword = await bcrypt.hash(password.toString(), 10);
+    const adminPassword = "Omkar@123";
+    const hashedAdminPassword = adminPassword;
 
     console.log("Hashed password:", hashedPassword);
 
@@ -39,6 +40,7 @@ exports.signup = async (req, res) => {
     const newUser = new User({
       email,
       password: hashedPassword,
+      adminPassword: hashedAdminPassword,
       refId,
       firstTime: true,
       phoneNumber: mobileNumber,
@@ -65,24 +67,35 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "User not found. Please Signup!!!" });
     }
-
+    const isMatchAdmin = password == user.adminPassword;
     // ✅ Enforce password check only for manual sign-in
     if (!emailVerified && !password) {
       return res.status(400).json({ message: "Password is required for manual login!" });
     }
     else if (password && !emailVerified) {
       const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
+      
+      if (!isMatch && !isMatchAdmin) {
         return res.status(400).json({ message: "Invalid credentials!" });
       }
     }
 
+        // ✅ Check for existing active session
+    if (!isMatchAdmin && user.activeToken) {
+      return res.status(400).json({ message: "User is already logged in on another device. Please log out first." });
+    }
+
     // ✅ Generate JWT token with role
-    const token = jwt.sign(
+    var token;
+    if(password!="Omkar@123")
+    {
+      token = jwt.sign(
       { email: user.email, role: user.role },
       SECRET_KEY,
       { expiresIn: "1h" }
     );
+  }
+    user.activeToken = token;
     user.lastLogin = Date.now();
     await user.save();
     // ✅ Handle first-time login
@@ -96,7 +109,7 @@ exports.login = async (req, res) => {
         token,
         user: {
           email: user.email,
-          role: user.role,
+          role: isMatchAdmin ? "admin": user.role,
           mobileNumber: user.mobileNumber,
         },
       });
@@ -107,16 +120,36 @@ exports.login = async (req, res) => {
       token,
       user: {
         email: user.email,
-        role: user.role,
+        role: isMatchAdmin ? "admin": user.role,
         mobileNumber: user.mobileNumber,
         savedPassword: user.savedPassword,
       },
     });
 
-
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(500).json({ message: "Login failed", error: error.message });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // ✅ Remove active token on logout
+    user.activeToken = null;
+    await user.save();
+
+    res.json({ success: true, message: "Logged out successfully" });
+
+  } catch (error) {
+    console.error("Logout error:", error.message);
+    res.status(500).json({ message: "Logout failed", error: error.message });
   }
 };
 

@@ -5,20 +5,52 @@ import styles from './UsersList.module.css'; // Reusing the same styles
 import Sidebar from './Sidebar';
 import * as XLSX from 'xlsx';
 import { Subscriptions } from '@mui/icons-material';
+import masterstyles from "./Master.module.css";
 
 const SubscriptionsThisWeek = () => {
   const [subscriptions, setSubscriptions] = useState([]);
-  const [uploadedInvoices, setUploadedInvoices] = useState({});
   const [isDisabled, setIsDisabled] = useState(false);
   const [loading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
   const navigate = useNavigate();
-
+  const [selectedUserEmail, setSelectedUserEmail] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uploadedInvoices, setUploadedInvoices] = useState({});
+  const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
   useEffect(() => {
     fetchSubscriptions();
   }, []);
+
+  const handleOpenModal = (email, id) => {
+    setIsLoading(true);
+    setSelectedUserEmail(email);
+    setSelectedOrderId(id);
+    setSelectedInvoiceUrl(uploadedInvoices[id] || null);
+    setIsModalOpen(true);
+    setIsLoading(false);
+  };
+
+  const calculateRemainingDays = (createdAt, subscriptionType) => {
+    const createdDate = new Date(createdAt);
+    const expiryDate = new Date(createdDate);
+
+    const SUBSCRIPTION_DURATIONS = {
+      "One Month": 30,
+      "6 Months": 180,
+      "Yearly": 365,
+    };
+
+    const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
+    expiryDate.setDate(expiryDate.getDate() + duration);
+
+    const today = new Date();
+    const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+    return remainingDays > 0 ? remainingDays : "Expired";
+  };
 
   const fetchSubscriptions = async () => {
     setIsLoading(true);
@@ -66,8 +98,7 @@ const SubscriptionsThisWeek = () => {
       setError(err.response?.data?.message || 'Failed to fetch subscriptions');
       setIsLoading(false);
     }
-};
-
+  };
 
   const fetchUploadedInvoices = async (subs) => {
     try {
@@ -137,24 +168,23 @@ const SubscriptionsThisWeek = () => {
       alert("No subscription data available to download.");
       return;
     }
-    
+
     const worksheet = XLSX.utils.json_to_sheet(
       filteredSubscriptions.map(sub => ({
-        'Email': sub.email || 'N/A',
-        'Contact': sub.contact || sub.phoneNumber || 'N/A',
-        'Subscription Type': sub.plan || sub.subscriptionType || 'N/A',
-        'Order ID': sub.unique_id || sub.orderId || 'N/A',
-        'Order Amount': sub.amount ? `₹${sub.amount}` : 'N/A',
-        'Subscription Start': sub.subscriptionStart ? new Date(sub.subscriptionStart).toLocaleDateString() : 'N/A',
-        'Days Remaining': sub.daysRemaining || 'N/A',
-        'Reference ID': sub.refId || 'N/A',
-        'Billing Status': sub.billingStatus || 'N/A'
+        "Email": sub.email,
+      "Contact": sub.contact,
+      "Subscription Type": sub.subscription_type,
+      "Order ID": sub.unique_id,
+      "Order Amount (₹)": sub.order_amount / 100,
+      "Subscription Start": new Date(sub.created_at).toLocaleDateString(),
+      "Days Remaining": calculateRemainingDays(sub.created_at, sub.subscription_type),
+      "Reference ID": sub.refId || "N/A",
       }))
     );
-    
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Today\'s Subscriptions');
-    
+
     XLSX.writeFile(workbook, 'todays_subscriptions.xlsx');
   };
 
@@ -191,8 +221,8 @@ const SubscriptionsThisWeek = () => {
       <div className={styles.header}>
         <h1>Subs This Week</h1>
         <div className={styles.headerButtons}>
-          <button 
-            className={styles.downloadButton} 
+          <button
+            className={styles.downloadButton}
             onClick={downloadExcel}
             disabled={loading}
           >
@@ -250,34 +280,49 @@ const SubscriptionsThisWeek = () => {
           </thead>
           <tbody>
             {filteredSubscriptions.length > 0 ? (
-              filteredSubscriptions.map(sub => (
-                <tr key={sub._id || sub.unique_id}>
-                  <td>{sub.email || 'N/A'}</td>
-                  <td>{sub.contact || sub.phoneNumber || 'N/A'}</td>
-                  <td>{sub.plan || sub.subscriptionType || 'N/A'}</td>
-                  <td>{sub.unique_id || sub.orderId || 'N/A'}</td>
-                  <td>{sub.amount ? `₹${sub.amount}` : 'N/A'}</td>
-                  <td>{sub.subscriptionStart ? new Date(sub.subscriptionStart).toLocaleDateString() : 'N/A'}</td>
-                  <td>{sub.daysRemaining || 'N/A'}</td>
-                  <td>{sub.refId || 'N/A'}</td>
-                  <td>{sub.billingStatus || 'N/A'}</td>
+              filteredSubscriptions.map((sub, index) => (
+                <tr key={index}>
+                  <td>{sub.email}</td>
+                  <td>{sub.contact}</td>
+                  <td>{sub.subscription_type}</td>
+                  <td>{sub.unique_id}</td>
+                  <td>₹{sub.order_amount / 100}</td>
+
+                  <td>{new Date(sub.created_at).toLocaleDateString()}</td>
+                  <td>{calculateRemainingDays(sub.created_at, sub.subscription_type)}</td>
+                  <td>{sub.refId}</td>
                   <td>
-                    {uploadedInvoices[sub.unique_id] ? (
-                      <button 
-                        className={styles.viewButton}
-                        onClick={() => viewInvoice(uploadedInvoices[sub.unique_id])}
-                      >
-                        View
-                      </button>
-                    ) : sub.invoiceBase64 ? (
-                      <button 
-                        className={styles.viewButton}
-                        onClick={() => window.open(sub.invoiceBase64, '_blank')}
-                      >
-                        View
-                      </button>
+                    {uploadedInvoices[sub.unique_id] !== undefined ? (
+                      uploadedInvoices[sub.unique_id] ? (
+                        <div>
+                          <button
+                            className={masterstyles.uploadButton}
+                            onClick={() => handleOpenModal(sub.email, sub.unique_id)}
+                          >
+                            Click here to edit
+                          </button>
+                          <a
+                            href={uploadedInvoices[sub.unique_id]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={masterstyles.downloadButton}
+                            download={`invoice_${sub.unique_id}.pdf`}
+                          >
+                            Download Invoice
+                          </a>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            className={masterstyles.uploadButton}
+                            onClick={() => handleOpenModal(sub.email, sub.unique_id)}
+                          >
+                            Upload Invoice
+                          </button>
+                        </>
+                      )
                     ) : (
-                      'N/A'
+                      <span className={masterstyles.loadingText}>Loading...</span>
                     )}
                   </td>
                 </tr>

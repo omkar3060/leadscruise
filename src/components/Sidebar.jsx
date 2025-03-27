@@ -5,7 +5,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { SiGooglesheets } from "react-icons/si";
 import { FiSettings, FiLogOut } from "react-icons/fi";
 import { AiOutlineHome } from "react-icons/ai";
-
+import axios from "axios";
 const Sidebar = ({ status }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,10 +23,22 @@ const Sidebar = ({ status }) => {
     }
   }, [status, location.pathname, navigate]);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
-  };
+  const handleLogout = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+  
+    try {
+      await axios.post("https://api.leadscruise.com/api/logout", { email: userEmail });
+  
+      localStorage.clear();
+      if (window.location.hostname === "app.leadscruise.com") {
+        window.location.href = "https://leadscruise.com"; // Replace with actual landing page URL
+      } else {
+        window.location.href = "http://localhost:3000"; // Local development
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };  
 
   const handleNavigation = () => {
     if (location.pathname.includes("/master")) {

@@ -139,13 +139,37 @@ const SettingsForm = () => {
   };
 
   // Save changes from modal to main state
-  const saveChanges = () => {
+  const saveChanges = async (modalType, modalData) => {
     setSettings((prev) => ({
       ...prev,
       [modalType]: modalData,
     }));
+  
+    const updatedSettings = { ...settings, [modalType]: modalData }; // Ensure updated values
+    console.log("Updated Settings:", updatedSettings); // Debugging log
+  
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) {
+      alert("User email not found!");
+      return;
+    }
+  
+    try {
+      await axios.post("https://api.leadscruise.com/api/save-settings", {
+        userEmail,
+        sentences: updatedSettings.sentences || [],
+        wordArray: updatedSettings.wordArray || [],
+        h2WordArray: updatedSettings.h2WordArray || [],
+      });
+  
+      alert("Settings saved successfully!");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      alert("Failed to save settings.");
+    }
+  
     closeModal();
-  };
+  };  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -328,7 +352,9 @@ const SettingsForm = () => {
               <button type="button" className="add-button" onClick={addItemInModal}>Add</button>
             </div>
             <div className="modal-buttons">
-              <button className="save-button" onClick={saveChanges}>Save Changes</button>
+            <button className="save-button" onClick={() => saveChanges(modalType, modalData)}>
+  Save Changes
+</button>
               <button className="settings-close-button" onClick={closeModal}>Close</button>
             </div>
           </div>

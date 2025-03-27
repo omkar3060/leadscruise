@@ -114,11 +114,11 @@ exports.getSubscriptionMetrics = async (req, res) => {
       return expiryDate <= threeDaysLater && expiryDate > today;
     });
 
-    const expiringToday = allPayments.filter((sub) => {
+    const expiredSubscriptions = allPayments.filter((sub) => {
       const expiryDate = new Date(sub.created_at);
       const duration = SUBSCRIPTION_DURATIONS[sub.subscription_type] || 30;
       expiryDate.setDate(expiryDate.getDate() + duration);
-      return expiryDate.toDateString() === today.toDateString();
+      return expiryDate < today; // Subscription expired before today
     });
 
     // Total Active Users = Users with valid subscriptions
@@ -132,7 +132,7 @@ exports.getSubscriptionMetrics = async (req, res) => {
       subscriptionsThisWeek: subscriptionsThisWeek.length,
       pendingBilling: pendingBilling.length,
       expiringWithinThreeDays: expiringWithinThreeDays.length,
-      expiringToday: expiringToday.length,
+      expiredSubscriptions: expiredSubscriptions.length,
       totalActiveUsers,
       totalUsers,
     });

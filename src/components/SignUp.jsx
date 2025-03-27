@@ -54,7 +54,7 @@ const SignUp = () => {
       });
       setIsLoading(false);
       alert(res.data.message);
-      navigate("/login"); // Redirect to SignIn page after successful signup
+      navigate("/"); // Redirect to SignIn page after successful signup
     } catch (error) {
       setIsLoading(false);
       alert(
@@ -108,7 +108,7 @@ const SignUp = () => {
               onClick={() => navigate("/")} // Navigate to home when clicked
             // Add styling if needed
             />
-            <div className="smart-scan" onClick={() => navigate("/login")}>
+            <div className="smart-scan" onClick={() => navigate("/")}>
               {/* <img
                 src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
                 alt=""

@@ -20,6 +20,10 @@ import UsersList from "./components/UserList";
 import Sheets from "./components/Sheets";
 import TodaySubscriptions from "./components/SubscriptionsToday";
 import SubscriptionsThisWeek from "./components/SubscriptionsThisWeek";
+import PendingBilling from "./components/PendingBilling";
+import ExpiryThree from "./components/ExpiryThree";
+import ExpiredSubscriptions from "./components/Expired";
+import ActiveUsers from "./components/AciveUsers";
 
 const Layout = () => {
   const location = useLocation();
@@ -27,7 +31,7 @@ const Layout = () => {
 
   useEffect(() => {
     // Check if the app is running on app.leadscruise.com
-    setIsAppDomain(window.location.hostname === "app.leadscruise.com");
+    setIsAppDomain(window.location.hostname === "app.leadscruise.com" || "localhost:3000");
   }, []);
 
   return (
@@ -105,6 +109,15 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/master/active-users"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <ActiveUsers />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/master/subscriptions-today"
           element={
@@ -123,6 +136,33 @@ const Layout = () => {
         />
 
         <Route
+          path="/master/pending"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <PendingBilling />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/master/expiring-soon"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <ExpiryThree />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/master/expired"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <ExpiredSubscriptions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/plans"
           element={
             <ProtectedRoute>
@@ -135,7 +175,7 @@ const Layout = () => {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      
+
       {/* Show Footer except on Landing Page */}
       {isAppDomain && <Footer />}
     </div>

@@ -13,7 +13,7 @@ const Master = () => {
     subscriptionsThisWeek: 0,
     pendingBilling: 0,
     expiringWithinThreeDays: 0,
-    expiringToday: 0,
+    expirinedSubscriptions: 0,
     totalActiveUsers: 0,
     totalUsers: 0,
   });
@@ -220,6 +220,22 @@ const Master = () => {
       navigate('/master/users');
     };
 
+    const handleViewActiveUsers = () => {
+      navigate('/master/active-users');
+    };
+
+    const handleViewPendingBilling =() => {
+      navigate('/master/pending');
+    }
+
+    const handleViewExpiringSoon = () => {
+      navigate('/master/expiring-soon');
+    }
+
+    const handleViewExpiredSubscriptions = () => {
+      navigate('/master/expired');
+    }
+
   return (
     <div className={masterstyles.dashboardContainer}>
       {isLoading && <LoadingScreen />}
@@ -246,10 +262,38 @@ const Master = () => {
             <br />
             <p>Subscriptions This Week</p>
           </div>
-          <div className={masterstyles.metricBox}>{subscriptionMetrics.pendingBilling} <br /><p>Pending Billing</p></div>
-          <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringWithinThreeDays} <br /><p>Expiring Within 3 Days</p></div>
-          <div className={masterstyles.metricBox}>{subscriptionMetrics.expiringToday} <br /><p>Expiring Today</p></div>
-          <div className={masterstyles.metricBox}>{subscriptionMetrics.totalActiveUsers} <br /><p>Total Active Users</p></div>
+          <div 
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+            onClick={handleViewPendingBilling}
+          >
+            {subscriptionMetrics.pendingBilling} 
+            <br />
+            <p>Pending Billing</p>
+          </div>
+          <div 
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+            onClick={handleViewExpiringSoon}
+          >
+            {subscriptionMetrics.expiringWithinThreeDays} 
+            <br />
+            <p>Expiring Within 3 Days</p>
+          </div>
+          <div 
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+            onClick={handleViewExpiredSubscriptions}
+          >
+            {subscriptionMetrics.expiredSubscriptions} 
+            <br />
+            <p>Expired</p>
+          </div>
+          <div 
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+            onClick={handleViewActiveUsers}
+          >
+            {subscriptionMetrics.totalActiveUsers} 
+            <br />
+            <p>Active Users</p>
+          </div>
           <div 
             className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
             onClick={handleViewAllUsers}

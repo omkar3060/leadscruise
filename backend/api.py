@@ -62,14 +62,14 @@ def clear_google_sheet():
         sys.exit(1)  
 # Stop execution if clearing fails
 
-def get_external_data(start_date, end_date):
-    """Fetches leads from IndiaMART API for a given date range."""
+def get_external_data(start_datetime, end_datetime):
+    """Fetches leads from IndiaMART API for a given hourly range."""
     
-    # Format dates as required by IndiaMART API (DD-MMM-YYYY)
-    start_time = start_date.strftime("%d-%b-%Y")
-    end_time = end_date.strftime("%d-%b-%Y")
+    # Format datetime as required by IndiaMART API (DD-MMM-YYYY HH:MM)
+    start_time = start_datetime.strftime("%d-%b-%Y %H:%M")
+    end_time = end_datetime.strftime("%d-%b-%Y %H:%M")
 
-    # Construct API URL for the date range
+    # Construct API URL for the date-time range
     api_url = f"{EXTERNAL_API_URL}?glusr_crm_key={EXTERNAL_API_KEY}&start_time={start_time}&end_time={end_time}"
 
     print(f"Fetching leads from {start_time} to {end_time}")
@@ -81,14 +81,14 @@ def get_external_data(start_date, end_date):
         
         if data.get("CODE") != 200:
             print(f"API Error: {data.get('MESSAGE', 'Unknown error')}")
-            sys.exit(1)  # Stop execution immediately
+            return []
 
         leads = data.get("RESPONSE", [])
         return list(reversed(leads))  # **Reverse the batch before returning**
     
     except requests.RequestException as e:
         print(f"Request failed: {e}")
-        sys.exit(1)  # Stop execution immediately
+        return []
 
 def write_to_sheets(data):
     """Writes IndiaMART leads to Google Sheets, keeping newest leads at the top within each batch."""
@@ -106,21 +106,32 @@ def write_to_sheets(data):
     body = {"values": values}
 
     try:
-        result = service.spreadsheets().values().append(
+        # Get existing data to determine the insertion point
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME
+        ).execute()
+        
+        existing_values = result.get("values", [])
+
+        # Insert new rows at the top by **shifting existing data down**
+        updated_values = values + existing_values  # New data first
+        body = {"values": updated_values}
+
+        result = service.spreadsheets().values().update(
             spreadsheetId=SPREADSHEET_ID,
             range=RANGE_NAME,
             valueInputOption="RAW",
-            insertDataOption="INSERT_ROWS",  # **Inserts data at the top**
             body=body
         ).execute()
-        print(f" {result.get('updates').get('updatedCells')} cells updated in Google Sheets.")
+
+        print(f"{len(values)} new leads added at the top. {result.get('updatedCells')} cells updated in Google Sheets.")
     
     except Exception as e:
-        print(f" Error writing to Google Sheets: {e}")
+        print(f"Error writing to Google Sheets: {e}")
         sys.exit(1)  # Stop execution immediately
 
 def get_last_entry_date():
-    """Fetches the last lead's date from Google Sheets to determine the starting point."""
+    """Fetches the last lead's timestamp from Google Sheets."""
     
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -135,15 +146,15 @@ def get_last_entry_date():
         ).execute()
 
         values = result.get("values", [])
-        # print(values)
-        if not values or len(values) < 3 or not values[2]:  # Check if the third column exists
-            print("No valid last entry date found in Google Sheets.")
+        
+        if not values or len(values) < 3 or not values[2]:  
+            print("No valid last entry timestamp found in Google Sheets.")
             return None  
 
-        # Extract all dates from the third column
-        date_strings = values[2]  # Third column contains date values
+        # Extract all timestamps from the third column
+        date_strings = values[2]  # Third column contains date-time values
 
-        # Convert to datetime objects (assuming format: "YYYY-MM-DD HH:MM:SS")
+        # Convert to datetime objects (Format: "YYYY-MM-DD HH:MM:SS")
         try:
             date_objects = [datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S") for date_str in date_strings if date_str]
         except ValueError as e:
@@ -151,18 +162,18 @@ def get_last_entry_date():
             return None  # If format is incorrect, return None
         
         if not date_objects:
-            print("No valid dates found in the column.")
+            print("No valid timestamps found in the column.")
             return None
 
-        # Get the most recent (max) date
-        last_date = max(date_objects)
-        print(f"Last entry date found: {last_date.strftime('%Y-%m-%d %H:%M:%S')}")
+        # Get the most recent (max) timestamp
+        last_timestamp = max(date_objects)
+        print(f"Last entry timestamp found: {last_timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
         
-        return last_date
+        return last_timestamp
 
     except Exception as e:
-        print(f"Error fetching last entry date: {e}")
-        sys.exit(1)  # Exit to prevent running incorrect fetch
+        print(f"Error fetching last entry timestamp: {e}")
+        return None  # Prevent script crash
 
 # Main function to fetch data starting from the newest and moving backward
 if __name__ == "__main__":
@@ -184,8 +195,7 @@ if __name__ == "__main__":
             print(f"Processed {days_back} days back, waiting 6 minutes before next request...")
 
             time.sleep(360)
-    else:
-        
+    else: 
         if last_date is None:
             while days_back < 360:
                 end_date = today - timedelta(days=days_back)  # X (latest date)
@@ -200,13 +210,14 @@ if __name__ == "__main__":
                 time.sleep(360)
         else:
             # Subsequent runs: Fetch only new leads since last recorded date
-            start_date = last_date + timedelta(days=1)  # Start from next day after last recorded
-            end_date = today.date()
-            print(start_date, end_date)
-            if start_date.date() >= end_date:
-                print(f"Skipping API call: Dates {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')} include today or future dates.")
+            start_time = last_date + timedelta(minutes=1)  # Start from the next minute
+            end_time = datetime.now()
+            print(f"Fetching new leads from {start_time} to {end_time}")
+
+            if start_time >= end_time:
+                print("Skipping API call: No new data to fetch.")
             else:
-                leads_data = get_external_data(start_date, today)
+                leads_data = get_external_data(start_time, end_time)
                 write_to_sheets(leads_data)
 
     print("Lead fetching completed successfully.")

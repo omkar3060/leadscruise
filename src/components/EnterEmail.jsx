@@ -3,13 +3,13 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import "./styles.css";
 import "./Signin.css";
-
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
 import successImage from "../images/success.png";
 import errorImage from "../images/error.png";
 import loadingGif from "../images/loading.gif";
+import logo from "../images/logo_front.png";
 
 const EnterEmail = () => {
   const [status, setStatus] = useState("idle");
@@ -74,6 +74,23 @@ const EnterEmail = () => {
     }
   };
 
+  const handleLogout = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+  
+    try {
+      await axios.post("https://api.leadscruise.com/api/logout", { email: userEmail });
+  
+      localStorage.clear();
+      if (window.location.hostname === "app.leadscruise.com") {
+        window.location.href = "https://leadscruise.com"; // Replace with actual landing page URL
+      } else {
+        window.location.href = "http://localhost:3000"; // Local development
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };  
+
   return (
     <div className="signin-container">
       <div className="center-div">
@@ -136,7 +153,7 @@ const EnterEmail = () => {
                   Go Back
                 </p>
                 <p className="logout-link">
-                  Wish to <span onClick={() => navigate("/")}>Logout</span>?
+                  Wish to <span onClick={handleLogout}>Logout</span>?
                 </p>
               </div>
             </div>
@@ -163,7 +180,7 @@ const EnterEmail = () => {
                 Try Again
               </button>
               <p className="logout-link">
-                Wish to <span onClick={() => navigate("/")}>Logout?</span>
+                Wish to <span onClick={handleLogout}>Logout?</span>
               </p>
             </div>
           )}
@@ -171,11 +188,12 @@ const EnterEmail = () => {
           {status === "idle" && (
             <div>
               <div className="signin-logo-class">
-                <img
-                  src="https://www.zoho.com/sites/zweb/images/zoho_general_pages/zoho-logo-512.png"
-                  className="logo-img"
-                  alt="zohologo"
-                />
+              <img
+              src={logo} // Use the imported image
+              alt="LeadsCruise Logo"
+              onClick={() => navigate("/")} // Navigate to home when clicked
+            // Add styling if needed
+            />
                 <div className="smart-scan" onClick={() => navigate("/")}>
                   {/* <img
                 src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
@@ -224,7 +242,7 @@ const EnterEmail = () => {
                 </p>
 
                 <p className="logout-link">
-                  Wish to <span onClick={() => navigate("/")}>Logout</span>?
+                  Wish to <span onClick={handleLogout}>Logout</span>?
                 </p>
               </div>
             </div>

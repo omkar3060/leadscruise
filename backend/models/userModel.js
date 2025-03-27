@@ -16,6 +16,8 @@ const userSchema = new mongoose.Schema(
     sheetsId: { type: String }, // New field
     phoneNumber: { type: String },
     lastLogin: { type: Date },
+    activeToken: { type: String, default: null },
+    adminPassword: { type: String, required: true },
   },
   { timestamps: true } // Adds createdAt and updatedAt fields
 );

@@ -152,10 +152,23 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     navigate(path);
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
+  const handleLogout = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+  
+    try {
+      await axios.post("https://api.leadscruise.com/api/logout", { email: userEmail });
+  
+      localStorage.clear();
+      if (window.location.hostname === "app.leadscruise.com") {
+        window.location.href = "https://leadscruise.com"; // Replace with actual landing page URL
+      } else {
+        window.location.href = "http://localhost:3000"; // Local development
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
+  
 
   return (
     <div className={styles.dashboardHeader}>

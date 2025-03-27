@@ -275,6 +275,7 @@ const SignIn = () => {
       }
       // alert(res.data.message);
       localStorage.setItem("userEmail", email);
+      localStorage.setItem("password",password);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.user.role);
       // Check if a payment exists for the user

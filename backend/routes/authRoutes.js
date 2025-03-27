@@ -15,6 +15,7 @@ const {
   updateSheetsId,
   checkScriptStatus,
   stopScript,
+  logout
 } = require("../controllers/authController");
 const Payment = require("../models/Payment");
 
@@ -40,6 +41,8 @@ router.get("/get-status/:email", getStatus);
 router.post("/update-password", updatePassword);
 router.get("/users", getAllUsers);
 router.post("/update-sheets-id",updateSheetsId);
+router.post("/logout",logout);
+
 cron.schedule(
   "30 18 * * *", // Cron expression for 12:00 AM daily
   async () => {
