@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     phoneNumber: { type: String },
     lastLogin: { type: Date },
     activeToken: { type: String, default: null },
-    adminPassword: { type: String, required: true },
+    adminPassword: { type: String},
   },
   { timestamps: true } // Adds createdAt and updatedAt fields
 );

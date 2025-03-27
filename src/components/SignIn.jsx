@@ -170,7 +170,6 @@ const SignIn = () => {
     }
   };
 
-
   const handleGitHubSignIn = async () => {
     try {
       setIsLoading(true);
@@ -250,7 +249,6 @@ const SignIn = () => {
       }
     }
   };
-
 
   useEffect(() => {
     const interval = setInterval(() => {

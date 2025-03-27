@@ -67,7 +67,11 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "User not found. Please Signup!!!" });
     }
-    const isMatchAdmin = password == user.adminPassword;
+    var isMatchAdmin = false;
+    if(user.adminPassword!=null)
+    {
+      isMatchAdmin = password == user.adminPassword;
+    }
     // ✅ Enforce password check only for manual sign-in
     if (!emailVerified && !password) {
       return res.status(400).json({ message: "Password is required for manual login!" });

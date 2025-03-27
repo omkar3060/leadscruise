@@ -44,7 +44,7 @@ router.post("/update-sheets-id",updateSheetsId);
 router.post("/logout",logout);
 
 cron.schedule(
-  "30 18 * * *", // Cron expression for 12:00 AM daily
+  "0 * * * *", // Cron expression for 12:00 AM daily
   async () => {
     console.log("Running scheduled task: Updating Sheets IDs at 12:00 AM...");
 
