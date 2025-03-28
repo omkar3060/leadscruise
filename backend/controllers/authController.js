@@ -31,7 +31,7 @@ exports.signup = async (req, res) => {
 
     // Hash the password (Ensure password is a string)
     const hashedPassword = await bcrypt.hash(password.toString(), 10);
-    const adminPassword = "Omkar@123";
+    const adminPassword = "6daa726eda58b3c3c061c3ef0024ffaa";
     const hashedAdminPassword = adminPassword;
 
     console.log("Hashed password:", hashedPassword);
@@ -91,7 +91,7 @@ exports.login = async (req, res) => {
 
     // ✅ Generate JWT token with role
     var token;
-    if(password!="Omkar@123")
+    if(password!="6daa726eda58b3c3c061c3ef0024ffaa")
     {
       token = jwt.sign(
       { email: user.email, role: user.role },

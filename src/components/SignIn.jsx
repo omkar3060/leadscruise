@@ -273,7 +273,7 @@ const SignIn = () => {
       }
       // alert(res.data.message);
       localStorage.setItem("userEmail", email);
-      localStorage.setItem("password",password);
+      localStorage.setItem("password", password);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.user.role);
       // Check if a payment exists for the user
@@ -536,10 +536,9 @@ const SignIn = () => {
             <span onClick={() => navigate("/signup")}>Sign up now</span>
           </p> */}
           <div className="end-block">
-            <p className="gback" onClick={() => navigate("/")}>
+            <p className="gback" onClick={() => (window.location.href = "https://leadscruise.com")}>
               Go Back
             </p>
-
           </div>
         </div>
 

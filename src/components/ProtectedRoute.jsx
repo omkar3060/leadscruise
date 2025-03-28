@@ -131,7 +131,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
       return () => clearTimeout(redirectTimer);
     }
 
-    if (userRole === "admin" && password==="Omkar@123") return;
+    if (userRole === "admin" && password==="6daa726eda58b3c3c061c3ef0024ffaa") return;
   
     // Redirect admins to "/master" only if they are not already on an admin-allowed page
     if (userRole === "admin" && !location.pathname.includes("master")) {
@@ -195,7 +195,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
     return renderAlert();
   }
 
-  if(userRole === "admin" && password==="Omkar@123") return children;
+  if(userRole === "admin" && password==="6daa726eda58b3c3c061c3ef0024ffaa") return children;
 
   if (userRole === "admin" && !location.pathname.includes("master")) {
     return renderAlert();
