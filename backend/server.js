@@ -17,6 +17,7 @@ const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
 
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const referralRoutes = require("./routes/referralRoutes");
 
 const server = createServer(app); // ✅ Create HTTP server
 const io = new Server(server, {
@@ -70,10 +71,10 @@ app.post("/order", async (req, res) => {
   }
 });
 
-
 app.post("/order/validate", async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
 
     const generatedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_SECRET)
@@ -81,9 +82,16 @@ app.post("/order/validate", async (req, res) => {
       .digest("hex");
 
     if (generatedSignature === razorpay_signature) {
-      return res.json({ success: true, msg: "success", orderId: razorpay_order_id, paymentId: razorpay_payment_id });
+      return res.json({
+        success: true,
+        msg: "success",
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+      });
     } else {
-      return res.status(400).json({ success: false, error: "Invalid signature" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid signature" });
     }
   } catch (error) {
     console.error("Error validating payment:", error);
@@ -114,9 +122,13 @@ app.post("/api/save-payment", async (req, res) => {
 
     if (latestPayment) {
       // Check if the last subscription is still active
-      const subscriptionDuration = getSubscriptionDuration(latestPayment.subscription_type); // Helper function for duration in days
+      const subscriptionDuration = getSubscriptionDuration(
+        latestPayment.subscription_type
+      ); // Helper function for duration in days
       const subscriptionEndDate = new Date(latestPayment.created_at);
-      subscriptionEndDate.setDate(subscriptionEndDate.getDate() + subscriptionDuration);
+      subscriptionEndDate.setDate(
+        subscriptionEndDate.getDate() + subscriptionDuration
+      );
 
       const today = new Date();
 
@@ -166,6 +178,7 @@ app.use("/api", authRoutes);
 app.use("/api", settingsRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api/billing", billingDetailsRoutes);
+app.use("/api/referrals", referralRoutes);
 
 // API Endpoint to check if a number exists in the database
 app.post("/api/check-number", async (req, res) => {
@@ -204,7 +217,6 @@ app.post("/api/check-number", async (req, res) => {
   }
 });
 
-
 app.post("/api/execute-task", async (req, res) => {
   const { mobileNumber, password, email } = req.body;
 
@@ -216,7 +228,11 @@ app.post("/api/execute-task", async (req, res) => {
   }
 
   // Spawn a new Python process to execute the task
-  const pythonProcess = spawn("python3", ["login_check.py", mobileNumber, password]);
+  const pythonProcess = spawn("python3", [
+    "login_check.py",
+    mobileNumber,
+    password,
+  ]);
 
   let result = "";
   let error = "";
@@ -241,7 +257,9 @@ app.post("/api/execute-task", async (req, res) => {
         let user = await User.findOne({ email });
 
         if (!user) {
-          return res.status(404).json({ status: "error", message: "User not found" });
+          return res
+            .status(404)
+            .json({ status: "error", message: "User not found" });
         }
 
         // ✅ **Update user record with API Key**
@@ -250,10 +268,16 @@ app.post("/api/execute-task", async (req, res) => {
         user.apiKey = extractedApiKey; // ✅ Store extracted API key
         await user.save();
 
-        return res.json({ status: "success", message: "API Key extracted and saved!", apiKey: extractedApiKey });
+        return res.json({
+          status: "success",
+          message: "API Key extracted and saved!",
+          apiKey: extractedApiKey,
+        });
       } catch (dbError) {
         console.error("Database error:", dbError);
-        return res.status(500).json({ status: "error", message: "Database error" });
+        return res
+          .status(500)
+          .json({ status: "error", message: "Database error" });
       }
     } else {
       return res.status(500).json({
@@ -272,12 +296,15 @@ const userLeadCounterSchema = new mongoose.Schema({
   lastUpdatedMaxCaptures: { type: Date, default: null }, // Track last update time
 });
 
-const UserLeadCounter = mongoose.model("UserLeadCounter", userLeadCounterSchema);
+const UserLeadCounter = mongoose.model(
+  "UserLeadCounter",
+  userLeadCounterSchema
+);
 
 app.post("/api/update-max-captures", async (req, res) => {
   try {
     console.log("Received Data:", req.body); // Debugging
-    
+
     const { user_mobile_number, maxCaptures } = req.body;
 
     if (!user_mobile_number || maxCaptures < 1) {
@@ -288,7 +315,9 @@ app.post("/api/update-max-captures", async (req, res) => {
 
     if (user) {
       // Ensure lastUpdated is a valid Date
-      const lastUpdated = user.lastUpdatedMaxCaptures ? new Date(user.lastUpdatedMaxCaptures) : null;
+      const lastUpdated = user.lastUpdatedMaxCaptures
+        ? new Date(user.lastUpdatedMaxCaptures)
+        : null;
       const now = new Date();
 
       if (lastUpdated && now - lastUpdated < 24 * 60 * 60 * 1000) {
@@ -313,7 +342,10 @@ app.post("/api/update-max-captures", async (req, res) => {
       await newUser.save();
       console.log("New User Created:", newUser); // Debugging
 
-      return res.json({ message: "Max captures set successfully", user: newUser });
+      return res.json({
+        message: "Max captures set successfully",
+        user: newUser,
+      });
     }
   } catch (error) {
     console.error("Error updating max captures:", error);
@@ -337,7 +369,6 @@ app.get("/api/get-max-captures", async (req, res) => {
       maxCaptures: user.maxCaptures,
       lastUpdatedMaxCaptures: user.lastUpdatedMaxCaptures,
     });
-
   } catch (error) {
     console.error("Error fetching max captures:", error);
     res.status(500).json({ message: "Server error" });
@@ -352,7 +383,9 @@ async function resetLeadCounters() {
     // Get the last reset time from one document
     const lastResetEntry = await UserLeadCounter.findOne({}, "lastReset");
 
-    const lastResetDate = lastResetEntry ? new Date(lastResetEntry.lastReset) : null;
+    const lastResetDate = lastResetEntry
+      ? new Date(lastResetEntry.lastReset)
+      : null;
     const now = new Date();
 
     // Get today's 7:00 AM
@@ -381,16 +414,32 @@ const activePythonProcesses = new Map(); // Store active processes by user_mobil
 
 app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
-  let { sentences, wordArray, h2WordArray, mobileNumber, password, uniqueId, userEmail } = req.body;
+  let {
+    sentences,
+    wordArray,
+    h2WordArray,
+    mobileNumber,
+    password,
+    uniqueId,
+    userEmail,
+  } = req.body;
 
   if (!req.body || Object.keys(req.body).length === 0) {
-    return res.status(400).json({ status: "error", message: "Empty request body. Ensure the request has a JSON payload." });
-  }
-
-  if (!Array.isArray(sentences) || !Array.isArray(wordArray) || !Array.isArray(h2WordArray)) {
     return res.status(400).json({
       status: "error",
-      message: "Invalid input format. sentences, wordArray, and h2WordArray should be arrays.",
+      message: "Empty request body. Ensure the request has a JSON payload.",
+    });
+  }
+
+  if (
+    !Array.isArray(sentences) ||
+    !Array.isArray(wordArray) ||
+    !Array.isArray(h2WordArray)
+  ) {
+    return res.status(400).json({
+      status: "error",
+      message:
+        "Invalid input format. sentences, wordArray, and h2WordArray should be arrays.",
     });
   }
 
@@ -411,10 +460,15 @@ app.post("/api/cycle", async (req, res) => {
     { new: true, upsert: true }
   );
 
-  let userCounter = await UserLeadCounter.findOne({ user_mobile_number: mobileNumber });
+  let userCounter = await UserLeadCounter.findOne({
+    user_mobile_number: mobileNumber,
+  });
 
   if (!userCounter) {
-    userCounter = new UserLeadCounter({ user_mobile_number: mobileNumber, leadCount: 0 });
+    userCounter = new UserLeadCounter({
+      user_mobile_number: mobileNumber,
+      leadCount: 0,
+    });
     await userCounter.save();
   }
 
@@ -425,7 +479,10 @@ app.post("/api/cycle", async (req, res) => {
       { status: "Stopped", startTime: null },
       { new: true }
     );
-    return res.status(403).json({ status: "error", message: "Lead limit reached. Cannot capture more leads today." });
+    return res.status(403).json({
+      status: "error",
+      message: "Lead limit reached. Cannot capture more leads today.",
+    });
   }
 
   const inputData = JSON.stringify({
@@ -463,7 +520,9 @@ app.post("/api/cycle", async (req, res) => {
 
   // Periodically check if lead limit is exceeded
   const leadCheckInterval = setInterval(async () => {
-    let updatedUserCounter = await UserLeadCounter.findOne({ user_mobile_number: mobileNumber });
+    let updatedUserCounter = await UserLeadCounter.findOne({
+      user_mobile_number: mobileNumber,
+    });
 
     if (updatedUserCounter.leadCount >= updatedUserCounter.maxCaptures) {
       console.log("Lead limit exceeded! Killing Python script...");
@@ -472,11 +531,14 @@ app.post("/api/cycle", async (req, res) => {
         { status: "Stopped", startTime: null },
         { new: true }
       );
-      pythonProcess.kill("SIGINT");// Kill the script
+      pythonProcess.kill("SIGINT"); // Kill the script
       activePythonProcesses.delete(uniqueId);
       clearInterval(leadCheckInterval);
       cleanupDisplay(uniqueId); // Cleanup display lock file
-      res.status(403).json({ status: "error", message: "Lead limit reached. Cannot capture more leads today." });
+      res.status(403).json({
+        status: "error",
+        message: "Lead limit reached. Cannot capture more leads today.",
+      });
     }
   }, 3000); // Check every 3 seconds
 
@@ -511,12 +573,17 @@ app.post("/api/cycle", async (req, res) => {
 app.post("/api/stop", async (req, res) => {
   const { userEmail, uniqueId } = req.body;
   if (!uniqueId || !userEmail) {
-    return res.status(400).json({ status: "error", message: "uniqueId and Email are required." });
+    return res
+      .status(400)
+      .json({ status: "error", message: "uniqueId and Email are required." });
   }
 
   const user = await User.findOne({ email: userEmail });
   if (!user || !user.startTime) {
-    return res.status(404).json({ status: "error", message: "No running process found for this user." });
+    return res.status(404).json({
+      status: "error",
+      message: "No running process found for this user.",
+    });
   }
 
   const startTime = new Date(user.startTime);
@@ -526,7 +593,9 @@ app.post("/api/stop", async (req, res) => {
   if (elapsedTime < 300) {
     return res.status(403).json({
       status: "error",
-      message: `Please wait at least ${Math.ceil((300 - elapsedTime) / 60)} more minutes before stopping.`,
+      message: `Please wait at least ${Math.ceil(
+        (300 - elapsedTime) / 60
+      )} more minutes before stopping.`,
     });
   }
 
@@ -573,7 +642,7 @@ const leadSchema = new mongoose.Schema({
   mobile: { type: String, required: true },
   user_mobile_number: { type: String, required: true },
   lead_bought: { type: String },
-  createdAt: { type: Date, default: Date.now } // Store the current date
+  createdAt: { type: Date, default: Date.now }, // Store the current date
 });
 
 const Lead = mongoose.model("Lead", leadSchema);
@@ -597,11 +666,20 @@ app.post("/api/store-lead", async (req, res) => {
     // Stop script if limit is reached
     if (userCounter.leadCount >= userCounter.maxCaptures) {
       console.log("Lead limit reached for user:", user_mobile_number);
-      return res.status(403).json({ error: "Lead limit reached. Cannot capture more leads today." });
+      return res.status(403).json({
+        error: "Lead limit reached. Cannot capture more leads today.",
+      });
     }
 
     // Store the new lead
-    const newLead = new Lead({ name, email, mobile, user_mobile_number, lead_bought, createdAt: new Date() });
+    const newLead = new Lead({
+      name,
+      email,
+      mobile,
+      user_mobile_number,
+      lead_bought,
+      createdAt: new Date(),
+    });
     await newLead.save();
 
     // Increment lead count
@@ -609,12 +687,13 @@ app.post("/api/store-lead", async (req, res) => {
     await userCounter.save();
     if (userCounter.leadCount >= userCounter.maxCaptures) {
       console.log("Lead limit reached for user:", user_mobile_number);
-      return res.status(403).json({ error: "Lead limit reached. Cannot capture more leads today." });
+      return res.status(403).json({
+        error: "Lead limit reached. Cannot capture more leads today.",
+      });
     }
 
     console.log("Lead Data Stored:", newLead);
     res.json({ message: "Lead data stored successfully", lead: newLead });
-
   } catch (error) {
     console.error("Error saving lead:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -641,7 +720,9 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
     }
 
     // Fetch leads that match the mobileNumber
-    const leads = await Lead.find({ user_mobile_number: mobileNumber }).sort({ createdAt: -1 });
+    const leads = await Lead.find({ user_mobile_number: mobileNumber }).sort({
+      createdAt: -1,
+    });
 
     res.json(leads);
   } catch (error) {
@@ -649,8 +730,6 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
-
 
 const PORT = 5000;
 server.listen(PORT, () => {

@@ -73,9 +73,10 @@ const isWithinDays = (date, days) => {
 
 // Subscription Metrics API
 const SUBSCRIPTION_DURATIONS = {
-  "One Month": 30,
-  "6 Months": 180,
-  "Yearly": 365,
+  "one-mo": 30,
+  "three-mo": 60,
+  "six-mo": 180,
+  "year-mo": 365,
 };
 
 // Function to check if a subscription has expired

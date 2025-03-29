@@ -30,7 +30,7 @@ const Sheets = () => {
     renewal_date: "Loading...",
     status: "Loading...",
   });
-  const status=localStorage.getItem("status");
+  const status = localStorage.getItem("status");
   console.log("Status in Sidebar:", status);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +38,8 @@ const Sheets = () => {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [sheetsId, setSheetsId] = useState(null);
   const [apiKey, setApiKey] = useState(null);
-
+  const [newApiKey, setNewApiKey] = useState("");
+  
   const userEmail = localStorage.getItem("userEmail");
 
   useEffect(() => {
@@ -64,6 +65,7 @@ const Sheets = () => {
         const response = await axios.get(`https://api.leadscruise.com/api/get-api-key/${userEmail}`);
         if (response.data.success) {
           setApiKey(response.data.user.apiKey || "Not Available");
+          setNewApiKey(response.data.user.apiKey|| "Not Available");
           setSheetsId(response.data.user.sheetsId || "");
         } else {
           setApiKey("Not Available");
@@ -76,10 +78,42 @@ const Sheets = () => {
     fetchUserData();
   }, []);
 
+  const updateApiKey = async () => {
+    if(apiKey === newApiKey) {
+      alert("New API Key cannot be the same as the current one!");
+      return;
+    }
+    if (!newApiKey) {
+      alert("API Key cannot be empty!");
+      return;
+    }
+
+    const confirmUpdate = window.confirm("Are you sure you want to update your API Key?");
+    if (!confirmUpdate) return;
+
+    try {
+      const response = await axios.put("https://api.leadscruise.com/api/update-api-key", {
+        email: userEmail,
+        newApiKey,
+      });
+
+      if (response.data.success) {
+        alert("API Key updated successfully!");
+        setApiKey(newApiKey);
+        setNewApiKey(newApiKey);
+      } else {
+        alert("Failed to update API Key.");
+      }
+    } catch (error) {
+      console.error("Error updating API Key:", error);
+      alert("An error occurred while updating API Key.");
+    }
+  };
+
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
       {isLoading && <LoadingScreen />}
-      {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status}/>}
+      {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
       <DashboardHeader
         style={windowWidth <= 768 ? {
           left: 0,
@@ -94,14 +128,30 @@ const Sheets = () => {
             <h2>Google Sheets Status</h2>
             {sheetsId && apiKey ? (
               <>
-              <div>
-                <p style={{ color: "green", fontWeight: "bold", fontSize: "2rem" }}>Active ✅</p>
-                <p style={{ fontSize: "1.1rem" }}>
-                  Your Google Sheet is ready:{" "}
-                  <a href={`https://docs.google.com/spreadsheets/d/${sheetsId}`} target="_blank" rel="noopener noreferrer">View Sheet</a>
-                </p>
+                <div>
+                  <p style={{ color: "green", fontWeight: "bold", fontSize: "2rem" }}>Active ✅</p>
+                  <p style={{ fontSize: "1.1rem" }}>
+                    Your Google Sheet is ready:{" "}
+                    <a href={`https://docs.google.com/spreadsheets/d/${sheetsId}`} target="_blank" rel="noopener noreferrer">View Sheet</a>
+                  </p>
+
+                  {/* New content inside table-container */}
+
+                  {/* Styled API Key Field */}
+                  <div className="api-key-container">
+                    <label className="api-key-label">Your API Key:</label>
+                    <input
+                      type="text"
+                      className="api-key-input"
+                      value={newApiKey}
+                      placeholder="Enter new API Key..."
+                      onChange={(e) => setNewApiKey(e.target.value)}
+                    />
+                    <button className="update-api-btn" onClick={updateApiKey}>
+                      Update API Key
+                    </button>
+                  </div>
                 </div>
-                {/* New content inside table-container */}
 
                 <div className="support-info">
                   <h3 className="support-info__title">

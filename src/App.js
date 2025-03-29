@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import CheckNumber from "./components/CheckNumber";
@@ -24,6 +30,7 @@ import PendingBilling from "./components/PendingBilling";
 import ExpiryThree from "./components/ExpiryThree";
 import ExpiredSubscriptions from "./components/Expired";
 import ActiveUsers from "./components/AciveUsers";
+import Referrals from "./components/Referrals";
 
 const Layout = () => {
   const location = useLocation();
@@ -31,7 +38,9 @@ const Layout = () => {
 
   useEffect(() => {
     // Check if the app is running on app.leadscruise.com
-    setIsAppDomain(window.location.hostname === "app.leadscruise.com" || "localhost:3000");
+    setIsAppDomain(
+      window.location.hostname === "app.leadscruise.com" || "localhost:3000"
+    );
   }, []);
 
   return (
@@ -118,6 +127,16 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/master/referrals"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <Referrals />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/master/subscriptions-today"
           element={
@@ -170,8 +189,22 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/whatsapp" element={<ProtectedRoute><ComingSoonFeature /></ProtectedRoute>} />
-        <Route path="/sheets" element={<ProtectedRoute><Sheets /></ProtectedRoute>} />
+        <Route
+          path="/whatsapp"
+          element={
+            <ProtectedRoute>
+              <ComingSoonFeature />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sheets"
+          element={
+            <ProtectedRoute>
+              <Sheets />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

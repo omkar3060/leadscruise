@@ -4,6 +4,7 @@ const User = require("../models/userModel");
 const cron = require("node-cron");
 const axios = require("axios");
 const crypto = require("crypto");
+const Payment = require("../models/Payment");
 const {
   signup,
   login,
@@ -17,7 +18,6 @@ const {
   stopScript,
   logout
 } = require("../controllers/authController");
-const Payment = require("../models/Payment");
 
 const router = express.Router();
 
@@ -43,16 +43,54 @@ router.get("/users", getAllUsers);
 router.post("/update-sheets-id",updateSheetsId);
 router.post("/logout",logout);
 
+const SUBSCRIPTION_DURATIONS = {
+  "one-mo": 30,
+  "three-mo": 60,
+  "six-mo": 180,
+  "year-mo": 365,
+};
+
 cron.schedule(
-  "0 * * * *", // Cron expression for 12:00 AM daily
+  "0 * * * *", // Runs every hour
   async () => {
-    console.log("Running scheduled task: Updating Sheets IDs at 12:00 AM...");
+    console.log("Running scheduled task: Updating Sheets IDs...");
 
     try {
-      const users = await User.find({}, "email apiKey sheetsId");
-      console.log(`Found ${users.length} users. Processing updates...`);
-      const throughUpdate=0;
-      for (const user of users) {
+      // Get users with valid API key & Sheets ID
+      const eligibleUsers = await User.find(
+        { apiKey: { $ne: null }, sheetsId: { $ne: null } }, 
+        "email apiKey sheetsId"
+      );
+
+      console.log(`Found ${eligibleUsers.length} users with valid API and Sheets ID.`);
+
+      let processedCount = 0;
+
+      for (const user of eligibleUsers) {
+        // Get latest payment record for the user
+        const lastPayment = await Payment.findOne({ email: user.email }).sort({ created_at: -1 });
+
+        if (!lastPayment) {
+          console.log(`Skipping ${user.email}: No payment record found.`);
+          continue;
+        }
+
+        // Calculate expiration date
+        const subscriptionDays = SUBSCRIPTION_DURATIONS[lastPayment.subscription_type];
+        if (!subscriptionDays) {
+          console.log(`Skipping ${user.email}: Unknown subscription type.`);
+          continue;
+        }
+
+        const expirationDate = new Date(lastPayment.created_at);
+        expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+
+        // Check if the subscription is still active
+        if (new Date() > expirationDate) {
+          console.log(`Skipping ${user.email}: Subscription expired on ${expirationDate.toDateString()}.`);
+          continue;
+        }
+
         try {
           console.log(`Updating Sheets ID for: ${user.email}`);
 
@@ -60,21 +98,24 @@ cron.schedule(
             email: user.email,
             apiKey: user.apiKey,
             sheetsId: user.sheetsId,
-            throughUpdate,
+            throughUpdate: 0,
           });
 
           console.log(`Successfully updated Sheets ID for ${user.email}`);
+          processedCount++;
         } catch (error) {
-          console.error(`Error updating Sheets ID for ${user.email}:`, error);
+          console.error(`Error updating Sheets ID for ${user.email}:`, error.message);
         }
       }
+
+      console.log(`Completed processing. Updated ${processedCount} users.`);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching users:", error.message);
     }
   },
   {
     scheduled: true,
-    timezone: "Asia/Kolkata", // Set to India Standard Time (modify if needed)
+    timezone: "Asia/Kolkata",
   }
 );
 router.post("/check-script-status", checkScriptStatus);
@@ -147,6 +188,23 @@ router.get("/get-api-key/:email", async (req, res) => {
   } catch (error) {
     console.error("Error fetching user details:", error);
     res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+router.put("/update-api-key", async (req, res) => {
+  const { email, newApiKey } = req.body;
+
+  try {
+    const user = await User.findOneAndUpdate({ email }, { apiKey: newApiKey }, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, message: "API Key updated successfully!" });
+  } catch (error) {
+    console.error("Error updating API Key:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 

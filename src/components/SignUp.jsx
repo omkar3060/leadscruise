@@ -44,6 +44,16 @@ const SignUp = () => {
       return;
     }
 
+    if (refId) {
+      try {
+        await axios.get(`https://api.leadscruise.com/api/referrals/${refId}`);
+      } catch (error) {
+        setIsLoading(false);
+        alert(error.response?.data?.message + " -- " + "Invalid Referral ID.");
+        return;
+      }
+    }
+
     try {
       const res = await axios.post("https://api.leadscruise.com/api/signup", {
         refId,
@@ -95,7 +105,9 @@ const SignUp = () => {
                 <span className="dot"></span>
               </div>
             </div>
-            <p className="loading-message">Please wait while we securely sign you up</p>
+            <p className="loading-message">
+              Please wait while we securely sign you up
+            </p>
           </div>
         </div>
       )}
@@ -106,7 +118,7 @@ const SignUp = () => {
               src={logo} // Use the imported image
               alt="LeadsCruise Logo"
               onClick={() => navigate("/")} // Navigate to home when clicked
-            // Add styling if needed
+              // Add styling if needed
             />
             <div className="smart-scan" onClick={() => navigate("/")}>
               {/* <img
@@ -133,12 +145,12 @@ const SignUp = () => {
             autoComplete="email"
           />
           <input
-                type="text"
-                placeholder="Mobile number"
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
-                className="mobile-number-input"
-              />
+            type="text"
+            placeholder="Mobile number"
+            value={mobileNumber}
+            onChange={(e) => setMobileNumber(e.target.value)}
+            className="mobile-number-input"
+          />
           <div className="pass-cont">
             <input
               className="password"
@@ -151,7 +163,7 @@ const SignUp = () => {
               onFocus={() => setShowError(true)}
               onBlur={() => setShowError(false)}
             />
-            
+
             <input
               className="password"
               type={showPassword ? "text" : "password"}
@@ -164,7 +176,7 @@ const SignUp = () => {
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+            </button>
             {showError && error && (
               <div
                 style={{
@@ -224,8 +236,9 @@ const SignUp = () => {
           <div className="banner-container">
             {/* First Banner */}
             <div
-              className={`banner overlapBanner ${selected === 0 ? "active" : ""
-                }`}
+              className={`banner overlapBanner ${
+                selected === 0 ? "active" : ""
+              }`}
             >
               <div className="rightbanner">
                 <div

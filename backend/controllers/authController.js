@@ -86,7 +86,8 @@ exports.login = async (req, res) => {
 
         // ✅ Check for existing active session
     if (!isMatchAdmin && user.activeToken) {
-      return res.status(400).json({ message: "User is already logged in on another device. Please log out first." });
+      user.activeToken = null;
+      await user.save();
     }
 
     // ✅ Generate JWT token with role
