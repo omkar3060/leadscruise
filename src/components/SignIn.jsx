@@ -90,11 +90,12 @@ const SignIn = () => {
   };
 
   const handleGoogleSignIn = async () => {
+    let email="";
     try {
       setIsLoading(true);
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      const email = user.email;
+      email = user.email;
       const emailVerified = result.user.emailVerified;
       const password = "NULL";
       console.log("Google Sign-In User:", user);
@@ -107,7 +108,7 @@ const SignIn = () => {
       localStorage.setItem("userEmail", email);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.user.role);
-
+      localStorage.setItem("sessionId", res.data.sessionId);
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
 
@@ -164,18 +165,37 @@ const SignIn = () => {
             alert("Error signing in with GitHub: " + githubError.message);
           }
         }
-      } else {
+      } else if (error.response.status === 403 && error.response.data.activeSession) {
+        // Handle active session error
+        const confirmLogout = window.confirm("You're already logged in on another device. Would you like to log out from all other devices and continue?");
+
+        if (confirmLogout) {
+          try {
+            // Request to force logout from other devices
+            console.log("email",email);
+            await axios.post("https://api.leadscruise.com/api/force-logout", { email });
+
+            // Retry Google login
+            handleGoogleSignIn();
+          } catch (logoutError) {
+            alert("Failed to log out from other devices. Please try again.");
+          }
+        }
+      }
+
+      else {
         alert(error.response?.data?.message || "Google sign-in failed. Please try again.");
       }
     }
   };
 
   const handleGitHubSignIn = async () => {
+    let email="";
     try {
       setIsLoading(true);
       const result = await signInWithPopup(auth, githubProvider);
       const user = result.user;
-      const email = user.email;
+      email = user.email;
       const emailVerified = result.user.emailVerified;
       const password = "NULL";
       console.log("GitHub Sign-In User:", user);
@@ -244,7 +264,24 @@ const SignIn = () => {
             alert("Error signing in with Google: " + googleError.message);
           }
         }
-      } else {
+      } else if (error.response.status === 403 && error.response.data.activeSession) {
+        // Handle active session error
+        const confirmLogout = window.confirm("You're already logged in on another device. Would you like to log out from all other devices and continue?");
+
+        if (confirmLogout) {
+          try {
+            // Request to force logout from other devices
+            console.log("email",email);
+            await axios.post("https://api.leadscruise.com/api/force-logout", { email });
+
+            // Retry Google login
+            handleGoogleSignIn();
+          } catch (logoutError) {
+            alert("Failed to log out from other devices. Please try again.");
+          }
+        }
+      } 
+      else {
         alert(error.response?.data?.message || "GitHub sign-in failed. Please try again.");
       }
     }
@@ -265,28 +302,28 @@ const SignIn = () => {
         email,
         password,
       });
-      
+
       if (rememberMe) {
         saveCredentials(email, password);
       } else {
         // Clear last used credentials if remember me is not checked
         localStorage.removeItem("lastUsedCredentials");
       }
-      
+
       localStorage.setItem("userEmail", email);
       localStorage.setItem("password", password);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("sessionId", res.data.sessionId);
       localStorage.setItem("role", res.data.user.role);
-      
+
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
-      
+
       if (email === "support@leadscruise.com" && (password === "Focus@123" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
         navigate("/master");
         return;
       }
-      
+
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         // If payment exists but mobileNumber and savedPassword are missing, redirect to execute-task
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
@@ -295,7 +332,7 @@ const SignIn = () => {
           return;
         }
       }
-  
+
       // If mobileNumber and savedPassword exist, proceed to dashboard
       if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
@@ -316,7 +353,7 @@ const SignIn = () => {
         } else if (error.response.status === 403 && error.response.data.activeSession) {
           // Handle active session error
           const confirmLogout = window.confirm("You're already logged in on another device. Would you like to log out from all other devices and continue?");
-          
+
           if (confirmLogout) {
             // Make a request to force logout from other devices
             try {

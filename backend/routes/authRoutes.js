@@ -5,6 +5,9 @@ const cron = require("node-cron");
 const axios = require("axios");
 const crypto = require("crypto");
 const Payment = require("../models/Payment");
+const jwt = require("jsonwebtoken");
+require("dotenv").config(); 
+const SECRET_KEY = process.env.SECRET_KEY;
 const {
   signup,
   login,
@@ -207,6 +210,43 @@ router.put("/update-api-key", async (req, res) => {
   } catch (error) {
     console.error("Error updating API Key:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+router.get("/verify-session", async (req, res) => {
+  try {
+    // Extract token & sessionId from request headers
+    const token = req.headers.authorization?.split(" ")[1]; // "Bearer <token>"
+    const sessionId = req.headers["session-id"]; // Get session ID from request header
+    console.log("🔹 Received Token:", token);
+    console.log("🔹 Received Session ID:", sessionId);
+
+
+    if (!token || !sessionId) {
+      return res.status(401).json({ activeSession: false, message: "Token or Session ID missing" });
+    }
+
+    // Verify JWT token
+    const decoded = jwt.verify(token, SECRET_KEY);
+    if (!decoded) {
+      return res.status(401).json({ activeSession: false, message: "Invalid token" });
+    }
+
+    // Find the user in the database
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(401).json({ activeSession: false, message: "User not found" });
+    }
+
+    // Check if the sessionId matches
+    if (user.sessionId !== sessionId) {
+      return res.status(401).json({ activeSession: false, message: "Session expired or logged in from another device" });
+    }
+
+    res.status(200).json({ activeSession: true, message: "Session is active" });
+  } catch (error) {
+    console.error("Session verification error:", error.message);
+    return res.status(401).json({ activeSession: false, message: "Session verification failed" });
   }
 });
 

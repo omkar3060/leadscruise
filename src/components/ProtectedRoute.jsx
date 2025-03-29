@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import { useCallback } from "react";
 // Styled component approach using template literals and CSS-in-JS
 const styles = {
   alertContainer: `
@@ -81,16 +81,59 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
   const [alertMessage, setAlertMessage] = useState("");
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
+  const sessionId = localStorage.getItem("sessionId");
   const location = useLocation();
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
-  const status=localStorage.getItem("status");
-  const password=localStorage.getItem("password");
+  const status = localStorage.getItem("status");
+  const password = localStorage.getItem("password");
+  
   const handleDismiss = () => {
     setShowAlert(false);
     navigate(-1);
   };
 
+  // Improved session verification function
+  const verifySession = useCallback(async () => {
+    if (!token || !sessionId) return;
+    
+    try {
+      const response = await fetch('https://api.leadscruise.com/api/verify-session', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Session-Id': sessionId
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // If the server says our session is invalid, log the user out
+        if (data.activeSession === false) {
+          setAlertMessage("Your session has been terminated because you logged in from another device");
+          setShowAlert(true);
+          
+          // Clear local storage
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          localStorage.removeItem("sessionId");
+          localStorage.removeItem("status");
+          
+          // Redirect to login after a delay
+          setTimeout(() => {
+            setShowAlert(false);
+            navigate('/');
+          }, 3000);
+        }
+      }
+    } catch (error) {
+      console.error("Session verification error:", error);
+    }
+  }, [token, sessionId, navigate]);
+  
+  // Effect for initial authorization checks
   useEffect(() => {
     // Check if trying to access settings while script is running
     if (status === "Running" && location.pathname === "/settings") {
@@ -131,7 +174,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
       return () => clearTimeout(redirectTimer);
     }
 
-    if (userRole === "admin" && password==="6daa726eda58b3c3c061c3ef0024ffaa") return;
+    if (userRole === "admin" && password === "6daa726eda58b3c3c061c3ef0024ffaa") return;
   
     // Redirect admins to "/master" only if they are not already on an admin-allowed page
     if (userRole === "admin" && !location.pathname.includes("master")) {
@@ -145,9 +188,33 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
       
       return () => clearTimeout(redirectTimer);
     }
-  }, [token, userRole, adminOnly, location.pathname, navigate, status]);  
+  }, [token, userRole, adminOnly, location.pathname, navigate, status, password]);
+  
+  // Separate effect specifically for session verification
+  useEffect(() => {
+    // Verify session on component mount
+    verifySession();
+    
+    // Set up interval to periodically check session (every 5 minutes)
+    const intervalId = setInterval(() => {
+      verifySession();
+    }, 5 * 60 * 1000);
+    
+    // Add event listener for focus events (when user returns to the tab)
+    const handleFocus = () => {
+      verifySession();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    // Clean up
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [verifySession]);
 
-  // Render alert component
+  // Rest of your component remains the same
   const renderAlert = () => {
     if (!showAlert) return null;
 
@@ -181,12 +248,11 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
     );
   };
 
-  // Check if script is running and trying to access settings
+  // Same conditions as before
   if (status === "Running" && location.pathname === "/settings") {
     return renderAlert();
   }
 
-  // Remove hardcoded alerts and use more robust navigation
   if (!token) {
     return renderAlert();
   }
@@ -195,7 +261,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
     return renderAlert();
   }
 
-  if(userRole === "admin" && password==="6daa726eda58b3c3c061c3ef0024ffaa") return children;
+  if(userRole === "admin" && password === "6daa726eda58b3c3c061c3ef0024ffaa") return children;
 
   if (userRole === "admin" && !location.pathname.includes("master")) {
     return renderAlert();
