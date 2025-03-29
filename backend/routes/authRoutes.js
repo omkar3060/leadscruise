@@ -16,7 +16,8 @@ const {
   updateSheetsId,
   checkScriptStatus,
   stopScript,
-  logout
+  logout,
+  forceLogout,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -42,6 +43,7 @@ router.post("/update-password", updatePassword);
 router.get("/users", getAllUsers);
 router.post("/update-sheets-id",updateSheetsId);
 router.post("/logout",logout);
+router.post('/force-logout', forceLogout);
 
 const SUBSCRIPTION_DURATIONS = {
   "one-mo": 30,

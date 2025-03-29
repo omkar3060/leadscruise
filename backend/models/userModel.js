@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
     phoneNumber: { type: String },
     lastLogin: { type: Date },
     activeToken: { type: String, default: null },
+    sessionId: { type: String, default: null }, // Added for session management
     adminPassword: { type: String},
   },
   { timestamps: true } // Adds createdAt and updatedAt fields

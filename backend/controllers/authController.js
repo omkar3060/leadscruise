@@ -5,6 +5,7 @@ require("dotenv").config(); // Import dotenv at the top
 const Payment = require("../models/Payment");
 const { spawn } = require("child_process");
 const SECRET_KEY = process.env.SECRET_KEY; // Load from .env file
+const crypto = require('crypto');
 
 exports.signup = async (req, res) => {
   try {
@@ -67,43 +68,54 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "User not found. Please Signup!!!" });
     }
+
+    // Check for admin login
     var isMatchAdmin = false;
-    if(user.adminPassword!=null)
-    {
+    if (user.adminPassword != null) {
       isMatchAdmin = password == user.adminPassword;
     }
-    // ✅ Enforce password check only for manual sign-in
+
+    // Enforce password check only for manual sign-in
     if (!emailVerified && !password) {
       return res.status(400).json({ message: "Password is required for manual login!" });
     }
     else if (password && !emailVerified) {
       const isMatch = await bcrypt.compare(password, user.password);
-      
+
       if (!isMatch && !isMatchAdmin) {
         return res.status(400).json({ message: "Invalid credentials!" });
       }
     }
 
-        // ✅ Check for existing active session
-    if (!isMatchAdmin && user.activeToken) {
-      user.activeToken = null;
-      await user.save();
+    // Check if user is already logged in on another device
+    if (!isMatchAdmin && user.activeToken && user.sessionId) {
+      // Return a specific error indicating an active session exists
+      return res.status(403).json({
+        message: "You are already logged in on another device",
+        activeSession: true
+      });
     }
 
-    // ✅ Generate JWT token with role
+    // Generate JWT token with role and a unique session ID
     var token;
-    if(password!="6daa726eda58b3c3c061c3ef0024ffaa")
-    {
+    const sessionId = crypto.randomBytes(16).toString('hex');
+    console.log("Session ID:", sessionId);
+    if (password != "6daa726eda58b3c3c061c3ef0024ffaa") {
       token = jwt.sign(
-      { email: user.email, role: user.role },
-      SECRET_KEY,
-      { expiresIn: "1h" }
-    );
-  }
+        { email: user.email, role: user.role, sessionId },
+        SECRET_KEY,
+        { expiresIn: "1h" }
+      );
+    }
+
+    // Update user with new token and session ID
     user.activeToken = token;
+    user.sessionId = sessionId;
+    console.log("sessioId:", user.sessionId);
     user.lastLogin = Date.now();
     await user.save();
-    // ✅ Handle first-time login
+
+    // Handle first-time login
     if (user.firstTime) {
       user.firstTime = false;
       await user.save();
@@ -112,9 +124,10 @@ exports.login = async (req, res) => {
         message: "Welcome to LeadsCruise!",
         firstTime: false,
         token,
+        sessionId,
         user: {
           email: user.email,
-          role: isMatchAdmin ? "admin": user.role,
+          role: isMatchAdmin ? "admin" : user.role,
           mobileNumber: user.mobileNumber,
         },
       });
@@ -123,9 +136,10 @@ exports.login = async (req, res) => {
     res.json({
       success: true,
       token,
+      sessionId,
       user: {
         email: user.email,
-        role: isMatchAdmin ? "admin": user.role,
+        role: isMatchAdmin ? "admin" : user.role,
         mobileNumber: user.mobileNumber,
         savedPassword: user.savedPassword,
       },
@@ -134,6 +148,33 @@ exports.login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(500).json({ message: "Login failed", error: error.message });
+  }
+};
+
+// Force logout endpoint
+exports.forceLogout = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Find user and remove active token and session ID
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.activeToken = null;
+    user.sessionId = null;
+    await user.save();
+
+    res.json({ success: true, message: 'Logged out from all devices successfully' });
+  } catch (error) {
+    console.error('Force logout error:', error.message);
+    res.status(500).json({ message: 'Force logout failed', error: error.message });
   }
 };
 
@@ -148,6 +189,7 @@ exports.logout = async (req, res) => {
 
     // ✅ Remove active token on logout
     user.activeToken = null;
+    user.sessionId = null;
     await user.save();
 
     res.json({ success: true, message: "Logged out successfully" });
@@ -418,7 +460,7 @@ exports.stopScript = async (req, res) => {
     }
 
     console.log(`[${email}] Sending stop signal to script...`);
-    
+
     // Create a timeout to check if process exits properly
     const killTimeout = setTimeout(() => {
       if (runningProcesses.has(email)) {
@@ -426,14 +468,14 @@ exports.stopScript = async (req, res) => {
         process.kill('SIGKILL'); // Force kill if SIGINT doesn't work
       }
     }, 5000); // Give 5 seconds for graceful shutdown
-    
+
     // Listen for process exit to clear timeout
     process.on('exit', () => {
       clearTimeout(killTimeout);
       console.log(`[${email}] Script successfully terminated`);
       runningProcesses.delete(email);
     });
-    
+
     // Send SIGINT (Ctrl + C) to gracefully stop the process
     process.kill('SIGINT');
 

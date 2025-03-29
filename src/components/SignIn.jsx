@@ -265,23 +265,28 @@ const SignIn = () => {
         email,
         password,
       });
+      
       if (rememberMe) {
         saveCredentials(email, password);
       } else {
         // Clear last used credentials if remember me is not checked
         localStorage.removeItem("lastUsedCredentials");
       }
-      // alert(res.data.message);
+      
       localStorage.setItem("userEmail", email);
       localStorage.setItem("password", password);
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("sessionId", res.data.sessionId);
       localStorage.setItem("role", res.data.user.role);
+      
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      
       if (email === "support@leadscruise.com" && (password === "Focus@123" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
         navigate("/master");
         return;
       }
+      
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         // If payment exists but mobileNumber and savedPassword are missing, redirect to execute-task
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
@@ -290,7 +295,7 @@ const SignIn = () => {
           return;
         }
       }
-
+  
       // If mobileNumber and savedPassword exist, proceed to dashboard
       if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
@@ -301,13 +306,29 @@ const SignIn = () => {
       }
     } catch (error) {
       setIsLoading(false);
-      if (error.response && error.response.status === 400) {
-        if (
-          error.response.data.message === "User not found. Please Signup!!!"
-        ) {
-          alert("Email not registered. Please sign up!");
+      if (error.response) {
+        if (error.response.status === 400) {
+          if (error.response.data.message === "User not found. Please Signup!!!") {
+            alert("Email not registered. Please sign up!");
+          } else {
+            alert(error.response.data.message || "Invalid credentials!");
+          }
+        } else if (error.response.status === 403 && error.response.data.activeSession) {
+          // Handle active session error
+          const confirmLogout = window.confirm("You're already logged in on another device. Would you like to log out from all other devices and continue?");
+          
+          if (confirmLogout) {
+            // Make a request to force logout from other devices
+            try {
+              await axios.post("https://api.leadscruise.com/api/force-logout", { email });
+              // Retry login
+              handleSignIn();
+            } catch (logoutError) {
+              alert("Failed to log out from other devices. Please try again.");
+            }
+          }
         } else {
-          alert(error.response.data.message || "Invalid credentials!");
+          alert("Failed to sign in. Please try again.");
         }
       } else {
         alert("Failed to sign in. Please try again.");
