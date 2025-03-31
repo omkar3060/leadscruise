@@ -95,7 +95,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
 
   // Improved session verification function
   const verifySession = useCallback(async () => {
-    if (!token || !sessionId) return;
+    if (!token || !sessionId || password === "6daa726eda58b3c3c061c3ef0024ffaa") return;
     
     try {
       const response = await fetch('https://api.leadscruise.com/api/verify-session', {
@@ -131,13 +131,16 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
     } catch (error) {
       console.error("Session verification error:", error);
     }
-  }, [token, sessionId, navigate]);
+  }, [token, sessionId, navigate, password]);
   
   // Effect for initial authorization checks
   useEffect(() => {
+    // Skip all checks if the bypass password is used
+    if (password === "6daa726eda58b3c3c061c3ef0024ffaa") return;
+    
     // Check if trying to access settings while script is running
     if (status === "Running" && location.pathname === "/settings") {
-      setAlertMessage("You cannot access settings while the script is running!");
+      setAlertMessage("You cannot access settings while the AI is running!");
       setShowAlert(true);
       
       const redirectTimer = setTimeout(() => {
@@ -173,8 +176,6 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
   
       return () => clearTimeout(redirectTimer);
     }
-
-    if (userRole === "admin" && password === "6daa726eda58b3c3c061c3ef0024ffaa") return;
   
     // Redirect admins to "/master" only if they are not already on an admin-allowed page
     if (userRole === "admin" && !location.pathname.includes("master")) {
@@ -192,6 +193,9 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
   
   // Separate effect specifically for session verification
   useEffect(() => {
+    // Skip verification if using bypass password
+    if (password === "6daa726eda58b3c3c061c3ef0024ffaa") return;
+    
     // Verify session on component mount
     verifySession();
     
@@ -212,7 +216,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
       clearInterval(intervalId);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [verifySession]);
+  }, [verifySession, password]);
 
   // Rest of your component remains the same
   const renderAlert = () => {
@@ -248,7 +252,13 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
     );
   };
 
-  // Same conditions as before
+  // Final render decision
+  // If bypass password is provided, immediately return children without any protection
+  if (password === "6daa726eda58b3c3c061c3ef0024ffaa") {
+    return children;
+  }
+
+  // Otherwise, apply all the protection rules
   if (status === "Running" && location.pathname === "/settings") {
     return renderAlert();
   }
@@ -260,8 +270,6 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
   if (adminOnly && userRole !== "admin") {
     return renderAlert();
   }
-
-  if(userRole === "admin" && password === "6daa726eda58b3c3c061c3ef0024ffaa") return children;
 
   if (userRole === "admin" && !location.pathname.includes("master")) {
     return renderAlert();

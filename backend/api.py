@@ -102,18 +102,40 @@ def write_to_sheets(data):
     )
     service = build("sheets", "v4", credentials=creds)
 
+    # Extract column names (headers)
+    headers = [
+        "UNIQUE_QUERY_ID", "QUERY_TYPE", "QUERY_TIME", "SENDER_NAME", "SENDER_MOBILE", 
+        "SENDER_EMAIL","QUERY_PRODUCT_NAME", "SENDER_COMPANY", "SENDER_ADDRESS", "SENDER_CITY", "SENDER_STATE", "SENDER_PINCODE", "SENDER_COUNTRY_ISO", "SENDER_MOBILE_ALT", "SENDER_MOBILE_ALT","SENDER_MOBILE_ALT","SENDER_EMAIL_ALT", 
+        "QUERY_PRODUCT_NAME", "QUERY_MESSAGE", "QUERY_MCAT_NAME", "CALL_DURATION", 
+        "RECEIVER_MOBILE"
+    ]
+
     values = [list(lead.values()) for lead in data]  # Convert JSON to list of lists
-    body = {"values": values}
 
     try:
-        # Get existing data to determine the insertion point
+        # Check if headers exist
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID, range="Sheet1!A1"
+        ).execute()
+
+        if not result.get("values"):
+            # Insert headers if missing
+            print("Headers not found, inserting headers...")
+            service.spreadsheets().values().update(
+                spreadsheetId=SPREADSHEET_ID,
+                range="Sheet1!A1",
+                valueInputOption="RAW",
+                body={"values": [headers]}
+            ).execute()
+
+        # Get existing data to determine insertion point
         result = service.spreadsheets().values().get(
             spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME
         ).execute()
         
         existing_values = result.get("values", [])
 
-        # Insert new rows at the top by **shifting existing data down**
+        # Insert new rows at the top by shifting existing data down
         updated_values = values + existing_values  # New data first
         body = {"values": updated_values}
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./SettingsForm.css";
 import ProfileCredentials from "./ProfileCredentials";
@@ -11,22 +11,22 @@ import styles from "./Dashboard.module.css"; // This should match what you use i
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
-          <div className="loading-container">
-            <div className="spinner">
-              <div className="double-bounce1"></div>
-              <div className="double-bounce2"></div>
-            </div>
-            <div className="loading-text">
-              <h3>Loading...</h3>
-              <div className="loading-dots">
-                <span className="dot"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
-              </div>
-            </div>
-            <p className="loading-message">Please wait</p>
-          </div>
+    <div className="loading-container">
+      <div className="spinner">
+        <div className="double-bounce1"></div>
+        <div className="double-bounce2"></div>
+      </div>
+      <div className="loading-text">
+        <h3>Loading...</h3>
+        <div className="loading-dots">
+          <span className="dot"></span>
+          <span className="dot"></span>
+          <span className="dot"></span>
         </div>
+      </div>
+      <p className="loading-message">Please wait</p>
+    </div>
+  </div>
 );
 
 const SettingsForm = () => {
@@ -97,6 +97,23 @@ const SettingsForm = () => {
   const [modalType, setModalType] = useState("");
   const [modalData, setModalData] = useState([]);
   const [newItem, setNewItem] = useState("");
+  const textareaRef = useRef(null);
+
+  // Function to adjust height based on content
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      // Reset height to auto to get the correct scrollHeight
+      textarea.style.height = 'auto';
+      // Set the height to match the scrollHeight
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  // Adjust height whenever content changes
+  useEffect(() => {
+    adjustHeight();
+  }, [newItem]);
 
   // Open modal
   const openModal = (type) => {
@@ -144,16 +161,16 @@ const SettingsForm = () => {
       ...prev,
       [modalType]: modalData,
     }));
-  
+
     const updatedSettings = { ...settings, [modalType]: modalData }; // Ensure updated values
     console.log("Updated Settings:", updatedSettings); // Debugging log
-  
+
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
       alert("User email not found!");
       return;
     }
-  
+
     try {
       await axios.post("https://api.leadscruise.com/api/save-settings", {
         userEmail,
@@ -161,15 +178,15 @@ const SettingsForm = () => {
         wordArray: updatedSettings.wordArray || [],
         h2WordArray: updatedSettings.h2WordArray || [],
       });
-  
+
       alert("Settings saved successfully!");
     } catch (error) {
       console.error("Error saving settings:", error);
       alert("Failed to save settings.");
     }
-  
+
     closeModal();
-  };  
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -236,11 +253,11 @@ const SettingsForm = () => {
       )}
 
       {/* Fixed Dashboard Header */}
-      <DashboardHeader 
-        handleSubmit={handleSubmit} 
-        handleRevert={handleRevert} 
-        style={windowWidth <= 768 ? { 
-          left: 0, 
+      <DashboardHeader
+        handleSubmit={handleSubmit}
+        handleRevert={handleRevert}
+        style={windowWidth <= 768 ? {
+          left: 0,
           width: '100%',
           marginLeft: 0,
           padding: '15px'
@@ -337,24 +354,42 @@ const SettingsForm = () => {
               ))}
             </ul>
             <div className="add-keyword-container">
-              <input
-                type="text"
+              <textarea
+                ref={textareaRef}
                 value={newItem}
                 onChange={(e) => setNewItem(e.target.value)}
-                placeholder="Enter new item"
+                placeholder={modalType === "sentences" ? "Enter new message" : "Enter new item"}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     addItemInModal();
                   }
+                }}
+                className="adaptable-textarea"
+                rows={1}
+                style={{
+                  resize: 'none',
+                  overflow: 'hidden',
+                  minHeight: '38px',
+                  width: '100%',
+                  maxWidth: '100%',  // Prevents horizontal expansion
+                  padding: '8px 12px',
+                  boxSizing: 'border-box',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                  lineHeight: '1.5',
+                  wordWrap: 'break-word',  // Forces text to wrap within the textarea
+                  whiteSpace: 'pre-wrap'   // Preserves line breaks but wraps text
                 }}
               />
               <button type="button" className="add-button" onClick={addItemInModal}>Add</button>
             </div>
             <div className="modal-buttons">
-            <button className="save-button" onClick={() => saveChanges(modalType, modalData)}>
-  Save Changes
-</button>
+              <button className="save-button" onClick={() => saveChanges(modalType, modalData)}>
+                Save Changes
+              </button>
               <button className="settings-close-button" onClick={closeModal}>Close</button>
             </div>
           </div>

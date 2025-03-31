@@ -72,9 +72,9 @@ const Dashboard = () => {
           const currentTime = new Date();
           const timeElapsed = Math.floor((currentTime - startTime) / 1000); // Time elapsed in seconds
 
-          if (timeElapsed < 300) {
+          if (timeElapsed < 30) {
             setIsDisabled(true);
-            setTimer(300 - timeElapsed);
+            setTimer(30 - timeElapsed);
           } else {
             setIsDisabled(false);
           }
@@ -262,28 +262,40 @@ const Dashboard = () => {
       alert(`You cannot stop the AI until ${Math.ceil(timer / 60)} min are completed.`);
       return;
     }
-
+  
     if (window.confirm("Are you sure you want to stop the AI?")) {
       setIsLoading(true); // Show loading when stopping
-
+  
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
-
+  
       if (!userEmail || !uniqueId) {
         alert("User email or mobile number is missing!");
         setIsLoading(false);
         return;
       }
-
+  
       try {
         const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
-
+  
         alert(response.data.message);
         setStatus("Stopped");
-        setIsDisabled(false);
-        setTimer(0);
+        setIsDisabled(true); // Disable stop button
+        setTimer(60); // Set a 1-minute cooldown timer
+  
+        // Start a countdown to re-enable the stop button after 1 min
+        const countdown = setInterval(() => {
+          setTimer((prev) => {
+            if (prev <= 1) {
+              clearInterval(countdown);
+              setIsDisabled(false); // Re-enable stop button after 1 min
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       } catch (error) {
-        alert(error.response?.data?.message || "Failed to stop the script.");
+        alert(error.response?.data?.message || "Failed to stop the AI.");
         console.error("Error stopping script:", error);
       } finally {
         setIsLoading(false);
@@ -345,9 +357,9 @@ const Dashboard = () => {
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>WhatsApp Messages Sent Today</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Emails Sent Today</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Emails Sent</span></div>
+          <div className={styles.metricBox}>Coming soon <br /><span>WhatsApp Messages Sent Today</span></div>
+          <div className={styles.metricBox}>Coming soon <br /><span>Emails Sent Today</span></div>
+          <div className={styles.metricBox}>Coming soon <br /><span>Total Emails Sent</span></div>
           <div className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>
         </div>
 

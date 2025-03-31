@@ -125,7 +125,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
 
   const handleStartScript = () => {
     if (!isSubscriptionActive) {
-      alert("Your subscription has expired. Please renew to start the script.");
+      alert("Your subscription has expired. Please renew to start the AI.");
       navigate("/plans");
       return;
     }

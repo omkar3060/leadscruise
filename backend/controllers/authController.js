@@ -481,7 +481,7 @@ exports.stopScript = async (req, res) => {
 
     res.json({ success: true, message: "Script stopping signal sent." });
   } catch (error) {
-    console.error(`Error stopping script for ${email}:`, error);
+    console.error(`Error stopping AI for ${email}:`, error);
     res.status(500).json({ success: false, message: "Failed to stop AI" });
   }
 };
@@ -494,6 +494,6 @@ exports.checkScriptStatus = async (req, res) => {
     res.json({ success: true, isRunning });
   } catch (error) {
     console.error("Error checking script status:", error);
-    res.status(500).json({ success: false, message: "Failed to check script status" });
+    res.status(500).json({ success: false, message: "Failed to check AI status" });
   }
 };

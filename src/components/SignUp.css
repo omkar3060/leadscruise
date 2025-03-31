@@ -2,6 +2,7 @@
   display: flex;
   justify-content: space-between;
   position: relative;
+  gap:3px;
 }
 
 .signin-left .pass-cont input {

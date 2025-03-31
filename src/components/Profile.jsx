@@ -28,11 +28,11 @@ const Profile = () => {
   const [billingHistory, setBillingHistory] = useState([]);
   const [isEditing, setIsEditing] = useState(false); // Toggle edit mode
   const [daysLeft, setDaysLeft] = useState(null);
-  
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true); // Start loading
-  
+
       try {
         // Load subscription details from localStorage
         const storedSubscription = localStorage.getItem("subscriptionDetails");
@@ -40,31 +40,31 @@ const Profile = () => {
           try {
             const parsedSubscription = JSON.parse(storedSubscription);
             setSubscriptionDetails(parsedSubscription);
-  
+
             // Calculate days left
             const renewalDate = new Date(parsedSubscription.renewal_date);
             const currentDate = new Date();
             const timeDifference = renewalDate - currentDate;
             const remainingDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-  
+
             setDaysLeft(remainingDays);
           } catch (error) {
             console.error("Error parsing subscription data:", error);
           }
         }
-  
+
         // Fetch billing history
         const historyResponse = await fetch(`https://api.leadscruise.com/api/payments?email=${userEmail}`);
         if (!historyResponse.ok) throw new Error("Failed to fetch billing history");
-        
+
         const historyData = await historyResponse.json();
         setBillingHistory(historyData);
-        
+
       } catch (error) {
         console.error("Error loading billing history:", error);
         setBillingHistory([]); // Fallback to empty array
       }
-  
+
       try {
         // Fetch billing details
         const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
@@ -80,7 +80,7 @@ const Profile = () => {
         } else {
           throw new Error(detailsResult.message || "Billing details not available");
         }
-        
+
       } catch (error) {
         console.error("Error loading billing details:", error);
         setBillingDetails(prevDetails => ({
@@ -90,31 +90,31 @@ const Profile = () => {
       } finally {
         setIsLoading(false); // Ensure loading state is off after a delay
       }
-  
+
       // Ensure loading state is off after a delay
       setTimeout(() => setIsLoading(false), 300);
     };
-  
+
     loadData();
   }, [userEmail]);
-  
+
   // Handle Input Changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setBillingDetails({ ...billingDetails, [name]: value });
   };
-  
+
   // Save Updated Billing Details
   const handleSave = async () => {
     try {
       setIsLoading(true); // Show loading while saving
-  
+
       const response = await fetch("https://api.leadscruise.com/api/billing/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(billingDetails),
       });
-  
+
       const result = await response.json();
       if (response.ok && result.success) {
         localStorage.setItem("billingEmail", billingDetails.email);
@@ -130,20 +130,20 @@ const Profile = () => {
       setIsLoading(false); // Hide loading when done
     }
   };
-  
+
   // Download Invoice
   const handleDownloadInvoice = async (orderId) => {
     try {
       setIsLoading(true); // Show loading while downloading
-  
+
       const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${orderId}`, {
         responseType: "blob", // Get binary data
       });
-  
+
       if (response.status !== 200) {
         throw new Error("Invoice download failed.");
       }
-  
+
       const fileURL = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = fileURL;
@@ -151,14 +151,14 @@ const Profile = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link); // Clean up after download
-  
+
     } catch (error) {
       console.error("Error downloading invoice:", error);
       alert("Invoice not found");
     } finally {
       setIsLoading(false); // Hide loading when done
     }
-  };  
+  };
 
   const calculateEndDate = (startDate, subscriptionType) => {
     const start = new Date(startDate);
@@ -184,31 +184,31 @@ const Profile = () => {
   // Loading Screen Component
   const LoadingScreen = () => (
     <div className="loading-overlay">
-    <div className="loading-container">
-      <div className="spinner">
-        <div className="double-bounce1"></div>
-        <div className="double-bounce2"></div>
-      </div>
-      <div className="loading-text">
-        <h3>Loading...</h3>
-        <div className="loading-dots">
-          <span className="dot"></span>
-          <span className="dot"></span>
-          <span className="dot"></span>
+      <div className="loading-container">
+        <div className="spinner">
+          <div className="double-bounce1"></div>
+          <div className="double-bounce2"></div>
         </div>
+        <div className="loading-text">
+          <h3>Loading...</h3>
+          <div className="loading-dots">
+            <span className="dot"></span>
+            <span className="dot"></span>
+            <span className="dot"></span>
+          </div>
+        </div>
+        <p className="loading-message">Please wait</p>
       </div>
-      <p className="loading-message">Please wait</p>
     </div>
-  </div>
   );
 
   return (
     <div className={styles["profile-page-wrapper"]}>
       {/* Show loading overlay when data is being fetched */}
       {isLoading && <LoadingScreen />}
-      
+
       {/* Sidebar */}
-      <Sidebar status={status}/>
+      <Sidebar status={status} />
 
       {/* Fixed Dashboard Header */}
       <DashboardHeader />
@@ -234,32 +234,41 @@ const Profile = () => {
                 </thead>
                 <tbody>
                   {billingHistory.length > 0 ? (
-                    billingHistory.map((item, index) => (
-                      <tr key={index}>
-                        <td>{index + 1}</td>
-                        <td>{item.subscription_type}</td>
-                        <td>{new Date(item.created_at).toLocaleDateString()}</td>
-                        <td>
-                          {calculateEndDate(item.created_at, item.subscription_type)}
-                        </td>
-                        <td>{`INR ${item.order_amount / 100}`}</td>
-                        <td>{item.unique_id}</td>
-                        <td>
-                          <button
-                            className={styles["download-button"]}
-                            onClick={() => handleDownloadInvoice(item.unique_id)}
-                          >
-                            Download GST receipt
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                    billingHistory.map((item, index) => {
+                      // Mapping subscription types to readable formats
+                      const subscriptionMapping = {
+                        "one-mo": "One Month",
+                        "three-mo": "Three Months",
+                        "six-mo": "Six Months",
+                        "year-mo": "One Year"
+                      };
+
+                      return (
+                        <tr key={index}>
+                          <td>{index + 1}</td>
+                          <td>{subscriptionMapping[item.subscription_type] || item.subscription_type}</td>
+                          <td>{new Date(item.created_at).toLocaleDateString()}</td>
+                          <td>{calculateEndDate(item.created_at, item.subscription_type)}</td>
+                          <td>{`INR ${item.order_amount / 100}`}</td>
+                          <td>{item.unique_id}</td>
+                          <td>
+                            <button
+                              className={styles["download-button"]}
+                              onClick={() => handleDownloadInvoice(item.unique_id)}
+                            >
+                              Download GST receipt
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan="7">No billing history available</td>
                     </tr>
                   )}
                 </tbody>
+
               </table>
             </div>
 
@@ -323,7 +332,7 @@ const Profile = () => {
                         <p className={styles["billing-address-text"]}><strong>Billing Email:</strong> {billingDetails.billingEmail || 'N/A'}</p>
                       </div>
                       <div className={styles["edit-button-container"]}>
-                      <button className={styles["edit-button"]} onClick={() => setIsEditing(true)}>Edit my Details</button>
+                        <button className={styles["edit-button"]} onClick={() => setIsEditing(true)}>Edit my Details</button>
                       </div>
                     </>
                   )}

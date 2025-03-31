@@ -15,7 +15,7 @@ const Sidebar = ({ status }) => {
   // Effect to check status and redirect from settings if running
   useEffect(() => {
     if (status === "Running" && location.pathname === "/settings") {
-      alert("You cannot access settings while the script is running!");
+      alert("You cannot access settings while the AI is running!");
       // Redirect back to dashboard
       if (location.pathname.includes("/master")) {
         navigate("/master");
@@ -78,7 +78,7 @@ const Sidebar = ({ status }) => {
                 console.log("Status in Sidebar:", status);
                 if (status === "Running") {
                   alert(
-                    "You cannot go to settings while the script is running!"
+                    "You cannot go to settings while the AI is running!"
                   );
                 } else {
                   navigate("/settings");

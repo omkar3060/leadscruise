@@ -282,7 +282,7 @@ app.post("/api/execute-task", async (req, res) => {
     } else {
       return res.status(500).json({
         status: "error",
-        message: `Python script failed with error: ${error.trim()}`,
+        message: `AI failed with error: ${error.trim()}`,
       });
     }
   });
@@ -563,7 +563,7 @@ app.post("/api/cycle", async (req, res) => {
     } else {
       res.status(500).json({
         status: "error",
-        message: `Python script failed`,
+        message: `AI failed`,
       });
     }
   });

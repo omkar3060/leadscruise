@@ -215,12 +215,12 @@ const ProfileCredentials = ({ isProfilePage }) => {
 
       {/* IndiaMart Account Credentials */}
       <div className="credentials-section">
-        <h3 className="credentials-header">Provider account credentials</h3>
+        <h3 className="credentials-header"> Leads Provider credentials</h3>
         <div className="credentials-content">
           <div className="credential-group">
             <label>Registered mobile number</label>
             <div className="mobile">
-              <span>{mobileNumber}</span>
+              <span className="mobile-text">{mobileNumber}</span>
               <div className="icon-group">
                 <span className="lock-icon">🔒</span>
                 <span className="info-icon" data-tooltip="Registered mobile number cannot be updated.">ⓘ</span>
@@ -266,8 +266,8 @@ const ProfileCredentials = ({ isProfilePage }) => {
         <div className="credentials-content">
           <div className="credential-group">
             <label>Registered Email ID</label>
-            <div className="credential-value">
-              <span>{email}</span>
+            <div className="mobile">
+              <span className="mobile-text">{email}</span>
               <div className="icon-group">
                 <span className="lock-icon">🔒</span>
                 <span className="info-icon" data-tooltip="Registered email ID cannot be updated.">ⓘ</span>

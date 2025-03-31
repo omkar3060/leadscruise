@@ -44,6 +44,12 @@ const SignUp = () => {
       return;
     }
 
+    if(!refId){
+      alert("Please enter a valid Referral ID.");
+      setIsLoading(false);
+      return;
+    }
+
     if (refId) {
       try {
         await axios.get(`https://api.leadscruise.com/api/referrals/${refId}`);
