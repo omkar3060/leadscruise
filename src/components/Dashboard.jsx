@@ -179,44 +179,44 @@ const Dashboard = () => {
     try {
       // Set a "Starting" state
       setIsStarting(true);
-      
+
       const mobileNumber = localStorage.getItem("mobileNumber");
       const password = localStorage.getItem("savedPassword");
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
-      
+
       if (!mobileNumber || !password) {
         alert("Mobile number or password not found in local storage!");
         setIsStarting(false); // Reset starting state on error
         return;
       }
-      
+
       if (!userEmail) {
         alert("User email not found!");
         setIsStarting(false); // Reset starting state on error
         return;
       }
-      
+
       const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
         setIsStarting(false); // Reset starting state on error
         return;
       }
-      
+
       // Fetch settings
       const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
       setSettings(response.data);
-      
+
       if (!userSettings) {
         alert("No settings found, please configure them first.");
         navigate("/settings");
         setIsStarting(false); // Reset starting state on error
         return;
       }
-      
+
       // Check if all settings arrays are empty
       if (
         (!userSettings.sentences || userSettings.sentences.length < 1) &&
@@ -228,9 +228,9 @@ const Dashboard = () => {
         setIsStarting(false); // Reset starting state on error
         return;
       }
-      
+
       console.log("Sending the following settings to backend:", userSettings);
-      
+
       // Send the fetched settings instead of using the state
       const cycleResponse = await axios.post("https://api.leadscruise.com/api/cycle", {
         sentences: userSettings.sentences,
@@ -244,7 +244,7 @@ const Dashboard = () => {
       setIsStarting(false); // Reset starting state after process completes
       setStatus("Running");
       // Note: we don't reset isStarting here because the status is now "Running"
-      
+
     } catch (error) {
       if (error.response?.status === 403) {
         alert("Lead limit reached. Cannot capture more leads today.");
@@ -258,50 +258,108 @@ const Dashboard = () => {
   };
 
   const handleStop = async () => {
-    if (isDisabled && timer > 0) {
-      alert(`You cannot stop the AI until ${Math.ceil(timer / 60)} min are completed.`);
+    // Get current timestamp and calculate if cooldown is still active
+    const cooldownUntil = parseInt(localStorage.getItem("stopCooldownUntil") || "0");
+    const currentTime = Date.now();
+    const remainingCooldown = Math.max(0, cooldownUntil - currentTime);
+
+    // Check if still in cooldown period
+    if (cooldownUntil > currentTime) {
+      const remainingMinutes = Math.ceil(remainingCooldown / (1000 * 60));
+      alert(`You cannot stop the AI until ${remainingMinutes} min are completed.`);
       return;
     }
-  
+
     if (window.confirm("Are you sure you want to stop the AI?")) {
       setIsLoading(true); // Show loading when stopping
-  
+
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
-  
+
       if (!userEmail || !uniqueId) {
         alert("User email or mobile number is missing!");
         setIsLoading(false);
         return;
       }
-  
+
       try {
         const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
-  
+
         alert(response.data.message);
+
+        // Update the status in localStorage
+        localStorage.setItem("status", "Stopped");
         setStatus("Stopped");
-        setIsDisabled(true); // Disable stop button
-        setTimer(60); // Set a 1-minute cooldown timer
-  
-        // Start a countdown to re-enable the stop button after 1 min
-        const countdown = setInterval(() => {
-          setTimer((prev) => {
-            if (prev <= 1) {
-              clearInterval(countdown);
-              setIsDisabled(false); // Re-enable stop button after 1 min
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+
+        // For permanent disable after successful stop, set a far-future timestamp
+        // or use a specific flag in localStorage
+        localStorage.setItem("aiPermanentlyStopped", "true");
+
+        // Update component state
+        setIsDisabled(true);
+        setTimer(0);
+
       } catch (error) {
         alert(error.response?.data?.message || "Failed to stop the AI.");
         console.error("Error stopping script:", error);
+
+        // Set a 1-minute cooldown timer in localStorage using timestamp
+        const oneMinuteFromNow = Date.now() + (60 * 1000);
+        localStorage.setItem("stopCooldownUntil", oneMinuteFromNow.toString());
+
+        // Update UI state
+        setIsDisabled(true);
+        setTimer(60);
+
+        // Start countdown for the current session
+        startTimerCountdown();
+
       } finally {
         setIsLoading(false);
       }
     }
   };
+
+  // Separate function to handle the countdown
+  const startTimerCountdown = () => {
+    const intervalId = setInterval(() => {
+      const cooldownUntil = parseInt(localStorage.getItem("stopCooldownUntil") || "0");
+      const currentTime = Date.now();
+      const remainingSeconds = Math.max(0, Math.ceil((cooldownUntil - currentTime) / 1000));
+
+      setTimer(remainingSeconds);
+
+      if (remainingSeconds <= 0) {
+        clearInterval(intervalId);
+        setIsDisabled(false);
+        localStorage.removeItem("stopCooldownUntil");
+      }
+    }, 1000);
+
+    // Clean up interval on component unmount
+    return intervalId;
+  };
+
+  // Add this useEffect at component level to check status on mount/navigation
+  useEffect(() => {
+    // Check if AI was permanently stopped
+    if (localStorage.getItem("aiPermanentlyStopped") === "true") {
+      setIsDisabled(true);
+      setStatus("Stopped");
+      return;
+    }
+
+    // Check if in cooldown period
+    const cooldownUntil = parseInt(localStorage.getItem("stopCooldownUntil") || "0");
+    const currentTime = Date.now();
+
+    if (cooldownUntil > currentTime) {
+      setIsDisabled(true);
+      setTimer(Math.ceil((cooldownUntil - currentTime) / 1000));
+      const intervalId = startTimerCountdown();
+      return () => clearInterval(intervalId);
+    }
+  }, []);
 
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc"); // "asc" | "desc"
