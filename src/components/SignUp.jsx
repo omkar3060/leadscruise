@@ -44,6 +44,12 @@ const SignUp = () => {
       return;
     }
 
+    if(!mobileNumber){
+      alert("Please enter a valid Mobile Number.");
+      setIsLoading(false);
+      return;
+    }
+    
     if(!refId){
       alert("Please enter a valid Referral ID.");
       setIsLoading(false);

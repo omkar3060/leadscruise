@@ -26,6 +26,13 @@ const Master = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const subscriptionMapping = {
+    "one-mo": "One Month",
+    "three-mo": "Three Months",
+    "six-mo": "Six Months",
+    "year-mo": "One Year"
+  };
+
   useEffect(() => {
     fetchSubscriptionMetrics();
     fetchSubscriptions();
@@ -338,10 +345,11 @@ const Master = () => {
               <tbody>
                 {subscriptions.length > 0 ? (
                   subscriptions.map((sub, index) => (
+                    
                     <tr key={index}>
                       <td>{sub.email}</td>
                       <td>{sub.contact}</td>
-                      <td>{sub.subscription_type}</td>
+                      <td>{subscriptionMapping[sub.subscription_type]}</td>
                       <td>{sub.unique_id}</td>
                       <td>₹{sub.order_amount / 100}</td>
 

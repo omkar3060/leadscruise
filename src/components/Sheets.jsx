@@ -152,7 +152,7 @@ const Sheets = () => {
 
                     {!isEditing ? (
                       // Show "Edit" button initially
-                      <button className="update-api-btn" onClick={() => setIsEditing(true)}>
+                      <button className="update-api-btn" style={{"background":"#28a745"}} onClick={() => setIsEditing(true)}>
                         Edit
                       </button>
                     ) : (

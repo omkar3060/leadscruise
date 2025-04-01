@@ -415,9 +415,9 @@ const Dashboard = () => {
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.metricBox}>Coming soon <br /><span>WhatsApp Messages Sent Today</span></div>
-          <div className={styles.metricBox}>Coming soon <br /><span>Emails Sent Today</span></div>
-          <div className={styles.metricBox}>Coming soon <br /><span>Total Emails Sent</span></div>
+          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon <br /><span>WA Messages Sent Today</span></div>
+          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon <br /><span>Emails Sent Today</span></div>
+          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon <br /><span>Total Emails Sent</span></div>
           <div className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>
         </div>
 
@@ -460,8 +460,13 @@ const Dashboard = () => {
               </tbody>
             </table>
           </div>
+
+        </div>
+        <div className={styles.scrollDownText}>
+          scroll down to see old captured leads
         </div>
       </div>
+
     </div>
   );
 };

@@ -90,34 +90,84 @@ def get_external_data(start_datetime, end_datetime):
         print(f"Request failed: {e}")
         exit(0)
 
+def format_headers(service, spreadsheet_id):
+    """Formats the first row (headers) as bold, ensuring the first column is not bold."""
+    
+    try:
+        # Request to make first row bold
+        requests = [
+            {
+                "repeatCell": {
+                    "range": {
+                        "sheetId": 0,
+                        "startColumnIndex": 0,  # First column
+                        "endColumnIndex": 1,    # Only first column
+                    },
+                    "cell": {
+                        "userEnteredFormat": {
+                            "textFormat": {"bold": False}  # Ensure it's not bold
+                        }
+                    },
+                    "fields": "userEnteredFormat.textFormat.bold"
+                }
+            },
+            {
+                "repeatCell": {
+                    "range": {
+                        "sheetId": 0,  # Default sheet ID is usually 0
+                        "startRowIndex": 0,  # First row (headers)
+                        "endRowIndex": 1,    # Only apply to row 1
+                    },
+                    "cell": {
+                        "userEnteredFormat": {
+                            "textFormat": {"bold": True}  # Make text bold
+                        }
+                    },
+                    "fields": "userEnteredFormat.textFormat.bold"
+                }
+            }
+        ]
+
+        # Execute batch update
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=spreadsheet_id, body={"requests": requests}
+        ).execute()
+
+        print("Formatted headers: First row is bold, first column is normal.")
+
+    except Exception as e:
+        print(f"Error applying header formatting: {e}")
+        sys.exit(1)  # Prevent script crash
+
 def write_to_sheets(data):
     """Writes IndiaMART leads to Google Sheets, keeping newest leads at the top within each batch."""
     
     if not data:
         print("No leads found to write.")
         return
-    
+        
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=["https://www.googleapis.com/auth/spreadsheets"]
     )
     service = build("sheets", "v4", credentials=creds)
-
+    
     # Extract column names (headers)
     headers = [
         "UNIQUE_QUERY_ID", "QUERY_TYPE", "QUERY_TIME", "SENDER_NAME", "SENDER_MOBILE", 
-        "SENDER_EMAIL","QUERY_PRODUCT_NAME", "SENDER_COMPANY", "SENDER_ADDRESS", "SENDER_CITY", "SENDER_STATE", "SENDER_PINCODE", "SENDER_COUNTRY_ISO", "SENDER_MOBILE_ALT", "SENDER_MOBILE_ALT","SENDER_MOBILE_ALT","SENDER_EMAIL_ALT", 
-        "QUERY_PRODUCT_NAME", "QUERY_MESSAGE", "QUERY_MCAT_NAME", "CALL_DURATION", 
-        "RECEIVER_MOBILE"
+        "SENDER_EMAIL","QUERY_PRODUCT_NAME", "SENDER_COMPANY", "SENDER_ADDRESS", "SENDER_CITY", 
+        "SENDER_STATE", "SENDER_PINCODE", "SENDER_COUNTRY_ISO", "SENDER_MOBILE_ALT", 
+        "SENDER_MOBILE_ALT","SENDER_MOBILE_ALT","SENDER_EMAIL_ALT", "QUERY_PRODUCT_NAME", 
+        "QUERY_MESSAGE", "QUERY_MCAT_NAME", "CALL_DURATION", "RECEIVER_MOBILE"
     ]
-
+    
     values = [list(lead.values()) for lead in data]  # Convert JSON to list of lists
-
+    
     try:
         # Check if headers exist
         result = service.spreadsheets().values().get(
-            spreadsheetId=SPREADSHEET_ID, range="Sheet1!A1"
+            spreadsheetId=SPREADSHEET_ID, range="Sheet1!A1:Z1"
         ).execute()
-
+        
         if not result.get("values"):
             # Insert headers if missing
             print("Headers not found, inserting headers...")
@@ -127,30 +177,46 @@ def write_to_sheets(data):
                 valueInputOption="RAW",
                 body={"values": [headers]}
             ).execute()
-
-        # Get existing data to determine insertion point
+            # If we just added headers, start adding data from row 2
+            start_row = 2
+        else:
+            # Headers exist, start adding data from row 2
+            start_row = 2
+        
+        # Get existing data (skip headers)
         result = service.spreadsheets().values().get(
-            spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME
+            spreadsheetId=SPREADSHEET_ID, 
+            range=f"Sheet1!A{start_row}:Z"
         ).execute()
         
         existing_values = result.get("values", [])
-
-        # Insert new rows at the top by shifting existing data down
-        updated_values = values + existing_values  # New data first
-        body = {"values": updated_values}
-
+        
+        # Insert new rows right after headers by shifting existing data down
+        # First, clear the existing data
+        if existing_values:
+            service.spreadsheets().values().clear(
+                spreadsheetId=SPREADSHEET_ID,
+                range=f"Sheet1!A{start_row}:Z{start_row + len(existing_values) - 1}"
+            ).execute()
+        
+        # Then add new data followed by existing data
+        updated_values = values + existing_values
+        
+        # Write the combined data starting from the second row
         result = service.spreadsheets().values().update(
             spreadsheetId=SPREADSHEET_ID,
-            range=RANGE_NAME,
+            range=f"Sheet1!A{start_row}",
             valueInputOption="RAW",
-            body=body
+            body={"values": updated_values}
         ).execute()
-
+        
         print(f"{len(values)} new leads added at the top. {result.get('updatedCells')} cells updated in Google Sheets.")
-    
+
+        format_headers(service, SPREADSHEET_ID)
+        
     except Exception as e:
         print(f"Error writing to Google Sheets: {e}")
-        sys.exit(1)  # Stop execution immediately
+        sys.exit(1)
 
 def get_last_entry_date():
     """Fetches the last lead's timestamp from Google Sheets."""

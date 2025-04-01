@@ -28,7 +28,7 @@
 }
 
 /* Individual Metric Box */
-.metricBox {
+.metricBox, .comingSoon {
   background: #f9f9f9;
   border-radius: 8px;
   text-align: center;
@@ -44,7 +44,7 @@
   min-width: 150px;
 }
 
-.metricBox span {
+.metricBox span,.comingSoon span {
   font-size: 14px;
   font-weight: normal;
   color: #666;
@@ -129,6 +129,9 @@
   .metricsSection {
     grid-template-columns: repeat(4, minmax(120px, 1fr)); /* Adjust columns */
   }
+  .scrollDownText{
+    margin-top: 0px !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -199,4 +202,14 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.scrollDownText {
+  width: 100%;
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content:center;
+  margin-top: 10px;
 }

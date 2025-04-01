@@ -100,22 +100,27 @@ const ResetPassword = () => {
   };
 
   const handleLogout = async () => {
+    const isConfirmed = window.confirm("Are you sure you want to logout?");
+    
+    if (!isConfirmed) return; // Stop if user cancels
+  
     const userEmail = localStorage.getItem("userEmail");
   
     try {
-      await axios.post("https://api.leadscruise.com/api/logout", { email: userEmail });
+      await axios.post("https://api.leadscruise.com/api/logout", {
+        email: userEmail,
+      });
   
       localStorage.clear();
-      if (window.location.hostname === "app.leadscruise.com") {
-        window.location.href = "https://leadscruise.com"; // Replace with actual landing page URL
-      } else {
-        window.location.href = "http://localhost:3000"; // Local development
-      }
+      window.location.href =
+        window.location.hostname === "app.leadscruise.com"
+          ? "https://leadscruise.com"
+          : "http://localhost:3000";
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  };  
-
+  };
+  
   return (
     <div className="signin-container">
       <div className="center-div">
