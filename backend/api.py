@@ -81,14 +81,14 @@ def get_external_data(start_datetime, end_datetime):
         
         if data.get("CODE") != 200:
             print(f"API Error: {data.get('MESSAGE', 'Unknown error')}")
-            return []
+            exit(0)
 
         leads = data.get("RESPONSE", [])
         return list(reversed(leads))  # **Reverse the batch before returning**
     
     except requests.RequestException as e:
         print(f"Request failed: {e}")
-        return []
+        exit(0)
 
 def write_to_sheets(data):
     """Writes IndiaMART leads to Google Sheets, keeping newest leads at the top within each batch."""
