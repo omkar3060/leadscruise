@@ -99,7 +99,7 @@ cron.schedule(
         try {
           console.log(`Updating Sheets ID for: ${user.email}`);
 
-          await axios.post("http://localhost:5000/api/update-sheets-id", {
+          await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
             email: user.email,
             apiKey: user.apiKey,
             sheetsId: user.sheetsId,

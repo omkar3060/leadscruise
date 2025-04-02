@@ -44,7 +44,7 @@ const TaskExecutor = () => {
       localStorage.setItem("savedpassword", password);
 
       const response = await axios.post(
-        "http://localhost:5000/api/execute-task",
+        "https://api.leadscruise.com/api/execute-task",
         {
           mobileNumber,
           password,
@@ -73,7 +73,7 @@ const TaskExecutor = () => {
     const userEmail = localStorage.getItem("userEmail");
   
     try {
-      await axios.post("http://localhost:5000/api/logout", {
+      await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
   

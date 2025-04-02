@@ -34,7 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ["https://app.leadscruise.com", "http://localhost:3000"],
+    origin: ["https://app.leadscruise.com", "http://localhost:3000","http://localhost:3001"],
     credentials: true,
   })
 );
@@ -590,7 +590,7 @@ app.post("/api/stop", async (req, res) => {
   const currentTime = new Date();
   const elapsedTime = Math.floor((currentTime - startTime) / 1000); // in seconds
 
-  if (elapsedTime < 300) {
+  if (elapsedTime < 30) {
     return res.status(403).json({
       status: "error",
       message: `Please wait at least ${Math.ceil(
