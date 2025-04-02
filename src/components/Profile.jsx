@@ -305,7 +305,7 @@ const Profile = () => {
                           <textarea name="address" value={billingDetails.address} onChange={handleChange}></textarea>
                         </p>
                         <p className={styles["billing-address-text"]}>
-                          <strong>billing Email:</strong>
+                          <strong>Billing Email:</strong>
                           <input type="email" name="billingEmail" value={billingDetails.billingEmail} onChange={handleChange} />
                         </p>
                       </div>

@@ -136,23 +136,26 @@ const Sheets = () => {
                     <a href={`https://docs.google.com/spreadsheets/d/${sheetsId}`} target="_blank" rel="noopener noreferrer">View Sheet</a>
                   </p>
 
-                  {/* New content inside table-container */}
-
                   {/* Styled API Key Field */}
                   <div className="api-key-container">
                     <label className="api-key-label">Your API Key:</label>
-                    <input
-                      type="text"
-                      className="api-key-input"
-                      value={newApiKey}
-                      placeholder="Enter new API Key..."
-                      onChange={(e) => setNewApiKey(e.target.value)}
-                      disabled={!isEditing} // Disable editing initially
-                    />
+                    {!isEditing ? (
+                      // Show API key as plain text when not in edit mode
+                      <span className="api-key-text">{newApiKey || "No API Key Set"}</span>
+                    ) : (
+                      // Show input field when in edit mode
+                      <input
+                        type="text"
+                        className="api-key-input"
+                        value={newApiKey}
+                        placeholder="Enter new API Key..."
+                        onChange={(e) => setNewApiKey(e.target.value)}
+                      />
+                    )}
 
                     {!isEditing ? (
                       // Show "Edit" button initially
-                      <button className="update-api-btn" style={{"background":"#28a745"}} onClick={() => setIsEditing(true)}>
+                      <button className="update-api-btn" style={{ background: "#28a745" }} onClick={() => setIsEditing(true)}>
                         Edit
                       </button>
                     ) : (
@@ -162,6 +165,7 @@ const Sheets = () => {
                       </button>
                     )}
                   </div>
+
                 </div>
 
                 <div className="support-info">

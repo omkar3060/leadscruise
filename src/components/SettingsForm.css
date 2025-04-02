@@ -798,3 +798,14 @@ body {
 .update-api-btn:hover {
   background-color: #0056b3;
 }
+
+.api-key-text {
+  font-size: 1rem;
+  padding: 10px;
+  width: 100%;
+  /* background: #f8f9fa; Light gray background */
+  border-radius: 5px;
+  /* border: 1px solid #ccc; */
+  min-width: 250px;
+  display: inline-block;
+}

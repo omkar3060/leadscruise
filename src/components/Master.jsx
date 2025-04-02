@@ -32,6 +32,23 @@ const Master = () => {
     "six-mo": "Six Months",
     "year-mo": "One Year"
   };
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Add this function to your component
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Add this function to filter the subscriptions
+  // Updated filtering function with safety checks
+const filteredSubscriptions = subscriptions.filter((sub) => {
+  const searchLower = searchTerm.toLowerCase();
+  return (
+    (sub.unique_id?.toString() || '').toLowerCase().includes(searchLower) ||
+    (sub.email?.toString() || '').toLowerCase().includes(searchLower) ||
+    (sub.refId?.toString() || '').toLowerCase().includes(searchLower)
+  );
+});
 
   useEffect(() => {
     fetchSubscriptionMetrics();
@@ -45,7 +62,7 @@ const Master = () => {
       setSubscriptionMetrics(response.data);
     } catch (error) {
       console.error("Error fetching subscription metrics:", error);
-    } finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -58,7 +75,7 @@ const Master = () => {
       fetchUploadedInvoices(response.data);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
-    } finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -77,7 +94,7 @@ const Master = () => {
       "Order Amount (₹)": sub.order_amount / 100,
       "Subscription Start": new Date(sub.created_at).toLocaleDateString(),
       "Days Remaining": calculateRemainingDays(sub.created_at, sub.subscription_type),
-      "Reference ID": sub.refId || "N/A",
+      "Referral ID": sub.refId || "N/A",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
@@ -126,7 +143,7 @@ const Master = () => {
     } catch (error) {
       console.error("Error fetching uploaded invoices:", error);
     }
-    finally{
+    finally {
       setIsLoading(false);
     }
   };
@@ -194,9 +211,9 @@ const Master = () => {
     return remainingDays > 0 ? remainingDays : "Expired";
   };
 
-    // Loading Screen Component
-    const LoadingScreen = () => (
-      <div className="loading-overlay">
+  // Loading Screen Component
+  const LoadingScreen = () => (
+    <div className="loading-overlay">
       <div className="loading-container">
         <div className="spinner">
           <div className="double-bounce1"></div>
@@ -213,35 +230,35 @@ const Master = () => {
         <p className="loading-message">Please wait</p>
       </div>
     </div>
-    );
+  );
 
-    const handleViewTodaySubscriptions = () => {
-      navigate('/master/subscriptions-today');  
-    }
+  const handleViewTodaySubscriptions = () => {
+    navigate('/master/subscriptions-today');
+  }
 
-    const handleViewWeekSubscriptions = () => {
-      navigate('/master/subscriptions-week'); 
-    }
+  const handleViewWeekSubscriptions = () => {
+    navigate('/master/subscriptions-week');
+  }
 
-    const handleViewAllUsers = () => {
-      navigate('/master/users');
-    };
+  const handleViewAllUsers = () => {
+    navigate('/master/users');
+  };
 
-    const handleViewActiveUsers = () => {
-      navigate('/master/active-users');
-    };
+  const handleViewActiveUsers = () => {
+    navigate('/master/active-users');
+  };
 
-    const handleViewPendingBilling =() => {
-      navigate('/master/pending');
-    }
+  const handleViewPendingBilling = () => {
+    navigate('/master/pending');
+  }
 
-    const handleViewExpiringSoon = () => {
-      navigate('/master/expiring-soon');
-    }
+  const handleViewExpiringSoon = () => {
+    navigate('/master/expiring-soon');
+  }
 
-    const handleViewExpiredSubscriptions = () => {
-      navigate('/master/expired');
-    }
+  const handleViewExpiredSubscriptions = () => {
+    navigate('/master/expired');
+  }
 
   return (
     <div className={masterstyles.dashboardContainer}>
@@ -253,59 +270,59 @@ const Master = () => {
       <div className={masterstyles.dashboardContent}>
         {/* Metrics Section */}
         <div className={masterstyles.metricsSection}>
-        <div 
-            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+          <div
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`}
             onClick={handleViewTodaySubscriptions}
           >
-            {subscriptionMetrics.subscriptionsToday } 
+            {subscriptionMetrics.subscriptionsToday}
             <br />
             <p>Subscriptions Today</p>
           </div>
-          <div 
-            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+          <div
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`}
             onClick={handleViewWeekSubscriptions}
           >
-            {subscriptionMetrics.subscriptionsThisWeek} 
+            {subscriptionMetrics.subscriptionsThisWeek}
             <br />
             <p>Subscriptions This Week</p>
           </div>
-          <div 
-            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+          <div
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`}
             onClick={handleViewPendingBilling}
           >
-            {subscriptionMetrics.pendingBilling} 
+            {subscriptionMetrics.pendingBilling}
             <br />
             <p>Pending Billing</p>
           </div>
-          <div 
-            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+          <div
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`}
             onClick={handleViewExpiringSoon}
           >
-            {subscriptionMetrics.expiringWithinThreeDays} 
+            {subscriptionMetrics.expiringWithinThreeDays}
             <br />
             <p>Expiring Within 3 Days</p>
           </div>
-          <div 
-            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+          <div
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`}
             onClick={handleViewExpiredSubscriptions}
           >
-            {subscriptionMetrics.expiredSubscriptions} 
+            {subscriptionMetrics.expiredSubscriptions}
             <br />
             <p>Expired</p>
           </div>
-          <div 
-            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+          <div
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`}
             onClick={handleViewActiveUsers}
           >
-            {subscriptionMetrics.totalActiveUsers} 
+            {subscriptionMetrics.totalActiveUsers}
             <br />
             <p>Active Users</p>
           </div>
-          <div 
-            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`} 
+          <div
+            className={`${masterstyles.metricBox} ${masterstyles.clickableMetric}`}
             onClick={handleViewAllUsers}
           >
-            {subscriptionMetrics.totalUsers - 1} 
+            {subscriptionMetrics.totalUsers - 1}
             <br />
             <p>Total Users</p>
           </div>
@@ -321,6 +338,15 @@ const Master = () => {
               📥 Download as Excel
             </button>
           </div>
+          <div className={masterstyles.searchContainer}>
+            <input
+              type="text"
+              placeholder="Search by Order ID, Email, or Referral ID..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className={masterstyles.searchInput}
+            />
+          </div>
           <div className={masterstyles.tableWrapper}>
             <table className={masterstyles.leadsTable}>
               <thead>
@@ -333,7 +359,7 @@ const Master = () => {
                     { label: "Order Amount", key: "order_amount" },
                     { label: "Subscription Start", key: "created_at" },
                     { label: "Days Remaining", key: "days_remaining" },
-                    { label: "Reference Id", key: "refId" },
+                    { label: "Referral Id", key: "refId" },
                   ].map(({ label, key }) => (
                     <th key={key} onClick={() => handleSort(key)} style={{ cursor: "pointer" }}>
                       {label} {sortConfig.key === key ? (sortConfig.direction === "asc" ? "🔼" : "🔽") : ""}
@@ -343,9 +369,9 @@ const Master = () => {
                 </tr>
               </thead>
               <tbody>
-                {subscriptions.length > 0 ? (
-                  subscriptions.map((sub, index) => (
-                    
+                {filteredSubscriptions.length > 0 ? (
+                  filteredSubscriptions.map((sub, index) => (
+
                     <tr key={index}>
                       <td>{sub.email}</td>
                       <td>{sub.contact}</td>

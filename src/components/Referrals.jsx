@@ -322,7 +322,7 @@ const Referrals = () => {
                 </th>
                 <th>Referral ID</th>
                 <th onClick={() => handleSort("indiaMartPhoneNumber")}>
-                  IndiaMart Phone No. {getSortIndicator("indiaMartPhoneNumber")}
+                  Phone No. {getSortIndicator("indiaMartPhoneNumber")}
                 </th>
                 <th onClick={() => handleSort("referralDate")}>
                   Referral Date {getSortIndicator("referralDate")}
@@ -362,7 +362,7 @@ const Referrals = () => {
                     <input
                       type="tel"
                       name="indiaMartPhoneNumber"
-                      placeholder="IndiaMart Phone"
+                      placeholder="Phone No."
                       value={newReferral.indiaMartPhoneNumber}
                       onChange={handleReferralChange}
                     />
