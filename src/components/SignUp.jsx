@@ -44,13 +44,13 @@ const SignUp = () => {
       return;
     }
 
-    if(!mobileNumber){
+    if (!mobileNumber) {
       alert("Please enter a valid Mobile Number.");
       setIsLoading(false);
       return;
     }
-    
-    if(!refId){
+
+    if (!refId) {
       alert("Please enter a valid Referral ID.");
       setIsLoading(false);
       return;
@@ -58,7 +58,7 @@ const SignUp = () => {
 
     if (refId) {
       try {
-        await axios.get(`https://api.leadscruise.com/api/referrals/${refId}`);
+        await axios.get(`http://localhost:5000/api/referrals/${refId}`);
       } catch (error) {
         setIsLoading(false);
         alert(error.response?.data?.message + " -- " + "Invalid Referral ID.");
@@ -67,7 +67,7 @@ const SignUp = () => {
     }
 
     try {
-      const res = await axios.post("https://api.leadscruise.com/api/signup", {
+      const res = await axios.post("http://localhost:5000/api/signup", {
         refId,
         email,
         mobileNumber,
@@ -130,7 +130,7 @@ const SignUp = () => {
               src={logo} // Use the imported image
               alt="LeadsCruise Logo"
               onClick={() => navigate("/")} // Navigate to home when clicked
-              // Add styling if needed
+            // Add styling if needed
             />
             <div className="smart-scan" onClick={() => navigate("/")}>
               {/* <img
@@ -236,9 +236,16 @@ const SignUp = () => {
           <div className="pri-cont">
             <p className="priv-p">
               By creating this account, you agree to our{" "}
-              <span>Privacy Policy</span> & <span>Cookie Policy</span>.
+              <a href="https://leadscruise.com/#faq" className="priv-link">
+                Privacy Policy
+              </a>{" "}
+              &{" "}
+              <a href="https://leadscruise.com/#faq" className="priv-link">
+                Cookie Policy
+              </a>.
             </p>
           </div>
+
           {/* <div className="signup-link">
             Already have an account?{" "}
             <span onClick={() => navigate("/")}>Sign In</span>
@@ -248,9 +255,8 @@ const SignUp = () => {
           <div className="banner-container">
             {/* First Banner */}
             <div
-              className={`banner overlapBanner ${
-                selected === 0 ? "active" : ""
-              }`}
+              className={`banner overlapBanner ${selected === 0 ? "active" : ""
+                }`}
             >
               <div className="rightbanner">
                 <div

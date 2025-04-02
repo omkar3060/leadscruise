@@ -1,4 +1,5 @@
 const Referral = require("../models/Referral");
+const User = require("../models/userModel"); // Import the User model
 
 // Create a new referral
 exports.createReferral = async (req, res) => {
@@ -44,7 +45,6 @@ exports.createReferral = async (req, res) => {
 // Get all referrals
 exports.getAllReferrals = async (req, res) => {
   try {
-    // Optional query parameters for filtering
     const {
       active,
       page = 1,
@@ -74,10 +74,28 @@ exports.getAllReferrals = async (req, res) => {
     const referrals = await Referral.find(query)
       .sort(sortOptions)
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean(); // Convert documents to plain JavaScript objects
 
     // Count total referrals
     const totalReferrals = await Referral.countDocuments(query);
+
+    // Count users who used each referral ID
+    const userCounts = await User.aggregate([
+      { $match: { refId: { $ne: null } } }, // Filter users with non-null refId
+      { $group: { _id: "$refId", count: { $sum: 1 } } } // Count users per refId
+    ]);
+
+    // Convert userCounts array to an object { referralId: count }
+    const userCountMap = {};
+    userCounts.forEach((item) => {
+      userCountMap[item._id] = item.count;
+    });
+
+    // Attach user count to each referral
+    referrals.forEach((referral) => {
+      referral.userCount = userCountMap[referral.referralId] || 0;
+    });
 
     res.status(200).json({
       referrals,
@@ -92,6 +110,7 @@ exports.getAllReferrals = async (req, res) => {
     });
   }
 };
+
 
 // Get single referral by ID
 exports.getReferralById = async (req, res) => {

@@ -63,7 +63,7 @@ const Sheets = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/get-api-key/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-api-key/${userEmail}`);
         if (response.data.success) {
           setApiKey(response.data.user.apiKey || "Not Available");
           setNewApiKey(response.data.user.apiKey || "Not Available");
@@ -93,7 +93,7 @@ const Sheets = () => {
     if (!confirmUpdate) return;
 
     try {
-      const response = await axios.put("https://api.leadscruise.com/api/update-api-key", {
+      const response = await axios.put("http://localhost:5000/api/update-api-key", {
         email: userEmail,
         newApiKey,
       });

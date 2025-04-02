@@ -31,7 +31,7 @@ const Referrals = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          "https://api.leadscruise.com/api/referrals",
+          "http://localhost:5000/api/referrals",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -121,7 +121,7 @@ const Referrals = () => {
     console.log(newReferral);
     try {
       const response = await axios.post(
-        "https://api.leadscruise.com/api/referrals",
+        "http://localhost:5000/api/referrals",
         newReferral,
         {
           headers: {
@@ -172,7 +172,7 @@ const Referrals = () => {
     setLoading(true);
     try {
       const response = await axios.put(
-        `https://api.leadscruise.com/api/referrals/${editingReferral._id}`,
+        `http://localhost:5000/api/referrals/${editingReferral._id}`,
         newReferral,
         {
           headers: {
@@ -234,7 +234,7 @@ const Referrals = () => {
 
     setLoading(true);
     try {
-      await axios.delete(`https://api.leadscruise.com/api/referrals/${referralId}`, {
+      await axios.delete(`http://localhost:5000/api/referrals/${referralId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -333,6 +333,7 @@ const Referrals = () => {
                 <th onClick={() => handleSort("expiryDate")}>
                   Expiry Date {getSortIndicator("expiryDate")}
                 </th>
+                <th onClick={() => handleSort("userCount")}>Users Used {getSortIndicator("userCount")}</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -371,8 +372,8 @@ const Referrals = () => {
                     {isAddingReferral
                       ? new Date().toLocaleString()
                       : newReferral.referralDate
-                      ? new Date(newReferral.referralDate).toLocaleString()
-                      : "N/A"}
+                        ? new Date(newReferral.referralDate).toLocaleString()
+                        : "N/A"}
                   </td>
                   <td>
                     <input
@@ -384,6 +385,7 @@ const Referrals = () => {
                       onChange={handleReferralChange}
                     />
                   </td>
+                  <td>N/A</td>
                   <td>N/A</td>
                   <td>
                     <div className={styles.editActionButtons}>
@@ -430,7 +432,7 @@ const Referrals = () => {
                         ? new Date(referral.expiryDate).toLocaleString()
                         : "N/A"}
                     </td>
-
+                    <td>{referral.userCount || 0}</td> {/* ✅ Show Users Count */}
                     <td className={styles.actionIcons}>
                       <button
                         onClick={() => handleEditReferral(referral)}

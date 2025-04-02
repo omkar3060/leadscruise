@@ -6,7 +6,7 @@ const axios = require("axios");
 const crypto = require("crypto");
 const Payment = require("../models/Payment");
 const jwt = require("jsonwebtoken");
-require("dotenv").config(); 
+require("dotenv").config();
 const SECRET_KEY = process.env.SECRET_KEY;
 const {
   signup,
@@ -14,7 +14,7 @@ const {
   update,
   updateSavedPassword,
   checkemail,
-  getStatus,updatePassword,
+  getStatus, updatePassword,
   getAllUsers,
   updateSheetsId,
   checkScriptStatus,
@@ -28,8 +28,8 @@ const router = express.Router();
 const transporter = nodemailer.createTransport({
   service: "gmail", // or your preferred email service
   auth: {
-    user: "kulkarnishashank962@gmail.com", // your email
-    pass: "lhrurqqhljtumyqb", // your email password or app-specific password
+    user: "noreply.leadscruise@gmail.com", // your email
+    pass: "cqemjscmupacnsdp", // your email password or app-specific password
   },
 });
 
@@ -44,8 +44,8 @@ router.post("/check-email", checkemail);
 router.get("/get-status/:email", getStatus);
 router.post("/update-password", updatePassword);
 router.get("/users", getAllUsers);
-router.post("/update-sheets-id",updateSheetsId);
-router.post("/logout",logout);
+router.post("/update-sheets-id", updateSheetsId);
+router.post("/logout", logout);
 router.post('/force-logout', forceLogout);
 
 const SUBSCRIPTION_DURATIONS = {
@@ -63,7 +63,7 @@ cron.schedule(
     try {
       // Get users with valid API key & Sheets ID
       const eligibleUsers = await User.find(
-        { apiKey: { $ne: null }, sheetsId: { $ne: null } }, 
+        { apiKey: { $ne: null }, sheetsId: { $ne: null } },
         "email apiKey sheetsId"
       );
 
@@ -99,7 +99,7 @@ cron.schedule(
         try {
           console.log(`Updating Sheets ID for: ${user.email}`);
 
-          await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
+          await axios.post("http://localhost:5000/api/update-sheets-id", {
             email: user.email,
             apiKey: user.apiKey,
             sheetsId: user.sheetsId,
@@ -124,7 +124,7 @@ cron.schedule(
   }
 );
 router.post("/check-script-status", checkScriptStatus);
-router.post("/stop-api-script",stopScript);
+router.post("/stop-api-script", stopScript);
 
 router.get("/get-latest-id", async (req, res) => {
   try {
@@ -159,16 +159,21 @@ router.post("/send-reset-email", async (req, res) => {
 
     // Email template
     const mailOptions = {
-      from: "kulkarnishashank962@gmail.com", // your sender email
+      from: "noreply.leadscruise@gmail.com", // Your sender email
       to: email,
       subject: "Password Reset Request",
       html: `
-        <h2>Password Reset Request</h2>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetLink}">Reset Password</a>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-      `,
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+      <h2 style="color: #444;">Hello ${email},</h2>
+      <p>We received a request to reset the password for your account associated with this email. If you made this request, please click the button below to reset your password. This link is valid for <strong>1 hour</strong> and will expire after that time for security reasons.</p>
+      <p>
+        <a href="${resetLink}" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block; font-weight: bold;">Reset Password</a>
+      </p>
+      <p>If you did not request a password reset, you can ignore this email, and your account will remain secure. However, if you suspect any unauthorized activity, we recommend updating your password and enabling additional security measures.</p>
+      <p>For any assistance, feel free to contact our support team at <a href="mailto:support@leadscruise.com">support@leadscruise.com</a>.</p>
+      <p>Best regards,<br><strong>LEADSCRUISE TEAM</strong></p>
+    </div>
+  `,
     };
 
     // Send the email

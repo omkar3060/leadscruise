@@ -38,7 +38,7 @@ const EnterEmail = () => {
     setStatus("loading");
 
     try {
-      const response = await fetch("https://api.leadscruise.com/api/check-email", {
+      const response = await fetch("http://localhost:5000/api/check-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,7 +53,7 @@ const EnterEmail = () => {
       }
 
       const resetResponse = await fetch(
-        "https://api.leadscruise.com/api/send-reset-email",
+        "http://localhost:5000/api/send-reset-email",
         {
           method: "POST",
           headers: {
@@ -82,7 +82,7 @@ const EnterEmail = () => {
     const userEmail = localStorage.getItem("userEmail");
   
     try {
-      await axios.post("https://api.leadscruise.com/api/logout", {
+      await axios.post("http://localhost:5000/api/logout", {
         email: userEmail,
       });
   

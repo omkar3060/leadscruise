@@ -64,7 +64,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-subscription/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-subscription/${userEmail}`);
         const { renewal_date, status, unique_id } = response.data;
 
         if (!unique_id) {
@@ -160,7 +160,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     const userEmail = localStorage.getItem("userEmail");
   
     try {
-      await axios.post("https://api.leadscruise.com/api/logout", {
+      await axios.post("http://localhost:5000/api/logout", {
         email: userEmail,
       });
   
