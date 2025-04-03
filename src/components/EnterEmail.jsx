@@ -38,13 +38,16 @@ const EnterEmail = () => {
     setStatus("loading");
 
     try {
-      const response = await fetch("https://api.leadscruise.com/api/check-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
+      const response = await fetch(
+        "https://api.leadscruise.com/api/check-email",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
 
       const data = await response.json();
       if (!data.exists) {
@@ -53,7 +56,7 @@ const EnterEmail = () => {
       }
 
       const resetResponse = await fetch(
-        "https://api.leadscruise.com/api/send-reset-email",
+        "http://localhost:5000/api/send-reset-email",
         {
           method: "POST",
           headers: {
@@ -76,16 +79,16 @@ const EnterEmail = () => {
 
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
-    
+
     if (!isConfirmed) return; // Stop if user cancels
-  
+
     const userEmail = localStorage.getItem("userEmail");
-  
+
     try {
       await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
-  
+
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
@@ -95,7 +98,7 @@ const EnterEmail = () => {
       console.error("Logout failed:", error);
     }
   };
-  
+
   return (
     <div className="signin-container">
       <div className="center-div">
@@ -193,12 +196,12 @@ const EnterEmail = () => {
           {status === "idle" && (
             <div>
               <div className="signin-logo-class">
-              <img
-              src={logo} // Use the imported image
-              alt="LeadsCruise Logo"
-              onClick={() => navigate("/")} // Navigate to home when clicked
-            // Add styling if needed
-            />
+                <img
+                  src={logo} // Use the imported image
+                  alt="LeadsCruise Logo"
+                  onClick={() => navigate("/")} // Navigate to home when clicked
+                  // Add styling if needed
+                />
                 <div className="smart-scan" onClick={() => navigate("/")}>
                   {/* <img
                 src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
