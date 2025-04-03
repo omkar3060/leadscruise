@@ -72,9 +72,9 @@ const Dashboard = () => {
           const currentTime = new Date();
           const timeElapsed = Math.floor((currentTime - startTime) / 1000); // Time elapsed in seconds
 
-          if (timeElapsed < 300) {
+          if (timeElapsed < 30) {
             setIsDisabled(true);
-            setTimer(300 - timeElapsed);
+            setTimer(30 - timeElapsed);
           } else {
             setIsDisabled(false);
           }
@@ -257,109 +257,107 @@ const Dashboard = () => {
     }
   };
 
-  const handleStop = async () => {
-    // Get current timestamp and calculate if cooldown is still active
-    const cooldownUntil = parseInt(localStorage.getItem("stopCooldownUntil") || "0");
-    const currentTime = Date.now();
-    const remainingCooldown = Math.max(0, cooldownUntil - currentTime);
+const [cooldownActive, setCooldownActive] = useState(false);
+const [cooldownTime, setCooldownTime] = useState(0);
 
-    // Check if still in cooldown period
-    if (cooldownUntil > currentTime) {
-      const remainingMinutes = Math.ceil(remainingCooldown / (1000 * 60));
-      alert(`You cannot stop the AI until ${remainingMinutes} min are completed.`);
+// Add this useEffect to check the cooldown status when the component mounts
+useEffect(() => {
+  // Check if there's an active cooldown in localStorage
+  const cooldownEnd = localStorage.getItem("cooldownEnd");
+  
+  if (cooldownEnd) {
+    const endTime = parseInt(cooldownEnd);
+    const currentTime = new Date().getTime();
+    
+    if (currentTime < endTime) {
+      // Cooldown is still active
+      setCooldownActive(true);
+      
+      // Calculate remaining time in seconds
+      const remainingTime = Math.ceil((endTime - currentTime) / 1000);
+      setCooldownTime(remainingTime);
+      setIsDisabled(true);
+      
+      // Set up interval to update the cooldown timer
+      const interval = setInterval(() => {
+        const newCurrentTime = new Date().getTime();
+        const newRemainingTime = Math.ceil((endTime - newCurrentTime) / 1000);
+        
+        if (newRemainingTime <= 0) {
+          // Cooldown finished
+          clearInterval(interval);
+          setCooldownActive(false);
+          setCooldownTime(0);
+          setIsDisabled(false);
+          localStorage.removeItem("cooldownEnd");
+        } else {
+          setCooldownTime(newRemainingTime);
+        }
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    } else {
+      // Cooldown has expired
+      localStorage.removeItem("cooldownEnd");
+    }
+  }
+}, []);
+
+// Modify your handleStop function
+const handleStop = async () => {
+  if (window.confirm("Are you sure you want to stop the AI?")) {
+    setIsLoading(true); // Show loading when stopping
+
+    const userEmail = localStorage.getItem("userEmail");
+    const uniqueId = localStorage.getItem("unique_id");
+
+    if (!userEmail || !uniqueId) {
+      alert("User email or mobile number is missing!");
+      setIsLoading(false);
       return;
     }
 
-    if (window.confirm("Are you sure you want to stop the AI?")) {
-      setIsLoading(true); // Show loading when stopping
+    try {
+      const response = await axios.post("http://localhost:5000/api/stop", { userEmail, uniqueId });
+      alert(response.data.message);
 
-      const userEmail = localStorage.getItem("userEmail");
-      const uniqueId = localStorage.getItem("unique_id");
-
-      if (!userEmail || !uniqueId) {
-        alert("User email or mobile number is missing!");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
-
-        alert(response.data.message);
-
-        // Update the status in localStorage
-        localStorage.setItem("status", "Stopped");
-        setStatus("Stopped");
-
-        // For permanent disable after successful stop, set a far-future timestamp
-        // or use a specific flag in localStorage
-        localStorage.setItem("aiPermanentlyStopped", "true");
-
-        // Update component state
-        setIsDisabled(true);
-        setTimer(0);
-
-      } catch (error) {
-        alert(error.response?.data?.message || "Failed to stop the AI.");
-        console.error("Error stopping script:", error);
-
-        // Set a 1-minute cooldown timer in localStorage using timestamp
-        const oneMinuteFromNow = Date.now() + (60 * 1000);
-        localStorage.setItem("stopCooldownUntil", oneMinuteFromNow.toString());
-
-        // Update UI state
-        setIsDisabled(true);
-        setTimer(60);
-
-        // Start countdown for the current session
-        startTimerCountdown();
-
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  // Separate function to handle the countdown
-  const startTimerCountdown = () => {
-    const intervalId = setInterval(() => {
-      const cooldownUntil = parseInt(localStorage.getItem("stopCooldownUntil") || "0");
-      const currentTime = Date.now();
-      const remainingSeconds = Math.max(0, Math.ceil((cooldownUntil - currentTime) / 1000));
-
-      setTimer(remainingSeconds);
-
-      if (remainingSeconds <= 0) {
-        clearInterval(intervalId);
-        setIsDisabled(false);
-        localStorage.removeItem("stopCooldownUntil");
-      }
-    }, 1000);
-
-    // Clean up interval on component unmount
-    return intervalId;
-  };
-
-  // Add this useEffect at component level to check status on mount/navigation
-  useEffect(() => {
-    // Check if AI was permanently stopped
-    if (localStorage.getItem("aiPermanentlyStopped") === "true") {
-      setIsDisabled(true);
+      // Update the status in localStorage
+      localStorage.setItem("status", "Stopped");
       setStatus("Stopped");
-      return;
-    }
 
-    // Check if in cooldown period
-    const cooldownUntil = parseInt(localStorage.getItem("stopCooldownUntil") || "0");
-    const currentTime = Date.now();
-
-    if (cooldownUntil > currentTime) {
+      // Set cooldown for 1 minute (60 seconds)
+      const cooldownDuration = 60 * 1000; // 1 minute in milliseconds
+      const cooldownEnd = new Date().getTime() + cooldownDuration;
+      
+      // Store the cooldown end time in localStorage
+      localStorage.setItem("cooldownEnd", cooldownEnd.toString());
+      
+      // Update component state
+      setCooldownActive(true);
+      setCooldownTime(60);
       setIsDisabled(true);
-      setTimer(Math.ceil((cooldownUntil - currentTime) / 1000));
-      const intervalId = startTimerCountdown();
-      return () => clearInterval(intervalId);
+      
+      // Set up interval to update the cooldown timer
+      const interval = setInterval(() => {
+        setCooldownTime(prevTime => {
+          if (prevTime <= 1) {
+            clearInterval(interval);
+            setCooldownActive(false);
+            setIsDisabled(false);
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to stop the AI.");
+      console.error("Error stopping script:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }
+};
 
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc"); // "asc" | "desc"
@@ -405,6 +403,8 @@ const Dashboard = () => {
           isDisabled={isDisabled}
           timer={timer}
           isStarting={isStarting}
+          cooldownActive={cooldownActive}
+          cooldownTime={cooldownTime}
         />
 
         {/* Metrics Section */}

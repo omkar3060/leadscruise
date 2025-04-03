@@ -4,7 +4,7 @@ import styles from "./Header.module.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaCheck, FaUser, FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaCog, FaWhatsapp, FaFileExcel, FaSignOutAlt, FaArrowLeft, FaSave, FaUndo, FaHeadset } from "react-icons/fa";
 
-const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSubmit, handleRevert, timer, isStarting }) => {
+const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSubmit, handleRevert, timer, isStarting, cooldownActive, cooldownTime }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -154,16 +154,16 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
 
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
-    
+
     if (!isConfirmed) return; // Stop if user cancels
-  
+
     const userEmail = localStorage.getItem("userEmail");
-  
+
     try {
       await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
-  
+
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
@@ -172,7 +172,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  };  
+  };
 
   return (
     <div className={styles.dashboardHeader}>
@@ -218,14 +218,22 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 <FaUndo className={styles.iconOnly} /> <span className={styles.buttonText}>Revert All</span>
               </button>
             </>
-          ) : location.pathname !== "/profile" && location.pathname !== "/sheets" ? ( // Hide buttons on profile page
+          ) : location.pathname !== "/profile" && location.pathname !== "/sheets" ? (
             <>
-              <div className={status === "Running" || isStarting ? styles.tooltip : ""}
-                data-tooltip={status === "Running" ? "You have already started the AI" : "Starting the AI..."}>
+              <div
+                className={status === "Running" || isStarting || cooldownActive ? styles.tooltip : ""}
+                data-tooltip={
+                  cooldownActive
+                    ? `Buttons disabled for ${cooldownTime} seconds`
+                    : status === "Running"
+                      ? "You have already started the AI"
+                      : "Starting the AI..."
+                }
+              >
                 <button
-                  className={`${styles.startButton} ${status === "Running" || isStarting ? styles.disabledButton : ""}`}
+                  className={`${styles.startButton} ${status === "Running" || isStarting || cooldownActive ? styles.disabledButton : ""}`}
                   onClick={handleStartScript}
-                  disabled={status === "Running" || isStarting}
+                  disabled={status === "Running" || isStarting || cooldownActive}
                 >
                   {isStarting && status !== "Running" ? (
                     <>
@@ -246,12 +254,18 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 </button>
               </div>
 
-              <div className={isDisabled ? styles.tooltip : ""}
-                data-tooltip={`You have to wait ${timer} seconds to stop the AI`}>
+              <div
+                className={isDisabled || cooldownActive ? styles.tooltip : ""}
+                data-tooltip={
+                  cooldownActive
+                    ? `Buttons disabled for ${cooldownTime} seconds`
+                    : `You have to wait ${timer} seconds to stop the AI`
+                }
+              >
                 <button
-                  className={`${styles.stopButton} ${isDisabled ? styles.disabledButton : ""}`}
+                  className={`${styles.stopButton} ${isDisabled || cooldownActive ? styles.disabledButton : ""}`}
                   onClick={handleStop}
-                  disabled={isDisabled || (!status === "Running" && !isStarting)}
+                  disabled={isDisabled || cooldownActive || (!status === "Running" && !isStarting)}
                 >
                   <FaStop className={styles.iconOnly} />
                   <span className={styles.buttonText}>Stop</span>

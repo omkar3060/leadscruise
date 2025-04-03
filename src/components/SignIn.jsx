@@ -90,7 +90,7 @@ const SignIn = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    let email="";
+    let email = "";
     try {
       setIsLoading(true);
       const result = await signInWithPopup(auth, provider);
@@ -172,7 +172,7 @@ const SignIn = () => {
         if (confirmLogout) {
           try {
             // Request to force logout from other devices
-            console.log("email",email);
+            console.log("email", email);
             await axios.post("https://api.leadscruise.com/api/force-logout", { email });
 
             // Retry Google login
@@ -190,7 +190,7 @@ const SignIn = () => {
   };
 
   const handleGitHubSignIn = async () => {
-    let email="";
+    let email = "";
     try {
       setIsLoading(true);
       const result = await signInWithPopup(auth, githubProvider);
@@ -271,7 +271,7 @@ const SignIn = () => {
         if (confirmLogout) {
           try {
             // Request to force logout from other devices
-            console.log("email",email);
+            console.log("email", email);
             await axios.post("https://api.leadscruise.com/api/force-logout", { email });
 
             // Retry Google login
@@ -280,7 +280,7 @@ const SignIn = () => {
             alert("Failed to log out from other devices. Please try again.");
           }
         }
-      } 
+      }
       else {
         alert(error.response?.data?.message || "GitHub sign-in failed. Please try again.");
       }
@@ -586,9 +586,16 @@ const SignIn = () => {
           <div className="pri-cont">
             <p className="priv-p">
               By creating this account, you agree to our{" "}
-              <span>Privacy Policy</span> & <span>Cookie Policy</span>.
+              <a href="https://leadscruise.com/#faq" className="priv-link">
+                Privacy Policy
+              </a>{" "}
+              &{" "}
+              <a href="https://leadscruise.com/#faq" className="priv-link">
+                Cookie Policy
+              </a>.
             </p>
           </div>
+
           {/* <p className="signup-link">
             Don't have a Zoho account?
             <span onClick={() => navigate("/signup")}>Sign up now</span>

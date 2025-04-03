@@ -183,6 +183,17 @@
   text-decoration: underline;
 }
 
+.priv-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.priv-link:hover {
+  text-decoration: underline;
+}
+
 .input-group {
   position: relative;
 }

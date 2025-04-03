@@ -333,6 +333,7 @@ const Referrals = () => {
                 <th onClick={() => handleSort("expiryDate")}>
                   Expiry Date {getSortIndicator("expiryDate")}
                 </th>
+                <th onClick={() => handleSort("userCount")}>Users Used {getSortIndicator("userCount")}</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -371,8 +372,8 @@ const Referrals = () => {
                     {isAddingReferral
                       ? new Date().toLocaleString()
                       : newReferral.referralDate
-                      ? new Date(newReferral.referralDate).toLocaleString()
-                      : "N/A"}
+                        ? new Date(newReferral.referralDate).toLocaleString()
+                        : "N/A"}
                   </td>
                   <td>
                     <input
@@ -384,6 +385,7 @@ const Referrals = () => {
                       onChange={handleReferralChange}
                     />
                   </td>
+                  <td>N/A</td>
                   <td>N/A</td>
                   <td>
                     <div className={styles.editActionButtons}>
@@ -430,7 +432,7 @@ const Referrals = () => {
                         ? new Date(referral.expiryDate).toLocaleString()
                         : "N/A"}
                     </td>
-
+                    <td>{referral.userCount || 0}</td> {/* ✅ Show Users Count */}
                     <td className={styles.actionIcons}>
                       <button
                         onClick={() => handleEditReferral(referral)}
