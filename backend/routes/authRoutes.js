@@ -14,12 +14,8 @@ const {
   update,
   updateSavedPassword,
   checkemail,
-<<<<<<< HEAD
   getStatus,
   updatePassword,
-=======
-  getStatus, updatePassword,
->>>>>>> e57d30ce45a9451cd60e4986d2f8bdd4733409b0
   getAllUsers,
   updateSheetsId,
   checkScriptStatus,
@@ -51,11 +47,7 @@ router.post("/update-password", updatePassword);
 router.get("/users", getAllUsers);
 router.post("/update-sheets-id", updateSheetsId);
 router.post("/logout", logout);
-<<<<<<< HEAD
 router.post("/force-logout", forceLogout);
-=======
-router.post('/force-logout', forceLogout);
->>>>>>> e57d30ce45a9451cd60e4986d2f8bdd4733409b0
 
 const SUBSCRIPTION_DURATIONS = {
   "one-mo": 30,
@@ -193,11 +185,8 @@ router.post("/send-reset-email", async (req, res) => {
       <p>If you did not request a password reset, you can ignore this email, and your account will remain secure. However, if you suspect any unauthorized activity, we recommend updating your password and enabling additional security measures.</p>
       <p>For any assistance, feel free to contact our support team at <a href="mailto:support@leadscruise.com">support@leadscruise.com</a>.</p>
       <p>Best regards,<br><strong>LEADSCRUISE TEAM</strong></p>
-<<<<<<< HEAD
       <hr>
       <p style="font-size: 12px; color: #888;">This is an automated message. <strong>Please do not reply</strong> to this email. If you need support, contact us at <a href="mailto:support@leadscruise.com">support@leadscruise.com</a>.</p>
-=======
->>>>>>> e57d30ce45a9451cd60e4986d2f8bdd4733409b0
     </div>
   `,
     };
