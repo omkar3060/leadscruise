@@ -14,7 +14,12 @@ const {
   update,
   updateSavedPassword,
   checkemail,
+<<<<<<< HEAD
+  getStatus,
+  updatePassword,
+=======
   getStatus, updatePassword,
+>>>>>>> e57d30ce45a9451cd60e4986d2f8bdd4733409b0
   getAllUsers,
   updateSheetsId,
   checkScriptStatus,
@@ -46,7 +51,11 @@ router.post("/update-password", updatePassword);
 router.get("/users", getAllUsers);
 router.post("/update-sheets-id", updateSheetsId);
 router.post("/logout", logout);
+<<<<<<< HEAD
+router.post("/force-logout", forceLogout);
+=======
 router.post('/force-logout', forceLogout);
+>>>>>>> e57d30ce45a9451cd60e4986d2f8bdd4733409b0
 
 const SUBSCRIPTION_DURATIONS = {
   "one-mo": 30,
@@ -67,13 +76,17 @@ cron.schedule(
         "email apiKey sheetsId"
       );
 
-      console.log(`Found ${eligibleUsers.length} users with valid API and Sheets ID.`);
+      console.log(
+        `Found ${eligibleUsers.length} users with valid API and Sheets ID.`
+      );
 
       let processedCount = 0;
 
       for (const user of eligibleUsers) {
         // Get latest payment record for the user
-        const lastPayment = await Payment.findOne({ email: user.email }).sort({ created_at: -1 });
+        const lastPayment = await Payment.findOne({ email: user.email }).sort({
+          created_at: -1,
+        });
 
         if (!lastPayment) {
           console.log(`Skipping ${user.email}: No payment record found.`);
@@ -81,7 +94,8 @@ cron.schedule(
         }
 
         // Calculate expiration date
-        const subscriptionDays = SUBSCRIPTION_DURATIONS[lastPayment.subscription_type];
+        const subscriptionDays =
+          SUBSCRIPTION_DURATIONS[lastPayment.subscription_type];
         if (!subscriptionDays) {
           console.log(`Skipping ${user.email}: Unknown subscription type.`);
           continue;
@@ -92,7 +106,11 @@ cron.schedule(
 
         // Check if the subscription is still active
         if (new Date() > expirationDate) {
-          console.log(`Skipping ${user.email}: Subscription expired on ${expirationDate.toDateString()}.`);
+          console.log(
+            `Skipping ${
+              user.email
+            }: Subscription expired on ${expirationDate.toDateString()}.`
+          );
           continue;
         }
 
@@ -109,7 +127,10 @@ cron.schedule(
           console.log(`Successfully updated Sheets ID for ${user.email}`);
           processedCount++;
         } catch (error) {
-          console.error(`Error updating Sheets ID for ${user.email}:`, error.message);
+          console.error(
+            `Error updating Sheets ID for ${user.email}:`,
+            error.message
+          );
         }
       }
 
@@ -172,6 +193,11 @@ router.post("/send-reset-email", async (req, res) => {
       <p>If you did not request a password reset, you can ignore this email, and your account will remain secure. However, if you suspect any unauthorized activity, we recommend updating your password and enabling additional security measures.</p>
       <p>For any assistance, feel free to contact our support team at <a href="mailto:support@leadscruise.com">support@leadscruise.com</a>.</p>
       <p>Best regards,<br><strong>LEADSCRUISE TEAM</strong></p>
+<<<<<<< HEAD
+      <hr>
+      <p style="font-size: 12px; color: #888;">This is an automated message. <strong>Please do not reply</strong> to this email. If you need support, contact us at <a href="mailto:support@leadscruise.com">support@leadscruise.com</a>.</p>
+=======
+>>>>>>> e57d30ce45a9451cd60e4986d2f8bdd4733409b0
     </div>
   `,
     };
@@ -191,7 +217,9 @@ router.get("/get-api-key/:email", async (req, res) => {
     const user = await User.findOne({ email: req.params.email });
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     res.json({ success: true, user });
@@ -205,10 +233,16 @@ router.put("/update-api-key", async (req, res) => {
   const { email, newApiKey } = req.body;
 
   try {
-    const user = await User.findOneAndUpdate({ email }, { apiKey: newApiKey }, { new: true });
+    const user = await User.findOneAndUpdate(
+      { email },
+      { apiKey: newApiKey },
+      { new: true }
+    );
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.json({ success: true, message: "API Key updated successfully!" });
@@ -226,32 +260,42 @@ router.get("/verify-session", async (req, res) => {
     console.log("🔹 Received Token:", token);
     console.log("🔹 Received Session ID:", sessionId);
 
-
     if (!token || !sessionId) {
-      return res.status(401).json({ activeSession: false, message: "Token or Session ID missing" });
+      return res
+        .status(401)
+        .json({ activeSession: false, message: "Token or Session ID missing" });
     }
 
     // Verify JWT token
     const decoded = jwt.verify(token, SECRET_KEY);
     if (!decoded) {
-      return res.status(401).json({ activeSession: false, message: "Invalid token" });
+      return res
+        .status(401)
+        .json({ activeSession: false, message: "Invalid token" });
     }
 
     // Find the user in the database
     const user = await User.findOne({ email: decoded.email });
     if (!user) {
-      return res.status(401).json({ activeSession: false, message: "User not found" });
+      return res
+        .status(401)
+        .json({ activeSession: false, message: "User not found" });
     }
 
     // Check if the sessionId matches
     if (user.sessionId !== sessionId) {
-      return res.status(401).json({ activeSession: false, message: "Session expired or logged in from another device" });
+      return res.status(401).json({
+        activeSession: false,
+        message: "Session expired or logged in from another device",
+      });
     }
 
     res.status(200).json({ activeSession: true, message: "Session is active" });
   } catch (error) {
     console.error("Session verification error:", error.message);
-    return res.status(401).json({ activeSession: false, message: "Session verification failed" });
+    return res
+      .status(401)
+      .json({ activeSession: false, message: "Session verification failed" });
   }
 });
 
