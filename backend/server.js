@@ -590,7 +590,7 @@ app.post("/api/stop", async (req, res) => {
   const currentTime = new Date();
   const elapsedTime = Math.floor((currentTime - startTime) / 1000); // in seconds
 
-  if (elapsedTime < 30) {
+  if (elapsedTime < 300) {
     return res.status(403).json({
       status: "error",
       message: `Please wait at least ${Math.ceil(

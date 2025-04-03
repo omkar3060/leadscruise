@@ -72,9 +72,9 @@ const Dashboard = () => {
           const currentTime = new Date();
           const timeElapsed = Math.floor((currentTime - startTime) / 1000); // Time elapsed in seconds
 
-          if (timeElapsed < 30) {
+          if (timeElapsed < 300) {
             setIsDisabled(true);
-            setTimer(30 - timeElapsed);
+            setTimer(300 - timeElapsed);
           } else {
             setIsDisabled(false);
           }
@@ -318,7 +318,7 @@ const handleStop = async () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/stop", { userEmail, uniqueId });
+      const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
       alert(response.data.message);
 
       // Update the status in localStorage
