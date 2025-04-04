@@ -167,7 +167,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
-          ? "https://leadscruise.com"
+          ? "https://app.leadscruise.com/"
           : "http://localhost:3000";
     } catch (error) {
       console.error("Logout failed:", error);

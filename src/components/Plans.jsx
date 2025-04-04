@@ -180,7 +180,7 @@ const Plans = () => {
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
-          ? "https://leadscruise.com"
+          ? "https://app.leadscruise.com/"
           : "http://localhost:3000";
     } catch (error) {
       console.error("Logout failed:", error);
@@ -308,9 +308,9 @@ const Plans = () => {
                   Let our AI do all the work even while you sleep. With
                   leadscruise all the software tasks are now automated with AI
                 </div>
-                <Link className="banner1_href" to="/notfound">
+                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                   Learn more
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -334,9 +334,9 @@ const Plans = () => {
                 Get to customers within the blink of opponent's eyes,
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
-              <Link className="banner1_href" to="/notfound">
-                Learn more
-              </Link>
+              <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
+                  Learn more
+                </a>
             </div>
 
             <div
@@ -354,9 +354,9 @@ const Plans = () => {
                   With leadscruise all the tasks are now automated so that you
                   no more need to do them manually
                 </div>
-                <Link className="banner1_href" to="/notfound">
+                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                   Learn more
-                </Link>
+                </a>
               </div>
             </div>
 

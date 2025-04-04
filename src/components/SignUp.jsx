@@ -127,10 +127,10 @@ const SignUp = () => {
         <div className="signin-left">
           <div className="signin-logo-class">
             <img
-              src={logo} // Use the imported image
+              src={logo}
               alt="LeadsCruise Logo"
-              onClick={() => navigate("/")} // Navigate to home when clicked
-            // Add styling if needed
+              onClick={() => window.location.href = "https://leadscruise.com"} // Navigate to external URL
+              style={{ cursor: "pointer" }} // Optional: Change cursor on hover
             />
             <div className="smart-scan" onClick={() => navigate("/")}>
               {/* <img
@@ -272,9 +272,10 @@ const SignUp = () => {
                   Let our AI do all the work even while you sleep. With
                   leadscruise all the software tasks are now automated with AI
                 </div>
-                <Link className="banner1_href" to="/notfound">
+                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                   Learn more
-                </Link>
+                </a>
+
               </div>
             </div>
 
@@ -298,9 +299,9 @@ const SignUp = () => {
                 Get to customers within the blink of opponent's eyes,
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
-              <Link className="banner1_href" to="/notfound">
+              <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                 Learn more
-              </Link>
+              </a>
             </div>
 
             <div
@@ -318,9 +319,9 @@ const SignUp = () => {
                   With leadscruise all the tasks are now automated so that you
                   no more need to do them manually
                 </div>
-                <Link className="banner1_href" to="/notfound">
+                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                   Learn more
-                </Link>
+                </a>
               </div>
             </div>
 

@@ -52,7 +52,7 @@ const CheckNumber = () => {
   
       localStorage.clear();
       if (window.location.hostname === "app.leadscruise.com") {
-        window.location.href = "https://leadscruise.com"; // Replace with actual landing page URL
+        window.location.href = "https://app.leadscruise.com/"; // Replace with actual landing page URL
       } else {
         window.location.href = "http://localhost:3000"; // Local development
       }
@@ -205,9 +205,9 @@ const CheckNumber = () => {
                   Let our AI do all the work even while you sleep. With
                   leadscruise all the software tasks are now automated with AI
                 </div>
-                <Link className="banner1_href" to="/notfound">
+                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                   Learn more
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -231,9 +231,9 @@ const CheckNumber = () => {
                 Get to customers within the blink of opponent's eyes,
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
-              <Link className="banner1_href" to="/notfound">
-                Learn more
-              </Link>
+              <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
+                  Learn more
+                </a>
             </div>
 
             <div
@@ -251,9 +251,9 @@ const CheckNumber = () => {
                   With leadscruise all the tasks are now automated so that you
                   no more need to do them manually
                 </div>
-                <Link className="banner1_href" to="/notfound">
+                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                   Learn more
-                </Link>
+                </a>
               </div>
             </div>
 

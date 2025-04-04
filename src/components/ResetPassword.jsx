@@ -114,7 +114,7 @@ const ResetPassword = () => {
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
-          ? "https://leadscruise.com"
+          ? "https://app.leadscruise.com/"
           : "http://localhost:3000";
     } catch (error) {
       console.error("Logout failed:", error);
@@ -290,12 +290,7 @@ const ResetPassword = () => {
                   Let our AI do all the work even while you sleep. With
                   leadscruise all the software tasks are now automated with AI
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                   Learn more
                 </a>
               </div>
@@ -321,14 +316,9 @@ const ResetPassword = () => {
                 Get to customers within the blink of opponent's eyes,
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
-              <a
-                className="banner2_href"
-                href="https://zoho.to/za_signin_oa_rp"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Learn more
-              </a>
+              <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
+                  Learn more
+                </a>
             </div>
 
             <div
@@ -346,12 +336,7 @@ const ResetPassword = () => {
                   With leadscruise all the tasks are now automated so that you
                   no more need to do them manually
                 </div>
-                <a
-                  className="banner1_href"
-                  href="https://zoho.to/za_signin_oa_rp"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
                   Learn more
                 </a>
               </div>
