@@ -88,12 +88,23 @@
 .pluscont {
   position: relative;
 }
+
 .tableContainer {
   overflow-x: auto;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   height: calc(100% - 200px);
+}
+
+.tableContainer1 {
+  overflow-x: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  height: calc(100% - 200px);
+  max-height: 380px;
+  overflow-y: scroll;
 }
 
 .plusbtn {

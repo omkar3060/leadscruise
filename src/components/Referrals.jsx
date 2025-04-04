@@ -313,7 +313,7 @@ const Referrals = () => {
       </div>
 
       <div className={styles.pluscont}>
-        <div className={styles.tableContainer}>
+        <div className={styles.tableContainer1}>
           <table className={styles.usersTable}>
             <thead>
               <tr>
