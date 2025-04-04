@@ -56,7 +56,7 @@ const EnterEmail = () => {
       }
 
       const resetResponse = await fetch(
-        "http://localhost:5000/api/send-reset-email",
+        "https://api.leadscruise.com/api/send-reset-email",
         {
           method: "POST",
           headers: {
