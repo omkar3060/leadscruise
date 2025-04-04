@@ -13,6 +13,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  height:98px;
 }
 
 .header h1 {
@@ -103,7 +104,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   height: calc(100% - 200px);
-  max-height: 380px;
+  max-height: 420px;
   overflow-y: scroll;
 }
 
@@ -451,4 +452,23 @@
   .metricsSection {
     grid-template-columns: 1fr;
   }
+}
+
+.refbtn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  box-sizing: border-box;
+  width: fit-content;
+}
+
+.refbtn button {
+  margin: 0;
+  margin-top: auto;
+  background-color: #46bc77;
+}
+
+.refbtn button:hover {
+  background-color:#24a259;
 }

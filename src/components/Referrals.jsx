@@ -287,7 +287,12 @@ const Referrals = () => {
       )}
       <Sidebar isDisabled={isDisabled} />
       <div className={styles.header}>
-        <h1>Referrals Management</h1>
+      <div className={styles.refbtn}>
+          <h1>Referrals Management</h1>
+          <button onClick={handlePlusClick} disabled={isAddingReferral}>
+            Add New Referral ID
+          </button>
+</div>
         <div className={styles.headerButtons}>
           <button
             className={styles.downloadButton}
@@ -461,14 +466,6 @@ const Referrals = () => {
             </tbody>
           </table>
         </div>
-
-        <button
-          className={styles.plusbtn}
-          onClick={handlePlusClick}
-          disabled={isAddingReferral}
-        >
-          +
-        </button>
       </div>
     </div>
   );
