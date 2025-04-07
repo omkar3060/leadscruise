@@ -34,7 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ["https://app.leadscruise.com", "http://localhost:3000","http://localhost:3001"],
+    origin: ["https://app.leadscruise.com", "http://localhost:3000", "http://localhost:3001"],
     credentials: true,
   })
 );
@@ -407,10 +407,91 @@ async function resetLeadCounters() {
 
 resetLeadCounters();
 
-// Schedule cron job to run every day at 7 AM
-cron.schedule("0 7 * * *", resetLeadCounters);
+// Schedule cron job to run every day at 5 AM
+cron.schedule("0 5 * * *", resetLeadCounters);
 
 const activePythonProcesses = new Map(); // Store active processes by user_mobile_number
+
+const SUBSCRIPTION_DURATIONS = {
+  "one-mo": 30,
+  "three-mo": 60,
+  "six-mo": 180,
+  "year-mo": 365,
+};
+
+cron.schedule("0 6 * * *", async () => {
+  console.log("Running scheduled task at 6:00 AM...");
+
+  try {
+    const usersToStart = await User.find({
+      autoStartEnabled: true, // Add this flag per user to control auto-start
+    });
+
+    for (const user of usersToStart) {
+      const settings = await Settings.findOne({ userEmail: user.email });
+
+      if (
+        !settings ||
+        (!settings.sentences?.length && !settings.wordArray?.length && !settings.h2WordArray?.length)
+      ) {
+        console.log(`Skipping ${user.email}: No valid settings found.`);
+        continue;
+      }
+
+      if (!user.mobileNumber || !user.savedPassword) {
+        console.log(`Skipping ${user.email}: Missing credentials.`);
+        continue;
+      }
+
+      // 3. Get the latest payment (based on created_at)
+      const latestPayment = await Payment.findOne({ email: user.email })
+        .sort({ created_at: -1 });
+
+      if (!latestPayment || !latestPayment.unique_id) {
+        console.log(`⚠️ Skipping ${user.email}: No valid unique_id found in payments.`);
+        continue;
+      }
+
+      const latestUniqueId = latestPayment.unique_id;
+
+      const subscriptionDays =
+        SUBSCRIPTION_DURATIONS[latestPayment.subscription_type];
+      if (!subscriptionDays) {
+        console.log(`Skipping ${user.email}: Unknown subscription type.`);
+        continue;
+      }
+
+      const expirationDate = new Date(latestPayment.created_at);
+      expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+
+      // Check if the subscription is still active
+      if (new Date() > expirationDate) {
+        console.log(
+          `Skipping ${user.email
+          }: Subscription expired on ${expirationDate.toDateString()}.`
+        );
+        continue;
+      }
+
+      try {
+        await axios.post("https://api.leadscruise.com/api/cycle", {
+          sentences: settings.sentences,
+          wordArray: settings.wordArray,
+          h2WordArray: settings.h2WordArray,
+          mobileNumber: user.mobileNumber,
+          password: user.savedPassword,
+          userEmail: user.email,
+          uniqueId: latestUniqueId,
+        });
+        console.log(`Started script for ${user.email}`);
+      } catch (error) {
+        console.error(`Failed to start script for ${user.email}:`, error.message);
+      }
+    }
+  } catch (err) {
+    console.error("Cron job error:", err.message);
+  }
+});
 
 app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
@@ -476,7 +557,7 @@ app.post("/api/cycle", async (req, res) => {
     console.log("Lead limit reached. Cannot capture more leads today.");
     await User.findOneAndUpdate(
       { email: userEmail },
-      { status: "Stopped", startTime: null },
+      { autoStartEnabled: true },
       { new: true }
     );
     return res.status(403).json({
@@ -554,7 +635,7 @@ app.post("/api/cycle", async (req, res) => {
     // Reset user status and remove startTime when the script stops
     await User.findOneAndUpdate(
       { email: userEmail },
-      { status: "Stopped", startTime: null },
+      { status: "Stopped", startTime: null, autoStartEnabled: false },
       { new: true }
     );
 
@@ -610,7 +691,7 @@ app.post("/api/stop", async (req, res) => {
   // Reset user status and startTime in DB
   await User.findOneAndUpdate(
     { email: userEmail },
-    { status: "Stopped", startTime: null },
+    { status: "Stopped", startTime: null, autoStartEnabled: false },
     { new: true }
   );
 

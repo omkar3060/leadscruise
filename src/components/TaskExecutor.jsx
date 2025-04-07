@@ -7,20 +7,20 @@ import { useNavigate, Link } from "react-router-dom";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
-
+import { Eye, EyeOff } from "lucide-react";
 import "./styles.css";
 import "./TaskExecutor.css";
 import "./Plans.css";
 
 const TaskExecutor = () => {
-  const mobileNumber = localStorage.getItem("mobileNumber");
+  const [mobileNumber, setMobileNumber]=useState(localStorage.getItem("mobileNumber") || "");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("idle"); // 'idle', 'loading', 'success', or 'error'
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const [showBanner, setShowBanner] = useState(true);
   const [selected, setSelected] = useState(0);
-
+  const [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
     const interval = setInterval(() => {
       setSelected((prev) => (prev + 1) % 2);
@@ -39,6 +39,31 @@ const TaskExecutor = () => {
 
     setStatus("loading");
     setMessage("");
+
+    try {
+      // First check if the mobile number is already used by another user
+      const checkResponse = await axios.post("https://api.leadscruise.com/api/check-mobile", {
+        mobileNumber,
+        email,
+      });
+  
+      // If 409 status, someone else is using it
+      if (checkResponse.status === 409) {
+        setStatus("idle");
+        alert("This mobile number is already used by another account.");
+        return;
+      }
+    }
+    catch (error) {
+      if (error.response?.status === 409) {
+        setStatus("idle");
+        alert("This mobile number is already used by another account.");
+        return;
+      } else {
+        setStatus("idle");
+        alert("An error occurred while executing the task.");
+        return;
+      }}
 
     try {
       localStorage.setItem("savedpassword", password);
@@ -67,16 +92,16 @@ const TaskExecutor = () => {
 
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
-    
+
     if (!isConfirmed) return; // Stop if user cancels
-  
+
     const userEmail = localStorage.getItem("userEmail");
-  
+
     try {
       await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
-  
+
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
@@ -85,7 +110,7 @@ const TaskExecutor = () => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  };  
+  };
 
   return (
     <div className="signin-container">
@@ -114,19 +139,32 @@ const TaskExecutor = () => {
                 </div>
               </div>
               <input
-                type="text"
-                placeholder="Mobile Number"
-                value={mobileNumber}
-                className="input-field"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
-              />
-
+  type="text"
+  placeholder="Mobile Number"
+  value={mobileNumber}
+  onChange={(e) => {
+    const value = e.target.value;
+    setMobileNumber(value);
+    localStorage.setItem("mobileNumber", value); // always keep it synced
+  }}
+  className="input-field"
+/>
+              <div className="password-container">
+                <input
+                  type={showPassword ? "text" : "password"} // Toggle type
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-field"
+                />
+                <button
+                  type="button"
+                  className="toggle-password-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               <p className="confirm">
                 By Clicking next you confirm to connect to LeadsCruise
               </p>
@@ -289,8 +327,8 @@ const TaskExecutor = () => {
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
               <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
+                Learn more
+              </a>
             </div>
 
             <div

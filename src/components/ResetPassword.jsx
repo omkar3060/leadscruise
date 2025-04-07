@@ -10,6 +10,7 @@ import bgImage3 from "../images/values-3.png";
 import successImage from "../images/success.png";
 import errorImage from "../images/error.png";
 import loadingGif from "../images/loading.gif";
+import { Eye, EyeOff } from "lucide-react";
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -22,7 +23,7 @@ const ResetPassword = () => {
   const location = useLocation();
   const [showError, setShowError] = useState(false);
   const [selected, setSelected] = useState(0);
-
+  const [showPassword, setShowPassword] = useState(false);
   const token = searchParams.get("token");
   var email = searchParams.get("email");
 
@@ -82,7 +83,7 @@ const ResetPassword = () => {
     }
   };
   const strongPasswordRegex =
-  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
   const handlePasswordChange = (e) => {
     const newPassword = e.target.value;
@@ -101,16 +102,22 @@ const ResetPassword = () => {
 
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
-    
+
     if (!isConfirmed) return; // Stop if user cancels
-  
+
     const userEmail = localStorage.getItem("userEmail");
-  
+    if(!userEmail) {
+      window.location.href =
+        window.location.hostname === "app.leadscruise.com"
+          ? "https://app.leadscruise.com/"
+          : "http://localhost:3000";
+    }
+
     try {
       await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
-  
+
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
@@ -120,7 +127,7 @@ const ResetPassword = () => {
       console.error("Logout failed:", error);
     }
   };
-  
+
   return (
     <div className="signin-container">
       <div className="center-div">
@@ -212,12 +219,12 @@ const ResetPassword = () => {
           {status === "idle" && (
             <div>
               <div className="signin-logo-class">
-              <img
-              src={logo} // Use the imported image
-              alt="LeadsCruise Logo"
-              onClick={() => navigate("/")} // Navigate to home when clicked
-            // Add styling if needed
-            />
+                <img
+                  src={logo} // Use the imported image
+                  alt="LeadsCruise Logo"
+                  onClick={() => navigate("/")} // Navigate to home when clicked
+                // Add styling if needed
+                />
                 <div className="smart-scan" onClick={() => navigate("/")}>
                   {/* <img
                 src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
@@ -241,29 +248,36 @@ const ResetPassword = () => {
                 autoComplete="email"
                 readOnly
               />
+              <div className="pass-cont">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="New Password"
+                  value={newPassword}
+                  onChange={handlePasswordChange}
+                  name="password"
+                  autoComplete="current-password"
 
-              <input
-                type="password"
-                placeholder="New Password"
-                value={newPassword}
-                onChange={handlePasswordChange}
-                name="password"
-                autoComplete="current-password"
-                
-              onFocus={() => setShowError(true)}
-              onBlur={() => setShowError(false)}
-              />
+                  onFocus={() => setShowError(true)}
+                  onBlur={() => setShowError(false)}
+                />
 
-              <input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                name="confirmpassword"
-                autoComplete="current-password"
-              />
-
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  name="confirmpassword"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               <button onClick={handleResetPassword}>Next</button>
+
             </div>
           )}
         </div>
@@ -272,9 +286,8 @@ const ResetPassword = () => {
           <div className="banner-container">
             {/* First Banner */}
             <div
-              className={`banner overlapBanner ${
-                selected === 0 ? "active" : ""
-              }`}
+              className={`banner overlapBanner ${selected === 0 ? "active" : ""
+                }`}
             >
               <div className="rightbanner">
                 <div
@@ -317,8 +330,8 @@ const ResetPassword = () => {
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
               <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
+                Learn more
+              </a>
             </div>
 
             <div

@@ -151,6 +151,43 @@ exports.login = async (req, res) => {
   }
 };
 
+// Check if mobileNumber and savedPassword exist for a user
+exports.checkUserCredentials= async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.mobileNumber || !user.savedPassword) {
+      return res.status(400).json({ message: "Please login to your leads provider account first." });
+    }
+
+    return res.status(200).json({ message: "Credentials found" });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+exports.checkMobileNumber = async (req, res) => {
+  const { mobileNumber, email } = req.body;
+
+  try {
+    const user = await User.findOne({ mobileNumber });
+
+    // If mobile is found and belongs to *another* user
+    if (user && user.email !== email) {
+      return res.status(409).json({ message: "Mobile number already in use by another account." });
+    }
+
+    return res.status(200).json({ message: "Mobile number is available." });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 // Force logout endpoint
 exports.forceLogout = async (req, res) => {
   try {

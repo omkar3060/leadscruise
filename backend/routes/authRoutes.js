@@ -22,6 +22,8 @@ const {
   stopScript,
   logout,
   forceLogout,
+  checkUserCredentials,
+  checkMobileNumber,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -30,7 +32,7 @@ const transporter = nodemailer.createTransport({
   service: "gmail", // or your preferred email service
   auth: {
     user: "noreply.leadscruise@gmail.com", // your email
-    pass: "cqemjscmupacnsdp", // your email password or app-specific password
+    pass: "weknalzoxkbuabvn", // your email password or app-specific password
   },
 });
 
@@ -48,6 +50,9 @@ router.get("/users", getAllUsers);
 router.post("/update-sheets-id", updateSheetsId);
 router.post("/logout", logout);
 router.post("/force-logout", forceLogout);
+router.get("/check-user-credentials/:email", checkUserCredentials);
+router.post("/check-mobile", checkMobileNumber);
+
 
 const SUBSCRIPTION_DURATIONS = {
   "one-mo": 30,
@@ -142,7 +147,6 @@ router.post("/stop-api-script", stopScript);
 router.get("/get-latest-id", async (req, res) => {
   try {
     const latestPayment = await Payment.findOne().sort({ unique_id: -1 });
-
     res.json({
       latestId: latestPayment ? latestPayment.unique_id + 1 : 153531,
     });

@@ -185,8 +185,24 @@ const Dashboard = () => {
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
 
+      try {
+        const credCheckRes = await axios.get(`https://api.leadscruise.com/api/check-user-credentials/${userEmail}`);
+        if (credCheckRes.status !== 200) {
+          alert("Please login to your leads provider account first.");
+        navigate("/execute-task");
+          setIsStarting(false);
+          return;
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || "Error checking stored credentials");
+        navigate("/execute-task");
+        setIsStarting(false);
+        return;
+      }
+
       if (!mobileNumber || !password) {
-        alert("Mobile number or password not found in local storage!");
+        alert("Please login to you leads provider account first.");
+        navigate("/execute-task");
         setIsStarting(false); // Reset starting state on error
         return;
       }

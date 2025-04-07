@@ -655,8 +655,8 @@ const SignIn = () => {
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
               <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
+                Learn more
+              </a>
             </div>
 
             <div

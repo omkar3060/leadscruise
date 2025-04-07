@@ -83,6 +83,12 @@ const EnterEmail = () => {
     if (!isConfirmed) return; // Stop if user cancels
 
     const userEmail = localStorage.getItem("userEmail");
+    if(!userEmail) {
+      window.location.href =
+        window.location.hostname === "app.leadscruise.com"
+          ? "https://app.leadscruise.com/"
+          : "http://localhost:3000";
+    }
 
     try {
       await axios.post("https://api.leadscruise.com/api/logout", {
