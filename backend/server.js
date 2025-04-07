@@ -609,7 +609,7 @@ app.post("/api/cycle", async (req, res) => {
       console.log("Lead limit exceeded! Killing Python script...");
       await User.findOneAndUpdate(
         { email: userEmail },
-        { status: "Stopped", startTime: null },
+        { autoStartEnabled: true },
         { new: true }
       );
       pythonProcess.kill("SIGINT"); // Kill the script
@@ -661,9 +661,16 @@ app.post("/api/stop", async (req, res) => {
 
   const user = await User.findOne({ email: userEmail });
   if (!user || !user.startTime) {
+    if(user){
+            await User.findOneAndUpdate(
+        { email: userEmail },
+        { autoStartEnabled: false },
+        { new: true }
+      );
+    }
     return res.status(404).json({
       status: "error",
-      message: "No running process found for this user.",
+      message: "No running AI found for this user.",
     });
   }
 
