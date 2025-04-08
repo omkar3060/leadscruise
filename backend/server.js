@@ -12,9 +12,10 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const fs = require("fs");
 const Payment = require("./models/Payment");
+const Settings = require('./models/Settings'); // adjust the path if needed
 const paymentRoutes = require("./routes/paymentRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
-
+const axios = require('axios');
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const referralRoutes = require("./routes/referralRoutes");
