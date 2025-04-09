@@ -69,7 +69,7 @@ def set_browser_zoom(driver, zoom_level=0.75):
     Uses Chrome DevTools Protocol (CDP) to set browser zoom.
     """
     driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {
-        "width": 1080,
+        "width": 1920,
         "height": 1080,
         "deviceScaleFactor": zoom_level,  # 0.75 = 75% zoom
         "mobile": False
@@ -77,61 +77,75 @@ def set_browser_zoom(driver, zoom_level=0.75):
     #print(f"Browser zoom set to {zoom_level * 100}% using Chrome DevTools Protocol.")
 
 def go_to_message_center_and_click(driver):
-    """
-    Navigates to the message center, clicks the first element, inputs messages from an array, 
-    clicks the send button, waits for 2 seconds before sending each message, 
-    clicks the 'View More' button, and prints only the Left Name, Mobile Number, and Email ID.
-    """
-    print("Waiting for 10 seconds before going to the message center...", flush=True)
-    time.sleep(3)  # Wait for 10 seconds before navigating to the message center
+
+    print("Waiting for 3 seconds before going to the message center...", flush=True)
+    time.sleep(3)
 
     third_url = "https://seller.indiamart.com/messagecentre/"
-    print(f"Redirecting to {third_url} to interact with the message center..." ,flush=True)
+    print(f"Redirecting to {third_url} to interact with the message center...", flush=True)
     driver.get(third_url)
-    time.sleep(3)  # Static wait for page load
+    time.sleep(3)
 
     try:
-        # Click the first element
-        message_element = driver.find_element(By.XPATH, "//div[@class='fl lh150 w100 hgt20']//div[@class='wrd_elip fl fs14 fwb maxwidth100m200']")
+        # Force remove tooltip that might block the first message
+        try:
+            driver.execute_script("""
+                const tooltip = document.querySelector('.Headertooltip');
+                if (tooltip) {
+                    tooltip.style.display = 'none';
+                }
+            """)
+            print("Forcefully hid the tooltip using JavaScript.", flush=True)
+        except Exception as js_error:
+            print(f"JS error while hiding tooltip: {js_error}", flush=True)
+
+        # Click the first message element
+        message_element = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@class='fl lh150 w100 hgt20']//div[@class='wrd_elip fl fs14 fwb maxwidth100m200']"))
+        )
         message_element.click()
-        print("Clicked the first element with the specified class parameters." ,flush=True)
+        print("Clicked the first element with the specified class parameters.", flush=True)
+        time.sleep(2)
 
-        time.sleep(2)  # Wait for the next element to load
+        message_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='lh150 pdb10 mxhgt125 m240130 edt_div edit_div_new fs15 overfw_yauto prewrap ' and @contenteditable='true']"))
+        )
 
-        # Find the editable div to input messages
-        message_input = driver.find_element(By.XPATH, "//div[@class='lh150 pdb10 mxhgt125 m240130 edt_div edit_div_new fs15 overfw_yauto prewrap ' and @contenteditable='true']")
-        
-        # Define the array of sentences
-        # third input from mern app
         sentences = input_data.get("sentences", [])
 
-        # Loop through the sentences array and send each one
         for sentence in sentences:
-            message_input.click()  # Ensure the input box is focused
-            message_input.clear()  # Clear the existing text (if any)
-            message_input.send_keys(sentence)  # Enter the sentence
-            print(f"Entered message: '{sentence}'" ,flush=True)
+            message_input.click()
+            message_input.clear()
+            message_input.send_keys(sentence)
+            print(f"Entered message: '{sentence}'", flush=True)
 
-            # Click the div containing the send button (identified by the div with id="send-reply-span")
-            send_div = driver.find_element(By.XPATH, "//div[@id='send-reply-span']")
+            send_div = driver.find_element(By.ID, "send-reply-span")
             send_div.click()
-            print("Clicked the send button inside the div." ,flush=True)
+            print("Clicked the send button.", flush=True)
+            time.sleep(2)
 
-            time.sleep(2)  # Wait for 2 seconds before sending the next message
+            # Close popup if it appears
+            try:
+                close_button = driver.find_element(By.XPATH, "//div[contains(@style,'background-color') and contains(@style,'position: relative')]//button[contains(text(),'✖')]")
+                close_button.click()
+                print("Closed the popup after sending the message.", flush=True)
+            except:
+                print("No popup appeared after message.", flush=True)
 
-        # Click the 'View More' button after sending all messages
-        view_more_button = driver.find_element(By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]")
+        # Click 'View More'
+        view_more_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
+        )
         view_more_button.click()
-        print("Clicked the 'View More' button." ,flush=True)
+        print("Clicked the 'View More' button.", flush=True)
+        time.sleep(2)
 
-        time.sleep(2)  # Wait for the page to load the additional content
-
-        # Print only the relevant data: Left Name, Mobile Number, and Email ID
+        # Extract and print contact details
         left_name = driver.find_element(By.XPATH, "//div[@id='left-name']")
-        print(f"Left Name: {left_name.text}" ,flush=True)
+        print(f"Left Name: {left_name.text}", flush=True)
 
         mobile_number = driver.find_element(By.XPATH, "//span[@class='fl mxwdt85 ml5 mt2 wbba']")
-        print(f"Mobile Number: {mobile_number.text}" ,flush=True)
+        print(f"Mobile Number: {mobile_number.text}", flush=True)
 
         try:
             email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt85 ml5 wbba']").text
@@ -242,13 +256,14 @@ def redirect_and_refresh(driver, wait):
             span_result = False
             try:
                 time.sleep(3)  # Static wait
-                couplings_span = driver.find_element(By.XPATH, "//span[contains(@style, 'color: rgb(42, 166, 153);')]")
-                couplings_text = couplings_span.text
-                print(f"Read data from span: {couplings_text}",flush=True)
+                first_grid = driver.find_element(By.CSS_SELECTOR, "div.bl_grid.Prd_Enq")
+                coupling_spans = first_grid.find_elements(By.CSS_SELECTOR, "span[style*='color: rgb(42, 166, 153)']")
+                found_texts = [span.text.strip() for span in coupling_spans if span.text.strip()]
+                print(f"data from span: {found_texts}", flush=True)
 
                 # Check if the extracted text matches any word in the array
-                span_result = couplings_text.lower() in (word.lower() for word in word_array)
-                print(span_result)
+                span_result = any(text in word_array for text in found_texts)
+                print(span_result, flush=True)
 
             except Exception as e:
                 print(f"Failed to read data from span with specified color: {e}",flush=True)
@@ -289,7 +304,7 @@ def redirect_and_refresh(driver, wait):
 
                 # Check if time is less than 10 minutes
                 time_result = time_value < 1000000
-                print(time_result)
+                print(time_result, flush=True)
 
             except Exception as e:
                 print(f"Failed to read the time text: {e}",flush=True)
@@ -425,7 +440,7 @@ def main():
     chrome_options.add_argument(f"user-agent={user_agent}")
 
     # Start virtual display
-    display = Display(visible=0, size=(1024, 768))
+    display = Display(visible=0, size=(1920, 1080))
     display.start()
     
     driver = webdriver.Chrome(options=chrome_options)
@@ -436,7 +451,7 @@ def main():
     # Start Xvfb in the background
     unique_id=input_data.get("uniqueId", [])
     # Start Xvfb with dynamic unique_id
-    subprocess.Popen(['Xvfb', f':{unique_id}', '-screen', '0', '1080x1080x24'])
+    subprocess.Popen(['Xvfb', f':{unique_id}', '-screen', '0', '1920x1080x24'])
 
     # Set the DISPLAY environment variable
     os.environ['DISPLAY'] = f':{unique_id}'
