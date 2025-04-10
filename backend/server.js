@@ -475,7 +475,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("https://api.leadscruise.com/api/cycle", {
+        await axios.post("http://localhost:5000/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,
@@ -735,6 +735,16 @@ const leadSchema = new mongoose.Schema({
 });
 
 const Lead = mongoose.model("Lead", leadSchema);
+const nodemailer = require("nodemailer");
+
+// Configure nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "noreply.leadscruise@gmail.com",
+    pass: "weknalzoxkbuabvn", // Use App Password, not your actual Gmail password
+  },
+});
 
 // Endpoint to receive lead data from Selenium script and store in DB
 app.post("/api/store-lead", async (req, res) => {
@@ -778,6 +788,35 @@ app.post("/api/store-lead", async (req, res) => {
       console.log("Lead limit reached for user:", user_mobile_number);
       return res.status(403).json({
         error: "Lead limit reached. Cannot capture more leads today.",
+      });
+    }
+
+    // 👉 Send email if email is provided
+    if (email) {
+      const mailOptions = {
+        from: '"LeadsCruise" <noreply.leadscruise@gmail.com>',
+        to: email,
+        subject: "Thank you for your interest!",
+        html: `
+          <p>Thank you for posting your lead. We have successfully received and bought it.</p>
+      <p><strong>Thank you for your enquiry!</strong></p>
+      <p>Please feel free to contact our sales team at:</p>
+      <ul>
+        <li>📞 +91-9900333143</li>
+        <li>📞 +91-9503213927</li>
+        <li>📞 +91-9284706164</li>
+      </ul>
+      <p>Once the enquiry is closed, kindly take a moment to review us with your ratings. ⭐⭐⭐⭐⭐</p>
+      <p>Best Regards,<br/>LeadsCruise Team</p>
+        `,
+      };
+
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+        } else {
+          console.log("Email sent:", info.response);
+        }
       });
     }
 
