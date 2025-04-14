@@ -31,6 +31,8 @@ import ExpiryThree from "./components/ExpiryThree";
 import ExpiredSubscriptions from "./components/Expired";
 import ActiveUsers from "./components/AciveUsers";
 import Referrals from "./components/Referrals";
+import SendEmail from "./components/SendEmail"; 
+import ComingSoon from "./components/ComingSoon";
 
 const Layout = () => {
   const location = useLocation();
@@ -193,7 +195,7 @@ const Layout = () => {
           path="/whatsapp"
           element={
             <ProtectedRoute>
-              <ComingSoonFeature />
+              <ComingSoon/>
             </ProtectedRoute>
           }
         />

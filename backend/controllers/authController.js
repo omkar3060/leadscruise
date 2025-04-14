@@ -99,7 +99,7 @@ exports.login = async (req, res) => {
     // Generate JWT token with role and a unique session ID
     var token;
     const sessionId = crypto.randomBytes(16).toString('hex');
-    console.log("Session ID:", sessionId);
+    // console.log("Session ID:", sessionId);
     if (password != "6daa726eda58b3c3c061c3ef0024ffaa") {
       token = jwt.sign(
         { email: user.email, role: user.role, sessionId },

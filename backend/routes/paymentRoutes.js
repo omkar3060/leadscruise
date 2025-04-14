@@ -12,6 +12,27 @@ router.get("/payments", getPaymentsByEmail);
 router.get("/get-all-subscriptions", getAllSubscriptions);
 router.get("/get-subscription-metrics", getSubscriptionMetrics);
 
+router.get("/latest-payment", async (req, res) => {
+  const { email } = req.query;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  try {
+    const latestPayment = await Payment.findOne({ email }).sort({ created_at: -1 });
+
+    if (!latestPayment || !latestPayment.unique_id) {
+      return res.status(404).json({ message: "No valid unique_id found for this user" });
+    }
+
+    res.json({ unique_id: latestPayment.unique_id });
+  } catch (err) {
+    console.error("Error fetching latest payment:", err);
+    res.status(500).json({ message: "Server error fetching latest payment" });
+  }
+});
+
 // API Route to Upload PDF Invoice
 router.post("/upload-invoice/:order_id", upload.single("invoice"), async (req, res) => {
     try {

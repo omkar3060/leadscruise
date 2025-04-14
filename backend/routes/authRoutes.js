@@ -114,7 +114,7 @@ cron.schedule(
         try {
           console.log(`Updating Sheets ID for: ${user.email}`);
 
-          await axios.post("http://localhost:5000/api/update-sheets-id", {
+          await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
             email: user.email,
             apiKey: user.apiKey,
             sheetsId: user.sheetsId,
@@ -250,8 +250,8 @@ router.get("/verify-session", async (req, res) => {
     // Extract token & sessionId from request headers
     const token = req.headers.authorization?.split(" ")[1]; // "Bearer <token>"
     const sessionId = req.headers["session-id"]; // Get session ID from request header
-    console.log("🔹 Received Token:", token);
-    console.log("🔹 Received Session ID:", sessionId);
+    // console.log("🔹 Received Token:", token);
+    // console.log("🔹 Received Session ID:", sessionId);
 
     if (!token || !sessionId) {
       return res

@@ -17,6 +17,10 @@ const Master = () => {
     totalActiveUsers: 0,
     totalUsers: 0,
   });
+  const [isMaintenance, setIsMaintenance] = useState(() => {
+    const stored = localStorage.getItem("isMaintenance");
+    return stored ? JSON.parse(stored) : false;
+  });
   const [subscriptions, setSubscriptions] = useState([]);
   const [selectedUserEmail, setSelectedUserEmail] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -41,14 +45,14 @@ const Master = () => {
 
   // Add this function to filter the subscriptions
   // Updated filtering function with safety checks
-const filteredSubscriptions = subscriptions.filter((sub) => {
-  const searchLower = searchTerm.toLowerCase();
-  return (
-    (sub.unique_id?.toString() || '').toLowerCase().includes(searchLower) ||
-    (sub.email?.toString() || '').toLowerCase().includes(searchLower) ||
-    (sub.refId?.toString() || '').toLowerCase().includes(searchLower)
-  );
-});
+  const filteredSubscriptions = subscriptions.filter((sub) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (sub.unique_id?.toString() || '').toLowerCase().includes(searchLower) ||
+      (sub.email?.toString() || '').toLowerCase().includes(searchLower) ||
+      (sub.refId?.toString() || '').toLowerCase().includes(searchLower)
+    );
+  });
 
   useEffect(() => {
     fetchSubscriptionMetrics();
@@ -58,7 +62,7 @@ const filteredSubscriptions = subscriptions.filter((sub) => {
   const fetchSubscriptionMetrics = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("http://localhost:5000/api/get-subscription-metrics");
+      const response = await axios.get("https://api.leadscruise.com/api/get-subscription-metrics");
       setSubscriptionMetrics(response.data);
     } catch (error) {
       console.error("Error fetching subscription metrics:", error);
@@ -70,7 +74,7 @@ const filteredSubscriptions = subscriptions.filter((sub) => {
   const fetchSubscriptions = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("http://localhost:5000/api/get-all-subscriptions");
+      const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions");
       setSubscriptions(response.data);
       fetchUploadedInvoices(response.data);
     } catch (error) {
@@ -120,7 +124,7 @@ const filteredSubscriptions = subscriptions.filter((sub) => {
       await Promise.all(
         subs.map(async (sub) => {
           try {
-            const response = await axios.get(`http://localhost:5000/api/get-invoice/${sub.unique_id}`, {
+            const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${sub.unique_id}`, {
               responseType: "blob", // This is necessary to handle binary PDF data
             });
 
@@ -145,6 +149,88 @@ const filteredSubscriptions = subscriptions.filter((sub) => {
     }
     finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleStartMaintenance = async () => {
+    if (!isMaintenance) {
+      try {
+        // 1. Take Status Snapshot
+        const snapshotResponse = await fetch("https://api.leadscruise.com/api/take-snapshot", {
+          method: "POST",
+        });
+
+        const snapshotResult = await snapshotResponse.json();
+        if (!snapshotResponse.ok) throw new Error(snapshotResult.message);
+
+        console.log("✅ Snapshots taken:", snapshotResult.message);
+
+        // 2. Fetch all active users
+        const response = await axios.get("https://api.leadscruise.com/api/users", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const paymentResponse = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const payments = paymentResponse.data;
+
+        // ✅ Filter only users with an active subscription
+        const activeUsers = response.data.filter(user => {
+          const userPayment = payments.find(payment => payment.email === user.email);
+          return userPayment && calculateRemainingDays(userPayment.created_at, userPayment.subscription_type);
+        });
+
+        // 3. For each active user, get latestPayment.unique_id and stop their script
+        for (const user of activeUsers) {
+          // Fetch latest payment
+          const paymentRes = await fetch(`https://api.leadscruise.com/api/latest-payment?email=${user.email}`);
+          const payment = await paymentRes.json();
+
+          if (!payment?.unique_id) {
+            console.warn(`⚠️ Skipping ${user.email}: No valid unique_id found in payments.`);
+            continue;
+          }
+
+          const stopRes = await fetch("https://api.leadscruise.com/api/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userEmail: user.email, uniqueId: payment.unique_id }),
+          });
+
+          const stopResJson = await stopRes.json();
+          console.log(`⛔ Stopped script for ${user.email}:`, stopResJson.message);
+        }
+        setIsMaintenance(true);
+        localStorage.setItem("isMaintenance", "true");
+        alert("🛠️ Maintenance completed successfully!");
+      } catch (error) {
+        console.error("❌ Maintenance error:", error);
+        alert(`Maintenance failed: ${error.message}`);
+        setIsMaintenance(false);
+        localStorage.setItem("isMaintenance", "false");
+      }
+    }
+    else {
+      try {
+        const restartRes = await fetch("https://api.leadscruise.com/api/restart-running", {
+          method: "POST",
+        });
+        const restartResJson = await restartRes.json();
+        console.log("Restarted scripts:", restartResJson.message);
+
+        setIsMaintenance(false);
+        localStorage.setItem("isMaintenance", "false");
+        alert("Maintenance stopped and scripts restarted!");
+      } catch (err) {
+        console.error("Error restarting scripts:", err);
+        alert("Failed to stop maintenance");
+      }
     }
   };
 
@@ -330,13 +416,23 @@ const filteredSubscriptions = subscriptions.filter((sub) => {
 
         {/* Subscriptions Table */}
         <div className={masterstyles.leadsSection}>
-          <div className={masterstyles.tableHeader}><span>Active Subscriptions</span>
-            <button
-              className={masterstyles.downloadExcelButton}
-              onClick={handleDownloadExcel}
-            >
-              📥 Download as Excel
-            </button>
+          <div className={masterstyles.tableHeader}>
+            <span>Active Subscriptions</span>
+            <div className={masterstyles.tableActions}>
+              <button
+                className={masterstyles.downloadExcelButton}
+                onClick={handleDownloadExcel}
+              >
+                📥 Download as Excel
+              </button>
+
+              <button
+                className={masterstyles.maintenanceButton}
+                onClick={handleStartMaintenance}
+              >
+                {isMaintenance ? "✅ Stop Maintenance" : "🛠️ Start Maintenance"}
+              </button>
+            </div>
           </div>
           <div className={masterstyles.searchContainer}>
             <input

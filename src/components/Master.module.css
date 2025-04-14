@@ -322,3 +322,28 @@
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
+
+.maintenanceButton{
+  background-color: #dc3545;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 5px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  width: fit-content;
+  margin-left: 2px;
+}
+
+.tableActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* margin-bottom: 10px; */
+}

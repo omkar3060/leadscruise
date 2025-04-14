@@ -14,12 +14,13 @@ const fs = require("fs");
 const Payment = require("./models/Payment");
 const Settings = require('./models/Settings'); // adjust the path if needed
 const paymentRoutes = require("./routes/paymentRoutes");
+const emailRoutes=require("./routes/emailRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
 const axios = require('axios');
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const referralRoutes = require("./routes/referralRoutes");
-
+const statusRoutes = require("./routes/snapshRoutes");
 const server = createServer(app); // ✅ Create HTTP server
 const io = new Server(server, {
   path: "/socket.io/",
@@ -180,6 +181,8 @@ app.use("/api", settingsRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api/billing", billingDetailsRoutes);
 app.use("/api/referrals", referralRoutes);
+app.use("/api",emailRoutes);
+app.use("/api",statusRoutes);
 
 // API Endpoint to check if a number exists in the database
 app.post("/api/check-number", async (req, res) => {
@@ -475,7 +478,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("http://localhost:5000/api/cycle", {
+        await axios.post("https://api.leadscruise.com/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,
