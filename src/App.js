@@ -31,22 +31,39 @@ import ExpiryThree from "./components/ExpiryThree";
 import ExpiredSubscriptions from "./components/Expired";
 import ActiveUsers from "./components/AciveUsers";
 import Referrals from "./components/Referrals";
-import SendEmail from "./components/SendEmail"; 
+import SendEmail from "./components/SendEmail";
 import ComingSoon from "./components/ComingSoon";
+import MaintenanceBanner from "./components/MaintenanceBanner"; // Adjust path as needed
 
 const Layout = () => {
   const location = useLocation();
   const [isAppDomain, setIsAppDomain] = useState(false);
+  const [maintenanceActive, setMaintenanceActive] = useState(false);
 
   useEffect(() => {
     // Check if the app is running on app.leadscruise.com
     setIsAppDomain(
       window.location.hostname === "app.leadscruise.com" || "localhost:3000"
     );
+
+    // You could also check maintenance status here and set it in a shared context
+    const checkMaintenance = async () => {
+      try {
+        const res = await fetch("https://api.leadscruise.com/api/maintenance-status");
+        const data = await res.json();
+        setMaintenanceActive(data.maintenanceOngoing);
+      } catch (error) {
+        console.error("Failed to fetch maintenance status:", error);
+      }
+    };
+
+    checkMaintenance();
   }, []);
 
   return (
     <div className="container">
+      <div className={`app-container ${maintenanceActive ? 'has-maintenance-banner' : ''}`}><MaintenanceBanner /></div>
+
       <Routes>
         {/* Redirect "/" to "/login" if on app.leadscruise.com */}
         {isAppDomain ? (
@@ -195,7 +212,7 @@ const Layout = () => {
           path="/whatsapp"
           element={
             <ProtectedRoute>
-              <ComingSoon/>
+              <ComingSoon />
             </ProtectedRoute>
           }
         />

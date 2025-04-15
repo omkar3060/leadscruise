@@ -49,3 +49,17 @@
     transform: rotate(360deg);
   }
 }
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* This ensures content is pushed down when banner is present */
+
+
+.content-container {
+  flex: 1;
+  transition: padding-top 0.3s ease;
+}

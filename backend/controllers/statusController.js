@@ -142,7 +142,11 @@ const restartRunningScripts = async (req, res) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyPayload),
       });
+
+      await User.updateOne({ email: snap.userEmail }, { $set: { status: snap.status } });
     }
+
+    await UserStatusSnapshot.deleteMany({});
 
     res.json({ message: "Restarted scripts for all previously running users." });
   } catch (err) {
