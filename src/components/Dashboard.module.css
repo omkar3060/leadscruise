@@ -139,6 +139,7 @@
   .dashboardContent {
     margin-left: 0px;
     padding: 10px;
+    width: 90%;
   }
 
   .metricsSection {
