@@ -233,7 +233,7 @@
 }
 
 /* ✅ Mobile & Small Screens */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .dashboardContainer {
       flex-direction: column;
       height: 100vh;
@@ -287,9 +287,21 @@
       padding: 5px;
   }
 }
+/* 
+@media (max-width: 480px){
+    .downloadExcelButton {
+      font-size: 10px;
+      padding: 5px;
+  }
+
+  .maintenanceButton{
+    font-size: 10px;
+    padding: 5px;
+  }
+} */
 
 /* ✅ Tablet Screens */
-@media (max-width: 1024px) {
+/* @media (max-width: 1024px) {
   .metricsSection {
       grid-template-columns: repeat(3, 1fr);
   }
@@ -301,7 +313,7 @@
   .tableWrapper {
       max-height: 350px;
   }
-}
+} */
 
 .searchContainer {
   margin-bottom: 10px;
@@ -347,3 +359,21 @@
   align-items: center;
   /* margin-bottom: 10px; */
 }
+
+
+@media (max-width: 480px){
+  .downloadExcelButton {
+    font-size: 8px;
+    padding: 2px 5px;
+}
+
+.maintenanceButton{
+  font-size: 8px;
+  padding: 2px 5px;
+}
+
+.uploadButton{
+  font-size: 5px;
+  padding: 2px 5px;
+}
+} 

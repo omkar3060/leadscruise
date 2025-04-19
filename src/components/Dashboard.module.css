@@ -166,6 +166,7 @@
   .tableHeader {
     font-size: 14px;
     padding: 8px;
+    /* display: none; */
   }
 
   .leadsSection{
@@ -190,6 +191,12 @@
 
   .dashboardContent {
     width: 100%;
+  }
+  /* .Dashboard_tableWrapper{
+    display: none;
+  } */
+  .leadsSection{
+    display: none;
   }
 }
 
