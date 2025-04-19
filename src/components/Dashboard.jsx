@@ -431,9 +431,9 @@ const handleStop = async () => {
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon <br /><span>WA Messages Sent Today</span></div>
-          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon <br /><span>Emails Sent Today</span></div>
-          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon <br /><span>Total Emails Sent</span></div>
+          <div className={styles.comingSoon}>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}<br /><span>WA Messages Sent Today</span></div>
+          <div className={styles.comingSoon}>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br /><span>Emails Sent Today</span></div>
+          <div className={styles.comingSoon}>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)} <br /><span>Total Emails Sent</span></div>
           <div className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>
         </div>
 

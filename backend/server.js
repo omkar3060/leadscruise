@@ -14,7 +14,7 @@ const fs = require("fs");
 const Payment = require("./models/Payment");
 const Settings = require('./models/Settings'); // adjust the path if needed
 const paymentRoutes = require("./routes/paymentRoutes");
-const emailRoutes=require("./routes/emailRoutes");
+const emailRoutes = require("./routes/emailRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
 const axios = require('axios');
 const { createServer } = require("http");
@@ -181,8 +181,8 @@ app.use("/api", settingsRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api/billing", billingDetailsRoutes);
 app.use("/api/referrals", referralRoutes);
-app.use("/api",emailRoutes);
-app.use("/api",statusRoutes);
+app.use("/api", emailRoutes);
+app.use("/api", statusRoutes);
 
 // API Endpoint to check if a number exists in the database
 app.post("/api/check-number", async (req, res) => {
@@ -602,7 +602,7 @@ app.post("/api/cycle", async (req, res) => {
     console.error("Python script stderr:", data.toString());
     error += data.toString();
   });
-
+  let killedDueToLimit = false;
   // Periodically check if lead limit is exceeded
   const leadCheckInterval = setInterval(async () => {
     let updatedUserCounter = await UserLeadCounter.findOne({
@@ -616,6 +616,7 @@ app.post("/api/cycle", async (req, res) => {
         { autoStartEnabled: true },
         { new: true }
       );
+      killedDueToLimit = true;
       pythonProcess.kill("SIGINT"); // Kill the script
       activePythonProcesses.delete(uniqueId);
       clearInterval(leadCheckInterval);
@@ -637,11 +638,13 @@ app.post("/api/cycle", async (req, res) => {
     cleanupDisplay(uniqueId);
 
     // Reset user status and remove startTime when the script stops
-    await User.findOneAndUpdate(
-      { email: userEmail },
-      { status: "Stopped", startTime: null, autoStartEnabled: false },
-      { new: true }
-    );
+    if (!killedDueToLimit) {
+      await User.findOneAndUpdate(
+        { email: userEmail },
+        { status: "Stopped", startTime: null, autoStartEnabled: false },
+        { new: true }
+      );
+    }
 
     if (code === 0) {
       res.json({ status: "success", message: "Successfully executed!!" });
@@ -665,8 +668,8 @@ app.post("/api/stop", async (req, res) => {
 
   const user = await User.findOne({ email: userEmail });
   if (!user || !user.startTime) {
-    if(user){
-            await User.findOneAndUpdate(
+    if (user) {
+      await User.findOneAndUpdate(
         { email: userEmail },
         { autoStartEnabled: false },
         { new: true }
@@ -795,7 +798,7 @@ app.post("/api/store-lead", async (req, res) => {
     }
 
     // 👉 Send email if email is provided
-    if (email) {
+    /*if (email) {
       const mailOptions = {
         from: '"LeadsCruise" <noreply.leadscruise@gmail.com>',
         to: email,
@@ -822,7 +825,7 @@ app.post("/api/store-lead", async (req, res) => {
         }
       });
     }
-
+*/
     console.log("Lead Data Stored:", newLead);
     res.json({ message: "Lead data stored successfully", lead: newLead });
   } catch (error) {
