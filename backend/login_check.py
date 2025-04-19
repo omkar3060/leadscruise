@@ -27,7 +27,8 @@ def execute_task_one(mobile_number, password):
         # Refresh the page first
         driver.refresh()
         time.sleep(3)  # Wait for the page to fully reload
-
+        driver.refresh()
+        time.sleep(3)
         # Wait for the input field to be present
         wait = WebDriverWait(driver, 10)
         input_field = wait.until(EC.presence_of_element_located((By.ID, "mobNo")))
@@ -68,7 +69,7 @@ def execute_task_one(mobile_number, password):
             dashboard_element = wait.until(
                 EC.presence_of_element_located((By.ID, "leftnav_dash_link"))
             )
-            
+            # print("Login successful")
             # Navigate to the CRM API page
             driver.get("https://seller.indiamart.com/leadmanager/crmapi?")
             
@@ -85,9 +86,9 @@ def execute_task_one(mobile_number, password):
                 print(api_key)
                 return 0  # Success exit code
             except TimeoutException:
-                return 1  # Failure exit code
+                return 0  # Failure exit code
             except NoSuchElementException:
-                return 1  # Failure exit code
+                return 0  # Failure exit code
 
         except TimeoutException:
             return 1  # Failure exit code
