@@ -4,6 +4,7 @@ import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
 import styles from "./Dashboard.module.css"; // Import CSS module
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -401,6 +402,29 @@ const handleStop = async () => {
     }
   });
 
+  const handleDownloadLeadsExcel = () => {
+    if (!leads || leads.length === 0) {
+      alert("No leads available to download.");
+      return;
+    }
+  
+    const formattedData = leads.map((lead, index) => ({
+      "S.No": index + 1,
+      "Name": lead.name || "N/A",
+      "Email": lead.email || "N/A",
+      "Phone": lead.phone || "N/A",
+      "Source": lead.source || "N/A",
+      "Captured At": new Date(lead.createdAt).toLocaleString(),
+    }));
+  
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
+  
+    // Trigger download
+    XLSX.writeFile(workbook, "download.xlsx");
+  };
+  
   return (
     <div className={styles.dashboardContainer}>
       {/* Loading Screen */}
@@ -431,7 +455,7 @@ const handleStop = async () => {
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.comingSoon}>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}<br /><span>WA Messages Sent Today</span></div>
+          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon<br /><span>WA Messages Sent Today</span></div>
           <div className={styles.comingSoon}>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br /><span>Emails Sent Today</span></div>
           <div className={styles.comingSoon}>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)} <br /><span>Total Emails Sent</span></div>
           <div className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>
@@ -439,8 +463,15 @@ const handleStop = async () => {
 
         {/* Recent Leads Table */}
         <div className={styles.leadsSection}>
-          <div className={styles.tableHeader}>Recent Purchased Leads</div>
-          <div className={styles.tableWrapper}>
+        <div className={styles.mobileOnlyMessage}>
+          <p>Use Desktop to login to see recent leads captured information</p>
+        </div>
+
+
+        <div style={{display: "flex", justifyContent: "end"}}>
+          <button style={{ width: "10%", padding: "20px 60px" }} onClick={handleDownloadLeadsExcel}>Download</button>
+        </div>
+        <div className={styles.tableWrapper}>
             <table className={styles.leadsTable}>
               <thead>
                 <tr>
