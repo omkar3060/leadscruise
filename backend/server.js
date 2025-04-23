@@ -776,6 +776,22 @@ app.post("/api/store-lead", async (req, res) => {
       });
     }
 
+    // Before storing the new lead
+const existingLead = await Lead.findOne({
+  mobile,
+  user_mobile_number,
+  lead_bought,
+});
+
+// If duplicate found within last X minutes
+if (existingLead) {
+  const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
+  if (timeDiff < 300) { // e.g. within 5 minutes
+    console.log("Duplicate lead detected. Skipping.");
+    return;
+  }
+}
+
     // Store the new lead
     const newLead = new Lead({
       name,
