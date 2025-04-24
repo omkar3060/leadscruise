@@ -600,11 +600,11 @@ const SignIn = () => {
             Don't have a Zoho account?
             <span onClick={() => navigate("/signup")}>Sign up now</span>
           </p> */}
-          <div className="end-block">
+          {/* <div className="end-block">
             <p className="gback" onClick={() => (window.location.href = "https://leadscruise.com")}>
               Go Back
             </p>
-          </div>
+          </div> */}
         </div>
 
         <div className="signin-right">
