@@ -297,7 +297,7 @@ const Profile = () => {
 
                       <div className={styles["billing-address"]}>
                         <p className={styles["billing-address-text"]}>
-                          <strong>Name:</strong>
+                          <strong>Company Name:</strong>
                           <input type="text" name="name" value={billingDetails.name} onChange={handleChange} />
                         </p>
                         <p className={styles["billing-address-text"]}>
@@ -327,7 +327,7 @@ const Profile = () => {
                       </div>
 
                       <div className={styles["billing-address"]}>
-                        <p className={styles["billing-address-text"]}><strong>Name:</strong> {billingDetails.name || 'N/A'}</p>
+                        <p className={styles["billing-address-text"]}><strong>Company Name:</strong> {billingDetails.name || 'N/A'}</p>
                         <p className={styles["billing-address-text"]}><strong>Address:</strong> {billingDetails.address || 'N/A'}</p>
                         <p className={styles["billing-address-text"]}><strong>Billing Email:</strong> {billingDetails.billingEmail || 'N/A'}</p>
                       </div>

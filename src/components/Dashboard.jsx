@@ -409,20 +409,22 @@ const handleStop = async () => {
     }
   
     const formattedData = leads.map((lead, index) => ({
-      "S.No": index + 1,
+      "Sl. No": index + 1,
       "Name": lead.name || "N/A",
       "Email": lead.email || "N/A",
-      "Phone": lead.phone || "N/A",
-      "Source": lead.source || "N/A",
+      "Phone": lead.mobile || lead.user_mobile_number || "N/A",
+      "Product(s)": lead.lead_bought || "N/A",
       "Captured At": new Date(lead.createdAt).toLocaleString(),
     }));
   
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "RecentLeads");
   
-    // Trigger download
-    XLSX.writeFile(workbook, "download.xlsx");
+    const today = new Date().toISOString().split("T")[0];
+    const filename = `Captured_${today}.xlsx`;
+  
+    XLSX.writeFile(workbook, filename);
   };
   
   return (
