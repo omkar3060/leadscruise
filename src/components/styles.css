@@ -360,6 +360,7 @@ button:hover {
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 100%;
 }
 
 .signin-tag {
@@ -401,6 +402,7 @@ button:hover {
   width: 390px;
   overflow: hidden;
   position: relative;
+  /* height: auto; */
 }
 
 .scrolling-content {

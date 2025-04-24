@@ -190,7 +190,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
 
       <div className={styles.statusSection}>
         {/* If the user is in settings or profile, show 'Return to Dashboard' */}
-        {location.pathname === "/settings" || location.pathname === "/profile" || location.pathname === "/sheets" ? (
+        {location.pathname === "/settings" || location.pathname === "/profile" || location.pathname === "/sheets" || location.pathname === "/whatsapp" ? (
           <div className={styles.statusLabel} onClick={() => navigate("/dashboard")}>
             <FaArrowLeft className={styles.iconOnly} /> <span className={styles.statusText}>Return to Dashboard</span>
           </div>
@@ -218,7 +218,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 <FaUndo className={styles.iconOnly} /> <span className={styles.buttonText}>Revert All</span>
               </button>
             </>
-          ) : location.pathname !== "/profile" && location.pathname !== "/sheets" ? (
+          ) : location.pathname !== "/profile" && location.pathname !== "/sheets" && location.pathname !== "/whatsapp" ? (
             <>
               <div
                 className={status === "Running" || isStarting || cooldownActive ? styles.tooltip : ""}
@@ -306,7 +306,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           <button
             className={styles.profileButton}
             onClick={toggleProfileDropdown}
-            style={location.pathname === "/sheets" ? { marginTop: "15px" } : {}}
+            style={location.pathname === "/sheets" || location.pathname === "/whatsapp" ? { marginTop: "15px" } : {}}
           >
             <FaUser className={styles.iconOnly} /> <span className={styles.buttonText}>Profile</span>
           </button>

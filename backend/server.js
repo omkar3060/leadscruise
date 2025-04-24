@@ -21,6 +21,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const referralRoutes = require("./routes/referralRoutes");
 const statusRoutes = require("./routes/snapshRoutes");
+const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const server = createServer(app); // ✅ Create HTTP server
 const io = new Server(server, {
   path: "/socket.io/",
@@ -183,6 +184,7 @@ app.use("/api/billing", billingDetailsRoutes);
 app.use("/api/referrals", referralRoutes);
 app.use("/api", emailRoutes);
 app.use("/api", statusRoutes);
+app.use("/api/whatsapp-settings", whatsappSettingsRoutes);
 
 // API Endpoint to check if a number exists in the database
 app.post("/api/check-number", async (req, res) => {
@@ -741,17 +743,7 @@ const leadSchema = new mongoose.Schema({
 });
 
 const Lead = mongoose.model("Lead", leadSchema);
-const nodemailer = require("nodemailer");
-
-// Configure nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "noreply.leadscruise@gmail.com",
-    pass: "weknalzoxkbuabvn", // Use App Password, not your actual Gmail password
-  },
-});
-
+const WhatsAppSettings = require("./models/WhatsAppSettings"); 
 // Endpoint to receive lead data from Selenium script and store in DB
 app.post("/api/store-lead", async (req, res) => {
   try {
@@ -777,20 +769,20 @@ app.post("/api/store-lead", async (req, res) => {
     }
 
     // Before storing the new lead
-const existingLead = await Lead.findOne({
-  mobile,
-  user_mobile_number,
-  lead_bought,
-});
+    const existingLead = await Lead.findOne({
+      mobile,
+      user_mobile_number,
+      lead_bought,
+    });
 
-// If duplicate found within last X minutes
-if (existingLead) {
-  const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
-  if (timeDiff < 300) { // e.g. within 5 minutes
-    console.log("Duplicate lead detected. Skipping.");
-    return;
-  }
-}
+    // If duplicate found within last X minutes
+    if (existingLead) {
+      const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
+      if (timeDiff < 300) { // e.g. within 5 minutes
+        console.log("Duplicate lead detected. Skipping.");
+        return;
+      }
+    }
 
     // Store the new lead
     const newLead = new Lead({
@@ -813,35 +805,35 @@ if (existingLead) {
       });
     }
 
-    // 👉 Send email if email is provided
-    /*if (email) {
-      const mailOptions = {
-        from: '"LeadsCruise" <noreply.leadscruise@gmail.com>',
-        to: email,
-        subject: "Thank you for your interest!",
-        html: `
-          <p>Thank you for posting your lead. We have successfully received and bought it.</p>
-      <p><strong>Thank you for your enquiry!</strong></p>
-      <p>Please feel free to contact our sales team at:</p>
-      <ul>
-        <li>📞 +91-9900333143</li>
-        <li>📞 +91-9503213927</li>
-        <li>📞 +91-9284706164</li>
-      </ul>
-      <p>Once the enquiry is closed, kindly take a moment to review us with your ratings. ⭐⭐⭐⭐⭐</p>
-      <p>Best Regards,<br/>LeadsCruise Team</p>
-        `,
-      };
+    // 🚀 Fetch WhatsApp settings
+    // const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
 
-      transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-          console.error("Error sending email:", err);
-        } else {
-          console.log("Email sent:", info.response);
-        }
-      });
-    }
-*/
+    // if (!settings || !settings.whatsappNumber || !settings.customMessage) {
+    //   console.warn("No WhatsApp settings found for this email");
+    // } else {
+    //   const { whatsappNumber, customMessage } = settings;
+
+    //   // 🧠 Send to whatsapp.py
+    //   const pythonProcess = spawn("python3", [
+    //     "whatsapp.py",
+    //     mobile,                 // Lead's mobile number
+    //     customMessage,          // Message from settings
+    //     whatsappNumber          // Sender's WhatsApp number
+    //   ]);
+
+    //   pythonProcess.stdout.on("data", (data) => {
+    //     console.log(`whatsapp.py output: ${data}`);
+    //   });
+
+    //   pythonProcess.stderr.on("data", (data) => {
+    //     console.error(`whatsapp.py error: ${data}`);
+    //   });
+
+    //   pythonProcess.on("close", (code) => {
+    //     console.log(`whatsapp.py exited with code ${code}`);
+    //   });
+    // }
+
     console.log("Lead Data Stored:", newLead);
     res.json({ message: "Lead data stored successfully", lead: newLead });
   } catch (error) {

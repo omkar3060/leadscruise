@@ -34,6 +34,7 @@ import Referrals from "./components/Referrals";
 import SendEmail from "./components/SendEmail";
 import ComingSoon from "./components/ComingSoon";
 import MaintenanceBanner from "./components/MaintenanceBanner"; // Adjust path as needed
+import Whatsapp from "./components/Whatsapp"; // Adjust path as needed
 
 const Layout = () => {
   const location = useLocation();
@@ -212,7 +213,7 @@ const Layout = () => {
           path="/whatsapp"
           element={
             <ProtectedRoute>
-              <ComingSoon />
+              <ComingSoon/>
             </ProtectedRoute>
           }
         />
