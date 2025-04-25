@@ -18,10 +18,10 @@ const whatsappSettingsSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  customMessage: {
+  messages: [{
     type: String,
     required: true
-  },
+  }],
   catalogueFiles: [fileSchema]  // Array of files
 }, { timestamps: true });
 

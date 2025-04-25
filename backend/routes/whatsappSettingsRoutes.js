@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { saveSettings, getSettings, removeFile } = require("../controllers/whatsappSettingsController");
-
+const WhatsAppSettings = require("../models/WhatsAppSettings");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -49,5 +49,29 @@ router.post(
 );
 router.get("/get", getSettings);
 router.delete('/remove-file', removeFile);
+router.put("/update-whatsapp-number", async (req, res) => {
+  try {
+    const { mobileNumber, newWhatsappNumber } = req.body;
+
+    if (!mobileNumber || !newWhatsappNumber) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const updated = await WhatsAppSettings.findOneAndUpdate(
+      { mobileNumber },
+      { whatsappNumber: newWhatsappNumber },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Settings not found for this mobile number" });
+    }
+
+    res.json({ message: "WhatsApp number updated successfully", data: updated });
+  } catch (err) {
+    console.error("Error updating WhatsApp number:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 module.exports = router;

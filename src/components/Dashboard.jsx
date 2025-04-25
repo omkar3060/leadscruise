@@ -49,7 +49,7 @@ const Dashboard = () => {
         return;
       }
 
-      const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
+      const response = await axios.get(`http://localhost:5000/api/get-leads/${mobileNumber}`);
       setLeads(response.data);
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -65,7 +65,7 @@ const Dashboard = () => {
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-status/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-status/${userEmail}`);
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
         if (response.data.startTime) {
@@ -129,7 +129,7 @@ const Dashboard = () => {
         return;
       }
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
         const userSettings = response.data // Extracting 'settings' from response
 
         if (!userSettings) {
@@ -187,10 +187,10 @@ const Dashboard = () => {
       const uniqueId = localStorage.getItem("unique_id");
 
       try {
-        const credCheckRes = await axios.get(`https://api.leadscruise.com/api/check-user-credentials/${userEmail}`);
+        const credCheckRes = await axios.get(`http://localhost:5000/api/check-user-credentials/${userEmail}`);
         if (credCheckRes.status !== 200) {
           alert("Please login to your leads provider account first.");
-        navigate("/execute-task");
+          navigate("/execute-task");
           setIsStarting(false);
           return;
         }
@@ -214,7 +214,7 @@ const Dashboard = () => {
         return;
       }
 
-      const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
+      const detailsResponse = await fetch(`http://localhost:5000/api/billing/${userEmail}`);
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
         setIsStarting(false); // Reset starting state on error
@@ -222,7 +222,7 @@ const Dashboard = () => {
       }
 
       // Fetch settings
-      const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+      const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
       setSettings(response.data);
@@ -249,7 +249,7 @@ const Dashboard = () => {
       console.log("Sending the following settings to backend:", userSettings);
 
       // Send the fetched settings instead of using the state
-      const cycleResponse = await axios.post("https://api.leadscruise.com/api/cycle", {
+      const cycleResponse = await axios.post("http://localhost:5000/api/cycle", {
         sentences: userSettings.sentences,
         wordArray: userSettings.wordArray,
         h2WordArray: userSettings.h2WordArray,
@@ -274,107 +274,107 @@ const Dashboard = () => {
     }
   };
 
-const [cooldownActive, setCooldownActive] = useState(false);
-const [cooldownTime, setCooldownTime] = useState(0);
+  const [cooldownActive, setCooldownActive] = useState(false);
+  const [cooldownTime, setCooldownTime] = useState(0);
 
-// Add this useEffect to check the cooldown status when the component mounts
-useEffect(() => {
-  // Check if there's an active cooldown in localStorage
-  const cooldownEnd = localStorage.getItem("cooldownEnd");
-  
-  if (cooldownEnd) {
-    const endTime = parseInt(cooldownEnd);
-    const currentTime = new Date().getTime();
-    
-    if (currentTime < endTime) {
-      // Cooldown is still active
-      setCooldownActive(true);
-      
-      // Calculate remaining time in seconds
-      const remainingTime = Math.ceil((endTime - currentTime) / 1000);
-      setCooldownTime(remainingTime);
-      setIsDisabled(true);
-      
-      // Set up interval to update the cooldown timer
-      const interval = setInterval(() => {
-        const newCurrentTime = new Date().getTime();
-        const newRemainingTime = Math.ceil((endTime - newCurrentTime) / 1000);
-        
-        if (newRemainingTime <= 0) {
-          // Cooldown finished
-          clearInterval(interval);
-          setCooldownActive(false);
-          setCooldownTime(0);
-          setIsDisabled(false);
-          localStorage.removeItem("cooldownEnd");
-        } else {
-          setCooldownTime(newRemainingTime);
-        }
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    } else {
-      // Cooldown has expired
-      localStorage.removeItem("cooldownEnd");
-    }
-  }
-}, []);
+  // Add this useEffect to check the cooldown status when the component mounts
+  useEffect(() => {
+    // Check if there's an active cooldown in localStorage
+    const cooldownEnd = localStorage.getItem("cooldownEnd");
 
-// Modify your handleStop function
-const handleStop = async () => {
-  if (window.confirm("Are you sure you want to stop the AI?")) {
-    setIsLoading(true); // Show loading when stopping
+    if (cooldownEnd) {
+      const endTime = parseInt(cooldownEnd);
+      const currentTime = new Date().getTime();
 
-    const userEmail = localStorage.getItem("userEmail");
-    const uniqueId = localStorage.getItem("unique_id");
+      if (currentTime < endTime) {
+        // Cooldown is still active
+        setCooldownActive(true);
 
-    if (!userEmail || !uniqueId) {
-      alert("User email or mobile number is missing!");
-      setIsLoading(false);
-      return;
-    }
+        // Calculate remaining time in seconds
+        const remainingTime = Math.ceil((endTime - currentTime) / 1000);
+        setCooldownTime(remainingTime);
+        setIsDisabled(true);
 
-    try {
-      const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
-      alert(response.data.message);
+        // Set up interval to update the cooldown timer
+        const interval = setInterval(() => {
+          const newCurrentTime = new Date().getTime();
+          const newRemainingTime = Math.ceil((endTime - newCurrentTime) / 1000);
 
-      // Update the status in localStorage
-      localStorage.setItem("status", "Stopped");
-      setStatus("Stopped");
-
-      // Set cooldown for 1 minute (60 seconds)
-      const cooldownDuration = 60 * 1000; // 1 minute in milliseconds
-      const cooldownEnd = new Date().getTime() + cooldownDuration;
-      
-      // Store the cooldown end time in localStorage
-      localStorage.setItem("cooldownEnd", cooldownEnd.toString());
-      
-      // Update component state
-      setCooldownActive(true);
-      setCooldownTime(60);
-      setIsDisabled(true);
-      
-      // Set up interval to update the cooldown timer
-      const interval = setInterval(() => {
-        setCooldownTime(prevTime => {
-          if (prevTime <= 1) {
+          if (newRemainingTime <= 0) {
+            // Cooldown finished
             clearInterval(interval);
             setCooldownActive(false);
+            setCooldownTime(0);
             setIsDisabled(false);
-            return 0;
+            localStorage.removeItem("cooldownEnd");
+          } else {
+            setCooldownTime(newRemainingTime);
           }
-          return prevTime - 1;
-        });
-      }, 1000);
+        }, 1000);
 
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to stop the AI.");
-      console.error("Error stopping script:", error);
-    } finally {
-      setIsLoading(false);
+        return () => clearInterval(interval);
+      } else {
+        // Cooldown has expired
+        localStorage.removeItem("cooldownEnd");
+      }
     }
-  }
-};
+  }, []);
+
+  // Modify your handleStop function
+  const handleStop = async () => {
+    if (window.confirm("Are you sure you want to stop the AI?")) {
+      setIsLoading(true); // Show loading when stopping
+
+      const userEmail = localStorage.getItem("userEmail");
+      const uniqueId = localStorage.getItem("unique_id");
+
+      if (!userEmail || !uniqueId) {
+        alert("User email or mobile number is missing!");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.post("http://localhost:5000/api/stop", { userEmail, uniqueId });
+        alert(response.data.message);
+
+        // Update the status in localStorage
+        localStorage.setItem("status", "Stopped");
+        setStatus("Stopped");
+
+        // Set cooldown for 1 minute (60 seconds)
+        const cooldownDuration = 60 * 1000; // 1 minute in milliseconds
+        const cooldownEnd = new Date().getTime() + cooldownDuration;
+
+        // Store the cooldown end time in localStorage
+        localStorage.setItem("cooldownEnd", cooldownEnd.toString());
+
+        // Update component state
+        setCooldownActive(true);
+        setCooldownTime(60);
+        setIsDisabled(true);
+
+        // Set up interval to update the cooldown timer
+        const interval = setInterval(() => {
+          setCooldownTime(prevTime => {
+            if (prevTime <= 1) {
+              clearInterval(interval);
+              setCooldownActive(false);
+              setIsDisabled(false);
+              return 0;
+            }
+            return prevTime - 1;
+          });
+        }, 1000);
+
+      } catch (error) {
+        alert(error.response?.data?.message || "Failed to stop the AI.");
+        console.error("Error stopping script:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc"); // "asc" | "desc"
@@ -407,7 +407,7 @@ const handleStop = async () => {
       alert("No leads available to download.");
       return;
     }
-  
+
     const formattedData = leads.map((lead, index) => ({
       "Sl. No": index + 1,
       "Name": lead.name || "N/A",
@@ -416,17 +416,17 @@ const handleStop = async () => {
       "Product(s)": lead.lead_bought || "N/A",
       "Captured At": new Date(lead.createdAt).toLocaleString(),
     }));
-  
+
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "RecentLeads");
-  
+
     const today = new Date().toISOString().split("T")[0];
     const filename = `Captured_${today}.xlsx`;
-  
+
     XLSX.writeFile(workbook, filename);
   };
-  
+
   return (
     <div className={styles.dashboardContainer}>
       {/* Loading Screen */}
@@ -465,15 +465,15 @@ const handleStop = async () => {
 
         {/* Recent Leads Table */}
         <div className={styles.leadsSection}>
-        <div className={styles.mobileOnlyMessage}>
-          <p>Use Desktop to login to see recent leads captured information</p>
-        </div>
+          <div className={styles.mobileOnlyMessage}>
+            <p>Use Desktop to login to see recent leads captured information</p>
+          </div>
 
 
-        <div style={{display: "flex", justifyContent: "end"}}>
-          <button style={{ width: "10%", padding: "20px 60px" }} onClick={handleDownloadLeadsExcel}>Download</button>
-        </div>
-        <div className={styles.tableWrapper}>
+          <div style={{ display: "flex", justifyContent: "end" }}>
+            <button style={{ width: "10%", padding: "20px 60px" }} onClick={handleDownloadLeadsExcel}>Download</button>
+          </div>
+          <div className={styles.tableWrapper}>
             <table className={styles.leadsTable}>
               <thead>
                 <tr>

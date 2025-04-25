@@ -41,6 +41,23 @@ const Whatsapp = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [newWhatsappNumber, setNewWhatsappNumber] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [messages, setMessages] = useState([{ id: Date.now(), text: '' }]);
+
+  const addMessage = () => {
+    setMessages([...messages, { id: Date.now(), text: '' }]);
+  };
+
+  const removeMessage = (id) => {
+    if (messages.length >= 1) {
+      setMessages(messages.filter(msg => msg.id !== id));
+    }
+  };
+
+  const handleMessageChange = (id, text) => {
+    setMessages(messages.map(msg => msg.id === id ? { ...msg, text } : msg));
+  };
 
   // Handle file selection
   const handleFileChange = (e) => {
@@ -73,7 +90,7 @@ const Whatsapp = () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
 
     try {
-      const res = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/remove-file`, {
+      const res = await fetch(`http://localhost:5000/api/whatsapp-settings/remove-file`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -103,12 +120,23 @@ const Whatsapp = () => {
     if (!mobileNumber) return;
 
     try {
-      const res = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
+      const res = await fetch(`http://localhost:5000/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
       const data = await res.json();
 
       if (res.ok) {
         setWhatsappNumber(data.data.whatsappNumber);
-        setCustomMessage(data.data.customMessage);
+        setNewWhatsappNumber(data.data.whatsappNumber);
+
+        // Updated to access messages correctly from data.data
+        if (data.data.messages && data.data.messages.length > 0) {
+          setMessages(data.data.messages.map((text, index) => ({
+            id: Date.now() + index,
+            text
+          })));
+        } else {
+          // Default empty message
+          setMessages([{ id: Date.now(), text: '' }]);
+        }
 
         // Set the uploaded files from the database
         if (data.data.catalogueFiles && data.data.catalogueFiles.length > 0) {
@@ -138,22 +166,17 @@ const Whatsapp = () => {
   const handleSubmit = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
 
-    if (!mobileNumber || !whatsappNumber || !customMessage) {
-      return alert("All fields are required!");
+    if (!mobileNumber || !whatsappNumber || messages.length === 0 || messages.some(msg => !msg.text)) {
+      return alert("All fields are required and you need at least one message!");
     }
 
     const formData = new FormData();
     formData.append("mobileNumber", mobileNumber);
     formData.append("whatsappNumber", whatsappNumber);
-    formData.append("customMessage", customMessage);
-
-    // Add new files to the form data
-    newFiles.forEach(file => {
-      formData.append("catalogueFiles", file);
-    });
+    formData.append("messages", JSON.stringify(messages.map(msg => msg.text)));
 
     try {
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/save", {
+      const res = await fetch("http://localhost:5000/api/whatsapp-settings/save", {
         method: "POST",
         body: formData,
       });
@@ -161,9 +184,6 @@ const Whatsapp = () => {
       const data = await res.json();
       if (res.ok) {
         alert("Settings saved successfully!");
-        // Clear new files after successful upload
-        setNewFiles([]);
-        setPreviewUrls([]);
         // Refresh settings to get updated file list
         fetchSettings();
       } else {
@@ -192,6 +212,48 @@ const Whatsapp = () => {
     }
   }, []);
 
+  const updateWhatsappNumber = async () => {
+    if (whatsappNumber === newWhatsappNumber) {
+      alert("New WhatsApp number cannot be the same as the current one!");
+      return;
+    }
+    if (!newWhatsappNumber) {
+      alert("WhatsApp number cannot be empty!");
+      return;
+    }
+
+    try {
+      const mobileNumber = localStorage.getItem("mobileNumber");
+
+      const res = await fetch("http://localhost:5000/api/whatsapp-settings/update-whatsapp-number", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("WhatsApp number updated successfully!");
+        setWhatsappNumber(newWhatsappNumber);
+        setIsEditing(false);
+      } else {
+        alert(data.error || "Failed to update WhatsApp number.");
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      alert("Server error during update.");
+    }
+  };
+
+  useEffect(() => {
+    // Find all auto-expanding textareas and set their height
+    const textareas = document.querySelectorAll('.auto-expanding-input');
+    textareas.forEach(textarea => {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    });
+  }, [messages]);
+
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
       {isLoading && <LoadingScreen />}
@@ -210,122 +272,92 @@ const Whatsapp = () => {
             <h2>WhatsApp Settings</h2>
 
             <div>
+
               <div className="api-key-container">
                 <label className="api-key-label">Your WhatsApp Number:</label>
-                <input
-                  type="text"
-                  className="api-key-input"
-                  placeholder="Enter WhatsApp number..."
-                  value={whatsappNumber}
-                  onChange={(e) => setWhatsappNumber(e.target.value)}
-                />
+                {!isEditing ? (
+                  // Show API key as plain text when not in edit mode
+                  <span className="api-key-text">{newWhatsappNumber || "No Whatsapp Number Set"}</span>
+                ) : (
+                  // Show input field when in edit mode
+                  <input
+                    type="text"
+                    className="api-key-input"
+                    value={newWhatsappNumber}
+                    placeholder="Enter new API Key..."
+                    onChange={(e) => setNewWhatsappNumber(e.target.value)}
+                  />
+                )}
+
+                {!isEditing ? (
+                  // Show "Edit" button initially
+                  <button className="update-api-btn" style={{ background: "#28a745" }} onClick={() => setIsEditing(true)}>
+                    Edit
+                  </button>
+                ) : (
+                  // Show "Update API Key" button only after clicking "Edit"
+                  <button className="update-api-btn" onClick={updateWhatsappNumber}>
+                    Update WhatsappNumber
+                  </button>
+                )}
               </div>
 
-              <div className="api-key-container">
-                <label className="api-key-label">Custom Message:</label>
-                <textarea
-                  className="api-key-input"
-                  placeholder="Enter your message..."
-                  value={customMessage}
-                  onChange={(e) => setCustomMessage(e.target.value)}
-                  rows={4}
-                />
-              </div>
-
-              <div className="file-upload-container">
-                <label htmlFor="catalogueFiles" className="file-upload-label">
-                  <div className="upload-icon">
-                    <i className="fas fa-cloud-upload-alt"></i>
-                  </div>
-                  <div className="upload-text">
-                    <h3>Attach Catalogue Files</h3>
-                    <p>Drag & drop files here or click to browse</p>
-                    <span className="file-types">Supports: PDF, JPG, PNG, GIF (Max 5 files)</span>
-                  </div>
-                </label>
-                <input
-                  type="file"
-                  id="catalogueFiles"
-                  multiple
-                  accept=".pdf,image/*"
-                  className="file-input"
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              {/* Preview of newly selected files */}
-              {previewUrls.length > 0 && (
-                <div className="file-preview-container">
-                  <h4>Selected Files</h4>
-                  <div className="file-preview-grid">
-                    {newFiles.map((file, index) => (
-                      <div key={`new-${index}`} className="file-preview-item">
-                        {file.type.startsWith('image/') ? (
-                          <img src={previewUrls[index]} alt={file.name} className="file-thumbnail" />
-                        ) : (
-                          <div className="pdf-thumbnail">
-                            <i className="fas fa-file-pdf"></i>
+              <div className="message-table-container">
+                <label className="message-table-label">Messages to send as replies:</label>
+                <table className="message-table">
+                  <thead>
+                    <tr>
+                      <th className="message-column">Message</th>
+                      <th className="action-column">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {messages.map((message) => (
+                      <tr key={message.id}>
+                        <td>
+                          <div className="auto-expanding-input-container">
+                            <textarea
+                              className="auto-expanding-input"
+                              placeholder="Enter your message..."
+                              value={message.text}
+                              onChange={(e) => {
+                                handleMessageChange(message.id, e.target.value);
+                                // Auto-expand logic
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                              }}
+                              onFocus={(e) => {
+                                // Ensure height is correct on focus
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                              }}
+                              rows={1}
+                            />
                           </div>
-                        )}
-                        <div className="file-info">
-                          <p className="file-name" title={file.name}>
-                            {file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name}
-                          </p>
-                          <p className="file-size">{(file.size / 1024).toFixed(1)} KB</p>
-                        </div>
-                        <button
-                          type="button"
-                          className="remove-file-btn"
-                          onClick={() => removeFile(index)}
-                        >
-                          <i className="fas fa-times"></i>
-                        </button>
-                      </div>
+                        </td>
+                        <td className="action-cell">
+                          <button
+                            className="remove-message-btn"
+                            onClick={() => removeMessage(message.id)}
+                            disabled={messages.length === 1}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
                     ))}
-                  </div>
+                  </tbody>
+                </table>
+                <div className="button-container">
+                  <button className="add-message-btn" onClick={addMessage}>
+                    Add Message
+                  </button>
+                  <button className="save-btn" onClick={handleSubmit}>
+                    Save WhatsApp Details
+                  </button>
                 </div>
-              )}
+              </div>
 
-              {/* Display previously uploaded files */}
-              {uploadedFiles.length > 0 && (
-                <div className="file-preview-container uploaded-files">
-                  <h4>Uploaded Files</h4>
-                  <div className="file-preview-grid">
-                    {uploadedFiles.map((file) => (
-                      <div key={file._id} className="file-preview-item">
-                        {file.mimetype.startsWith('image/') ? (
-                          <img
-                            src={`https://api.leadscruise.com/${file.path}`}
-                            alt={file.originalName}
-                            className="file-thumbnail"
-                          />
-                        ) : (
-                          <div className="pdf-thumbnail">
-                            <i className="fas fa-file-pdf"></i>
-                          </div>
-                        )}
-                        <div className="file-info">
-                          <p className="file-name" title={file.originalName}>
-                            {file.originalName.length > 20 ? file.originalName.substring(0, 17) + '...' : file.originalName}
-                          </p>
-                          <p className="file-size">{(file.size / 1024).toFixed(1)} KB</p>
-                        </div>
-                        <button
-                          type="button"
-                          className="remove-file-btn"
-                          onClick={() => removeUploadedFile(file._id)}
-                        >
-                          <i className="fas fa-times"></i>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <button className="update-api-btn" onClick={handleSubmit}>
-                Save WhatsApp Details
-              </button>
             </div>
           </div>
 

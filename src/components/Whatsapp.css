@@ -174,19 +174,10 @@
   }
   
   /* Save button */
-  .save-settings-btn {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: 500;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: block;
-    margin-top: 30px;
-    width: 100%;
+  .save-btn {
+    width: fit-content;
+    margin-top: 10px;
+    margin-left: 10px;
   }
   
   .save-settings-btn:hover {
@@ -198,9 +189,95 @@
   .save-settings-btn:active {
     transform: translateY(0);
   }
+
+  .message-table-container {
+    margin-bottom: 20px;
+  }
   
-  /* Font Awesome icons */
-  /* Make sure to include Font Awesome in your project:
-  Add this to your HTML head:
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-  */
+  .message-table-label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: larger;
+    margin-top: 10px;
+  }
+  
+  .message-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    table-layout: fixed;
+  }
+  
+  .message-table th,
+  .message-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+  }
+  
+  .message-table th {
+    background-color: #f4f4f4;
+    text-align: left;
+  }
+  
+  .message-column {
+    width: 80%;
+  }
+  
+  .action-column {
+    width: 20%;
+  }
+  
+  .action-cell {
+    text-align: center;
+  }
+  
+  .auto-expanding-input-container {
+    width: 100%;
+    position: relative;
+  }
+  
+  .auto-expanding-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    min-height: 38px;
+    line-height: 1.4;
+    transition: height 0.1s ease;
+    font-size: 14px;
+  }
+  
+  .add-message-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px; 
+    width: fit-content;
+  }
+  
+  .remove-message-btn {
+    background-color: #f44336;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .remove-message-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  .button-container {
+    display: flex;
+    
+  }
