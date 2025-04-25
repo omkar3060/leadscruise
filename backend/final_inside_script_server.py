@@ -228,7 +228,7 @@ def redirect_and_refresh(driver, wait):
         time.sleep(3)  # Static wait
         buyer_balance_element = driver.find_element(By.ID, "cstm_bl_bal1")
         buyer_balance = int(buyer_balance_element.text)
-        print(f"Buyer balance found: {buyer_balance}",flush=True)
+        print(f"BUYER_BALANCE:{buyer_balance}", flush=True)
         
 
         if buyer_balance > 0:
@@ -332,7 +332,7 @@ def redirect_and_refresh(driver, wait):
                 print("Waiting for 10 seconds...",flush=True)
                 time.sleep(10)  # Static wait for refresh
         else:
-            print("Buyer balance is 0. Exiting the function.",flush=True)
+            print("ZERO_BALANCE_DETECTED", flush=True)
             return
     except Exception as e:
         print(f"Error while checking buyer balance: {e}",flush=True)

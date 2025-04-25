@@ -596,9 +596,34 @@ app.post("/api/cycle", async (req, res) => {
   let error = "";
 
   pythonProcess.stdout.on("data", (data) => {
+    const dataString = data.toString();
     console.log("Python script stdout:", data.toString());
     result += data.toString();
-  });
+      // Check for buyer balance information
+      if (dataString.includes("BUYER_BALANCE:")) {
+        const balanceMatch = dataString.match(/BUYER_BALANCE:(\d+)/);
+        if (balanceMatch && balanceMatch[1]) {
+          const balance = parseInt(balanceMatch[1], 10);
+          
+          // Update user's balance in the database
+          User.findOneAndUpdate(
+            { email: userEmail },
+            { buyerBalance: balance },
+            { new: true }
+          ).then((updatedUser) => {
+            console.log(`Updated buyer balance for ${userEmail} to ${balance}`);
+          }).catch(err => {
+            console.error("Error updating buyer balance:", err);
+          });
+        }
+      }
+      
+      // Check for zero balance alert
+      if (dataString.includes("ZERO_BALANCE_DETECTED")) {
+        // Just log this for now, the balance update above will handle setting to 0
+        console.log("Zero balance detected for user:", userEmail);
+      }
+    });
 
   pythonProcess.stderr.on("data", (data) => {
     console.error("Python script stderr:", data.toString());
@@ -731,6 +756,23 @@ function cleanupDisplay(uniqueId) {
     }
   }
 }
+
+app.get("/api/user/balance", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    res.json({ 
+      buyerBalance: user.buyerBalance,
+      hasZeroBalance: user.buyerBalance === 0
+    });
+  } catch (error) {
+    console.error("Error fetching user balance:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 // Define Schema
 const leadSchema = new mongoose.Schema({

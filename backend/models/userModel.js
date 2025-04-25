@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
     sessionId: { type: String, default: null }, // Added for session management
     adminPassword: { type: String},
     autoStartEnabled: {type: Boolean,default: false},
+    buyerBalance: { type: Number, default: null },
   },
   { timestamps: true } // Adds createdAt and updatedAt fields
 );
