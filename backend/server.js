@@ -480,7 +480,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("http://localhost:5000/api/cycle", {
+        await axios.post("https://api.leadscruise.com/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,
@@ -759,7 +759,8 @@ function cleanupDisplay(uniqueId) {
 
 app.get("/api/user/balance", async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.user.email });
+    const { email } = req.query;
+    const user = await User.findOne({ email});
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }

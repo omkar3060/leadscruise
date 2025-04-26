@@ -62,7 +62,7 @@ const Master = () => {
   const fetchSubscriptionMetrics = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("http://localhost:5000/api/get-subscription-metrics");
+      const response = await axios.get("https://api.leadscruise.com/api/get-subscription-metrics");
       setSubscriptionMetrics(response.data);
     } catch (error) {
       console.error("Error fetching subscription metrics:", error);
@@ -74,7 +74,7 @@ const Master = () => {
   const fetchSubscriptions = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("http://localhost:5000/api/get-all-subscriptions");
+      const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions");
       setSubscriptions(response.data);
       fetchUploadedInvoices(response.data);
     } catch (error) {
@@ -124,7 +124,7 @@ const Master = () => {
       await Promise.all(
         subs.map(async (sub) => {
           try {
-            const response = await axios.get(`http://localhost:5000/api/get-invoice/${sub.unique_id}`, {
+            const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${sub.unique_id}`, {
               responseType: "blob", // This is necessary to handle binary PDF data
             });
 
@@ -156,7 +156,7 @@ const Master = () => {
     if (!isMaintenance) {
       try {
         // 1. Take Status Snapshot
-        const snapshotResponse = await fetch("http://localhost:5000/api/take-snapshot", {
+        const snapshotResponse = await fetch("https://api.leadscruise.com/api/take-snapshot", {
           method: "POST",
         });
 
@@ -166,13 +166,13 @@ const Master = () => {
         console.log("✅ Snapshots taken:", snapshotResult.message);
 
         // 2. Fetch all active users
-        const response = await axios.get("http://localhost:5000/api/users", {
+        const response = await axios.get("https://api.leadscruise.com/api/users", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
 
-        const paymentResponse = await axios.get("http://localhost:5000/api/get-all-subscriptions", {
+        const paymentResponse = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -189,7 +189,7 @@ const Master = () => {
         // 3. For each active user, get latestPayment.unique_id and stop their script
         for (const user of activeUsers) {
           // Fetch latest payment
-          const paymentRes = await fetch(`http://localhost:5000/api/latest-payment?email=${user.email}`);
+          const paymentRes = await fetch(`https://api.leadscruise.com/api/latest-payment?email=${user.email}`);
           const payment = await paymentRes.json();
 
           if (!payment?.unique_id) {
@@ -197,7 +197,7 @@ const Master = () => {
             continue;
           }
 
-          const stopRes = await fetch("http://localhost:5000/api/stop", {
+          const stopRes = await fetch("https://api.leadscruise.com/api/stop", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userEmail: user.email, uniqueId: payment.unique_id }),
@@ -218,7 +218,7 @@ const Master = () => {
     }
     else {
       try {
-        const restartRes = await fetch("http://localhost:5000/api/restart-running", {
+        const restartRes = await fetch("https://api.leadscruise.com/api/restart-running", {
           method: "POST",
         });
         const restartResJson = await restartRes.json();

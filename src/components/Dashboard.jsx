@@ -41,19 +41,27 @@ const Dashboard = () => {
   });
   const [buyerBalance, setBuyerBalance] = useState(null);
   const [showZeroBalanceAlert, setShowZeroBalanceAlert] = useState(false);
-
+  const [isVisible, setIsVisible] = useState(true);
   // Function to fetch balance
   const fetchBuyerBalance = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/balance');
+      // Get user email from localStorage
+      const userEmail = localStorage.getItem('userEmail');
+      
+      if (!userEmail) {
+        console.error('Please login to your leads provider account first.');
+        return;
+      }
+      
+      const response = await fetch(`https://api.leadscruise.com/api/user/balance?email=${userEmail}`);
       const data = await response.json();
-
+  
       setBuyerBalance(data.buyerBalance);
       setShowZeroBalanceAlert(data.hasZeroBalance);
     } catch (error) {
       console.error('Error fetching buyer balance:', error);
     }
-  }, []);
+  });
 
   // Check balance on component mount and when status changes
   useEffect(() => {
@@ -78,8 +86,8 @@ const Dashboard = () => {
             </svg>
           </div>
           <p className="maintenance-message">
-            <span className="mobile-message">System maintenance in progress</span>
-            <span className="desktop-message">System maintenance is currently in progress. You may experience temporary disruptions.</span>
+            <span className="mobile-message">Buyer balance is zero</span>
+            <span className="desktop-message">Buyer balance is zero</span>
           </p>
         </div>
         <button
@@ -105,7 +113,7 @@ const Dashboard = () => {
         return;
       }
 
-      const response = await axios.get(`http://localhost:5000/api/get-leads/${mobileNumber}`);
+      const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
       setLeads(response.data);
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -121,7 +129,7 @@ const Dashboard = () => {
           return;
         }
 
-        const response = await axios.get(`http://localhost:5000/api/get-status/${userEmail}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/get-status/${userEmail}`);
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
         if (response.data.startTime) {
@@ -185,7 +193,7 @@ const Dashboard = () => {
         return;
       }
       try {
-        const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
         const userSettings = response.data // Extracting 'settings' from response
 
         if (!userSettings) {
@@ -243,7 +251,7 @@ const Dashboard = () => {
       const uniqueId = localStorage.getItem("unique_id");
 
       try {
-        const credCheckRes = await axios.get(`http://localhost:5000/api/check-user-credentials/${userEmail}`);
+        const credCheckRes = await axios.get(`https://api.leadscruise.com/api/check-user-credentials/${userEmail}`);
         if (credCheckRes.status !== 200) {
           alert("Please login to your leads provider account first.");
           navigate("/execute-task");
@@ -270,7 +278,7 @@ const Dashboard = () => {
         return;
       }
 
-      const detailsResponse = await fetch(`http://localhost:5000/api/billing/${userEmail}`);
+      const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
         setIsStarting(false); // Reset starting state on error
@@ -278,7 +286,7 @@ const Dashboard = () => {
       }
 
       // Fetch settings
-      const response = await axios.get(`http://localhost:5000/api/get-settings/${userEmail}`);
+      const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
       setSettings(response.data);
@@ -305,7 +313,7 @@ const Dashboard = () => {
       console.log("Sending the following settings to backend:", userSettings);
 
       // Send the fetched settings instead of using the state
-      const cycleResponse = await axios.post("http://localhost:5000/api/cycle", {
+      const cycleResponse = await axios.post("https://api.leadscruise.com/api/cycle", {
         sentences: userSettings.sentences,
         wordArray: userSettings.wordArray,
         h2WordArray: userSettings.h2WordArray,
@@ -391,7 +399,7 @@ const Dashboard = () => {
       }
 
       try {
-        const response = await axios.post("http://localhost:5000/api/stop", { userEmail, uniqueId });
+        const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
         alert(response.data.message);
 
         // Update the status in localStorage
@@ -486,7 +494,7 @@ const Dashboard = () => {
   return (
     <div className={styles.dashboardContainer}>
 
-      {showZeroBalanceAlert && <ZeroBalanceAlert />}
+      {showZeroBalanceAlert && status=="Running" && <ZeroBalanceAlert />}
 
       {/* Loading Screen */}
       {isLoading && <LoadingScreen />}
