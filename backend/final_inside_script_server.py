@@ -8,6 +8,8 @@ from selenium.webdriver.common.by import By
 from pyvirtualdisplay import Display
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 import os
 import time
 import subprocess
@@ -442,8 +444,10 @@ def main():
     # Start virtual display
     display = Display(visible=0, size=(1920, 1080))
     display.start()
-    
+
     driver = webdriver.Chrome(options=chrome_options)
+    #service = Service('/usr/local/bin/chromedriver')
+    #driver = webdriver.Chrome(service=service, options=chrome_options)
     #driver.minimize_window() 
     driver.get("https://seller.indiamart.com/")  # Navigate to IndiaMART seller platform
     wait = WebDriverWait(driver, 10)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
@@ -45,35 +45,32 @@ const Dashboard = () => {
   // Function to fetch balance
   const fetchBuyerBalance = useCallback(async () => {
     try {
-      // Get user email from localStorage
       const userEmail = localStorage.getItem('userEmail');
-      
+  
       if (!userEmail) {
         console.error('Please login to your leads provider account first.');
         return;
       }
-      
+  
       const response = await fetch(`https://api.leadscruise.com/api/user/balance?email=${userEmail}`);
       const data = await response.json();
   
       setBuyerBalance(data.buyerBalance);
-      setShowZeroBalanceAlert(data.hasZeroBalance);
     } catch (error) {
       console.error('Error fetching buyer balance:', error);
     }
-  });
-
-  // Check balance on component mount and when status changes
+  }, []);
+  
   useEffect(() => {
+    // If status changes, check balance immediately
     fetchBuyerBalance();
-
-    // Set up polling for balance checks
+  
     const balanceInterval = setInterval(() => {
       fetchBuyerBalance();
-    }, 60000); // Check every minute
-
+    }, 60000); // Check every 60 seconds
+  
     return () => clearInterval(balanceInterval);
-  }, [fetchBuyerBalance, status]);
+  }, [status]); // Remove fetchBuyerBalance from dependency 
 
   // Add zero balance alert component
   const ZeroBalanceAlert = () => (
@@ -90,18 +87,17 @@ const Dashboard = () => {
             <span className="desktop-message">Buyer balance is zero</span>
           </p>
         </div>
-        <button
-          className="maintenance-close-button"
-          onClick={() => setIsVisible(false)}
-          aria-label="Dismiss maintenance notification"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
     </div>
   );
+
+    
+  const zeroBalanceAlertMemo = useMemo(() => {
+    if (buyerBalance === 0 && status === "Running") {
+      return <ZeroBalanceAlert />;
+    }
+    return null;
+  }, [buyerBalance, status]);
 
 
   // Fetch leads from backend
@@ -494,7 +490,7 @@ const Dashboard = () => {
   return (
     <div className={styles.dashboardContainer}>
 
-      {showZeroBalanceAlert && status=="Running" && <ZeroBalanceAlert />}
+       {zeroBalanceAlertMemo}
 
       {/* Loading Screen */}
       {isLoading && <LoadingScreen />}
