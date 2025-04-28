@@ -11,6 +11,7 @@ const settingsRoutes = require("./routes/settingsRoutes");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const fs = require("fs");
+const readline = require('readline');
 const Payment = require("./models/Payment");
 const Settings = require('./models/Settings'); // adjust the path if needed
 const paymentRoutes = require("./routes/paymentRoutes");
@@ -841,15 +842,8 @@ app.post("/api/store-lead", async (req, res) => {
     // Increment lead count
     userCounter.leadCount += 1;
     await userCounter.save();
-    if (userCounter.leadCount >= userCounter.maxCaptures) {
-      console.log("Lead limit reached for user:", user_mobile_number);
-      return res.status(403).json({
-        error: "Lead limit reached. Cannot capture more leads today.",
-      });
-    }
 
     console.log("Lead Data Stored:", newLead);
-    res.json({ message: "Lead data stored successfully", lead: newLead });
 
     // 🚀 Fetch WhatsApp settings
     const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
@@ -906,6 +900,7 @@ app.post("/api/store-lead", async (req, res) => {
         // Do not reject or resolve anything, let it stay running
       });
     }
+    res.json({ message: "Lead data stored successfully", lead: newLead });
 
   } catch (error) {
     console.error("Error saving lead:", error);
