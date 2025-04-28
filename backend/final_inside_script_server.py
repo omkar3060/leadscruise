@@ -9,7 +9,7 @@ from pyvirtualdisplay import Display
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+# from webdriver_manager.chrome import ChromeDriverManager
 import os
 import time
 import subprocess
@@ -146,11 +146,11 @@ def go_to_message_center_and_click(driver):
         left_name = driver.find_element(By.XPATH, "//div[@id='left-name']")
         print(f"Left Name: {left_name.text}", flush=True)
 
-        mobile_number = driver.find_element(By.XPATH, "//span[@class='fl mxwdt85 ml5 mt2 wbba']")
+        mobile_number = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 mt2 wbba']")
         print(f"Mobile Number: {mobile_number.text}", flush=True)
 
         try:
-            email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt85 ml5 wbba']").text
+            email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 wbba']").text
             print(f"Email ID: {email_id}", flush=True)
         except:
             email_id = None

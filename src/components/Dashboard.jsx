@@ -83,8 +83,8 @@ const Dashboard = () => {
             </svg>
           </div>
           <p className="maintenance-message">
-            <span className="mobile-message">Buyer balance is zero</span>
-            <span className="desktop-message">Buyer balance is zero</span>
+            <span className="mobile-message">Dear user, your buyer balance is zero, add more buyer balance or wait till next day to capture more leads</span>
+            <span className="desktop-message">Dear user, your buyer balance is zero, add more buyer balance or wait till next day to capture more leads</span>
           </p>
         </div>
       </div>
