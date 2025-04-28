@@ -74,4 +74,25 @@ router.put("/update-whatsapp-number", async (req, res) => {
   }
 });
 
+router.get('/verification-code/:mobileNumber', async (req, res) => {
+  try {
+    const { mobileNumber } = req.params;
+    if (!mobileNumber) {
+      return res.status(400).json({ error: "Mobile number is required" });
+    }
+
+    const settings = await WhatsAppSettings.findOne({ mobileNumber });
+
+    if (!settings) {
+      return res.status(404).json({ error: "Settings not found" });
+    }
+
+    res.json({ verificationCode: settings.verificationCode || null });
+
+  } catch (err) {
+    console.error("Error fetching verification code:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 module.exports = router;

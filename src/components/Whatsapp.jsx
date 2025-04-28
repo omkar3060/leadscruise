@@ -38,13 +38,10 @@ const Whatsapp = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customMessage, setCustomMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [newFiles, setNewFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
   const [newWhatsappNumber, setNewWhatsappNumber] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [messages, setMessages] = useState([{ id: Date.now(), text: '' }]);
-
+  const [verificationCode, setVerificationCode] = useState('');
   const addMessage = () => {
     setMessages([...messages, { id: Date.now(), text: '' }]);
   };
@@ -59,73 +56,18 @@ const Whatsapp = () => {
     setMessages(messages.map(msg => msg.id === id ? { ...msg, text } : msg));
   };
 
-  // Handle file selection
-  const handleFileChange = (e) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      setNewFiles(filesArray);
-
-      // Create preview URLs for the selected files
-      const filePreviewUrls = filesArray.map(file => {
-        if (file.type.startsWith('image/')) {
-          return URL.createObjectURL(file);
-        } else if (file.type === 'application/pdf') {
-          return '/pdf-icon.png'; // Replace with path to your PDF icon
-        }
-        return '/file-icon.png'; // Replace with path to your generic file icon
-      });
-
-      setPreviewUrls(filePreviewUrls);
-    }
-  };
-
-  // Remove a file from the selection
-  const removeFile = (index) => {
-    setNewFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-    setPreviewUrls(prevUrls => prevUrls.filter((_, i) => i !== index));
-  };
-
-  // Remove a previously uploaded file
-  const removeUploadedFile = async (fileId) => {
-    const mobileNumber = localStorage.getItem("mobileNumber");
-
-    try {
-      const res = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/remove-file`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mobileNumber,
-          fileId
-        }),
-      });
-
-      if (res.ok) {
-        // Remove file from state
-        setUploadedFiles(prevFiles => prevFiles.filter(file => file._id !== fileId));
-        alert('File removed successfully');
-      } else {
-        const data = await res.json();
-        alert(data.error || 'Error removing file');
-      }
-    } catch (err) {
-      console.error('Error removing file:', err);
-      alert('Server error while removing file');
-    }
-  };
-
   const fetchSettings = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
     if (!mobileNumber) return;
 
     try {
-      const res = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
+      const res = await fetch(`http://localhost:5000/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
       const data = await res.json();
 
       if (res.ok) {
         setWhatsappNumber(data.data.whatsappNumber);
         setNewWhatsappNumber(data.data.whatsappNumber);
+        setVerificationCode(data.data.verificationCode || '');
 
         // Updated to access messages correctly from data.data
         if (data.data.messages && data.data.messages.length > 0) {
@@ -137,31 +79,38 @@ const Whatsapp = () => {
           // Default empty message
           setMessages([{ id: Date.now(), text: '' }]);
         }
-
-        // Set the uploaded files from the database
-        if (data.data.catalogueFiles && data.data.catalogueFiles.length > 0) {
-          setUploadedFiles(data.data.catalogueFiles);
-        }
       }
     } catch (err) {
       console.error("Error fetching settings:", err);
     }
   };
 
+  const fetchVerificationCode = async () => {
+    const mobileNumber = localStorage.getItem("mobileNumber");
+    if (!mobileNumber) return;
+    try {
+      const response = await axios.get(`http://localhost:5000/api/whatsapp-settings/verification-code/${mobileNumber}`);
+      const code = response.data.verificationCode;
+      console.log("Fetched verification code:", code);
+      setVerificationCode(code);
+    } catch (error) {
+      console.error("Error fetching verification code:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchVerificationCode(); // initial fetch
+  
+    const intervalId = setInterval(() => {
+      fetchVerificationCode();
+    }, 3000); // Refresh every 3 seconds
+  
+    return () => clearInterval(intervalId); // Stop when component unmounts
+  }, []);  
+
   useEffect(() => {
     fetchSettings();
-  }, []);
-
-  // Clean up preview URLs when component unmounts
-  useEffect(() => {
-    return () => {
-      previewUrls.forEach(url => {
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
-    };
-  }, [previewUrls]);
+  }, []);  
 
   const handleSubmit = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
@@ -176,7 +125,7 @@ const Whatsapp = () => {
     formData.append("messages", JSON.stringify(messages.map(msg => msg.text)));
 
     try {
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/save", {
+      const res = await fetch("http://localhost:5000/api/whatsapp-settings/save", {
         method: "POST",
         body: formData,
       });
@@ -225,7 +174,7 @@ const Whatsapp = () => {
     try {
       const mobileNumber = localStorage.getItem("mobileNumber");
 
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/update-whatsapp-number", {
+      const res = await fetch("http://localhost:5000/api/whatsapp-settings/update-whatsapp-number", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
@@ -301,6 +250,14 @@ const Whatsapp = () => {
                   </button>
                 )}
               </div>
+
+              {/* Verification Code Display */}
+              {verificationCode && (
+                <div className="verification-code-container">
+                  <label className="verification-code-label">Verification Code:</label>
+                  <span className="verification-code">{verificationCode}</span>
+                </div>
+              )}
 
               <div className="message-table-container">
                 <label className="message-table-label">Messages to send as replies:</label>

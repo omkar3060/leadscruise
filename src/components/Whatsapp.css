@@ -281,3 +281,31 @@
     display: flex;
     
   }
+
+  .verification-code-container {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .verification-code-label {
+    font-weight: bold;
+    margin-right: 10px;
+    color: #495057;
+  }
+  
+  .verification-code {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    font-weight: bold;
+    color: #28a745;
+    letter-spacing: 1px;
+    background-color: #e9f7ef;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px dashed #28a745;
+  }

@@ -2,7 +2,8 @@ const WhatsAppSettings = require("../models/WhatsAppSettings");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
+const readline = require('readline');
+const { spawn } = require('child_process');
 // Set up multer storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -42,90 +43,98 @@ const upload = multer({
 // Modified controller
 exports.saveSettings = async (req, res) => {
   try {
-      const { mobileNumber, whatsappNumber, messages } = req.body;
-      
-      // Parse messages from JSON string if needed
-      const parsedMessages = typeof messages === 'string' ? JSON.parse(messages) : messages;
-      
-      if (!mobileNumber || !whatsappNumber || !parsedMessages || parsedMessages.length === 0) {
-        // Delete uploaded files if validation fails
-        if (req.files && req.files.length > 0) {
-          req.files.forEach(file => {
-            fs.unlinkSync(file.path);
-          });
-        }
-        return res.status(400).json({ error: "All fields are required" });
-      }
-      
-      const updated = await WhatsAppSettings.findOneAndUpdate(
-        { mobileNumber },
-        {
-          whatsappNumber,
-          messages: parsedMessages,
-        },
-        { upsert: true, new: true }
-      );
+    const { mobileNumber, whatsappNumber, messages } = req.body;
 
-    // const { spawn } = require('child_process');
-    // const receiverNumber = "9741076333"; // Constant receiver number
-    
-    // // Convert catalogueFiles to JSON string for passing to script
-    // const catalogueFilesJSON = JSON.stringify(catalogueFiles);
-    
+    const parsedMessages = typeof messages === 'string' ? JSON.parse(messages) : messages;
+
+    if (!mobileNumber || !whatsappNumber || !parsedMessages || parsedMessages.length === 0) {
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => fs.unlinkSync(file.path));
+      }
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const updated = await WhatsAppSettings.findOneAndUpdate(
+      { mobileNumber },
+      { whatsappNumber, messages: parsedMessages },
+      { upsert: true, new: true }
+    );
+
+    // const receiverNumber = "9741076333";
+    // const messagesJSON = JSON.stringify(parsedMessages);
+
     // console.log("Launching WhatsApp script with parameters:");
     // console.log("WhatsApp Number:", whatsappNumber);
-    // console.log("Custom Message:", customMessage);
     // console.log("Receiver Number:", receiverNumber);
-    // console.log("Catalogue Files Count:", catalogueFiles.length);
 
-    // // Set stdio option to 'inherit' to show output in the parent process terminal
-    // const pythonProcess = spawn('python', [
+    // let verificationCode = null; // 👈 define once here
+
+    // // Start the Python process
+    // const pythonProcess = spawn('python3', [
     //   'whatsapp.py',
     //   whatsappNumber,
-    //   customMessage,
-    //   catalogueFilesJSON,
-    //   receiverNumber
-    // ], {
-    //   stdio: ['ignore', 'inherit', 'inherit']
+    //   messagesJSON,
+    //   receiverNumber,
+    // ]);
+
+    // const rl = readline.createInterface({ input: pythonProcess.stdout });
+
+    // rl.on('line', async (line) => {
+    //   console.log(`Python output: ${line}`);
+
+    //   const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
+    //   if (codeMatch && codeMatch[1]) {
+    //     verificationCode = codeMatch[1]; // 👈 just assign, no const
+
+    //     console.log(`Verification code captured: ${verificationCode}`);
+
+    //     // Update the verificationCode immediately in DB
+    //     await WhatsAppSettings.findOneAndUpdate(
+    //       { mobileNumber },
+    //       { verificationCode },
+    //       { new: true }
+    //     );
+
+    //     console.log("Verification code updated in DB");
+    //   }
     // });
 
-    // // Alternative approach using event listeners if inherit doesn't work
-    // // This keeps the original code but ensures it doesn't buffer output
-    // pythonProcess.stdout && pythonProcess.stdout.on('data', (data) => {
-    //   process.stdout.write(`WhatsApp script: ${data}`);
-    // });
-
-    // pythonProcess.stderr && pythonProcess.stderr.on('data', (data) => {
-    //   process.stderr.write(`WhatsApp script error: ${data}`);
+    // pythonProcess.stderr.on('data', (data) => {
+    //   console.error(`Python error: ${data}`);
     // });
 
     // pythonProcess.on('close', (code) => {
     //   console.log(`WhatsApp script exited with code ${code}`);
+    //   // Do not reject or resolve anything, let it stay running
     // });
-    res.json({ message: "Settings saved successfully", data: updated });
-    
+
+    // // ✅ Send response IMMEDIATELY after starting the Python script
+    res.json({
+      message: "Settings saved successfully.",
+      data: updated,
+    });
+
   } catch (err) {
     console.error("Error saving WhatsApp settings:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-
 exports.getSettings = async (req, res) => {
   try {
     // Change from req.params to req.query
     const { mobileNumber } = req.query;
-    
+
     if (!mobileNumber) {
       return res.status(400).json({ error: "Mobile number is required" });
     }
-    
+
     const settings = await WhatsAppSettings.findOne({ mobileNumber });
-    
+
     if (!settings) {
       return res.status(404).json({ error: "Settings not found" });
     }
-    
+
     res.json({ data: settings });
   } catch (err) {
     console.error("Error fetching WhatsApp settings:", err);

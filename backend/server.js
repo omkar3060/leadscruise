@@ -480,7 +480,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("https://api.leadscruise.com/api/cycle", {
+        await axios.post("http://localhost:5000/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,
@@ -848,37 +848,65 @@ app.post("/api/store-lead", async (req, res) => {
       });
     }
 
-    // 🚀 Fetch WhatsApp settings
-    // const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
-
-    // if (!settings || !settings.whatsappNumber || !settings.customMessage) {
-    //   console.warn("No WhatsApp settings found for this email");
-    // } else {
-    //   const { whatsappNumber, customMessage } = settings;
-
-    //   // 🧠 Send to whatsapp.py
-    //   const pythonProcess = spawn("python3", [
-    //     "whatsapp.py",
-    //     mobile,                 // Lead's mobile number
-    //     customMessage,          // Message from settings
-    //     whatsappNumber          // Sender's WhatsApp number
-    //   ]);
-
-    //   pythonProcess.stdout.on("data", (data) => {
-    //     console.log(`whatsapp.py output: ${data}`);
-    //   });
-
-    //   pythonProcess.stderr.on("data", (data) => {
-    //     console.error(`whatsapp.py error: ${data}`);
-    //   });
-
-    //   pythonProcess.on("close", (code) => {
-    //     console.log(`whatsapp.py exited with code ${code}`);
-    //   });
-    // }
-
     console.log("Lead Data Stored:", newLead);
     res.json({ message: "Lead data stored successfully", lead: newLead });
+
+    // 🚀 Fetch WhatsApp settings
+    const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
+
+    if (!settings || !settings.whatsappNumber || !settings.messages) {
+    console.warn("No WhatsApp settings found for this email");
+    } else {
+      const receiverNumber = mobile; // Use the mobile number from the lead
+      const messagesJSON = JSON.stringify(settings.messages);
+      const whatsappNumber = settings.whatsappNumber;
+  
+      console.log("Launching WhatsApp script with parameters:");
+      console.log("WhatsApp Number:", whatsappNumber);
+      console.log("Receiver Number:", receiverNumber);
+  
+      let verificationCode = null; // 👈 define once here
+  
+      // Start the Python process
+      const pythonProcess = spawn('python3', [
+        'whatsapp.py',
+        whatsappNumber,
+        messagesJSON,
+        receiverNumber,
+      ]);
+  
+      const rl = readline.createInterface({ input: pythonProcess.stdout });
+  
+      rl.on('line', async (line) => {
+        console.log(`Python output: ${line}`);
+  
+        const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
+        if (codeMatch && codeMatch[1]) {
+          verificationCode = codeMatch[1]; // 👈 just assign, no const
+  
+          console.log(`Verification code captured: ${verificationCode}`);
+  
+          // Update the verificationCode immediately in DB
+          await WhatsAppSettings.findOneAndUpdate(
+            { mobileNumber },
+            { verificationCode },
+            { new: true }
+          );
+  
+          console.log("Verification code updated in DB");
+        }
+      });
+  
+      pythonProcess.stderr.on('data', (data) => {
+        console.error(`Python error: ${data}`);
+      });
+  
+      pythonProcess.on('close', (code) => {
+        console.log(`WhatsApp script exited with code ${code}`);
+        // Do not reject or resolve anything, let it stay running
+      });
+    }
+
   } catch (error) {
     console.error("Error saving lead:", error);
     res.status(500).json({ error: "Internal Server Error" });

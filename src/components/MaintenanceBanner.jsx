@@ -7,7 +7,7 @@ const MaintenanceBanner = () => {
 
   const checkMaintenanceStatus = async () => {
     try {
-      const res = await fetch("https://api.leadscruise.com/api/maintenance-status");
+      const res = await fetch("http://localhost:5000/api/maintenance-status");
       const data = await res.json();
       setIsMaintenance(data.maintenanceOngoing);
     } catch (error) {

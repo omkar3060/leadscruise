@@ -22,6 +22,9 @@ const whatsappSettingsSchema = new mongoose.Schema({
     type: String,
     required: true
   }],
+  verificationCode: {
+    type: String,
+  },
   catalogueFiles: [fileSchema]  // Array of files
 }, { timestamps: true });
 
