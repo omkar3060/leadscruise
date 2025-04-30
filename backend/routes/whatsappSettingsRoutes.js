@@ -59,7 +59,10 @@ router.put("/update-whatsapp-number", async (req, res) => {
 
     const updated = await WhatsAppSettings.findOneAndUpdate(
       { mobileNumber },
-      { whatsappNumber: newWhatsappNumber },
+      {
+        $set: { whatsappNumber: newWhatsappNumber },
+        $unset: { verificationCode: "" }
+      },
       { new: true }
     );
 
