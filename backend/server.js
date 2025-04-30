@@ -481,7 +481,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("http://localhost:5000/api/cycle", {
+        await axios.post("https://api.leadscruise.com/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,
@@ -792,18 +792,17 @@ const WhatsAppSettings = require("./models/WhatsAppSettings");
 app.post("/api/store-lead", async (req, res) => {
   try {
     const { name, email, mobile, user_mobile_number, lead_bought } = req.body;
-
+    
     if (!name || !mobile || !user_mobile_number || !lead_bought) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-
+    
     // Fetch user lead counter
     let userCounter = await UserLeadCounter.findOne({ user_mobile_number });
-
     if (!userCounter) {
       userCounter = new UserLeadCounter({ user_mobile_number, leadCount: 0 });
     }
-
+    
     // Stop script if limit is reached
     if (userCounter.leadCount >= userCounter.maxCaptures) {
       console.log("Lead limit reached for user:", user_mobile_number);
@@ -811,23 +810,23 @@ app.post("/api/store-lead", async (req, res) => {
         error: "Lead limit reached. Cannot capture more leads today.",
       });
     }
-
-    // Before storing the new lead
+    
+    // Check for duplicate leads
     const existingLead = await Lead.findOne({
       mobile,
       user_mobile_number,
       lead_bought,
     });
-
+    
     // If duplicate found within last X minutes
     if (existingLead) {
       const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
       if (timeDiff < 300) { // e.g. within 5 minutes
         console.log("Duplicate lead detected. Skipping.");
-        return;
+        return res.status(409).json({ error: "Duplicate lead detected" });
       }
     }
-
+    
     // Store the new lead
     const newLead = new Lead({
       name,
@@ -838,70 +837,122 @@ app.post("/api/store-lead", async (req, res) => {
       createdAt: new Date(),
     });
     await newLead.save();
-
+    
     // Increment lead count
     userCounter.leadCount += 1;
     await userCounter.save();
-
+    
     console.log("Lead Data Stored:", newLead);
-
-    // 🚀 Fetch WhatsApp settings
+    
+    // Fetch WhatsApp settings
     const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
-
+    
     if (!settings || !settings.whatsappNumber || !settings.messages) {
-    console.warn("No WhatsApp settings found for this email");
+      console.warn("No WhatsApp settings found for this user");
+      return res.json({ message: "Lead data stored successfully", lead: newLead });
     } else {
       const receiverNumber = mobile; // Use the mobile number from the lead
       const messagesJSON = JSON.stringify(settings.messages);
       const whatsappNumber = settings.whatsappNumber;
-  
+      
       console.log("Launching WhatsApp script with parameters:");
       console.log("WhatsApp Number:", whatsappNumber);
       console.log("Receiver Number:", receiverNumber);
-  
-      let verificationCode = null; // 👈 define once here
-  
-      // Start the Python process
-      const pythonProcess = spawn('python3', [
-        'whatsapp.py',
-        whatsappNumber,
-        messagesJSON,
-        receiverNumber,
-      ]);
-  
-      const rl = readline.createInterface({ input: pythonProcess.stdout });
-  
-      rl.on('line', async (line) => {
-        console.log(`Python output: ${line}`);
-  
-        const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
-        if (codeMatch && codeMatch[1]) {
-          verificationCode = codeMatch[1]; // 👈 just assign, no const
-  
-          console.log(`Verification code captured: ${verificationCode}`);
-  
-          // Update the verificationCode immediately in DB
-          await WhatsAppSettings.findOneAndUpdate(
-            { mobileNumber },
-            { verificationCode },
-            { new: true }
-          );
-  
-          console.log("Verification code updated in DB");
-        }
+      
+      // Create a promise to handle the Python process completion
+      const pythonProcessPromise = new Promise((resolve, reject) => {
+        let verificationCode = null;
+        let errorOutput = "";
+        
+        // Start the Python process
+        const pythonProcess = spawn('python3', [
+          'whatsapp.py',
+          whatsappNumber,
+          messagesJSON,
+          receiverNumber,
+        ]);
+        
+        const rl = readline.createInterface({ input: pythonProcess.stdout });
+        
+        rl.on('line', async (line) => {
+          console.log(`Python output: ${line}`);
+          
+          const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
+          if (codeMatch && codeMatch[1]) {
+            verificationCode = codeMatch[1];
+            console.log(`Verification code captured: ${verificationCode}`);
+            
+            try {
+              // Update the verificationCode immediately in DB
+              await WhatsAppSettings.findOneAndUpdate(
+                { mobileNumber: user_mobile_number },
+                { verificationCode },
+                { new: true }
+              );
+              console.log("Verification code updated in DB");
+            } catch (dbError) {
+              console.error("Error updating verification code:", dbError);
+              // Continue execution even if DB update fails
+            }
+          }
+        });
+        
+        pythonProcess.stderr.on('data', (data) => {
+          const errorMsg = data.toString();
+          errorOutput += errorMsg;
+          console.error(`Python error: ${errorMsg}`);
+        });
+        
+        pythonProcess.on('close', (code) => {
+          console.log(`WhatsApp script exited with code ${code}`);
+          
+          if (code === 0) {
+            resolve({ success: true, verificationCode });
+          } else {
+            resolve({ 
+              success: false, 
+              code, 
+              error: errorOutput,
+              message: `WhatsApp script failed with code ${code}`
+            });
+          }
+        });
+        
+        pythonProcess.on('error', (err) => {
+          console.error("Failed to start Python process:", err);
+          reject(err);
+        });
+        
+        // Set a timeout to prevent hanging indefinitely
+        const timeout = setTimeout(() => {
+          pythonProcess.kill();
+          reject(new Error('WhatsApp script execution timed out after 5 minutes'));
+        }, 5 * 60 * 1000); // 5 minutes timeout
+        
+        // Clear the timeout when the process completes
+        pythonProcess.on('close', () => clearTimeout(timeout));
       });
-  
-      pythonProcess.stderr.on('data', (data) => {
-        console.error(`Python error: ${data}`);
-      });
-  
-      pythonProcess.on('close', (code) => {
-        console.log(`WhatsApp script exited with code ${code}`);
-        // Do not reject or resolve anything, let it stay running
-      });
+      
+      try {
+        // Wait for the Python process to complete (or timeout)
+        const result = await pythonProcessPromise;
+        
+        // Include WhatsApp script result in the response
+        return res.json({
+          message: "Lead data stored successfully",
+          lead: newLead,
+          whatsapp: result
+        });
+      } catch (pythonError) {
+        console.error("Error in WhatsApp script execution:", pythonError);
+        // Even if WhatsApp script fails, the lead was stored successfully
+        return res.json({
+          message: "Lead data stored successfully, but WhatsApp messaging failed",
+          lead: newLead,
+          error: pythonError.message
+        });
+      }
     }
-    res.json({ message: "Lead data stored successfully", lead: newLead });
-
   } catch (error) {
     console.error("Error saving lead:", error);
     res.status(500).json({ error: "Internal Server Error" });

@@ -50,7 +50,7 @@ const Layout = () => {
     // You could also check maintenance status here and set it in a shared context
     const checkMaintenance = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/maintenance-status");
+        const res = await fetch("https://api.leadscruise.com/api/maintenance-status");
         const data = await res.json();
         setMaintenanceActive(data.maintenanceOngoing);
       } catch (error) {
