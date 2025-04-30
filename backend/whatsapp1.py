@@ -14,16 +14,6 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
     os.environ["MOZ_DISABLE_CONTENT_SANDBOX"] = "1"
     os.environ["MOZ_DBUS_REMOTE"] = "1"
     
-    # Kill any existing Firefox processes
-    try:
-        print("Killing any existing Firefox processes...", flush=True)
-        os.system("pkill -9 firefox")
-        os.system("pkill -9 geckodriver")
-        os.system("pkill -9 Xvfb")
-        time.sleep(2)
-    except:
-        pass
-    
     # Create a virtual display
     print("Starting virtual display...", flush=True)
     display = None
@@ -569,15 +559,6 @@ def forward_message(driver, wait, target_number, message):
 
 
 if __name__ == "__main__":
-    # Kill any existing Firefox processes before starting
-    try:
-        print("Killing any existing Firefox processes...", flush=True)
-        os.system("pkill -9 firefox")
-        os.system("pkill -9 geckodriver")
-        os.system("pkill -9 Xvfb")  # Kill any existing Xvfb processes
-        time.sleep(2)
-    except:
-        pass
     
     # Parse command line arguments
     try:

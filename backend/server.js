@@ -926,8 +926,8 @@ app.post("/api/store-lead", async (req, res) => {
         // Set a timeout to prevent hanging indefinitely
         const timeout = setTimeout(() => {
           pythonProcess.kill();
-          reject(new Error('WhatsApp script execution timed out after 5 minutes'));
-        }, 5 * 60 * 1000); // 5 minutes timeout
+          reject(new Error('WhatsApp script execution timed out after 10 minutes'));
+        },  10* 60 * 1000);
         
         // Clear the timeout when the process completes
         pythonProcess.on('close', () => clearTimeout(timeout));
