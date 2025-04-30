@@ -53,7 +53,7 @@ const TotalLeadsToday = () => {
         </button>
       </div>
 
-      <div className="table-container">
+      <div className="table-container1">
         {todayLeads.length > 0 ? (
           <table>
             <thead>

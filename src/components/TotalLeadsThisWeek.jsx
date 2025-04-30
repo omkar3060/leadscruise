@@ -55,7 +55,7 @@ const TotalLeadsThisWeek = () => {
         </button>
       </div>
 
-      <div className="table-container">
+      <div className="table-container1">
         <table>
           <thead>
             <tr>

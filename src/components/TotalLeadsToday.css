@@ -25,11 +25,12 @@
     align-items: center;
   }
   
- .table-container {
+ .table-container1 {
   max-height: 500px;
   border: 1px solid #ccc;
   border-radius: 6px;
   padding-top: 0px;
+  overflow-y: auto;
 }
 
 table {
