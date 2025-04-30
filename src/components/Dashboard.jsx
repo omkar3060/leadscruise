@@ -527,8 +527,8 @@ const Dashboard = () => {
 
         {/* Metrics Section */}
         <div className={styles.metricsSection}>
-          <div className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Total Leads Today</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsThisWeek} <br /><span>Total Leads This Week</span></div>
+          <div onClick={() => navigate("/totalLeadsToday")} className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Total Leads Today</span></div>
+          <div onClick={() => navigate("/totalLeadsThisWeek")} className={styles.metricBox}>{metrics.totalLeadsThisWeek} <br /><span>Total Leads This Week</span></div>
           <div className={styles.metricBox}>
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
             <span>Replies Sent Today</span>

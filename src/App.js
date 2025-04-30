@@ -35,6 +35,8 @@ import SendEmail from "./components/SendEmail";
 import ComingSoon from "./components/ComingSoon";
 import MaintenanceBanner from "./components/MaintenanceBanner"; // Adjust path as needed
 import Whatsapp from "./components/Whatsapp"; // Adjust path as needed
+import TotalLeadsToday from "./components/TotalLeadsToday"; // Adjust path as needed
+import TotalLeadsThisWeek from "./components/TotalLeadsThisWeek"; // Adjust path as needed
 
 const Layout = () => {
   const location = useLocation();
@@ -222,6 +224,22 @@ const Layout = () => {
           element={
             <ProtectedRoute>
               <Sheets />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/totalLeadsToday"
+          element={
+            <ProtectedRoute>
+              <TotalLeadsToday />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/totalLeadsThisWeek"
+          element={
+            <ProtectedRoute>
+              <TotalLeadsThisWeek />
             </ProtectedRoute>
           }
         />
