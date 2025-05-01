@@ -696,13 +696,13 @@
   border: 1px solid #ccc !important; /* Light gray border */
 }
 
-.tooltip {
+.tooltip,.tooltip1 {
   position: relative;
   display: inline-block;
 }
 
 /* Tooltip Text */
-.tooltip::after {
+.tooltip::after,.tooltip1::after {
   content: attr(data-tooltip);
   visibility: hidden;
   opacity: 0;
@@ -720,8 +720,12 @@
   transition: opacity 0.3s, visibility 0.3s;
 }
 
+.tooltip1::after{
+  transform: translateX(-20%) !important;
+}
+
 /* Show Tooltip on Hover */
-.tooltip:hover::after {
+.tooltip:hover::after,.tooltip1:hover::after {
   visibility: visible;
   opacity: 1;
 }

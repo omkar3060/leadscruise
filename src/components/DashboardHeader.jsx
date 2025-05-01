@@ -227,7 +227,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           ) : location.pathname !== "/profile" && location.pathname !== "/sheets" && location.pathname !== "/whatsapp" ? (
             <>
               <div
-                className={status === "Running" || isStarting || cooldownActive ? styles.tooltip : ""}
+                className={status === "Running" || isStarting || cooldownActive ? styles.tooltip1 : ""}
                 data-tooltip={
                   cooldownActive
                     ? `Buttons disabled for ${cooldownTime} seconds`
