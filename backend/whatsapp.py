@@ -27,7 +27,6 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
     except json.JSONDecodeError as e:
         print(f"Error parsing messages JSON: {e}", flush=True)
         return
-    
     # Set environment variables for Firefox
     os.environ["MOZ_DISABLE_CONTENT_SANDBOX"] = "1"
     os.environ["MOZ_DBUS_REMOTE"] = "1"
@@ -68,6 +67,13 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
         firefox_options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream")
         firefox_options.set_preference("webdriver.log.level", "trace")  # Enable detailed logging
         
+        # Add settings to prevent 504 errors
+        firefox_options.set_preference("network.http.connection-timeout", 120)  # 2 minute connection timeout
+        firefox_options.set_preference("network.http.request.timeout", 120)  # 2 minute request timeout
+        firefox_options.set_preference("network.http.response.timeout", 120)  # 2 minute response timeout
+        firefox_options.set_preference("dom.max_script_run_time", 0)  # Disable slow script warnings
+        firefox_options.set_preference("dom.timeout.enable_budget_timer_throttling", False)  # Disable budget timer throttling
+        
         # Check if geckodriver exists
         geckodriver_path = "/usr/local/bin/geckodriver"
         if not os.path.exists(geckodriver_path):
@@ -99,9 +105,24 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
         # Set window size
         driver.set_window_size(1920, 1080)
         
-        # Navigate to WhatsApp Web
-        print("Navigating to WhatsApp Web...", flush=True)
-        driver.get("https://web.whatsapp.com/")
+        # Set page load timeout to prevent hanging
+        driver.set_page_load_timeout(120)  # 2 minutes
+        
+        # Navigate to WhatsApp Web with error handling
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                print(f"Navigating to WhatsApp Web (attempt {attempt+1}/{max_retries})...", flush=True)
+                driver.get("https://web.whatsapp.com/")
+                break
+            except Exception as e:
+                print(f"Error navigating to WhatsApp Web: {e}", flush=True)
+                if attempt < max_retries - 1:
+                    print("Retrying in 10 seconds...", flush=True)
+                    time.sleep(10)
+                else:
+                    print("Failed to navigate to WhatsApp Web after retries", flush=True)
+                    raise
         
         # Set up wait with generous timeout
         wait = WebDriverWait(driver, 120)  # 2 minutes timeout
@@ -142,15 +163,51 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
         # Now we should be logged in, proceed to send message
         time.sleep(5)  # Give a moment for the UI to fully load
         
-        for message_text in formatted_messages:
-            print(f"Sending message: {message_text}", flush=True)
-            forward_message(driver, wait, receiver_number, message_text)
-            # Add a delay between messages
-            time.sleep(3)
+        # Use a progressive delay between messages to prevent rate limiting
+        base_delay = 5  # Start with 5 seconds
+        
+        for index, message_text in enumerate(formatted_messages):
+            # Calculate progressive delay
+            current_delay = base_delay + (index * 2)  # Add 2 seconds for each message
+            
+            print(f"Sending message {index+1}/{len(formatted_messages)}: {message_text[:30]}{'...' if len(message_text) > 30 else ''}", flush=True)
+            success = forward_message(driver, wait, receiver_number, message_text)
+            
+            if success:
+                print(f"Message {index+1} sent successfully!", flush=True)
+            else:
+                print(f"Failed to send message {index+1}. Continuing with next message...", flush=True)
+            
+            # Add a progressive delay between messages
+            print(f"Waiting for {current_delay} seconds before next message...", flush=True)
+            time.sleep(current_delay)
+        
+        print("All messages processed. WhatsApp script completed successfully!", flush=True)
         
     except Exception as e:
-        print(f"Error opening WhatsApp: {e}", flush=True)
+        print(f"Error in WhatsApp automation: {e}", flush=True)
         print(traceback.format_exc(), flush=True)
+        
+    finally:
+        # Always run cleanup code
+        print("Running cleanup...", flush=True)
+        
+        # Make sure to close the driver and display
+        try:
+            if driver:
+                driver.quit()
+                print("WebDriver closed successfully", flush=True)
+        except Exception as driver_error:
+            print(f"Error closing WebDriver: {driver_error}", flush=True)
+            
+        try:
+            if display:
+                display.stop()
+                print("Virtual display stopped successfully", flush=True)
+        except Exception as display_error:
+            print(f"Error stopping virtual display: {display_error}", flush=True)
+            
+        print("WhatsApp script finished execution", flush=True)
 
 def login_and_extract_code(driver, wait, phone_number):
     try:

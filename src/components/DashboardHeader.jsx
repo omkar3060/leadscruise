@@ -232,7 +232,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                   cooldownActive
                     ? `Buttons disabled for ${cooldownTime} seconds`
                     : status === "Running"
-                      ? "You have already started the AI"
+                      ? "Please visit the WhatsApp page to log in and message buyers if you haven't already."
                       : "Starting the AI..."
                 }
               >
