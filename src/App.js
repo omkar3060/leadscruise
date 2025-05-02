@@ -37,6 +37,10 @@ import MaintenanceBanner from "./components/MaintenanceBanner"; // Adjust path a
 import Whatsapp from "./components/Whatsapp"; // Adjust path as needed
 import TotalLeadsToday from "./components/TotalLeadsToday"; // Adjust path as needed
 import TotalLeadsThisWeek from "./components/TotalLeadsThisWeek"; // Adjust path as needed
+import RepliesSentToday from "./components/RepliesSentToday"; // Adjust path as needed
+import EmailsSentToday from "./components/EmailsSentToday"; // Adjust path as needed
+import TotalEmailsSent from "./components/TotalEmailsSent"; // Adjust path as needed
+import TotalLeadsCaptured from "./components/TotalLeadsCaptured"; // Adjust path as needed
 
 const Layout = () => {
   const location = useLocation();
@@ -240,6 +244,38 @@ const Layout = () => {
           element={
             <ProtectedRoute>
               <TotalLeadsThisWeek />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/repliesSentToday"
+          element={
+            <ProtectedRoute>
+              <RepliesSentToday />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/emailsSentToday"
+          element={
+            <ProtectedRoute>
+              <EmailsSentToday />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/totalEmailsSent"
+          element={
+            <ProtectedRoute>
+              <TotalEmailsSent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/totalLeadsCaptured"
+          element={
+            <ProtectedRoute>
+              <TotalLeadsCaptured />
             </ProtectedRoute>
           }
         />

@@ -530,14 +530,14 @@ const Dashboard = () => {
         <div className={styles.metricsSection}>
           <div onClick={() => navigate("/totalLeadsToday")} className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Total Leads Today</span></div>
           <div onClick={() => navigate("/totalLeadsThisWeek")} className={styles.metricBox}>{metrics.totalLeadsThisWeek} <br /><span>Total Leads This Week</span></div>
-          <div className={styles.metricBox}>
+          <div onClick={() => navigate("/repliesSentToday")} className={styles.metricBox}>
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
             <span>Replies Sent Today</span>
           </div>
           <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon<br /><span>WA Messages Sent Today</span></div>
-          <div className={styles.comingSoon}>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br /><span>Emails Sent Today</span></div>
-          <div className={styles.comingSoon}>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)} <br /><span>Total Emails Sent</span></div>
-          <div className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>
+          <div onClick={() => navigate("/emailsSentToday")} className={styles.comingSoon}>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br /><span>Emails Sent Today</span></div>
+          <div onClick={() => navigate("/totalEmailsSent")} className={styles.comingSoon}>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)} <br /><span>Total Emails Sent</span></div>
+          <div onClick={() => navigate("/totalLeadsCaptured")} className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>
         </div>
 
         {/* Recent Leads Table */}

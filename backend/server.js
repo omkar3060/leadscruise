@@ -397,7 +397,7 @@ async function resetLeadCounters() {
 
     // Get today's 7:00 AM
     const today7AM = new Date();
-    today7AM.setHours(7, 0, 0, 0);
+    today7AM.setHours(5, 0, 0, 0);
 
     // If last reset was before today's 7 AM, reset counters
     if (!lastResetDate || lastResetDate < today7AM) {
