@@ -182,7 +182,7 @@ const Whatsapp = () => {
 
       const data = await res.json();
       if (res.ok) {
-        alert("WhatsApp number updated successfully!");
+        alert("WhatsApp number updated successfully! Please wait a few minutes for a verification code. Enter it in WhatsApp to enable messaging buyers.");
         setWhatsappNumber(newWhatsappNumber);
         setIsEditing(false);
       } else {
