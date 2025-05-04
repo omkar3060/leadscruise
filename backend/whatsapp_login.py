@@ -9,6 +9,8 @@ import os
 from pyvirtualdisplay import Display
 import traceback
 import sys
+import shutil
+
 def open_whatsapp(whatsapp_number):
     
     # Set environment variables for Firefox
@@ -26,8 +28,18 @@ def open_whatsapp(whatsapp_number):
         display.start()
         print("Virtual display started successfully!", flush=True)
         
-        # Ensure profile directory exists and has proper permissions
+        # Check if profile directory exists and delete it if it does
         profile_dir = os.path.join(os.getcwd(), "firefox_profiles", f"whatsapp_{whatsapp_number}")
+        if os.path.exists(profile_dir):
+            print(f"Found existing profile directory at {profile_dir}. Deleting it...", flush=True)
+            try:
+                shutil.rmtree(profile_dir)
+                print(f"Successfully deleted profile directory: {profile_dir}", flush=True)
+            except Exception as e:
+                print(f"Error deleting profile directory: {e}", flush=True)
+                print(traceback.format_exc(), flush=True)
+        
+        # Create a fresh profile directory
         os.makedirs(profile_dir, exist_ok=True)
         
         # Make sure profile directory has right permissions
@@ -111,42 +123,32 @@ def open_whatsapp(whatsapp_number):
         # Set up wait with generous timeout
         wait = WebDriverWait(driver, 120)  # 2 minutes timeout
         
-        print("Checking WhatsApp Web login status...", flush=True)
+        print("Proceeding with login flow...", flush=True)
         
-        # Check for login status (either QR code or chats)
         try:
-            # First try to check if already logged in
-            print("Checking if already logged in...", flush=True)
-            chats_heading = wait.until(
-                EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]"))
-            )
-            print("Already logged in! Chats found.", flush=True)
+            print("Taking a screenshot of current page state...", flush=True)
+            # driver.save_screenshot("whatsapp_login_state.png")
             
-        except:
+            print("Looking for login button...", flush=True)
+            login_button = wait.until(
+                EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Log in with phone number')]"))
+            )
+            # Handle phone number login flow
+            verification_code = login_and_extract_code(driver, wait, whatsapp_number)
+            print(f"Phone number login completed. Verification code: {verification_code}", flush=True)
+            return 0
+        except Exception as login_error:
+            print(f"Error during login process: {login_error}", flush=True)
+            print(traceback.format_exc(), flush=True)
+            # Take a screenshot to diagnose the issue
             try:
-                print("Taking a screenshot of current page state...", flush=True)
-                # driver.save_screenshot("whatsapp_login_state.png")
-                
-                print("Looking for login button...", flush=True)
-                login_button = wait.until(
-                    EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Log in with phone number')]"))
-                )
-                # Handle phone number login flow
-                verification_code = login_and_extract_code(driver, wait, whatsapp_number)
-                print(f"Phone number login completed. Verification code: {verification_code}", flush=True)
-                return 0
-            except Exception as login_error:
-                print(f"Unable to detect login method: {login_error}", flush=True)
-                print(traceback.format_exc(), flush=True)
-                # Take a screenshot to diagnose the issue
-                try:
-                    # driver.save_screenshot("login_error.png")
-                    print("Screenshot saved as login_error.png", flush=True)
-                except:
-                    print("Failed to save screenshot", flush=True)
+                # driver.save_screenshot("login_error.png")
+                print("Screenshot saved as login_error.png", flush=True)
+            except:
+                print("Failed to save screenshot", flush=True)
         
-        # Now we should be logged in, proceed to send message
-        time.sleep(5)  # Give a moment for the UI to fully load
+        # Wait a moment before cleanup
+        time.sleep(5)
         
     except Exception as e:
         print(f"Error in WhatsApp automation: {e}", flush=True)
@@ -156,43 +158,6 @@ def open_whatsapp(whatsapp_number):
         # Always run cleanup code
         print("Running cleanup...", flush=True)
         return 0
-        # Make sure to close the driver and display
-        try:
-            if driver:
-                driver.quit()
-                print("WebDriver closed successfully", flush=True)
-        except Exception as driver_error:
-            print(f"Error closing WebDriver: {driver_error}", flush=True)
-            
-        try:
-            if display:
-                display.stop()
-                print("Virtual display stopped successfully", flush=True)
-        except Exception as display_error:
-            print(f"Error stopping virtual display: {display_error}", flush=True)
-            
-        print("WhatsApp script finished execution", flush=True)
-
-def keep_alive(driver):
-    """
-    Keep the browser session alive until manually terminated
-    """
-    print("WhatsApp session active. Press Ctrl+C to terminate.", flush=True)
-    try:
-        while True:
-            time.sleep(60)  # Check every minute
-            try:
-                # Just check if the browser is still responsive
-                driver.title
-                print("Browser session still active.", flush=True)
-            except Exception as e:
-                print(f"Browser session ended: {e}", flush=True)
-                break
-    except KeyboardInterrupt:
-        print("Script terminated by user.", flush=True)
-    finally:
-        print("Script ended.", flush=True)
-
 
 def login_and_extract_code(driver, wait, phone_number):
     try:

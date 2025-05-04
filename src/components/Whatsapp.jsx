@@ -37,13 +37,23 @@ const Whatsapp = () => {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customMessage, setCustomMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(() => {
+    const savedLoadingState = localStorage.getItem("whatsappVerificationLoading");
+    // Parse the string "true" to boolean true, or default to false
+    return savedLoadingState === "true";
+  });  
+  const [error, setError] = useState(null);
   const [newWhatsappNumber, setNewWhatsappNumber] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [messages, setMessages] = useState([{ id: Date.now(), text: '' }]);
   const [verificationCode, setVerificationCode] = useState('');
   const addMessage = () => {
     setMessages([...messages, { id: Date.now(), text: '' }]);
+  };
+
+  const updateLoadingState = (newLoadingState) => {
+    setIsLoading(newLoadingState);
+    localStorage.setItem("whatsappVerificationLoading", newLoadingState.toString());
   };
 
   const removeMessage = (id) => {
@@ -55,6 +65,40 @@ const Whatsapp = () => {
   const handleMessageChange = (id, text) => {
     setMessages(messages.map(msg => msg.id === id ? { ...msg, text } : msg));
   };
+
+  useEffect(() => {
+    // Add a timestamp when loading starts to detect stale loading states
+    if (isLoading) {
+      localStorage.setItem("whatsappLoadingStartTime", Date.now().toString());
+    }
+    
+    return () => {
+      // This cleanup function won't run on page reload, only on component unmount
+      // We leave the logic here in case the user navigates away from the page
+      if (isLoading) {
+        // Don't clear loading state on normal unmount - we want it to persist
+      }
+    };
+  }, [isLoading]);
+  
+  // 7. Add a timeout check to prevent indefinite loading states
+  useEffect(() => {
+    if (isLoading) {
+      const loadingStartTime = localStorage.getItem("whatsappLoadingStartTime");
+      if (loadingStartTime) {
+        const startTime = parseInt(loadingStartTime, 10);
+        const currentTime = Date.now();
+        const loadingDuration = currentTime - startTime;
+        
+        // If it's been loading for more than 15 minutes (900000ms), reset it
+        // Adjust this timeout as needed based on your verification process
+        if (loadingDuration > 600000) {
+          console.log("Loading state timed out after 10 minutes");
+          updateLoadingState(false);
+        }
+      }
+    }
+  }, [isLoading]);
 
   const fetchSettings = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
@@ -88,29 +132,40 @@ const Whatsapp = () => {
   const fetchVerificationCode = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
     if (!mobileNumber) return;
+
     try {
-      const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/verification-code/${mobileNumber}`);
+      // Assuming axios is available in the global scope or parent component
+      const response = await window.axios.get(`https://api.leadscruise.com/api/whatsapp-settings/verification-code/${mobileNumber}`);
       const code = response.data.verificationCode;
       console.log("Fetched verification code:", code);
       setVerificationCode(code);
+
+      // If we got a code, we can stop loading
+      if (code) {
+        updateLoadingState(false);
+      }
     } catch (error) {
       console.error("Error fetching verification code:", error);
+      // Don't turn off loading on error - keep trying
     }
   };
 
   useEffect(() => {
     fetchVerificationCode(); // initial fetch
-  
+
     const intervalId = setInterval(() => {
-      fetchVerificationCode();
+      // Only fetch if we're in loading state or already have a code
+      if (isLoading || verificationCode) {
+        fetchVerificationCode();
+      }
     }, 3000); // Refresh every 3 seconds
-  
+
     return () => clearInterval(intervalId); // Stop when component unmounts
-  }, []);  
+  }, [isLoading, verificationCode]);
 
   useEffect(() => {
     fetchSettings();
-  }, []);  
+  }, []);
 
   const handleSubmit = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
@@ -170,7 +225,9 @@ const Whatsapp = () => {
       alert("WhatsApp number cannot be empty!");
       return;
     }
-
+    updateLoadingState(true);
+    setVerificationCode(null);
+    setError(null);
     try {
       const mobileNumber = localStorage.getItem("mobileNumber");
 
@@ -187,10 +244,14 @@ const Whatsapp = () => {
         setIsEditing(false);
       } else {
         alert(data.error || "Failed to update WhatsApp number.");
+        setError("Failed to update WhatsApp number");
+        updateLoadingState(false);
       }
     } catch (error) {
       console.error("Update error:", error);
       alert("Server error during update.");
+      setError("Failed to update WhatsApp number");
+      updateLoadingState(false);
     }
   };
 
@@ -205,7 +266,6 @@ const Whatsapp = () => {
 
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
-      {isLoading && <LoadingScreen />}
       {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
       <DashboardHeader
         style={windowWidth <= 768 ? {
@@ -252,12 +312,21 @@ const Whatsapp = () => {
               </div>
 
               {/* Verification Code Display */}
-              {verificationCode && (
-                <div className="verification-code-container">
-                  <label className="verification-code-label">Verification Code:</label>
+              {error && <div className="error-message">{error}</div>}
+
+              <div className="verification-code-container">
+                <label className="verification-code-label">Verification Code:</label>
+                {isLoading ? (
+                  <div className="loading-spinner">
+                    <div className="spinner1"></div>
+                    <span>Waiting for verification code...</span>
+                  </div>
+                ) : verificationCode ? (
                   <span className="verification-code">{verificationCode}</span>
-                </div>
-              )}
+                ) : (
+                  <span className="no-code">No verification code available</span>
+                )}
+              </div>
 
               <div className="message-table-container">
                 <label className="message-table-label">Messages to send as replies:</label>
