@@ -477,6 +477,7 @@ cron.schedule("0 6 * * *", async () => {
           `Skipping ${user.email
           }: Subscription expired on ${expirationDate.toDateString()}.`
         );
+        await User.updateOne({ email: user.email }, { status: "stopped" });
         continue;
       }
 
