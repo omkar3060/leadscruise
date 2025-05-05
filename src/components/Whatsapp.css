@@ -330,3 +330,28 @@
     100% { transform: rotate(360deg); }
   }
 
+  .no-code {
+    color: #888;
+    font-style: italic;
+  }
+  
+  .already-logged-in-message {
+    /* margin-top: 10px; */
+    padding: 8px 8px;
+    background-color: #dff0d8;
+    border-left: 4px solid #5cb85c;
+    color: #3c763d;
+    border-radius: 4px;
+    
+  }
+
+  .already-logged-in-message p {
+    margin: 0;
+    /* font-size: 14px; */
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
