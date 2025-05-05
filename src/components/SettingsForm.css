@@ -776,6 +776,7 @@ body {
   border: 2px solid #007bff;
   border-radius: 5px;
   transition: all 0.3s ease-in-out;
+  margin-bottom: 5px;
 }
 
 .api-key-input:focus {
@@ -793,6 +794,7 @@ body {
   cursor: pointer;
   transition: 0.3s;
   width: fit-content;
+  margin-bottom: 0;
 }
 
 .update-api-btn:hover {

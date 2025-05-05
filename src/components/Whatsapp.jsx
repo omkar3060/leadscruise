@@ -44,7 +44,7 @@ const Whatsapp = () => {
   });
   const [error, setError] = useState(null);
   const [newWhatsappNumber, setNewWhatsappNumber] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingWhatsapp, setIsEditingWhatsapp] = useState(false);
   const [messages, setMessages] = useState([{ id: Date.now(), text: '' }]);
   const [verificationCode, setVerificationCode] = useState('');
   const addMessage = () => {
@@ -135,29 +135,29 @@ const Whatsapp = () => {
       console.log("No mobile number found in localStorage");
       return;
     }
-  
+
     try {
       console.log("Fetching verification code for:", mobileNumber);
-      
+
       // Using native fetch API
       const response = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/verification-code/${mobileNumber}`);
-      
+
       if (!response.ok) {
         console.error(`Error response: ${response.status}`);
         return;
       }
-      
+
       const data = await response.json();
       console.log("API Response:", data);
-      
+
       // Check if the response contains a verification code
       if (data && data.verificationCode) {
         const code = data.verificationCode;
         console.log("Received verification code:", code);
-        
+
         // Update state with the verification code
         setVerificationCode(code);
-        
+
         // Update loading state if we got a code
         if (code) {
           setIsLoading(false);
@@ -169,29 +169,29 @@ const Whatsapp = () => {
     } catch (error) {
       console.error("Error fetching verification code:", error);
     }
-  };  
+  };
 
   useEffect(() => {
     console.log("Component updated with isLoading:", isLoading, "verificationCode:", verificationCode);
   }, [isLoading, verificationCode]);
-  
+
   // Use a ref to store the interval ID so we can clear it from within fetchVerificationCode
   const intervalRef = useRef(null);
-  
-// Simplified polling with fewer dependencies
-useEffect(() => {
-  
-  // Initial fetch
-  fetchVerificationCode();
-  
-  // Set up polling interval
-  const interval = setInterval(() => {
+
+  // Simplified polling with fewer dependencies
+  useEffect(() => {
+
+    // Initial fetch
     fetchVerificationCode();
-  }, 3000);
-  
-  // Clean up on unmount or when isLoading changes
-  return () => clearInterval(interval);
-}, []); // Only depend on isLoading // Add dependencies to re-establish interval if these change
+
+    // Set up polling interval
+    const interval = setInterval(() => {
+      fetchVerificationCode();
+    }, 3000);
+
+    // Clean up on unmount or when isLoading changes
+    return () => clearInterval(interval);
+  }, []); // Only depend on isLoading // Add dependencies to re-establish interval if these change
 
   useEffect(() => {
     fetchSettings();
@@ -272,7 +272,7 @@ useEffect(() => {
       if (res.ok) {
         alert("WhatsApp number updated successfully! Please wait a few minutes for a verification code. Enter it in WhatsApp to enable messaging buyers.");
         setWhatsappNumber(newWhatsappNumber);
-        setIsEditing(false);
+        setIsEditingWhatsapp(false);
       } else {
         alert(data.error || "Failed to update WhatsApp number.");
         setError("Failed to update WhatsApp number");
@@ -297,6 +297,99 @@ useEffect(() => {
     });
   }, [messages]);
 
+    // Modal States
+    const [modalType, setModalType] = useState("");
+    const [modalData, setModalData] = useState([]);
+    const [newItem, setNewItem] = useState("");
+    const textareaRef = useRef(null);
+  
+    // Function to adjust height based on content
+    const adjustHeight = () => {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        // Set the height to match the scrollHeight
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    };
+  
+    // Adjust height whenever content changes
+    useEffect(() => {
+      adjustHeight();
+    }, [newItem]);
+  
+    // Open modal
+    const openModal = (type) => {
+      setModalData(messages.map((msg) => msg.text));
+      setModalType(type);
+    };
+  
+    // Close modal
+    const closeModal = () => {
+      setModalType("");
+      setModalData([]);
+      setNewItem("");
+    };
+  
+    const addItemInModal = () => {
+      if (newItem.trim() && !modalData.includes(newItem.trim())) {
+        setModalData([...modalData, newItem.trim()]);
+        setNewItem("");
+  
+        setTimeout(() => {
+          const listItems = document.querySelectorAll('.modal-content li');
+          if (listItems.length > 0) {
+            const lastItem = listItems[listItems.length - 1];
+            lastItem.classList.add('item-added');
+  
+            setTimeout(() => {
+              lastItem.classList.remove('item-added');
+            }, 1500);
+          }
+        }, 10);
+      } else {
+        alert("Item already exists or empty!");
+      }
+    };
+  
+    // Delete item inside modal
+    const deleteItemInModal = (index) => {
+      const updatedData = modalData.filter((_, i) => i !== index);
+      setModalData(updatedData);
+    };
+  
+    // Save changes from modal to main state
+    const saveChanges = async () => {
+      const mobileNumber = localStorage.getItem("mobileNumber");
+      if (!mobileNumber) {
+        alert("Mobile number not found!");
+        return;
+      }
+    
+      try {
+        await axios.post("https://api.leadscruise.com/api/whatsapp-settings/save", {
+          mobileNumber,
+          whatsappNumber: newWhatsappNumber,
+          verificationCode,
+          messages: modalData, // Save new message list
+        });
+    
+        // Update local state
+        setMessages(modalData.map((text, index) => ({
+          id: Date.now() + index,
+          text,
+        })));
+    
+        alert("Messages saved successfully!");
+      } catch (err) {
+        console.error("Error saving messages:", err);
+        alert("Failed to save messages.");
+      }
+    
+      closeModal();
+    };
+
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
       {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
@@ -310,126 +403,111 @@ useEffect(() => {
       />
       <div className="settings-scroll-container">
         <div className="sheets-container">
-          <div className="table-container">
-            <h2>WhatsApp Settings</h2>
-
-            <div>
-
-              <div className="api-key-container">
-                <label className="api-key-label">Your WhatsApp Number:</label>
-                {!isEditing ? (
-                  // Show API key as plain text when not in edit mode
-                  <span className="api-key-text">{newWhatsappNumber || "No Whatsapp Number Set"}</span>
-                ) : (
-                  // Show input field when in edit mode
-                  <input
-                    type="text"
-                    className="api-key-input"
-                    value={newWhatsappNumber}
-                    placeholder="Enter new API Key..."
-                    onChange={(e) => setNewWhatsappNumber(e.target.value)}
-                  />
-                )}
-
-                {!isEditing ? (
-                  // Show "Edit" button initially
-                  <button className="update-api-btn" style={{ background: "#28a745" }} onClick={() => setIsEditing(true)}>
-                    Edit
-                  </button>
-                ) : (
-                  // Show "Update API Key" button only after clicking "Edit"
-                  <button className="update-api-btn" onClick={updateWhatsappNumber}>
-                    Update WhatsappNumber
-                  </button>
-                )}
-              </div>
-
-              {/* Verification Code Display */}
-              {error && <div className="error-message">{error}</div>}
-
-              
-<div className="verification-code-container">
-  <label className="verification-code-label">Verification Code:</label>
-  {isLoading ? (
-    <div className="loading-spinner">
-      <div className="spinner1"></div>
-      <span>Waiting for verification code...</span>
-    </div>
-  ) : verificationCode ? (
-    <>
-      {verificationCode === "111" ? (
-        <div className="already-logged-in-message">
-          <p>Already logged in to WhatsApp! No verification needed.</p>
-        </div>
-      ) : (
-        <span className="verification-code">{verificationCode}</span>
-      )}
-    </>
+          {/* WhatsApp Settings Section */}
+<div className="table-container">
+  <h2>WhatsApp Settings</h2>
+  {messages.length > 0 ? (
+    <ul>
+      {messages.map((msg) => (
+        <li key={msg.id}>{msg.text}</li>
+      ))}
+    </ul>
   ) : (
-    <span className="no-code">No verification code available</span>
+    <p>No messages added.</p>
   )}
+  <div className="edit-button-container">
+    <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
+      Edit
+    </button>
+  </div>
 </div>
 
-              <div className="message-table-container">
-                <label className="message-table-label">Messages to send as replies:</label>
-                <table className="message-table">
-                  <thead>
-                    <tr>
-                      <th className="message-column">Message</th>
-                      <th className="action-column">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {messages.map((message) => (
-                      <tr key={message.id}>
-                        <td>
-                          <div className="auto-expanding-input-container">
-                            <textarea
-                              className="auto-expanding-input"
-                              placeholder="Enter your message..."
-                              value={message.text}
-                              onChange={(e) => {
-                                handleMessageChange(message.id, e.target.value);
-                                // Auto-expand logic
-                                e.target.style.height = 'auto';
-                                e.target.style.height = e.target.scrollHeight + 'px';
-                              }}
-                              onFocus={(e) => {
-                                // Ensure height is correct on focus
-                                e.target.style.height = 'auto';
-                                e.target.style.height = e.target.scrollHeight + 'px';
-                              }}
-                              rows={1}
-                            />
-                          </div>
-                        </td>
-                        <td className="action-cell">
-                          <button
-                            className="remove-message-btn"
-                            onClick={() => removeMessage(message.id)}
-                            disabled={messages.length === 1}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="button-container">
-                  <button className="add-message-btn" onClick={addMessage}>
-                    Add Message
-                  </button>
-                  <button className="save-btn" onClick={handleSubmit}>
-                    Save WhatsApp Details
-                  </button>
-                </div>
-              </div>
+{/* Modal Popup */}
+{modalType === "sentences" && (
+  <div
+    className="modal-overlay"
+    onClick={(e) => {
+      if (e.target.className === "modal-overlay") closeModal();
+    }}
+  >
+    <div className="modal-content">
+      <div className="modal-header">
+        <h2>Edit Messages to send as replies</h2>
+        <button
+          className="modal-close-icon"
+          onClick={closeModal}
+          aria-label="Close modal"
+        >
+          &times;
+        </button>
+      </div>
+      <ul>
+        {modalData.map((item, index) => (
+          <li key={index}>
+            <span>{item}</span>
+            <button className="delete-button" onClick={() => deleteItemInModal(index)}>
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="add-keyword-container">
+        <textarea
+          ref={textareaRef}
+          value={newItem}
+          onChange={(e) => setNewItem(e.target.value)}
+          placeholder="Enter new message"
+          onKeyPress={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              addItemInModal();
+            }
+          }}
+          className="adaptable-textarea"
+          rows={1}
+          style={{
+            resize: "none",
+            overflow: "hidden",
+            minHeight: "38px",
+            width: "100%",
+            maxWidth: "100%",
+            padding: "8px 12px",
+            boxSizing: "border-box",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            fontFamily: "inherit",
+            fontSize: "inherit",
+            lineHeight: "1.5",
+            wordWrap: "break-word",
+            whiteSpace: "pre-wrap",
+          }}
+        />
+        <button type="button" className="add-button" onClick={addItemInModal}>
+          Add
+        </button>
+      </div>
+      <div className="modal-buttons">
+        <button className="save-button" onClick={() => saveChanges(modalType, modalData)}>
+          Save Changes
+        </button>
+        <button className="settings-close-button" onClick={closeModal}>
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
-            </div>
-          </div>
 
-          <ProfileCredentials isProfilePage={true} />
+          <ProfileCredentials isProfilePage={true}
+            newWhatsappNumber={newWhatsappNumber}
+            setNewWhatsappNumber={setNewWhatsappNumber}
+            isEditingWhatsapp={isEditingWhatsapp}
+            setIsEditingWhatsapp={setIsEditingWhatsapp}
+            updateWhatsappNumber={updateWhatsappNumber}
+            verificationCode={verificationCode}
+            isLoading={isLoading}
+            error={error} />
         </div>
       </div>
 

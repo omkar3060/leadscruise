@@ -3,9 +3,17 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ProfileCredentials.css";
 
-const ProfileCredentials = ({ isProfilePage }) => {
+const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
+  setNewWhatsappNumber,
+  isEditingWhatsapp,
+  setIsEditingWhatsapp,
+  updateWhatsappNumber,
+  verificationCode,
+  isLoading,
+  error }) => {
   const location = useLocation();
   const isSettingsPage = location.pathname === "/settings" || location.pathname === "/sheets";
+  const isWhatsAppPage = location.pathname === "/whatsapp";
   const [shakeError, setShakeError] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -71,19 +79,19 @@ const ProfileCredentials = ({ isProfilePage }) => {
   const handleSaveMaxCaptures = async () => {
     try {
       const userMobileNumber = localStorage.getItem("mobileNumber");
-  
+
       // Prevent API call if maxCaptures is the same
       if (tempCaptures === maxCaptures) {
         alert("Max captures value is unchanged.");
         setIsEditingMaxCaptures(false);
         return;
       }
-  
+
       const response = await axios.post("https://api.leadscruise.com/api/update-max-captures", {
         user_mobile_number: userMobileNumber,
         maxCaptures: tempCaptures,
       });
-  
+
       setMaxCaptures(tempCaptures);
       setIsEditingMaxCaptures(false);
       alert(response.data.message);
@@ -96,7 +104,7 @@ const ProfileCredentials = ({ isProfilePage }) => {
       }
     }
   };
-  
+
 
   useEffect(() => {
     const fetchMaxCaptures = async () => {
@@ -188,7 +196,7 @@ const ProfileCredentials = ({ isProfilePage }) => {
   return (
     <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
       {/* Show Max Captures per Day only on Settings page */}
-      {isSettingsPage && (
+      {isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">
           <div className="credentials-header">Max Captures per day</div>
           <div className="max-captures-content">
@@ -213,7 +221,68 @@ const ProfileCredentials = ({ isProfilePage }) => {
         </div>
       )}
 
+      {isWhatsAppPage && (
+      <div className="credentials-section">
+        <h3 className="credentials-header">WhatsApp Settings</h3>
+        <div className="credentials-content">
+          <div className="credential-group">
+            <label>Your WhatsApp Number</label>
+
+            {!isEditingWhatsapp ? (
+              <span className="mobile-text">{newWhatsappNumber || "No WhatsApp Number Set"}</span>
+            ) : (
+              <input
+                type="text"
+                className="api-key-input"
+                value={newWhatsappNumber}
+                placeholder="Enter new WhatsApp Number..."
+                onChange={(e) => setNewWhatsappNumber(e.target.value)}
+              />
+            )}
+
+            {!isEditingWhatsapp ? (
+              <button
+                className="edit-button"
+                style={{ background: "#28a745" }}
+                onClick={() => setIsEditingWhatsapp(true)}
+              >
+                Edit
+              </button>
+            ) : (
+              <div className="edit-button-container">
+                <button className="update-api-btn" onClick={updateWhatsappNumber}>Update</button>
+                <button className="cancel-button" onClick={() => setIsEditingWhatsapp(false)}>Cancel</button>
+              </div>
+            )}
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <div className="verification-code-container">
+            <label className="verification-code-label">Verification Code:</label>
+            {isLoading ? (
+              <div className="loading-spinner">
+                <div className="spinner1"></div>
+                <span>Waiting for verification code...</span>
+              </div>
+            ) : verificationCode ? (
+              verificationCode === "111" ? (
+                <div className="already-logged-in-message">
+                  <p>Already logged in to WhatsApp! No verification needed.</p>
+                </div>
+              ) : (
+                <span className="verification-code">{verificationCode}</span>
+              )
+            ) : (
+              <span className="no-code">No verification code available</span>
+            )}
+          </div>
+        </div>
+      </div>
+      )}
+
       {/* IndiaMart Account Credentials */}
+      {!isWhatsAppPage && (
       <div className="credentials-section">
         <h3 className="credentials-header"> Leads Provider credentials</h3>
         <div className="credentials-content">
@@ -259,8 +328,9 @@ const ProfileCredentials = ({ isProfilePage }) => {
           </div>
         </div>
       </div>
-
+      )}
       {/* LeadsCruise Credentials */}
+      {!isWhatsAppPage && (
       <div className="credentials-section">
         <h3 className="credentials-header">LeadsCruise Credentials</h3>
         <div className="credentials-content">
@@ -306,7 +376,7 @@ const ProfileCredentials = ({ isProfilePage }) => {
           </div>
         </div>
       </div>
-
+      )}
       {/* IndiaMart Password Validation Popup */}
       {showLeadsCruiseValidation && (
         <div className={`password-validation-popup ${shakeError ? "shake" : ""}`}>
