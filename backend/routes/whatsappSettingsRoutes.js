@@ -79,6 +79,7 @@ router.put("/update-whatsapp-number", async (req, res) => {
         let verificationCode = null;
         let errorOutput = "";
         let isCompleted = false;
+        let alreadyLoggedIn = false;
         
         // Start the Python process
         const pythonProcess = spawn('python3', [
@@ -90,6 +91,26 @@ router.put("/update-whatsapp-number", async (req, res) => {
         
         rl.on('line', async (line) => {
           console.log(`Python output: ${line}`);
+          
+          // Check for "Already logged in" message
+          if (line.includes("Already logged in! Chats found.")) {
+            alreadyLoggedIn = true;
+            verificationCode = "111";
+            console.log("Detected already logged in. Setting verification code to 111");
+            
+            try {
+              // Update the verificationCode immediately in DB
+              await WhatsAppSettings.findOneAndUpdate(
+                { mobileNumber },
+                { verificationCode },
+                { new: true }
+              );
+              console.log("Verification code updated in DB (Already logged in case)");
+            } catch (dbError) {
+              console.error("Error updating verification code:", dbError);
+              // Continue execution even if DB update fails
+            }
+          }
           
           // Handle specific errors that should be ignored
           if (line.includes("504 Gateway Time-out") || 
@@ -133,7 +154,7 @@ router.put("/update-whatsapp-number", async (req, res) => {
           
           if (code === 0 || code === null) {
             // Consider both 0 and null (killed by timeout) as successful completions
-            resolve({ success: true, verificationCode });
+            resolve({ success: true, verificationCode, alreadyLoggedIn });
           } else {
             resolve({ 
               success: false, 
@@ -164,7 +185,8 @@ router.put("/update-whatsapp-number", async (req, res) => {
             success: true, 
             timeout: true,
             message: "WhatsApp script completed after full 10-minute wait",
-            verificationCode
+            verificationCode,
+            alreadyLoggedIn
           });
         }, 10 * 60 * 1000); // Full 10 minutes (600,000 ms)
         
