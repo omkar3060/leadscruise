@@ -65,8 +65,8 @@ router.put("/update-whatsapp-number", async (req, res) => {
         $set: { whatsappNumber: newWhatsappNumber },
         $unset: { verificationCode: "" }
       },
-      { new: true }
-    );
+      { new: true, upsert: true } // Add upsert: true
+    );    
 
     if (!updated) {
       return res.status(404).json({ error: "Settings not found for this mobile number" });

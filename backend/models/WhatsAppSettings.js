@@ -15,12 +15,10 @@ const whatsappSettingsSchema = new mongoose.Schema({
     unique: true
   },
   whatsappNumber: {
-    type: String,
-    required: true
+    type: String
   },
   messages: [{
-    type: String,
-    required: true
+    type: String
   }],
   verificationCode: {
     type: String,

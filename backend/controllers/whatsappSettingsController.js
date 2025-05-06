@@ -45,70 +45,25 @@ exports.saveSettings = async (req, res) => {
   try {
     const { mobileNumber, whatsappNumber, messages } = req.body;
 
-    const parsedMessages = typeof messages === 'string' ? JSON.parse(messages) : messages;
-
-    if (!mobileNumber || !whatsappNumber || !parsedMessages || parsedMessages.length === 0) {
-      if (req.files && req.files.length > 0) {
-        req.files.forEach(file => fs.unlinkSync(file.path));
-      }
-      return res.status(400).json({ error: "All fields are required" });
+    if (!mobileNumber) {
+      return res.status(400).json({ error: "Mobile number is required" });
     }
+
+    let parsedMessages = undefined;
+    if (messages) {
+      parsedMessages = typeof messages === 'string' ? JSON.parse(messages) : messages;
+    }
+
+    const updateFields = {};
+    if (whatsappNumber) updateFields.whatsappNumber = whatsappNumber;
+    if (parsedMessages) updateFields.messages = parsedMessages;
 
     const updated = await WhatsAppSettings.findOneAndUpdate(
       { mobileNumber },
-      { whatsappNumber, messages: parsedMessages },
+      { $set: updateFields },
       { upsert: true, new: true }
     );
 
-    // const receiverNumber = "9741076333";
-    // const messagesJSON = JSON.stringify(parsedMessages);
-
-    // console.log("Launching WhatsApp script with parameters:");
-    // console.log("WhatsApp Number:", whatsappNumber);
-    // console.log("Receiver Number:", receiverNumber);
-
-    // let verificationCode = null; // 👈 define once here
-
-    // // Start the Python process
-    // const pythonProcess = spawn('python3', [
-    //   'whatsapp.py',
-    //   whatsappNumber,
-    //   messagesJSON,
-    //   receiverNumber,
-    // ]);
-
-    // const rl = readline.createInterface({ input: pythonProcess.stdout });
-
-    // rl.on('line', async (line) => {
-    //   console.log(`Python output: ${line}`);
-
-    //   const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
-    //   if (codeMatch && codeMatch[1]) {
-    //     verificationCode = codeMatch[1]; // 👈 just assign, no const
-
-    //     console.log(`Verification code captured: ${verificationCode}`);
-
-    //     // Update the verificationCode immediately in DB
-    //     await WhatsAppSettings.findOneAndUpdate(
-    //       { mobileNumber },
-    //       { verificationCode },
-    //       { new: true }
-    //     );
-
-    //     console.log("Verification code updated in DB");
-    //   }
-    // });
-
-    // pythonProcess.stderr.on('data', (data) => {
-    //   console.error(`Python error: ${data}`);
-    // });
-
-    // pythonProcess.on('close', (code) => {
-    //   console.log(`WhatsApp script exited with code ${code}`);
-    //   // Do not reject or resolve anything, let it stay running
-    // });
-
-    // // ✅ Send response IMMEDIATELY after starting the Python script
     res.json({
       message: "Settings saved successfully.",
       data: updated,
@@ -119,6 +74,7 @@ exports.saveSettings = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 
 exports.getSettings = async (req, res) => {
   try {
