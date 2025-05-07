@@ -9,6 +9,7 @@ import os
 from pyvirtualdisplay import Display
 import traceback
 import sys
+import shutil
 def open_whatsapp(whatsapp_number):
     
     # Set environment variables for Firefox
@@ -28,6 +29,9 @@ def open_whatsapp(whatsapp_number):
         
         # Ensure profile directory exists and has proper permissions
         profile_dir = os.path.join(os.getcwd(), "firefox_profiles", f"whatsapp_{whatsapp_number}")
+        # Delete the directory if it exists
+        if os.path.exists(profile_dir):
+            shutil.rmtree(profile_dir)
         os.makedirs(profile_dir, exist_ok=True)
         
         # Make sure profile directory has right permissions
@@ -156,43 +160,6 @@ def open_whatsapp(whatsapp_number):
         # Always run cleanup code
         print("Running cleanup...", flush=True)
         return 0
-        # Make sure to close the driver and display
-        try:
-            if driver:
-                driver.quit()
-                print("WebDriver closed successfully", flush=True)
-        except Exception as driver_error:
-            print(f"Error closing WebDriver: {driver_error}", flush=True)
-            
-        try:
-            if display:
-                display.stop()
-                print("Virtual display stopped successfully", flush=True)
-        except Exception as display_error:
-            print(f"Error stopping virtual display: {display_error}", flush=True)
-            
-        print("WhatsApp script finished execution", flush=True)
-
-def keep_alive(driver):
-    """
-    Keep the browser session alive until manually terminated
-    """
-    print("WhatsApp session active. Press Ctrl+C to terminate.", flush=True)
-    try:
-        while True:
-            time.sleep(60)  # Check every minute
-            try:
-                # Just check if the browser is still responsive
-                driver.title
-                print("Browser session still active.", flush=True)
-            except Exception as e:
-                print(f"Browser session ended: {e}", flush=True)
-                break
-    except KeyboardInterrupt:
-        print("Script terminated by user.", flush=True)
-    finally:
-        print("Script ended.", flush=True)
-
 
 def login_and_extract_code(driver, wait, phone_number):
     try:

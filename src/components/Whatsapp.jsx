@@ -42,6 +42,11 @@ const Whatsapp = () => {
     // Parse the string "true" to boolean true, or default to false
     return savedLoadingState === "true";
   });
+  const [editLockedUntil, setEditLockedUntil] = useState(() => {
+    const stored = localStorage.getItem("editLockedUntil");
+    return stored ? parseInt(stored, 10) : null;
+  });
+  const [justUpdated, setJustUpdated] = useState(false);
   const [error, setError] = useState(null);
   const [newWhatsappNumber, setNewWhatsappNumber] = useState("");
   const [isEditingWhatsapp, setIsEditingWhatsapp] = useState(false);
@@ -90,11 +95,13 @@ const Whatsapp = () => {
         const currentTime = Date.now();
         const loadingDuration = currentTime - startTime;
 
-        // If it's been loading for more than 15 minutes (900000ms), reset it
+        // If it's been loading for more than 10 minutes (600000ms), reset it
         // Adjust this timeout as needed based on your verification process
         if (loadingDuration > 600000) {
           console.log("Loading state timed out after 10 minutes");
           updateLoadingState(false);
+          setIsLoading(false);
+          localStorage.removeItem("whatsappLoadingStartTime");
         }
       }
     }
@@ -247,10 +254,6 @@ const Whatsapp = () => {
   }, []);
 
   const updateWhatsappNumber = async () => {
-    if (whatsappNumber === newWhatsappNumber) {
-      alert("New WhatsApp number cannot be the same as the current one!");
-      return;
-    }
     if (!newWhatsappNumber) {
       alert("WhatsApp number cannot be empty!");
       return;
@@ -259,6 +262,7 @@ const Whatsapp = () => {
     setIsLoading(true);
     setVerificationCode("");
     setError(null);
+    setJustUpdated(true);
     try {
       const mobileNumber = localStorage.getItem("mobileNumber");
 
@@ -267,7 +271,9 @@ const Whatsapp = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
       });
-
+      const lockUntil = Date.now() + 15 * 60 * 1000;
+      localStorage.setItem("editLockedUntil", lockUntil);
+      setEditLockedUntil(lockUntil);
       const data = await res.json();
       if (res.ok) {
         alert("WhatsApp number updated successfully! Please wait a few minutes for a verification code. Enter it in WhatsApp to enable messaging buyers.");
@@ -284,9 +290,19 @@ const Whatsapp = () => {
       alert("Server error during update.");
       setError("Failed to update WhatsApp number");
       setIsLoading(false);
+      setEditLockedUntil(null);
+      localStorage.removeItem("editLockedUntil");
       updateLoadingState(false);
     }
   };
+
+  useEffect(() => {
+    if (justUpdated && verificationCode && verificationCode !== "111") {
+      // Allow editing again after verification received
+      setEditLockedUntil(null);
+      localStorage.removeItem("editLockedUntil");
+    }
+  }, [verificationCode, justUpdated]);
 
   useEffect(() => {
     // Find all auto-expanding textareas and set their height
@@ -297,98 +313,98 @@ const Whatsapp = () => {
     });
   }, [messages]);
 
-    // Modal States
-    const [modalType, setModalType] = useState("");
-    const [modalData, setModalData] = useState([]);
-    const [newItem, setNewItem] = useState("");
-    const textareaRef = useRef(null);
-  
-    // Function to adjust height based on content
-    const adjustHeight = () => {
-      const textarea = textareaRef.current;
-      if (textarea) {
-        // Reset height to auto to get the correct scrollHeight
-        textarea.style.height = 'auto';
-        // Set the height to match the scrollHeight
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-    };
-  
-    // Adjust height whenever content changes
-    useEffect(() => {
-      adjustHeight();
-    }, [newItem]);
-  
-    // Open modal
-    const openModal = (type) => {
-      setModalData(messages.map((msg) => msg.text));
-      setModalType(type);
-    };
-  
-    // Close modal
-    const closeModal = () => {
-      setModalType("");
-      setModalData([]);
+  // Modal States
+  const [modalType, setModalType] = useState("");
+  const [modalData, setModalData] = useState([]);
+  const [newItem, setNewItem] = useState("");
+  const textareaRef = useRef(null);
+
+  // Function to adjust height based on content
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      // Reset height to auto to get the correct scrollHeight
+      textarea.style.height = 'auto';
+      // Set the height to match the scrollHeight
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  // Adjust height whenever content changes
+  useEffect(() => {
+    adjustHeight();
+  }, [newItem]);
+
+  // Open modal
+  const openModal = (type) => {
+    setModalData(messages.map((msg) => msg.text));
+    setModalType(type);
+  };
+
+  // Close modal
+  const closeModal = () => {
+    setModalType("");
+    setModalData([]);
+    setNewItem("");
+  };
+
+  const addItemInModal = () => {
+    if (newItem.trim() && !modalData.includes(newItem.trim())) {
+      setModalData([...modalData, newItem.trim()]);
       setNewItem("");
-    };
-  
-    const addItemInModal = () => {
-      if (newItem.trim() && !modalData.includes(newItem.trim())) {
-        setModalData([...modalData, newItem.trim()]);
-        setNewItem("");
-  
-        setTimeout(() => {
-          const listItems = document.querySelectorAll('.modal-content li');
-          if (listItems.length > 0) {
-            const lastItem = listItems[listItems.length - 1];
-            lastItem.classList.add('item-added');
-  
-            setTimeout(() => {
-              lastItem.classList.remove('item-added');
-            }, 1500);
-          }
-        }, 10);
-      } else {
-        alert("Item already exists or empty!");
-      }
-    };
-  
-    // Delete item inside modal
-    const deleteItemInModal = (index) => {
-      const updatedData = modalData.filter((_, i) => i !== index);
-      setModalData(updatedData);
-    };
-  
-    // Save changes from modal to main state
-    const saveChanges = async () => {
-      const mobileNumber = localStorage.getItem("mobileNumber");
-      if (!mobileNumber) {
-        alert("Mobile number not found!");
-        return;
-      }
-    
-      try {
-        await axios.post("https://api.leadscruise.com/api/whatsapp-settings/save", {
-          mobileNumber,
-          whatsappNumber: newWhatsappNumber,
-          verificationCode,
-          messages: modalData, // Save new message list
-        });
-    
-        // Update local state
-        setMessages(modalData.map((text, index) => ({
-          id: Date.now() + index,
-          text,
-        })));
-    
-        alert("Messages saved successfully!");
-      } catch (err) {
-        console.error("Error saving messages:", err);
-        alert("Failed to save messages.");
-      }
-    
-      closeModal();
-    };
+
+      setTimeout(() => {
+        const listItems = document.querySelectorAll('.modal-content li');
+        if (listItems.length > 0) {
+          const lastItem = listItems[listItems.length - 1];
+          lastItem.classList.add('item-added');
+
+          setTimeout(() => {
+            lastItem.classList.remove('item-added');
+          }, 1500);
+        }
+      }, 10);
+    } else {
+      alert("Item already exists or empty!");
+    }
+  };
+
+  // Delete item inside modal
+  const deleteItemInModal = (index) => {
+    const updatedData = modalData.filter((_, i) => i !== index);
+    setModalData(updatedData);
+  };
+
+  // Save changes from modal to main state
+  const saveChanges = async () => {
+    const mobileNumber = localStorage.getItem("mobileNumber");
+    if (!mobileNumber) {
+      alert("Mobile number not found!");
+      return;
+    }
+
+    try {
+      await axios.post("https://api.leadscruise.com/api/whatsapp-settings/save", {
+        mobileNumber,
+        whatsappNumber: newWhatsappNumber,
+        verificationCode,
+        messages: modalData, // Save new message list
+      });
+
+      // Update local state
+      setMessages(modalData.map((text, index) => ({
+        id: Date.now() + index,
+        text,
+      })));
+
+      alert("Messages saved successfully!");
+    } catch (err) {
+      console.error("Error saving messages:", err);
+      alert("Failed to save messages.");
+    }
+
+    closeModal();
+  };
 
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
@@ -404,99 +420,99 @@ const Whatsapp = () => {
       <div className="settings-scroll-container">
         <div className="sheets-container">
           {/* WhatsApp Settings Section */}
-<div className="table-container">
-  <h2>WhatsApp Settings</h2>
-  {messages.length > 0 ? (
-    <ul>
-      {messages.map((msg) => (
-        <li key={msg.id}>{msg.text}</li>
-      ))}
-    </ul>
-  ) : (
-    <p>No messages added.</p>
-  )}
-  <div className="edit-button-container">
-    <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
-      Edit
-    </button>
-  </div>
-</div>
+          <div className="table-container">
+            <h2>WhatsApp Settings</h2>
+            {messages.length > 0 ? (
+              <ul>
+                {messages.map((msg) => (
+                  <li key={msg.id}>{msg.text}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No messages added.</p>
+            )}
+            <div className="edit-button-container">
+              <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
+                Edit
+              </button>
+            </div>
+          </div>
 
-{/* Modal Popup */}
-{modalType === "sentences" && (
-  <div
-    className="modal-overlay"
-    onClick={(e) => {
-      if (e.target.className === "modal-overlay") closeModal();
-    }}
-  >
-    <div className="modal-content">
-      <div className="modal-header">
-        <h2>Edit Messages to send as replies</h2>
-        <button
-          className="modal-close-icon"
-          onClick={closeModal}
-          aria-label="Close modal"
-        >
-          &times;
-        </button>
-      </div>
-      <ul>
-        {modalData.map((item, index) => (
-          <li key={index}>
-            <span>{item}</span>
-            <button className="delete-button" onClick={() => deleteItemInModal(index)}>
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="add-keyword-container">
-        <textarea
-          ref={textareaRef}
-          value={newItem}
-          onChange={(e) => setNewItem(e.target.value)}
-          placeholder="Enter new message"
-          onKeyPress={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              addItemInModal();
-            }
-          }}
-          className="adaptable-textarea"
-          rows={1}
-          style={{
-            resize: "none",
-            overflow: "hidden",
-            minHeight: "38px",
-            width: "100%",
-            maxWidth: "100%",
-            padding: "8px 12px",
-            boxSizing: "border-box",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            fontFamily: "inherit",
-            fontSize: "inherit",
-            lineHeight: "1.5",
-            wordWrap: "break-word",
-            whiteSpace: "pre-wrap",
-          }}
-        />
-        <button type="button" className="add-button" onClick={addItemInModal}>
-          Add
-        </button>
-      </div>
-      <div className="modal-buttons">
-        <button className="save-button" onClick={() => saveChanges(modalType, modalData)}>
-          Save Changes
-        </button>
-        <button className="settings-close-button" onClick={closeModal}>
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+          {/* Modal Popup */}
+          {modalType === "sentences" && (
+            <div
+              className="modal-overlay"
+              onClick={(e) => {
+                if (e.target.className === "modal-overlay") closeModal();
+              }}
+            >
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h2>Edit Messages to send as replies</h2>
+                  <button
+                    className="modal-close-icon"
+                    onClick={closeModal}
+                    aria-label="Close modal"
+                  >
+                    &times;
+                  </button>
+                </div>
+                <ul>
+                  {modalData.map((item, index) => (
+                    <li key={index}>
+                      <span>{item}</span>
+                      <button className="delete-button" onClick={() => deleteItemInModal(index)}>
+                        Delete
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <div className="add-keyword-container">
+                  <textarea
+                    ref={textareaRef}
+                    value={newItem}
+                    onChange={(e) => setNewItem(e.target.value)}
+                    placeholder="Enter new message"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        addItemInModal();
+                      }
+                    }}
+                    className="adaptable-textarea"
+                    rows={1}
+                    style={{
+                      resize: "none",
+                      overflow: "hidden",
+                      minHeight: "38px",
+                      width: "100%",
+                      maxWidth: "100%",
+                      padding: "8px 12px",
+                      boxSizing: "border-box",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      fontFamily: "inherit",
+                      fontSize: "inherit",
+                      lineHeight: "1.5",
+                      wordWrap: "break-word",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  />
+                  <button type="button" className="add-button" onClick={addItemInModal}>
+                    Add
+                  </button>
+                </div>
+                <div className="modal-buttons">
+                  <button className="save-button" onClick={() => saveChanges(modalType, modalData)}>
+                    Save Changes
+                  </button>
+                  <button className="settings-close-button" onClick={closeModal}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
 
           <ProfileCredentials isProfilePage={true}
@@ -506,7 +522,12 @@ const Whatsapp = () => {
             setIsEditingWhatsapp={setIsEditingWhatsapp}
             updateWhatsappNumber={updateWhatsappNumber}
             verificationCode={verificationCode}
+            setVerificationCode={setVerificationCode}
             isLoading={isLoading}
+            editLockedUntil={editLockedUntil}
+            setEditLockedUntil={setEditLockedUntil}
+            justUpdated={justUpdated}
+            setJustUpdated={setJustUpdated}
             error={error} />
         </div>
       </div>

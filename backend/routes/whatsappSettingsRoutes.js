@@ -3,8 +3,8 @@ const router = express.Router();
 const { saveSettings, getSettings, removeFile } = require("../controllers/whatsappSettingsController");
 const WhatsAppSettings = require("../models/WhatsAppSettings");
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const fs = require("fs-extra");
+const path = require("path");
 const { spawn } = require("child_process");
 const readline = require('readline');
 
@@ -72,7 +72,12 @@ router.put("/update-whatsapp-number", async (req, res) => {
       return res.status(404).json({ error: "Settings not found for this mobile number" });
     }
 
-    res.json({ message: "WhatsApp number updated successfully", data: updated });
+    res.status(200).json({
+      success: true,
+      message: "WhatsApp number updated successfully",
+      data: updated
+    });
+        
     try {
       // Create a promise to handle the Python process
       const pythonProcessPromise = new Promise((resolve, reject) => {
@@ -93,7 +98,7 @@ router.put("/update-whatsapp-number", async (req, res) => {
           console.log(`Python output: ${line}`);
           
           // Check for "Already logged in" message
-          if (line.includes("Already logged in! Chats found.")) {
+          if (line.includes("Login successful! Chats found.")) {
             alreadyLoggedIn = true;
             verificationCode = "111";
             console.log("Detected already logged in. Setting verification code to 111");
@@ -228,6 +233,44 @@ router.get('/verification-code/:mobileNumber', async (req, res) => {
   } catch (err) {
     console.error("Error fetching verification code:", err);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.put("/whatsapp-logout", async (req, res) => {
+  const { mobileNumber } = req.body;
+
+  if (!mobileNumber) {
+    return res.status(400).json({ error: "mobileNumber is required" });
+  }
+
+  try {
+    const record = await WhatsAppSettings.findOne({ mobileNumber });
+
+    if (!record || !record.whatsappNumber) {
+      return res.status(404).json({ error: "No WhatsApp number linked with this mobile number" });
+    }
+
+    const whatsappNumber = record.whatsappNumber;
+
+    await WhatsAppSettings.findOneAndUpdate(
+      { mobileNumber },
+      { $unset: { verificationCode: "" } }
+    );
+
+    const profileDir = path.join(
+      __dirname,
+      "..",
+      "firefox_profiles",
+      `whatsapp_${whatsappNumber}`
+    );
+
+    // Use fs-extra to remove the directory safely
+    await fs.remove(profileDir);
+
+    res.json({ message: "WhatsApp unlinked and associated profile directory deleted successfully" });
+  } catch (err) {
+    console.error("Error during WhatsApp unlinking:", err);
+    res.status(500).json({ error: "Failed to unlink WhatsApp and delete profile directory" });
   }
 });
 

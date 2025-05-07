@@ -9,7 +9,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   setIsEditingWhatsapp,
   updateWhatsappNumber,
   verificationCode,
+  setVerificationCode,
   isLoading,
+  justUpdated,
+  setJustUpdated,
+  editLockedUntil,
+  setEditLockedUntil,
   error }) => {
   const location = useLocation();
   const isSettingsPage = location.pathname === "/settings" || location.pathname === "/sheets";
@@ -193,6 +198,72 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     }
   };
 
+  const unlinkWhatsappNumber = async () => {
+    const confirmed = window.confirm("Are you sure you want to unlink your WhatsApp number?");
+    if (!confirmed) return;
+  
+    try {
+      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/whatsapp-logout", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ mobileNumber })
+      });
+  
+      const data = await res.json();
+      if (res.ok) {
+        alert("WhatsApp unlinked successfully");
+        setVerificationCode(null);
+        const lockUntil = Date.now() + 5 * 60 * 1000; // 5 minutes
+        localStorage.setItem("editLockedUntil", lockUntil);
+        setEditLockedUntil(lockUntil);
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (err) {
+      console.error("Unlink failed:", err);
+      alert("Something went wrong while unlinking WhatsApp");
+    }
+  };
+  
+
+  useEffect(() => {
+    const savedLock = localStorage.getItem("editLockedUntil");
+    if (savedLock) {
+      setEditLockedUntil(Number(savedLock));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (editLockedUntil && Date.now() < editLockedUntil) {
+      const timeout = setTimeout(() => {
+        setEditLockedUntil(null);
+        localStorage.removeItem("editLockedUntil");
+      }, editLockedUntil - Date.now());
+  
+      return () => clearTimeout(timeout);
+    }
+  }, [editLockedUntil]);
+  
+  
+  
+  useEffect(() => {
+    if (verificationCode === "111" && !editLockedUntil) {
+      const lockUntil = Date.now() + 15 * 60 * 1000;
+      localStorage.setItem("editLockedUntil", lockUntil); // Persist between reloads
+      setEditLockedUntil(lockUntil);
+    }
+  }, [verificationCode]);
+
+  useEffect(() => {
+    if (justUpdated && verificationCode && verificationCode !== "111") {
+      // Allow editing again after verification received
+      setEditLockedUntil(null);
+      localStorage.removeItem("editLockedUntil");
+    }
+  }, [verificationCode, justUpdated]);
+
   return (
     <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
       {/* Show Max Captures per Day only on Settings page */}
@@ -222,160 +293,181 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       )}
 
       {isWhatsAppPage && (
-      <div className="credentials-section">
-        <h3 className="credentials-header">WhatsApp Settings</h3>
-        <div className="credentials-content">
-          <div className="credential-group">
-            <label>Your WhatsApp Number</label>
-
-            {!isEditingWhatsapp ? (
-              <span className="mobile-text">{newWhatsappNumber || "No WhatsApp Number Set"}</span>
-            ) : (
-              <input
-                type="text"
-                className="api-key-input"
-                value={newWhatsappNumber}
-                placeholder="Enter new WhatsApp Number..."
-                onChange={(e) => setNewWhatsappNumber(e.target.value)}
-              />
-            )}
-
-            {!isEditingWhatsapp ? (
-              <button
-                className="edit-button"
-                style={{ background: "#28a745" }}
-                onClick={() => setIsEditingWhatsapp(true)}
-              >
-                Edit
-              </button>
-            ) : (
-              <div className="edit-button-container">
-                <button className="update-api-btn" onClick={updateWhatsappNumber}>Update</button>
-                <button className="cancel-button" onClick={() => setIsEditingWhatsapp(false)}>Cancel</button>
-              </div>
-            )}
-          </div>
-
-          {error && <div className="error-message">{error}</div>}
-
-          <div className="verification-code-container">
-            <label className="verification-code-label">Verification Code:</label>
-            {isLoading ? (
-              <div className="loading-spinner">
-                <div className="spinner1"></div>
-                <span>Waiting for verification code...</span>
-              </div>
-            ) : verificationCode ? (
-              verificationCode === "111" ? (
-                <div className="already-logged-in-message">
-                  <p>Already logged in to WhatsApp! No verification needed.</p>
-                </div>
+        <div className="credentials-section">
+          <h3 className="credentials-header">WhatsApp Settings</h3>
+          <div className="credentials-content">
+            <div className="credential-group">
+              <label>Your WhatsApp Number</label>
+            <div className="whatsapp-number-container">
+              {!isEditingWhatsapp ? (
+                <span className="mobile-text">{newWhatsappNumber || "No WhatsApp Number Set"}</span>
               ) : (
-                <span className="verification-code">{verificationCode}</span>
-              )
-            ) : (
-              <span className="no-code">No verification code available</span>
-            )}
+                <input
+                  type="text"
+                  className="api-key-input"
+                  value={newWhatsappNumber}
+                  placeholder="Enter new WhatsApp Number..."
+                  onChange={(e) => setNewWhatsappNumber(e.target.value)}
+                />
+              )}
+              {!isEditingWhatsapp ? (
+                verificationCode === "111" ? (
+                  <button
+                    className="unlink-button"
+                    style={{ background: "#dc3545" }}
+                    disabled={editLockedUntil && Date.now() < editLockedUntil}
+                    title={
+                      editLockedUntil && Date.now() < editLockedUntil
+                        ? "Unlinking is locked temporarily. Please try again later."
+                        : "Unlink your WhatsApp number"
+                    }
+                    onClick={unlinkWhatsappNumber}
+                  >
+                    Unlink
+                  </button>
+                ) : (
+                  <button
+                    className="edit-button"
+                    style={{ background: "#28a745" }}
+                    onClick={() => setIsEditingWhatsapp(true)}
+                    disabled={editLockedUntil && Date.now() < editLockedUntil}
+                    title={
+                      editLockedUntil && Date.now() < editLockedUntil
+                        ? "Editing is locked temporarily. Please try again later."
+                        : "Edit your WhatsApp number"
+                    }
+                  >
+                    Edit
+                  </button>
+                )
+              ) : (
+                <div className="edit-button-container">
+                  <button className="update-api-btn" onClick={updateWhatsappNumber}>Update</button>
+                  <button className="cancel-button" onClick={() => setIsEditingWhatsapp(false)}>Cancel</button>
+                </div>
+              )}
+            </div>
+            </div>
+            {error && <div className="error-message">{error}</div>}
+
+            <div className="verification-code-container">
+              <label className="verification-code-label">Verification Code:</label>
+              {isLoading ? (
+                <div className="loading-spinner">
+                  <div className="spinner1"></div>
+                  <span>Waiting for verification code...</span>
+                </div>
+              ) : verificationCode ? (
+                verificationCode === "111" ? (
+                  <div className="already-logged-in-message">
+                    <p>Login successful!</p>
+                  </div>
+                ) : (
+                  <span className="verification-code">{verificationCode}</span>
+                )
+              ) : (
+                <span className="no-code">No verification code available</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* IndiaMart Account Credentials */}
       {!isWhatsAppPage && (
-      <div className="credentials-section">
-        <h3 className="credentials-header"> Leads Provider credentials</h3>
-        <div className="credentials-content">
-          <div className="credential-group">
-            <label>Registered mobile number</label>
-            <div className="mobile">
-              <span className="mobile-text">{mobileNumber}</span>
-              <div className="icon-group">
-                <span className="lock-icon">🔒</span>
-                <span className="info-icon" data-tooltip="Registered mobile number cannot be updated.">ⓘ</span>
+        <div className="credentials-section">
+          <h3 className="credentials-header"> Leads Provider credentials</h3>
+          <div className="credentials-content">
+            <div className="credential-group">
+              <label>Registered mobile number</label>
+              <div className="mobile">
+                <span className="mobile-text">{mobileNumber}</span>
+                <div className="icon-group">
+                  <span className="lock-icon">🔒</span>
+                  <span className="info-icon" data-tooltip="Registered mobile number cannot be updated.">ⓘ</span>
+                </div>
+              </div>
+            </div>
+            <div className="credential-group">
+              <label>Password</label>
+              <div className="password-field">
+                {isEditingSavedPassword ? (
+                  <input
+                    type="password"
+                    className="password-input"
+                    value={savedNewPassword}
+                    onChange={(e) => setSavedNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    onFocus={() => setIsIndiaMartPasswordFocused(true)}
+                    onBlur={() => setIsIndiaMartPasswordFocused(false)}
+                  />
+                ) : (
+                  <span>************</span>
+                )}
+                {isEditingSavedPassword ? (
+                  <div className="edit-button-container">
+                    <button className="save-button" onClick={(e) => { e.preventDefault(); handleSavedPasswordUpdate(); }}>
+                      Save
+                    </button>
+                    <button className="cancel-button" onClick={() => handleCancelEdit('saved')}>Cancel</button>
+                  </div>
+                ) : (
+                  <button type="button" className="edit-button" onClick={() => setIsEditingSavedPassword(true)}>
+                    Edit
+                  </button>
+                )}
               </div>
             </div>
           </div>
-          <div className="credential-group">
-            <label>Password</label>
-            <div className="password-field">
-              {isEditingSavedPassword ? (
-                <input
-                  type="password"
-                  className="password-input"
-                  value={savedNewPassword}
-                  onChange={(e) => setSavedNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                  onFocus={() => setIsIndiaMartPasswordFocused(true)}
-                  onBlur={() => setIsIndiaMartPasswordFocused(false)}
-                />
-              ) : (
-                <span>************</span>
-              )}
-              {isEditingSavedPassword ? (
-                <div className="edit-button-container">
-                  <button className="save-button" onClick={(e) => { e.preventDefault(); handleSavedPasswordUpdate(); }}>
-                    Save
-                  </button>
-                  <button className="cancel-button" onClick={() => handleCancelEdit('saved')}>Cancel</button>
-                </div>
-              ) : (
-                <button type="button" className="edit-button" onClick={() => setIsEditingSavedPassword(true)}>
-                  Edit
-                </button>
-              )}
-            </div>
-          </div>
         </div>
-      </div>
       )}
       {/* LeadsCruise Credentials */}
       {!isWhatsAppPage && (
-      <div className="credentials-section">
-        <h3 className="credentials-header">LeadsCruise Credentials</h3>
-        <div className="credentials-content">
-          <div className="credential-group">
-            <label>Registered Email ID</label>
-            <div className="mobile">
-              <span className="mobile-text">{email}</span>
-              <div className="icon-group">
-                <span className="lock-icon">🔒</span>
-                <span className="info-icon" data-tooltip="Registered email ID cannot be updated.">ⓘ</span>
+        <div className="credentials-section">
+          <h3 className="credentials-header">LeadsCruise Credentials</h3>
+          <div className="credentials-content">
+            <div className="credential-group">
+              <label>Registered Email ID</label>
+              <div className="mobile">
+                <span className="mobile-text">{email}</span>
+                <div className="icon-group">
+                  <span className="lock-icon">🔒</span>
+                  <span className="info-icon" data-tooltip="Registered email ID cannot be updated.">ⓘ</span>
+                </div>
+              </div>
+            </div>
+            <div className="credential-group">
+              <label>Password</label>
+              <div className="password-field">
+                {isEditing ? (
+                  <input
+                    type="password"
+                    className="password-input"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    onFocus={() => setIsLeadsCruisePasswordFocused(true)}
+                    onBlur={() => setIsLeadsCruisePasswordFocused(false)}
+                  />
+                ) : (
+                  <span>************</span>
+                )}
+                {isEditing ? (
+                  <div className="edit-button-container">
+                    <button className="save-button" onClick={(e) => { e.preventDefault(); handlePasswordUpdate(); }}>
+                      Save
+                    </button>
+                    <button className="cancel-button" onClick={() => handleCancelEdit('leadscruise')}>Cancel</button>
+                  </div>
+                ) : (
+                  <button className="edit-button" onClick={(e) => { e.preventDefault(); setIsEditing(true); }}>
+                    Edit
+                  </button>
+                )}
               </div>
             </div>
           </div>
-          <div className="credential-group">
-            <label>Password</label>
-            <div className="password-field">
-              {isEditing ? (
-                <input
-                  type="password"
-                  className="password-input"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                  onFocus={() => setIsLeadsCruisePasswordFocused(true)}
-                  onBlur={() => setIsLeadsCruisePasswordFocused(false)}
-                />
-              ) : (
-                <span>************</span>
-              )}
-              {isEditing ? (
-                <div className="edit-button-container">
-                  <button className="save-button" onClick={(e) => { e.preventDefault(); handlePasswordUpdate(); }}>
-                    Save
-                  </button>
-                  <button className="cancel-button" onClick={() => handleCancelEdit('leadscruise')}>Cancel</button>
-                </div>
-              ) : (
-                <button className="edit-button" onClick={(e) => { e.preventDefault(); setIsEditing(true); }}>
-                  Edit
-                </button>
-              )}
-            </div>
-          </div>
         </div>
-      </div>
       )}
       {/* IndiaMart Password Validation Popup */}
       {showLeadsCruiseValidation && (

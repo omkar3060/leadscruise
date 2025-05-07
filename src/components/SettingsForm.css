@@ -776,7 +776,7 @@ body {
   border: 2px solid #007bff;
   border-radius: 5px;
   transition: all 0.3s ease-in-out;
-  margin-bottom: 5px;
+  /* margin-bottom: 5px; */
 }
 
 .api-key-input:focus {
