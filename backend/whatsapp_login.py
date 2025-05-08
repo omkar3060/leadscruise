@@ -355,13 +355,14 @@ def login_and_extract_code(driver, wait, phone_number):
         print("Waiting for 'Chats' to appear after login...", flush=True)
         try:
             WebDriverWait(driver, 600).until(
-                EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]"))
+                EC.any_of(
+                    EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]")),
+                    EC.presence_of_element_located((By.XPATH, "//*[@aria-label='WhatsApp' and @data-icon='wa-wordmark-refreshed']"))
+                )
             )
             print("Login successful! Chats found.", flush=True)
         except Exception as e:
-            print(f"Error waiting for Chats: {e}", flush=True)
-            print("Taking screenshot of current state...", flush=True)
-            # driver.save_screenshot("waiting_for_chats.png")
+            print(f"Error waiting for WhatsApp UI: {e}", flush=True)
         
         return code
 
