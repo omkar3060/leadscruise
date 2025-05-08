@@ -1,4 +1,6 @@
-/* fileUploadStyles.css */
+.whatsapp-settings-table{
+  height: 350px;
+}
 
 .file-upload-container {
     border: 2px dashed #3498db;

@@ -46,7 +46,7 @@ const TotalLeadsThisWeek = () => {
   };
   
   return (
-    <div className="container">
+    <div className="leads-container">
       <h2>Total Leads Captured This Week</h2>
       <div className="download-and-back-div">
         <button className="excel-btn" onClick={exportToExcel}>Download</button>

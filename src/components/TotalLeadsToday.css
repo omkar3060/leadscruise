@@ -1,31 +1,37 @@
-.container {
-    padding: 20px;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-  
-  h2 {
-    text-align: center;
-    margin-bottom: 10px;
-  }
-  
-  
-  .excel-btn {
-    width: 10%;
-  }
+.leads-container {
+  padding: 20px;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  justify-content: flex-start;
+}
 
-  .back-btn{
-    width: 10%;
-  }
+h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
 
-  .download-and-back-div{
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
- .table-container1 {
+.excel-btn {
+  width: 10%;
+}
+
+.back-btn {
+  width: 10%;
+  background-color: rgba(229, 87, 87, 0.945);
+}
+
+.back-btn:hover {
+  background-color: red !important;
+}
+
+.download-and-back-div {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-container1 {
   max-height: 500px;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -38,7 +44,6 @@ table {
   border-collapse: collapse;
   table-layout: fixed;
   overflow-y: auto;
-
 }
 
 thead th {
@@ -49,23 +54,24 @@ thead th {
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
 }
 
-th, td {
+th,
+td {
   text-align: left;
   padding: 12px;
   border-bottom: 1px solid #ddd;
   word-wrap: break-word;
 }
 
+.no-leads {
+  margin: 10px;
+}
+
 @media (max-width: 768px) {
-    .excel-btn {
-        width: 15%;
-      }
-    
-      .back-btn{
-        width: 15%;
-      }
+  .excel-btn {
+    width: 15%;
   }
 
-
-
-
+  .back-btn {
+    width: 15%;
+  }
+}

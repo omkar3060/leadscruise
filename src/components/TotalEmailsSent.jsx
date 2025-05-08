@@ -36,7 +36,7 @@ const TotalLeadsAllTime = () => {
   };
 
   return (
-    <div className="container">
+    <div className="leads-container">
       <h2>Total Emails Sent</h2>
       <div className="download-and-back-div">
         <button className="excel-btn" onClick={exportToExcel}>Download</button>

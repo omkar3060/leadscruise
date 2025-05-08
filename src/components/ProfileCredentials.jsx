@@ -36,6 +36,29 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const [isIndiaMartPasswordFocused, setIsIndiaMartPasswordFocused] = useState(false);
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+  const [now, setNow] = useState(Date.now());
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = Date.now();
+      if (editLockedUntil && now < editLockedUntil) {
+        setCountdown(Math.ceil((editLockedUntil - now) / 1000));
+      } else {
+        setCountdown(0);
+      }
+    };
+
+    // Calculate immediately
+    calculateTimeLeft();
+    
+    // Then update every second
+    const timer = setInterval(calculateTimeLeft, 1000);
+    
+    // Clean up the interval on component unmount
+    return () => clearInterval(timer);
+  }, [editLockedUntil]);
+
 
   useEffect(() => {
     // Fetch credentials from localStorage
@@ -215,7 +238,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       if (res.ok) {
         alert("WhatsApp unlinked successfully");
         setVerificationCode(null);
-        const lockUntil = Date.now() + 5 * 60 * 1000; // 5 minutes
+        const lockUntil = Date.now() + 1 * 60 * 1000; // 1 minutes
         localStorage.setItem("editLockedUntil", lockUntil);
         setEditLockedUntil(lockUntil);
       } else {
@@ -226,14 +249,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       alert("Something went wrong while unlinking WhatsApp");
     }
   };
-  
-
-  useEffect(() => {
-    const savedLock = localStorage.getItem("editLockedUntil");
-    if (savedLock) {
-      setEditLockedUntil(Number(savedLock));
-    }
-  }, []);
 
   useEffect(() => {
     if (editLockedUntil && Date.now() < editLockedUntil) {
@@ -245,24 +260,28 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       return () => clearTimeout(timeout);
     }
   }, [editLockedUntil]);
-  
-  
-  
-  useEffect(() => {
-    if (verificationCode === "111" && !editLockedUntil) {
-      const lockUntil = Date.now() + 15 * 60 * 1000;
-      localStorage.setItem("editLockedUntil", lockUntil); // Persist between reloads
-      setEditLockedUntil(lockUntil);
-    }
-  }, [verificationCode]);
 
   useEffect(() => {
-    if (justUpdated && verificationCode && verificationCode !== "111") {
-      // Allow editing again after verification received
+    if (justUpdated && verificationCode ||( verificationCode === "111")) {
+      // Allow editing again after verification received or if login is successful
       setEditLockedUntil(null);
       localStorage.removeItem("editLockedUntil");
     }
   }, [verificationCode, justUpdated]);
+
+    // For demonstration of the countdown timer
+    const getButtonStyle = (baseColor) => {
+      return {
+        background: countdown > 0 ? "#6c757d" : baseColor,
+        cursor: countdown > 0 ? "not-allowed" : "pointer",
+      };
+    };
+  
+    const getButtonTitle = (action) => {
+      return countdown > 0
+        ? `${action} locked. Try again in ${countdown}s`
+        : `${action} your WhatsApp number`;
+    };
 
   return (
     <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
@@ -312,33 +331,25 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               )}
               {!isEditingWhatsapp ? (
                 verificationCode === "111" ? (
-                  <button
-                    className="unlink-button"
-                    style={{ background: "#dc3545" }}
-                    disabled={editLockedUntil && Date.now() < editLockedUntil}
-                    title={
-                      editLockedUntil && Date.now() < editLockedUntil
-                        ? "Unlinking is locked temporarily. Please try again later."
-                        : "Unlink your WhatsApp number"
-                    }
-                    onClick={unlinkWhatsappNumber}
-                  >
-                    Unlink
-                  </button>
+                <button
+                  className="unlink-button"
+                  style={getButtonStyle("#dc3545")}
+                  disabled={countdown > 0}
+                  title={getButtonTitle("Unlink")}
+                  onClick={unlinkWhatsappNumber}
+                >
+                  Unlink {countdown > 0 && `(${countdown}s)`}
+                </button>
                 ) : (
                   <button
-                    className="edit-button"
-                    style={{ background: "#28a745" }}
-                    onClick={() => setIsEditingWhatsapp(true)}
-                    disabled={editLockedUntil && Date.now() < editLockedUntil}
-                    title={
-                      editLockedUntil && Date.now() < editLockedUntil
-                        ? "Editing is locked temporarily. Please try again later."
-                        : "Edit your WhatsApp number"
-                    }
-                  >
-                    Edit
-                  </button>
+                  className="edit-button"
+                  style={getButtonStyle("#28a745")}
+                  disabled={countdown > 0}
+                  title={getButtonTitle("Edit")}
+                  onClick={() => setIsEditingWhatsapp(true)}
+                >
+                  Edit {countdown > 0 && `(${countdown}s)`}
+                </button>
                 )
               ) : (
                 <div className="edit-button-container">
