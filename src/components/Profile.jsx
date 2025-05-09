@@ -28,6 +28,7 @@ const Profile = () => {
   const [billingHistory, setBillingHistory] = useState([]);
   const [isEditing, setIsEditing] = useState(false); // Toggle edit mode
   const [daysLeft, setDaysLeft] = useState(null);
+  const [availableInvoices, setAvailableInvoices] = useState({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -130,6 +131,27 @@ const Profile = () => {
       setIsLoading(false); // Hide loading when done
     }
   };
+
+  useEffect(() => {
+    const checkInvoices = async () => {
+      const result = {};
+
+      await Promise.all(
+        billingHistory.map(async (item) => {
+          try {
+            const res = await axios.head(`https://api.leadscruise.com/api/get-invoice/${item.unique_id}`);
+            result[item.unique_id] = res.status === 200;
+          } catch (err) {
+            result[item.unique_id] = false;
+          }
+        })
+      );
+
+      setAvailableInvoices(result);
+    };
+
+    if (billingHistory.length > 0) checkInvoices();
+  }, [billingHistory]);
 
   // Download Invoice
   const handleDownloadInvoice = async (orderId) => {
@@ -255,9 +277,16 @@ const Profile = () => {
                             <button
                               className={styles["download-button"]}
                               onClick={() => handleDownloadInvoice(item.unique_id)}
+                              disabled={!availableInvoices[item.unique_id]}
+                              style={{
+                                backgroundColor: !availableInvoices[item.unique_id] ? "#ccc" : "#5cb85c",
+                                color: !availableInvoices[item.unique_id] ? "#666" : "#fff",
+                                cursor: !availableInvoices[item.unique_id] ? "not-allowed" : "pointer"
+                              }}
                             >
                               Download GST receipt
                             </button>
+
                           </td>
                         </tr>
                       );
