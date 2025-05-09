@@ -331,9 +331,7 @@ const SettingsForm = () => {
 
       {/* Modal Popup */}
       {modalType && (
-        <div className="modal-overlay" onClick={(e) => {
-          if (e.target.className === 'modal-overlay') closeModal();
-        }}>
+        <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
               <h2>Edit {modalType.replace("wordArray", "Accepted Categories").replace("h2WordArray", "Rejected Leads")}</h2>

@@ -359,5 +359,5 @@
   }
 
   .support-info-width{
-    width: 71%;
+    width: calc(100% - 420px);
   }
