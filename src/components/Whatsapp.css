@@ -357,3 +357,7 @@
       transform: rotate(360deg);
     }
   }
+
+  .support-info-width{
+    width: 71%;
+  }

@@ -209,7 +209,7 @@ const Whatsapp = () => {
     if (savedLock) {
       setEditLockedUntil(Number(savedLock));
     }
-  }, []); 
+  }, []);
 
   const handleSubmit = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
@@ -317,10 +317,10 @@ const Whatsapp = () => {
         setEditLockedUntil(null);
         localStorage.removeItem("editLockedUntil");
       }, editLockedUntil - Date.now());
-  
+
       return () => clearTimeout(timeout);
     }
-  }, [editLockedUntil]);  
+  }, [editLockedUntil]);
 
   useEffect(() => {
     // Find all auto-expanding textareas and set their height
@@ -549,7 +549,7 @@ const Whatsapp = () => {
             error={error} />
         </div>
       </div>
-      <div className="support-info">
+      <div className="support-info support-info-width">
         <h3 className="support-info__title">
           <svg xmlns="http://www.w3.org/2000/svg" className="support-info__title-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -588,23 +588,23 @@ const Whatsapp = () => {
             </a>
           </p>
           <p className="support-info__paragraph">
-      <svg xmlns="http://www.w3.org/2000/svg" className="support-info__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-        <line x1="10" y1="15" x2="10" y2="9"></line>
-        <line x1="14" y1="15" x2="14" y2="9"></line>
-        <line x1="7" y1="12" x2="17" y2="12"></line>
-      </svg>
-      Watch our&nbsp;{' '}
-      <a href="https://www.youtube.com/watch?v=yQgrVTUYlvk" className="support-info__link support-info__link--with-icon">
-        Demo Video
-        <svg xmlns="http://www.w3.org/2000/svg" className="support-info__external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-          <polyline points="15 3 21 3 21 9"></polyline>
-          <line x1="10" y1="14" x2="21" y2="3"></line>
-        </svg>
-      </a>
-      &nbsp;for a quick tutorial on how to use our whatsapp feature.
-    </p>
+            <svg xmlns="http://www.w3.org/2000/svg" className="support-info__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="10" y1="15" x2="10" y2="9"></line>
+              <line x1="14" y1="15" x2="14" y2="9"></line>
+              <line x1="7" y1="12" x2="17" y2="12"></line>
+            </svg>
+            Watch our&nbsp;{' '}
+            <a href="https://www.youtube.com/watch?v=yQgrVTUYlvk" className="support-info__link support-info__link--with-icon">
+              Demo Video
+              <svg xmlns="http://www.w3.org/2000/svg" className="support-info__external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
+            &nbsp;for a quick tutorial on how to use our whatsapp feature.
+          </p>
         </div>
       </div>
 
