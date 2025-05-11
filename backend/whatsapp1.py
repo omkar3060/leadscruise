@@ -8,10 +8,9 @@ import time
 import os
 from pyvirtualdisplay import Display
 import traceback
-script_start_time = time.time() 
-
+import sys
+import json
 def open_whatsapp(whatsapp_number, messages_json, receiver_number):
-    
     # Set environment variables for Firefox
     os.environ["MOZ_DISABLE_CONTENT_SANDBOX"] = "1"
     os.environ["MOZ_DBUS_REMOTE"] = "1"
@@ -118,8 +117,11 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
         try:
             # First try to check if already logged in
             print("Checking if already logged in...", flush=True)
-            chats_heading = wait.until(
-                EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]"))
+            WebDriverWait(driver, 600).until(
+                EC.any_of(
+                    EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]")),
+                    EC.presence_of_element_located((By.XPATH, "//*[@aria-label='WhatsApp' and @data-icon='wa-wordmark-refreshed']"))
+                )
             )
             print("Already logged in! Chats found.", flush=True)
             
@@ -151,14 +153,17 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
         # Use a progressive delay between messages to prevent rate limiting
         base_delay = 5  # Start with 5 seconds
         
-        for message in messages_json:
-            # Calculate progressive delay
-            success = forward_message(driver, wait, receiver_number, message)
+        for message_text in messages_json:
+            success = forward_message(driver, wait, receiver_number, message_text)
             
             if success:
-                print(f"Message sent successfully!", flush=True)
+                print(f"Message  sent successfully!", flush=True)
             else:
-                print(f"Failed to send message Continuing with next message...", flush=True)
+                print(f"Failed to send message . Continuing with next message...", flush=True)
+            
+            # Add a progressive delay between messages
+            print(f"Waiting for 3 seconds before next message...", flush=True)
+            time.sleep(3)
         
         print("All messages processed. WhatsApp script completed successfully!", flush=True)
         
@@ -186,38 +191,6 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
             print(f"Error stopping virtual display: {display_error}", flush=True)
             
         print("WhatsApp script finished execution", flush=True)
-        
-        # Ensure we always wait the full 10 minutes (600 seconds) before returning
-        # This prevents concurrent runs interfering with each other
-        script_end_time = time.time()
-        elapsed_time = script_end_time - script_start_time
-        remaining_time = max(0, 600 - elapsed_time)
-        
-        if remaining_time > 0:
-            print(f"Waiting for remaining time to complete 10 minutes: {int(remaining_time)} seconds", flush=True)
-            time.sleep(remaining_time)
-            print("Wait completed. Script exiting after full 10-minute period.", flush=True)
-
-def keep_alive(driver):
-    """
-    Keep the browser session alive until manually terminated
-    """
-    print("WhatsApp session active. Press Ctrl+C to terminate.", flush=True)
-    try:
-        while True:
-            time.sleep(60)  # Check every minute
-            try:
-                # Just check if the browser is still responsive
-                driver.title
-                print("Browser session still active.", flush=True)
-            except Exception as e:
-                print(f"Browser session ended: {e}", flush=True)
-                break
-    except KeyboardInterrupt:
-        print("Script terminated by user.", flush=True)
-    finally:
-        print("Script ended.", flush=True)
-
 
 def login_and_extract_code(driver, wait, phone_number):
     try:
@@ -413,7 +386,10 @@ def login_and_extract_code(driver, wait, phone_number):
         print("Waiting for 'Chats' to appear after login...", flush=True)
         try:
             WebDriverWait(driver, 600).until(
-                EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]"))
+                EC.any_of(
+                    EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]")),
+                    EC.presence_of_element_located((By.XPATH, "//*[@aria-label='WhatsApp' and @data-icon='wa-wordmark-refreshed']"))
+                )
             )
             print("Login successful! Chats found.", flush=True)
         except Exception as e:
@@ -447,15 +423,15 @@ def forward_message(driver, wait, target_number, message):
         driver.get(f"https://web.whatsapp.com/send?phone={clean_target}")
         
         # Take screenshot after navigating to the chat
-        # driver.save_screenshot("chat_loading.png")
+        driver.save_screenshot("chat_loading.png")
         print("Screenshot saved as chat_loading.png", flush=True)
         
         # Wait for WhatsApp to fully load the chat
         print("Waiting for chat to load (this may take up to 45 seconds)...", flush=True)
-        time.sleep(15)  # Longer explicit wait to allow page to fully render
+        time.sleep(45)  # Longer explicit wait to allow page to fully render
         
         # Take another screenshot after waiting
-        # driver.save_screenshot("chat_after_wait.png")
+        driver.save_screenshot("chat_after_wait.png")
         print("Screenshot saved as chat_after_wait.png", flush=True)
         
         # Wait for message input field with a longer timeout
@@ -468,7 +444,7 @@ def forward_message(driver, wait, target_number, message):
             print("Found message input field and it's clickable", flush=True)
             
             # Take screenshot after finding chat box
-            # driver.save_screenshot("found_chat_box.png")
+            driver.save_screenshot("found_chat_box.png")
             
             # Use Actions to move to the element before interacting
             actions = webdriver.ActionChains(driver)
@@ -519,80 +495,7 @@ def forward_message(driver, wait, target_number, message):
             
         except Exception as e:
             print(f"Error interacting with chat elements: {e}", flush=True)
-            print(traceback.format_exc(), flush=True)
-            
-            # Take screenshot before attempting JavaScript approach
-            # driver.save_screenshot("chat_error.png")
-            print("Screenshot saved as chat_error.png", flush=True)
-            
-            # Fall back to direct JavaScript approach
-            print("Trying direct JavaScript injection approach...", flush=True)
-            
-            try:
-                # Use JavaScript to type and send the message
-                result = driver.execute_script("""
-                    try {
-                        // Find the input element using multiple possible selectors
-                        let inputElement = document.querySelector('div[aria-label="Type a message"][role="textbox"]');
-                        if (!inputElement) {
-                            inputElement = document.querySelector('div[contenteditable="true"][spellcheck="true"]');
-                        }
-                        if (!inputElement) {
-                            inputElement = document.querySelector('div[contenteditable="true"]');
-                        }
-                        
-                        if (!inputElement) {
-                            return "Input element not found";
-                        }
-                        
-                        // Focus on the input and simulate typing
-                        inputElement.focus();
-                        
-                        // Clear any existing content
-                        inputElement.innerHTML = '';
-                        
-                        // Set the input value
-                        inputElement.textContent = arguments[0];
-                        
-                        // Dispatch events to ensure WhatsApp registers the input
-                        inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-                        inputElement.dispatchEvent(new Event('change', { bubbles: true }));
-                        
-                        // Find and click the send button after a small delay
-                        setTimeout(() => {
-                            const sendButton = document.querySelector('button[aria-label="Send"]');
-                            if (sendButton) {
-                                sendButton.click();
-                                return "Message sent via Send button";
-                            } else {
-                                // Try sending with Enter key
-                                const enterEvent = new KeyboardEvent('keydown', {
-                                    key: 'Enter',
-                                    code: 'Enter',
-                                    keyCode: 13,
-                                    which: 13,
-                                    bubbles: true
-                                });
-                                inputElement.dispatchEvent(enterEvent);
-                                return "Message sent via Enter key";
-                            }
-                        }, 500);
-                        
-                        return "JavaScript injection succeeded";
-                    } catch(e) {
-                        return "JavaScript error: " + e.message;
-                    }
-                """, message)
-                
-                print(f"JavaScript result: {result}", flush=True)
-                
-                # Take screenshot after JavaScript approach
-                # driver.save_screenshot("after_javascript.png")
-                print("Screenshot saved as after_javascript.png", flush=True)
-                
-            except Exception as js_error:
-                print(f"JavaScript approach failed: {js_error}", flush=True)
-                print(traceback.format_exc(), flush=True)
+            print(traceback.format_exc(), flush=True)        
     
     except Exception as e:
         print(f"Error in forward_message function: {e}", flush=True)
@@ -606,20 +509,19 @@ def forward_message(driver, wait, target_number, message):
 
 
 if __name__ == "__main__":
+    # if len(sys.argv) < 4:
+    #     print("Usage: python whatsapp.py whatsappNumber messagesJson receiverNumber",flush=True)
+    #     sys.exit(1)
     
     # Parse command line arguments
-    try:
-        print("Waiting for input...", flush=True)
-        whatsapp_number = input().strip()
-        messages_json = ["hi", "hello", "how are you?"]
-        receiver_number = input().strip()
-        
-        print(f"Starting WhatsApp automation with:", flush=True)
-        print(f"WhatsApp Number: {whatsapp_number}", flush=True)
-        print(f"Receiver Number: {receiver_number}", flush=True)
-        
-        # Start the WhatsApp automation
-        open_whatsapp(whatsapp_number, messages_json, receiver_number)
-    except Exception as e:
-        print(f"Error in main function: {e}", flush=True)
-        print(traceback.format_exc(), flush=True)
+    whatsapp_number = input()
+    messages_json = ["hi"]
+    receiver_number = input()
+    
+    print(f"Starting WhatsApp automation with:",flush=True)
+    print(f"WhatsApp Number: {whatsapp_number}",flush=True)
+    print(f"Receiver Number: {receiver_number}",flush=True)
+    
+    # Start the WhatsApp automation
+    open_whatsapp(whatsapp_number, messages_json, receiver_number)
+    

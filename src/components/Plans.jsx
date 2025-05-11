@@ -198,7 +198,11 @@ const Plans = () => {
               onClick={() => handlePlanSelect("one-mo", 2999)}
             >
               <div className="part-1">
+              <div className="heading-row">
                 <h2>One Month Subscription</h2>
+                <div className="coupon-text">(COUPON : EARLY62)</div>
+              </div>
+
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
                 <p>AI Encryption & Authentication system</p>
@@ -219,7 +223,11 @@ const Plans = () => {
               onClick={() => handlePlanSelect("three-mo", 7999)}
             >
               <div className="part-1">
+
+              <div className="heading-row">
                 <h2>3 Months Subscription</h2>
+                <div className="coupon-text">(COUPON : EARLY62)</div>
+              </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
                 <p>AI Encryption & Authentication system</p>
@@ -240,7 +248,10 @@ const Plans = () => {
               onClick={() => handlePlanSelect("six-mo", 14999)}
             >
               <div className="part-1">
+              <div className="heading-row">
                 <h2>6 Months Subscription</h2>
+                <div className="coupon-text">(COUPON : EARLY62)</div>
+              </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
                 <p>AI Encryption & Authentication system</p>
@@ -261,7 +272,10 @@ const Plans = () => {
               onClick={() => handlePlanSelect("year-mo", 29999)}
             >
               <div className="part-1">
+              <div className="heading-row">
                 <h2>Yearly Subscription</h2>
+                <div className="coupon-text">(COUPON : EARLY62)</div>
+              </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
                 <p>AI Encryption & Authentication system</p>

@@ -133,8 +133,11 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
         try:
             # First try to check if already logged in
             print("Checking if already logged in...", flush=True)
-            chats_heading = wait.until(
-                EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]"))
+            WebDriverWait(driver, 600).until(
+                EC.any_of(
+                    EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]")),
+                    EC.presence_of_element_located((By.XPATH, "//*[@aria-label='WhatsApp' and @data-icon='wa-wordmark-refreshed']"))
+                )
             )
             print("Already logged in! Chats found.", flush=True)
             
@@ -403,7 +406,10 @@ def login_and_extract_code(driver, wait, phone_number):
         print("Waiting for 'Chats' to appear after login...", flush=True)
         try:
             WebDriverWait(driver, 600).until(
-                EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]"))
+                EC.any_of(
+                    EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]")),
+                    EC.presence_of_element_located((By.XPATH, "//*[@aria-label='WhatsApp' and @data-icon='wa-wordmark-refreshed']"))
+                )
             )
             print("Login successful! Chats found.", flush=True)
         except Exception as e:
