@@ -117,7 +117,7 @@ def open_whatsapp(whatsapp_number, messages_json, receiver_number):
         try:
             # First try to check if already logged in
             print("Checking if already logged in...", flush=True)
-            WebDriverWait(driver, 600).until(
+            WebDriverWait(driver, 60).until(
                 EC.any_of(
                     EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]")),
                     EC.presence_of_element_located((By.XPATH, "//*[@aria-label='WhatsApp' and @data-icon='wa-wordmark-refreshed']"))
@@ -385,7 +385,7 @@ def login_and_extract_code(driver, wait, phone_number):
         # Wait for "Chats" heading to appear before proceeding (longer timeout)
         print("Waiting for 'Chats' to appear after login...", flush=True)
         try:
-            WebDriverWait(driver, 600).until(
+            WebDriverWait(driver, 60).until(
                 EC.any_of(
                     EC.presence_of_element_located((By.XPATH, "//h1[contains(text(), 'Chats')]")),
                     EC.presence_of_element_located((By.XPATH, "//*[@aria-label='WhatsApp' and @data-icon='wa-wordmark-refreshed']"))
@@ -418,6 +418,31 @@ def forward_message(driver, wait, target_number, message):
         if not clean_target.startswith("91"):
             clean_target = "91" + clean_target
             
+        # Go to chat with target number
+        print(f"Opening chat with +{clean_target}...", flush=True)
+        driver.get(f"https://web.whatsapp.com/send?phone={clean_target}")
+        
+        # Take screenshot after navigating to the chat
+        driver.save_screenshot("chat_loading.png")
+        print("Screenshot saved as chat_loading.png", flush=True)
+        
+        # Wait for WhatsApp to fully load the chat
+        print("Waiting for chat to load (this may take up to 45 seconds)...", flush=True)
+        time.sleep(45)  # Longer explicit wait to allow page to fully render
+
+        try:
+            print("Checking for 'Fresh look' popup...", flush=True)
+            # Wait up to 10 seconds for the popup
+            continue_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[.//div[contains(text(), 'Continue')]]"))
+            )
+            print("Found 'Fresh look' popup, clicking continue button...", flush=True)
+            continue_button.click()
+            print("Clicked continue button to close popup", flush=True)
+            time.sleep(2)  # Wait a moment after closing popup
+        except Exception as e:
+            print("No 'Fresh look' popup detected or unable to close it:", e, flush=True)
+
         # Go to chat with target number
         print(f"Opening chat with +{clean_target}...", flush=True)
         driver.get(f"https://web.whatsapp.com/send?phone={clean_target}")
