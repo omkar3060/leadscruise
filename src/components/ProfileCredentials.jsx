@@ -17,7 +17,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   setEditLockedUntil,
   error }) => {
   const location = useLocation();
-  const isSettingsPage = location.pathname === "/settings" || location.pathname === "/sheets";
+  const isSettingsPage = location.pathname === "/settings";
   const isWhatsAppPage = location.pathname === "/whatsapp";
   const [shakeError, setShakeError] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");

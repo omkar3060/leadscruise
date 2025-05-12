@@ -29,7 +29,7 @@ import SubscriptionsThisWeek from "./components/SubscriptionsThisWeek";
 import PendingBilling from "./components/PendingBilling";
 import ExpiryThree from "./components/ExpiryThree";
 import ExpiredSubscriptions from "./components/Expired";
-import ActiveUsers from "./components/AciveUsers";
+import ActiveUsers from "./components/ActiveUsers";
 import Referrals from "./components/Referrals";
 import SendEmail from "./components/SendEmail";
 import ComingSoon from "./components/ComingSoon";
@@ -41,7 +41,7 @@ import RepliesSentToday from "./components/RepliesSentToday"; // Adjust path as 
 import EmailsSentToday from "./components/EmailsSentToday"; // Adjust path as needed
 import TotalEmailsSent from "./components/TotalEmailsSent"; // Adjust path as needed
 import TotalLeadsCaptured from "./components/TotalLeadsCaptured"; // Adjust path as needed
-
+import UserStatus from "./components/UserStatus"; 
 const Layout = () => {
   const location = useLocation();
   const [isAppDomain, setIsAppDomain] = useState(false);
@@ -141,6 +141,15 @@ const Layout = () => {
           element={
             <ProtectedRoute adminOnly={true}>
               <UsersList />
+            </ProtectedRoute>
+          }
+        />
+
+         <Route
+          path="/master/user-status"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <UserStatus />
             </ProtectedRoute>
           }
         />

@@ -71,7 +71,8 @@ const SubscriptionsThisWeek = () => {
 
       // Filter subscriptions created within this week
       const thisWeekSubscriptions = response.data.filter(sub => {
-        const subDate = new Date(sub.createdAt);
+        const subDate = new Date(sub.created_at);
+        console.log("Subscription Date:", subDate);
         return subDate >= firstDayOfWeek && subDate <= lastDayOfWeek;
       });
 

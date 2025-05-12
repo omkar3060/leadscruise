@@ -283,9 +283,10 @@ const Master = () => {
     const expiryDate = new Date(createdDate);
 
     const SUBSCRIPTION_DURATIONS = {
-      "One Month": 30,
-      "6 Months": 180,
-      "Yearly": 365,
+      "one-mo": 30,
+      "six-mo": 180,
+      "year-mo": 365,
+      "three-mo": 90,
     };
 
     const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
@@ -418,31 +419,47 @@ const Master = () => {
         <div className={masterstyles.leadsSection}>
           <div className={masterstyles.tableHeader}>
             <span>Active Subscriptions</span>
+          </div>
+
+          <div className={masterstyles.downBox}>
+            <div className={masterstyles.searchContainer}>
+              <input
+                type="text"
+                placeholder="Search by Order ID, Email, or Referral ID..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className={masterstyles.searchInput}
+              />
+            </div>
+
             <div className={masterstyles.tableActions}>
               <button
-                className={masterstyles.downloadExcelButton}
-                onClick={handleDownloadExcel}
+                className={masterstyles.downloadButton}
+                onClick={() => navigate('/master/user-status')}
+                title="Go to User Status"
               >
-                📥 Download as Excel
+                <span className={masterstyles.icon}>👤</span>
               </button>
 
               <button
-                className={masterstyles.maintenanceButton}
-                onClick={handleStartMaintenance}
+                className={masterstyles.downloadButton}
+                onClick={handleDownloadExcel}
+                title="Download as Excel"
               >
-                {isMaintenance ? "✅ Stop Maintenance" : "🛠️ Start Maintenance"}
+                <span className={masterstyles.icon}>📥</span>
+              </button>
+
+              <button
+                className={masterstyles.editButton}
+                onClick={handleStartMaintenance}
+                title={isMaintenance ? "Stop Maintenance" : "Start Maintenance"}
+              >
+                <span className={masterstyles.icon}>{isMaintenance ? "✅" : "🛠"}</span>
               </button>
             </div>
+
           </div>
-          <div className={masterstyles.searchContainer}>
-            <input
-              type="text"
-              placeholder="Search by Order ID, Email, or Referral ID..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className={masterstyles.searchInput}
-            />
-          </div>
+
           <div className={masterstyles.tableWrapper}>
             <table className={masterstyles.leadsTable}>
               <thead>
@@ -457,8 +474,17 @@ const Master = () => {
                     { label: "Days Remaining", key: "days_remaining" },
                     { label: "Referral Id", key: "refId" },
                   ].map(({ label, key }) => (
-                    <th key={key} onClick={() => handleSort(key)} style={{ cursor: "pointer" }}>
-                      {label} {sortConfig.key === key ? (sortConfig.direction === "asc" ? "🔼" : "🔽") : ""}
+                    <th
+                      key={key}
+                      onClick={() => handleSort(key)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {label}{" "}
+                      {sortConfig.key === key
+                        ? sortConfig.direction === "asc"
+                          ? "🔼"
+                          : "🔽"
+                        : ""}
                     </th>
                   ))}
                   <th>Billing</th>
@@ -467,7 +493,6 @@ const Master = () => {
               <tbody>
                 {filteredSubscriptions.length > 0 ? (
                   filteredSubscriptions.map((sub, index) => (
-
                     <tr key={index}>
                       <td>{sub.email}</td>
                       <td>{sub.contact}</td>
@@ -476,17 +501,24 @@ const Master = () => {
                       <td>₹{sub.order_amount / 100}</td>
 
                       <td>{new Date(sub.created_at).toLocaleDateString()}</td>
-                      <td>{calculateRemainingDays(sub.created_at, sub.subscription_type)}</td>
+                      <td>
+                        {calculateRemainingDays(
+                          sub.created_at,
+                          sub.subscription_type
+                        )}
+                      </td>
                       <td>{sub.refId}</td>
                       <td>
                         {uploadedInvoices[sub.unique_id] !== undefined ? (
                           uploadedInvoices[sub.unique_id] ? (
-                            <div>
+                            <div className={masterstyles.actionBtns}>
                               <button
-                                className={masterstyles.uploadButton}
-                                onClick={() => handleOpenModal(sub.email, sub.unique_id)}
+                                className={masterstyles.editButton}
+                                onClick={() =>
+                                  handleOpenModal(sub.email, sub.unique_id)
+                                }
                               >
-                                Click here to edit
+                                🖉
                               </button>
                               <a
                                 href={uploadedInvoices[sub.unique_id]}
@@ -495,21 +527,25 @@ const Master = () => {
                                 className={masterstyles.downloadButton}
                                 download={`invoice_${sub.unique_id}.pdf`}
                               >
-                                Download Invoice
+                                ⤓
                               </a>
                             </div>
                           ) : (
                             <>
                               <button
                                 className={masterstyles.uploadButton}
-                                onClick={() => handleOpenModal(sub.email, sub.unique_id)}
+                                onClick={() =>
+                                  handleOpenModal(sub.email, sub.unique_id)
+                                }
                               >
                                 Upload Invoice
                               </button>
                             </>
                           )
                         ) : (
-                          <span className={masterstyles.loadingText}>Loading...</span>
+                          <span className={masterstyles.loadingText}>
+                            Loading...
+                          </span>
                         )}
                       </td>
                     </tr>

@@ -16,54 +16,61 @@ const ActiveUsers = () => {
 
   useEffect(() => {
     const calculateRemainingDays = (createdAt, subscriptionType) => {
-        const createdDate = new Date(createdAt);
-        const expiryDate = new Date(createdDate);
-    
-        const SUBSCRIPTION_DURATIONS = {
-            "One Month": 30,
-            "6 Months": 180,
-            "Yearly": 365,
-        };
-    
-        const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
-        expiryDate.setDate(expiryDate.getDate() + duration);
-    
-        const today = new Date();
-        const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-    
-        return remainingDays > 0; // Returns true if subscription is active
+      const createdDate = new Date(createdAt);
+      const expiryDate = new Date(createdDate);
+
+      const SUBSCRIPTION_DURATIONS = {
+        "One Month": 30,
+        "6 Months": 180,
+        "Yearly": 365,
+      };
+
+      const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
+      expiryDate.setDate(expiryDate.getDate() + duration);
+
+      const today = new Date();
+      const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+      return remainingDays > 0; // Returns true if subscription is active
     };
-    
+
     const fetchUsers = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get("https://api.leadscruise.com/api/users", {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-    
-            const paymentResponse = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-    
-            const payments = paymentResponse.data;
-    
-            // ✅ Filter only users with an active subscription
-            const activeUsers = response.data.filter(user => {
-                const userPayment = payments.find(payment => payment.email === user.email);
-                return userPayment && calculateRemainingDays(userPayment.created_at, userPayment.subscription_type);
-            });
-    
-            setUsers(activeUsers);
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to fetch active users');
-        } finally {
-            setLoading(false);
-        }
-    };    
+      setLoading(true);
+      try {
+        const response = await axios.get("https://api.leadscruise.com/api/users", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const paymentResponse = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const payments = paymentResponse.data;
+
+        // ✅ Filter only users with an active subscription
+        const activeUsers = response.data.filter(user => {
+          const userPayments = payments
+            .filter(payment => payment.email === user.email)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Latest first
+
+          if (userPayments.length === 0) return false;
+
+          const latestPayment = userPayments[0];
+          return calculateRemainingDays(latestPayment.created_at, latestPayment.subscription_type);
+
+        });
+
+        setUsers(activeUsers);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to fetch active users');
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchUsers();
   }, []);
@@ -111,11 +118,11 @@ const ActiveUsers = () => {
         'Last Login': user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'N/A'
       }))
     );
-    
+
     // Create workbook and add the worksheet
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
-    
+
     // Generate Excel file and download
     XLSX.writeFile(workbook, 'users_list.xlsx');
   };
@@ -147,8 +154,8 @@ const ActiveUsers = () => {
       <div className={styles.header}>
         <h1>Active Users</h1>
         <div className={styles.headerButtons}>
-          <button 
-            className={styles.downloadButton} 
+          <button
+            className={styles.downloadButton}
             onClick={downloadExcel}
             disabled={loading || filteredUsers.length === 0}
           >

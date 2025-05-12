@@ -15,7 +15,12 @@ const PendingBilling = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
   const navigate = useNavigate();
-
+  const subscriptionMapping = {
+  "one-mo": "One Month",
+  "three-mo": "Three Months",
+  "six-mo": "Six Months",
+  "year-mo": "One Year"
+};
   useEffect(() => {
     fetchSubscriptions();
   }, []);
@@ -116,11 +121,11 @@ const fetchUploadedInvoices = async (subs) => {
     const worksheet = XLSX.utils.json_to_sheet(
       filteredSubscriptions.map(sub => ({
         'Email': sub.email || 'N/A',
-        'Contact': sub.contact || sub.phoneNumber || 'N/A',
-        'Subscription Type': sub.plan || sub.subscriptionType || 'N/A',
+        'Contact': sub.contact || 'N/A',
+        'Subscription Type': sub.subscription_type || 'N/A',
         'Order ID': sub.unique_id || sub.orderId || 'N/A',
-        'Order Amount': sub.amount ? `₹${sub.amount}` : 'N/A',
-        'Subscription Start': sub.subscriptionStart ? new Date(sub.subscriptionStart).toLocaleDateString() : 'N/A',
+        'Order Amount': sub.order_amount ? `₹${sub.order_amount/100}` : 'N/A',
+        'Subscription Start': sub.created_at ? new Date(sub.created_at).toLocaleDateString() : 'N/A',
         'Days Remaining': sub.daysRemaining || 'N/A',
         'Reference ID': sub.refId || 'N/A',
         'Billing Status': sub.billingStatus || 'N/A'
@@ -128,15 +133,35 @@ const fetchUploadedInvoices = async (subs) => {
     );
     
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Today\'s Subscriptions');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Expired Subscriptions');
     
-    XLSX.writeFile(workbook, 'todays_subscriptions.xlsx');
+    XLSX.writeFile(workbook, 'Pending Billing Subscriptions.xlsx');
   };
 
   const viewInvoice = (invoiceUrl) => {
     if (invoiceUrl) {
       window.open(invoiceUrl, '_blank');
     }
+  };
+
+  const calculateRemainingDays = (createdAt, subscriptionType) => {
+    const createdDate = new Date(createdAt);
+    const expiryDate = new Date(createdDate);
+
+    const SUBSCRIPTION_DURATIONS = {
+      "one-mo": 30,
+      "six-mo": 180,
+      "year-mo": 365,
+      "three-mo": 90,
+    };
+
+    const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
+    expiryDate.setDate(expiryDate.getDate() + duration);
+
+    const today = new Date();
+    const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+    return remainingDays > 0 ? remainingDays : "Expired";
   };
 
   if (error) return <div className={styles.errorMessage}>Error: {error}</div>;
@@ -228,12 +253,15 @@ const fetchUploadedInvoices = async (subs) => {
               filteredSubscriptions.map(sub => (
                 <tr key={sub._id || sub.unique_id}>
                   <td>{sub.email || 'N/A'}</td>
-                  <td>{sub.contact || sub.phoneNumber || 'N/A'}</td>
-                  <td>{sub.plan || sub.subscriptionType || 'N/A'}</td>
+                  <td>{sub.contact || 'N/A'}</td>
+                  <td>{subscriptionMapping[sub.subscription_type] || 'N/A'}</td>
                   <td>{sub.unique_id || sub.orderId || 'N/A'}</td>
-                  <td>{sub.amount ? `₹${sub.amount}` : 'N/A'}</td>
-                  <td>{sub.subscriptionStart ? new Date(sub.subscriptionStart).toLocaleDateString() : 'N/A'}</td>
-                  <td>{sub.daysRemaining || 'N/A'}</td>
+                  <td>{sub.order_amount ? `₹${sub.order_amount/100}` : 'N/A'}</td>
+                  <td>{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : 'N/A'}</td>
+                  <td>{calculateRemainingDays(
+                          sub.created_at,
+                          sub.subscription_type
+                        )}</td>
                   <td>{sub.refId || 'N/A'}</td>
                   <td>{sub.billingStatus || 'N/A'}</td>
                   <td>

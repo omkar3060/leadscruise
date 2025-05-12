@@ -20,6 +20,12 @@ const ExpiredSubscriptions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploadedInvoices, setUploadedInvoices] = useState({});
   const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
+    const subscriptionMapping = {
+    "one-mo": "One Month",
+    "three-mo": "Three Months",
+    "six-mo": "Six Months",
+    "year-mo": "One Year"
+  };
   useEffect(() => {
     fetchSubscriptions();
   }, []);
@@ -147,7 +153,7 @@ const ExpiredSubscriptions = () => {
 
     const worksheet = XLSX.utils.json_to_sheet(
       filteredSubscriptions.map(sub => ({
-        "Email": sub.email,
+      "Email": sub.email,
       "Contact": sub.contact,
       "Subscription Type": sub.subscription_type,
       "Order ID": sub.unique_id,
@@ -159,9 +165,9 @@ const ExpiredSubscriptions = () => {
     );
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Today\'s Subscriptions');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Expired_subscriptions');
 
-    XLSX.writeFile(workbook, 'todays_subscriptions.xlsx');
+    XLSX.writeFile(workbook, 'Expired_subscriptions.xlsx');
   };
 
   const viewInvoice = (invoiceUrl) => {
@@ -259,7 +265,7 @@ const ExpiredSubscriptions = () => {
                 <tr key={index}>
                   <td>{sub.email}</td>
                   <td>{sub.contact}</td>
-                  <td>{sub.subscription_type}</td>
+                  <td>{subscriptionMapping[sub.subscription_type]}</td>
                   <td>{sub.unique_id}</td>
                   <td>₹{sub.order_amount / 100}</td>
 
@@ -269,12 +275,12 @@ const ExpiredSubscriptions = () => {
                   <td>
                     {uploadedInvoices[sub.unique_id] !== undefined ? (
                       uploadedInvoices[sub.unique_id] ? (
-                        <div>
+                        <div className={masterstyles.actionBtns}>
                           <button
-                            className={masterstyles.uploadButton}
+                            className={masterstyles.editButton}
                             onClick={() => handleOpenModal(sub.email, sub.unique_id)}
                           >
-                            Click here to edit
+                            🖉
                           </button>
                           <a
                             href={uploadedInvoices[sub.unique_id]}
@@ -283,7 +289,7 @@ const ExpiredSubscriptions = () => {
                             className={masterstyles.downloadButton}
                             download={`invoice_${sub.unique_id}.pdf`}
                           >
-                            Download Invoice
+                            ⤓
                           </a>
                         </div>
                       ) : (

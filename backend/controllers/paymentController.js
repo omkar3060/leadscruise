@@ -1,5 +1,5 @@
 const Payment = require("../models/Payment");
-const User = require("../models/userModel"); 
+const User = require("../models/userModel");
 // Fetch the latest unique_id from the database and increment it
 exports.latestId = async (req, res) => {
   try {
@@ -103,7 +103,22 @@ exports.getSubscriptionMetrics = async (req, res) => {
       return new Date(sub.created_at).toDateString() === today.toDateString();
     });
 
-    const subscriptionsThisWeek = allPayments.filter((sub) => isWithinDays(sub.created_at, 7));
+    // Get Monday of the current week
+    const startOfWeek = new Date();
+    const day = startOfWeek.getDay(); // Sunday - Saturday : 0 - 6
+    const diffToMonday = (day === 0 ? -6 : 1) - day;
+    startOfWeek.setDate(startOfWeek.getDate() + diffToMonday);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // Get Sunday of the current week
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const subscriptionsThisWeek = allPayments.filter((sub) => {
+      const createdAt = new Date(sub.created_at);
+      return createdAt >= startOfWeek && createdAt <= endOfWeek;
+    });
 
     // Pending Billing: Users whose subscriptions have expired
     const pendingBilling = allPayments.filter((sub) => isExpired(sub));

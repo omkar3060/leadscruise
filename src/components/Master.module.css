@@ -1,116 +1,123 @@
 /* Dashboard Container */
 .dashboardContainer {
-    display: flex;
-    height: 100vh;
-    width: 100vw;
-  }
-  
-  /* Main Content */
-  .dashboardContent {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    margin-left: 50px;
-  }
-  
-  /* Metrics Section */
-  .metricsSection {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-  }
-  
-  .metricBox {
-    background: #ffffff;
-    border-radius: 12px;
-    text-align: center;
-    padding: 20px;
-    font-size: 70px;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease-in-out;
-    cursor: pointer;
-  }
-  
-  .metricBox:hover {
-    transform: scale(1.05);
-  }
-  
-  .metricBox p {
-    font-size: 16px;
-    font-weight: bolder;
-    color: #777;
-  }
-  
-  /* Leads Section */
-  .leadsSection {
-    border-radius: 10px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-  }
-  
-  /* Table Wrapper */
-  .tableWrapper {
-    overflow-y: auto;
-    max-height: 400px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ddd;
-    /* background: #ffffff; */
+  display: flex;
+  height: 100vh;
+  width: 100vw;
 }
 
-  
-  /* Table Header */
-  .tableHeader {
-    background: #007bff;
-    color: white;
-    padding: 12px;
-    font-size: 18px;
-    font-weight: bold;
-    position: sticky;
-    top: 0;
-    z-index: 0;
-    display:flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  /* Table Styling */
-  .leadsTable {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 12px;
-    overflow: hidden;
-}
-  
-  .leadsTable th,
-  .leadsTable td {
-    border-bottom: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-    font-size: 14px;
-  }
-  .leadsTable th {
-    /* background: linear-gradient(135deg, #ffffff, #ffffff); */
-    color: black;
-    font-weight: bold;
-    padding: 14px;
-    text-align: left;
-    position: sticky;
-    top: 0;
-    z-index: 0;
-    border-bottom: 2px solid #ddd;
-    cursor: pointer;
-    transition: background 0.3s ease-in-out;
+/* Main Content */
+.dashboardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  margin-left: 50px;
 }
 
-  
+/* Metrics Section */
+.metricsSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.metricBox {
+  background: #ffffff;
+  border-radius: 12px;
+  text-align: center;
+  padding: 20px;
+  font-size: 70px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.metricBox:hover {
+  transform: scale(1.05);
+}
+
+.metricBox p {
+  font-size: 16px;
+  font-weight: bolder;
+  color: #777;
+}
+
+/* Leads Section */
+.leadsSection {
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  width: 100%;
+}
+
+/* Table Wrapper */
+.tableWrapper {
+  overflow-y: auto;
+  max-height: 300px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  /* background: #ffffff; */
+}
+
+/* Table Header */
+.tableHeader {
+  background: #007bff;
+  color: white;
+  padding: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.downBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* Table Styling */
+.leadsTable {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.leadsTable th,
+.leadsTable td {
+  border-bottom: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+  font-size: 14px;
+}
+.leadsTable th {
+  /* background: linear-gradient(135deg, #ffffff, #ffffff); */
+  color: black;
+  font-weight: bold;
+  padding: 14px;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  border-bottom: 2px solid #ddd;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+}
+
 .leadsTable td {
   padding: 14px;
   font-size: 15px;
@@ -118,68 +125,69 @@
   border-bottom: 1px solid #ddd;
 }
 
-  /* File Upload & Download Buttons */
-  .fileInput {
-    display: none;
-  }
-  
-  .fileLabel {
-    background: #007bff;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
-    display: inline-block;
-    margin-right: 5px;
-  }
-  
-  .fileLabel:hover {
-    background: #0056b3;
-  }
-  .leadsTable tr:hover {
-    background: rgba(0, 123, 255, 0.1);
-    transition: background 0.3s ease-in-out;
+/* File Upload & Download Buttons */
+.fileInput {
+  display: none;
+}
+
+.fileLabel {
+  background: #007bff;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.fileLabel:hover {
+  background: #0056b3;
+}
+.leadsTable tr:hover {
+  background: rgba(0, 123, 255, 0.1);
+  transition: background 0.3s ease-in-out;
 }
 
 /* Buttons */
-.uploadButton, .downloadButton {
-    padding: 10px 8px;
-    font-size: 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    text-align: center;
-    display: inline-block;
-    font-weight: bold;
-    margin-bottom: 5px;
-    width: auto;
+.uploadButton,
+.downloadButton {
+  padding: 10px 8px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-align: center;
+  display: inline-block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  width: auto;
 }
 
 /* Upload Button */
 .uploadButton {
-  background: #6c5ce7;  /* Modern purple */
+  background: #6c5ce7; /* Modern purple */
   color: white;
   border: none;
 }
 
 .uploadButton:hover {
-  background: #5849c4;  /* Darker purple on hover */
+  background: #5849c4; /* Darker purple on hover */
 }
 
 /* Upload Invoice button */
 .uploadButton:not(:has(+ .downloadButton)) {
-  background: #e74c3c;  /* Red for Upload Invoice */
+  background: #e74c3c; /* Red for Upload Invoice */
 }
 
 .uploadButton:not(:has(+ .downloadButton)):hover {
-  background: #c0392b;  /* Darker red on hover */
+  background: #c0392b; /* Darker red on hover */
 }
 /* Download Button */
 .downloadButton {
   padding: 14px 16px;
-  background: #00b894;  /* Fresh teal */
+  background: #00b894; /* Fresh teal */
   color: white;
   border: none;
   text-decoration: none;
@@ -187,24 +195,24 @@
 }
 
 .downloadButton:hover {
-  background: #00a886;  /* Darker teal on hover */
+  background: #00a886; /* Darker teal on hover */
 }
 
 /* Loading Text */
 .loadingText {
-    color: #dc3545;
-    font-weight: bold;
+  color: #dc3545;
+  font-weight: bold;
 }
 
 /* Center "No Active Subscriptions" Message */
 .noSubscriptions {
-    text-align: center;
-    font-size: 16px;
-    font-weight: bold;
-    color: #666;
-    padding: 20px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #666;
+  padding: 20px;
 }
-  
+
 .downloadExcelButton {
   background-color: #28a745;
   color: white;
@@ -235,56 +243,50 @@
 /* ✅ Mobile & Small Screens */
 @media (max-width: 1024px) {
   .dashboardContainer {
-      flex-direction: column;
-      height: 100vh;
-      width: 100vw;
-      padding: 10px;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    padding: 10px;
   }
 
   .dashboardContent {
-      margin-left: 0;
-      padding: 10px;
+    margin-left: 0;
+    padding: 10px;
   }
 
   .metricsSection {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
   .metricBox {
-      font-size: 30px;
-      padding: 15px;
+    font-size: 30px;
+    padding: 15px;
   }
 
   .metricBox p {
-      font-size: 14px;
-      margin-bottom: 0;
+    font-size: 14px;
+    margin-bottom: 0;
   }
 
   .tableWrapper {
-      max-height: 300px;
+    max-height: 300px;
   }
 
   .tableHeader {
-      font-size: 14px;
-      padding: 10px;
+    font-size: 14px;
+    padding: 10px;
   }
 
   .leadsTable th,
   .leadsTable td {
-      font-size: 12px;
-      padding: 8px;
-  }
-
-  .uploadButton,
-  .downloadButton {
-      font-size: 12px;
-      padding: 8px 6px;
+    font-size: 12px;
+    padding: 8px;
   }
 
   .downloadExcelButton {
-      font-size: 14px;
-      padding: 5px;
+    font-size: 14px;
+    padding: 5px;
   }
 }
 /* 
@@ -316,8 +318,7 @@
 } */
 
 .searchContainer {
-  margin-bottom: 10px;
-  width: 100%;
+  width: 50%;
 }
 
 .searchInput {
@@ -335,7 +336,7 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.maintenanceButton{
+.maintenanceButton {
   background-color: #dc3545;
   color: white;
   font-size: 16px;
@@ -355,25 +356,55 @@
 
 .tableActions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  width: 50%;
+  padding-right: 10px;
+  gap: 10px;
+  box-sizing: border-box;
   /* margin-bottom: 10px; */
 }
 
+.editButton,
+.downloadButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-@media (max-width: 480px){
+.actionBtns {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 480px) {
   .downloadExcelButton {
     font-size: 8px;
     padding: 2px 5px;
+  }
+
+  .maintenanceButton {
+    font-size: 8px;
+    padding: 2px 5px;
+  }
+
+  .uploadButton {
+    font-size: 5px;
+    padding: 2px 5px;
+  }
 }
 
-.maintenanceButton{
-  font-size: 8px;
-  padding: 2px 5px;
+.icon {
+  font-size: 1.2rem; /* Increase icon size */
+  transition: transform 0.2s;
 }
 
-.uploadButton{
-  font-size: 5px;
-  padding: 2px 5px;
+.icon:hover {
+  transform: scale(1.2); /* Optional hover effect */
 }
-} 
