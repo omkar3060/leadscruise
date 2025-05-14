@@ -3,7 +3,10 @@ const express = require('express');
 const router = express.Router();
 
 async function fetchIndiaMartData(mobileNumber, password) {
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   const page = await browser.newPage();
   const wait = selector => page.waitForSelector(selector, { visible: true, timeout: 60000 });
 
@@ -68,12 +71,12 @@ async function fetchIndiaMartData(mobileNumber, password) {
         const locationsTabExists = await page.evaluate((selector) => {
           return document.querySelector(selector) !== null;
         }, locationsTabSelector);
-        
+
         if (locationsTabExists) {
           await page.click(locationsTabSelector);
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        
+
         // Extract location data
         locationData = await page.evaluate(() => {
           const rows = Array.from(document.querySelectorAll('#Enquiries_reportTableCSS__38-9b tbody tr'));
@@ -87,17 +90,17 @@ async function fetchIndiaMartData(mobileNumber, password) {
             };
           });
         });
-        
+
         // Switch to categories tab if it exists
         const categoriesTabSelector = "#categories";
         const categoriesTabExists = await page.evaluate((selector) => {
           return document.querySelector(selector) !== null;
         }, categoriesTabSelector);
-        
+
         if (categoriesTabExists) {
           await page.click(categoriesTabSelector);
           await new Promise(resolve => setTimeout(resolve, 1000));
-          
+
           // Extract category data (assuming similar structure)
           categoryData = await page.evaluate(() => {
             const rows = Array.from(document.querySelectorAll('#Enquiries_reportTableCSS__38-9b tbody tr'));
@@ -160,15 +163,15 @@ router.get("/charts", async (req, res) => {
 // Keep the old endpoint for backward compatibility
 router.get("/chart", async (req, res) => {
   const { mobileNumber, password, period = 'weekly' } = req.query;
-  
+
   if (!mobileNumber || !password) {
     return res.status(400).json({ success: false, error: "mobileNumber & password are required" });
   }
-  
+
   try {
     const charts = await fetchIndiaMartCharts(mobileNumber, password);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       chart: charts[period]
     });
   } catch (err) {

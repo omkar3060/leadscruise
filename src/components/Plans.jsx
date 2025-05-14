@@ -170,16 +170,16 @@ const Plans = () => {
 
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
-    
+
     if (!isConfirmed) return; // Stop if user cancels
-  
+
     const userEmail = localStorage.getItem("userEmail");
-  
+
     try {
       await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
-  
+
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
@@ -188,8 +188,8 @@ const Plans = () => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  };  
-  
+  };
+
   const handleNextClick = () => {
     if (!selectedPlan) {
       alert("Please select a plan first!");
@@ -210,10 +210,10 @@ const Plans = () => {
               onClick={() => handlePlanSelect("one-mo", 2999)}
             >
               <div className="part-1">
-              <div className="heading-row">
-                <h2>One Month Subscription</h2>
-                <div className="coupon-text">(COUPON : EARLY62)</div>
-              </div>
+                <div className="heading-row">
+                  <h2>One Month Subscription</h2>
+                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                </div>
 
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
@@ -236,10 +236,10 @@ const Plans = () => {
             >
               <div className="part-1">
 
-              <div className="heading-row">
-                <h2>3 Months Subscription</h2>
-                <div className="coupon-text">(COUPON : EARLY62)</div>
-              </div>
+                <div className="heading-row">
+                  <h2>3 Months Subscription</h2>
+                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
                 <p>AI Encryption & Authentication system</p>
@@ -260,10 +260,10 @@ const Plans = () => {
               onClick={() => handlePlanSelect("six-mo", 14999)}
             >
               <div className="part-1">
-              <div className="heading-row">
-                <h2>6 Months Subscription</h2>
-                <div className="coupon-text">(COUPON : EARLY62)</div>
-              </div>
+                <div className="heading-row">
+                  <h2>6 Months Subscription</h2>
+                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
                 <p>AI Encryption & Authentication system</p>
@@ -284,10 +284,10 @@ const Plans = () => {
               onClick={() => handlePlanSelect("year-mo", 29999)}
             >
               <div className="part-1">
-              <div className="heading-row">
-                <h2>Yearly Subscription</h2>
-                <div className="coupon-text">(COUPON : EARLY62)</div>
-              </div>
+                <div className="heading-row">
+                  <h2>Yearly Subscription</h2>
+                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
                 <p>AI Encryption & Authentication system</p>
@@ -364,8 +364,8 @@ const Plans = () => {
                 LeadsCruise provides 100% uptime utilising FA cloud systems
               </div>
               <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
+                Learn more
+              </a>
             </div>
 
             <div
@@ -411,46 +411,44 @@ const Plans = () => {
         </div>
       </div>
 
-         {showModal && (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <h2>Confirm Your Plan</h2>
-      
-      <div className="plan-summary">
-        <p><strong>Plan:</strong> {
-          selectedPlan === "one-mo" ? "1 Month" :
-          selectedPlan === "three-mo" ? "3 Months" :
-          selectedPlan === "six-mo" ? "6 Months" :
-          "12 Months"
-        }</p>
-        <p><strong>Price:</strong> ₹{localStorage.getItem("selectedPrice")}</p>
-      </div>
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Confirm Your Plan</h2>
 
-      <div className="coupon-section">
-        <label htmlFor="couponInput"><strong>Coupon Code:</strong></label>
-        <input
-          id="couponInput"
-          type="text"
-          value="EARLY62"
-          readOnly
-          className="coupon-input"
-        />
-        <p className="coupon-note">(Auto-applied at checkout)</p>
-      </div>
+            <div className="plan-summary">
+              <p><strong>Plan:</strong> {
+                selectedPlan === "one-mo" ? "1 Month" :
+                  selectedPlan === "three-mo" ? "3 Months" :
+                    selectedPlan === "six-mo" ? "6 Months" :
+                      "12 Months"
+              }</p>
+              <p><strong>Price:</strong> ₹{localStorage.getItem("selectedPrice")}</p>
+            </div>
 
-      <div className="modal-actions" style={{ display: 'flex' }}>
-        <button className="proceed-button" onClick={paymentHandler}>
-          Proceed to Pay
-        </button>
-        <button className="cancel-button" onClick={() => setShowModal(false)}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            <div className="coupon-section">
+              <label htmlFor="couponInput"><strong>Coupon Code:</strong></label>
+              <input
+                id="couponInput"
+                type="text"
+                value="EARLY62"
+                readOnly
+                className="coupon-input"
+              />
+              <p className="coupon-note">(Auto-applied at checkout)</p>
+            </div>
 
-
+            <div className="modal-actions" style={{ display: 'flex' }}>
+              <button className="proceed-button" onClick={paymentHandler}>
+                Proceed to Pay
+              </button>
+              <button className="cancel-button" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
