@@ -5,6 +5,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { SiGooglesheets } from "react-icons/si";
 import { FiSettings, FiLogOut } from "react-icons/fi";
 import { AiOutlineHome } from "react-icons/ai";
+import { BiBarChartSquare } from "react-icons/bi";
 import { MdOutlineRecommend } from "react-icons/md"; // Import referral icon
 import axios from "axios";
 
@@ -106,6 +107,13 @@ const Sidebar = ({ status }) => {
             >
               <SiGooglesheets className={styles.icon} />
               <span className={styles.tooltipText}>Sheets</span>
+            </div>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/analytics")}
+            >
+              <BiBarChartSquare className={styles.icon} />
+              <span className={styles.tooltipText}>Analytics</span>
             </div>
           </>
         )}

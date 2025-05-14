@@ -42,6 +42,8 @@ import EmailsSentToday from "./components/EmailsSentToday"; // Adjust path as ne
 import TotalEmailsSent from "./components/TotalEmailsSent"; // Adjust path as needed
 import TotalLeadsCaptured from "./components/TotalLeadsCaptured"; // Adjust path as needed
 import UserStatus from "./components/UserStatus"; 
+import Analytics from "./components/Analytics";
+
 const Layout = () => {
   const location = useLocation();
   const [isAppDomain, setIsAppDomain] = useState(false);
@@ -126,6 +128,8 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
+
+
 
         {/* Admin Routes */}
         <Route
@@ -240,6 +244,7 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
         <Route
           path="/totalLeadsToday"
           element={

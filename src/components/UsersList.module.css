@@ -472,3 +472,12 @@
 .refbtn button:hover {
   background-color:#24a259;
 }
+
+.penup_btn {
+  background-color: rgb(235, 80, 80);
+  color: white;
+}
+
+.penup_btn:hover {
+  background-color: rgb(241,18,18);
+}

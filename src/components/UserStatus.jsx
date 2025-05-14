@@ -15,18 +15,59 @@ const UserStatus = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const calculateRemainingDays = (createdAt, subscriptionType) => {
+      const createdDate = new Date(createdAt);
+      const expiryDate = new Date(createdDate);
+
+      const SUBSCRIPTION_DURATIONS = {
+        "One Month": 30,
+        "6 Months": 180,
+        "Yearly": 365,
+      };
+
+      const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
+      expiryDate.setDate(expiryDate.getDate() + duration);
+
+      const today = new Date();
+      const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+      return remainingDays > 0; // Returns true if subscription is active
+    };
+
     const fetchUsers = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const response = await axios.get('https://api.leadscruise.com/api/users', {
+        const response = await axios.get("https://api.leadscruise.com/api/users", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-        setUsers(response.data);
-        setLoading(false);
+
+        const paymentResponse = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const payments = paymentResponse.data;
+
+        // ✅ Filter only users with an active subscription
+        const activeUsers = response.data.filter(user => {
+          const userPayments = payments
+            .filter(payment => payment.email === user.email)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Latest first
+
+          if (userPayments.length === 0) return false;
+
+          const latestPayment = userPayments[0];
+          return calculateRemainingDays(latestPayment.created_at, latestPayment.subscription_type);
+
+        });
+
+        setUsers(activeUsers);
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch users');
+        setError(err.response?.data?.message || 'Failed to fetch active users');
+      } finally {
         setLoading(false);
       }
     };

@@ -173,13 +173,13 @@ const SubscriptionsThisWeek = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       filteredSubscriptions.map(sub => ({
         "Email": sub.email,
-      "Contact": sub.contact,
-      "Subscription Type": sub.subscription_type,
-      "Order ID": sub.unique_id,
-      "Order Amount (₹)": sub.order_amount / 100,
-      "Subscription Start": new Date(sub.created_at).toLocaleDateString(),
-      "Days Remaining": calculateRemainingDays(sub.created_at, sub.subscription_type),
-      "Reference ID": sub.refId || "N/A",
+        "Contact": sub.contact,
+        "Subscription Type": sub.subscription_type,
+        "Order ID": sub.unique_id,
+        "Order Amount (₹)": sub.order_amount / 100,
+        "Subscription Start": new Date(sub.created_at).toLocaleDateString(),
+        "Days Remaining": calculateRemainingDays(sub.created_at, sub.subscription_type),
+        "Reference ID": sub.refId || "N/A",
       }))
     );
 
@@ -276,7 +276,6 @@ const SubscriptionsThisWeek = () => {
               <th onClick={() => handleSort('billingStatus')}>
                 Billing {getSortIndicator('billingStatus')}
               </th>
-              <th>Invoice</th>
             </tr>
           </thead>
           <tbody>
@@ -330,7 +329,7 @@ const SubscriptionsThisWeek = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="10" className={styles.noResults}>
+                <td colSpan="9" className={styles.noResults}>
                   No subscriptions found for this week
                 </td>
               </tr>

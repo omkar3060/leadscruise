@@ -168,7 +168,7 @@ const TodaySubscriptions = () => {
 
     const worksheet = XLSX.utils.json_to_sheet(
       filteredSubscriptions.map(sub => ({
-        "Email": sub.email,
+      "Email": sub.email,
       "Contact": sub.contact,
       "Subscription Type": sub.subscription_type,
       "Order ID": sub.unique_id,
@@ -272,7 +272,6 @@ const TodaySubscriptions = () => {
               <th onClick={() => handleSort('billingStatus')}>
                 Billing {getSortIndicator('billingStatus')}
               </th>
-              <th>Invoice</th>
             </tr>
           </thead>
           <tbody>
@@ -326,7 +325,7 @@ const TodaySubscriptions = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="10" className={styles.noResults}>
+                <td colSpan="9" className={styles.noResults}>
                   No subscriptions found for today
                 </td>
               </tr>

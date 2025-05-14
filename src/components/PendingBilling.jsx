@@ -5,7 +5,7 @@ import styles from './UsersList.module.css'; // Reusing the same styles
 import Sidebar from './Sidebar';
 import * as XLSX from 'xlsx';
 import { Subscriptions } from '@mui/icons-material';
-
+import BillingModal from "./BillingModal";
 const PendingBilling = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [uploadedInvoices, setUploadedInvoices] = useState({});
@@ -15,12 +15,24 @@ const PendingBilling = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
   const navigate = useNavigate();
+  const [selectedUserEmail, setSelectedUserEmail] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
   const subscriptionMapping = {
-  "one-mo": "One Month",
-  "three-mo": "Three Months",
-  "six-mo": "Six Months",
-  "year-mo": "One Year"
-};
+    "one-mo": "One Month",
+    "three-mo": "Three Months",
+    "six-mo": "Six Months",
+    "year-mo": "One Year"
+  };
+  const handleOpenModal = (email, id) => {
+    setIsLoading(true);
+    setSelectedUserEmail(email);
+    setSelectedOrderId(id);
+    setSelectedInvoiceUrl(uploadedInvoices[id] || null);
+    setIsModalOpen(true);
+    setIsLoading(false);
+  };
   useEffect(() => {
     fetchSubscriptions();
   }, []);
@@ -28,56 +40,56 @@ const PendingBilling = () => {
   const fetchSubscriptions = async () => {
     setIsLoading(true);
     try {
-        const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-        });
+      const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
 
-        const allSubscriptions = response.data;
+      const allSubscriptions = response.data;
 
-        // Fetch uploaded invoices and filter only subscriptions without invoices
-        const subscriptionsWithoutInvoices = await fetchUploadedInvoices(allSubscriptions);
+      // Fetch uploaded invoices and filter only subscriptions without invoices
+      const subscriptionsWithoutInvoices = await fetchUploadedInvoices(allSubscriptions);
 
-        setSubscriptions(subscriptionsWithoutInvoices);
+      setSubscriptions(subscriptionsWithoutInvoices);
     } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch subscriptions');
+      setError(err.response?.data?.message || 'Failed to fetch subscriptions');
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
-const fetchUploadedInvoices = async (subs) => {
+  const fetchUploadedInvoices = async (subs) => {
     try {
-        const invoiceStatus = {};
-        await Promise.all(
-            subs.map(async (sub) => {
-                try {
-                    const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${sub.unique_id}`, {
-                        responseType: "blob",
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem('token')}`
-                        }
-                    });
+      const invoiceStatus = {};
+      await Promise.all(
+        subs.map(async (sub) => {
+          try {
+            const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${sub.unique_id}`, {
+              responseType: "blob",
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+              }
+            });
 
-                    const pdfBlob = new Blob([response.data], { type: "application/pdf" });
-                    const pdfUrl = URL.createObjectURL(pdfBlob);
-                    invoiceStatus[sub.unique_id] = pdfUrl;
-                } catch (error) {
-                    if (error.response && error.response.status === 404) {
-                        invoiceStatus[sub.unique_id] = null; // No invoice uploaded
-                    }
-                }
-            })
-        );
+            const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            invoiceStatus[sub.unique_id] = pdfUrl;
+          } catch (error) {
+            if (error.response && error.response.status === 404) {
+              invoiceStatus[sub.unique_id] = null; // No invoice uploaded
+            }
+          }
+        })
+      );
 
-        // Return subscriptions where invoice is missing
-        return subs.filter(sub => invoiceStatus[sub.unique_id] === null);
+      // Return subscriptions where invoice is missing
+      return subs.filter(sub => invoiceStatus[sub.unique_id] === null);
     } catch (error) {
-        console.error("Error fetching uploaded invoices:", error);
-        return [];
+      console.error("Error fetching uploaded invoices:", error);
+      return [];
     }
-};
+  };
 
 
   const handleSort = (key) => {
@@ -117,24 +129,24 @@ const fetchUploadedInvoices = async (subs) => {
       alert("No subscription data available to download.");
       return;
     }
-    
+
     const worksheet = XLSX.utils.json_to_sheet(
       filteredSubscriptions.map(sub => ({
         'Email': sub.email || 'N/A',
         'Contact': sub.contact || 'N/A',
         'Subscription Type': sub.subscription_type || 'N/A',
         'Order ID': sub.unique_id || sub.orderId || 'N/A',
-        'Order Amount': sub.order_amount ? `₹${sub.order_amount/100}` : 'N/A',
+        'Order Amount': sub.order_amount ? `₹${sub.order_amount / 100}` : 'N/A',
         'Subscription Start': sub.created_at ? new Date(sub.created_at).toLocaleDateString() : 'N/A',
         'Days Remaining': sub.daysRemaining || 'N/A',
         'Reference ID': sub.refId || 'N/A',
         'Billing Status': sub.billingStatus || 'N/A'
       }))
     );
-    
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Expired Subscriptions');
-    
+
     XLSX.writeFile(workbook, 'Pending Billing Subscriptions.xlsx');
   };
 
@@ -191,8 +203,8 @@ const fetchUploadedInvoices = async (subs) => {
       <div className={styles.header}>
         <h1>Pending Bills</h1>
         <div className={styles.headerButtons}>
-          <button 
-            className={styles.downloadButton} 
+          <button
+            className={styles.downloadButton}
             onClick={downloadExcel}
             disabled={loading}
           >
@@ -245,7 +257,6 @@ const fetchUploadedInvoices = async (subs) => {
               <th onClick={() => handleSort('billingStatus')}>
                 Billing {getSortIndicator('billingStatus')}
               </th>
-              <th>Invoice</th>
             </tr>
           </thead>
           <tbody>
@@ -256,44 +267,45 @@ const fetchUploadedInvoices = async (subs) => {
                   <td>{sub.contact || 'N/A'}</td>
                   <td>{subscriptionMapping[sub.subscription_type] || 'N/A'}</td>
                   <td>{sub.unique_id || sub.orderId || 'N/A'}</td>
-                  <td>{sub.order_amount ? `₹${sub.order_amount/100}` : 'N/A'}</td>
+                  <td>{sub.order_amount ? `₹${sub.order_amount / 100}` : 'N/A'}</td>
                   <td>{sub.created_at ? new Date(sub.created_at).toLocaleDateString() : 'N/A'}</td>
                   <td>{calculateRemainingDays(
-                          sub.created_at,
-                          sub.subscription_type
-                        )}</td>
+                    sub.created_at,
+                    sub.subscription_type
+                  )}</td>
                   <td>{sub.refId || 'N/A'}</td>
-                  <td>{sub.billingStatus || 'N/A'}</td>
                   <td>
-                    {uploadedInvoices[sub.unique_id] ? (
-                      <button 
-                        className={styles.viewButton}
-                        onClick={() => viewInvoice(uploadedInvoices[sub.unique_id])}
-                      >
-                        View
-                      </button>
-                    ) : sub.invoiceBase64 ? (
-                      <button 
-                        className={styles.viewButton}
-                        onClick={() => window.open(sub.invoiceBase64, '_blank')}
-                      >
-                        View
-                      </button>
+                    {sub.billingStatus ? (
+                      sub.billingStatus
                     ) : (
-                      'N/A'
+                      <button
+                        className={styles.penup_btn}
+                        onClick={() =>
+                          handleOpenModal(sub.email, sub.unique_id)
+                        }
+                      >
+                        Upload Invoice
+                      </button>
                     )}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="10" className={styles.noResults}>
+                <td colSpan="09" className={styles.noResults}>
                   No Bills Pending
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        <BillingModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          userEmail={selectedUserEmail}
+          unique_id={selectedOrderId}
+          invoiceUrl={selectedInvoiceUrl}
+        />
       </div>
     </div>
   );

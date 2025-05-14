@@ -19,6 +19,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const location = useLocation();
   const isSettingsPage = location.pathname === "/settings";
   const isWhatsAppPage = location.pathname === "/whatsapp";
+  const isSheetsPage = location.pathname === "/sheets" || location.pathname === "/profile";
   const [shakeError, setShakeError] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -132,7 +133,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       }
     }
   };
-
 
   useEffect(() => {
     const fetchMaxCaptures = async () => {
@@ -385,7 +385,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       )}
 
       {/* IndiaMart Account Credentials */}
-      {!isWhatsAppPage && (
+      {!isWhatsAppPage && !isSheetsPage && (
         <div className="credentials-section">
           <h3 className="credentials-header"> Leads Provider credentials</h3>
           <div className="credentials-content">

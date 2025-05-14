@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, use } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
@@ -42,6 +42,7 @@ const Dashboard = () => {
   const [buyerBalance, setBuyerBalance] = useState(null);
   const [showZeroBalanceAlert, setShowZeroBalanceAlert] = useState(false);
   const [isVisible, setIsVisible] = useState(localStorage.getItem("isVisible") === "true" || false);
+  const whatsappMessagesLength=localStorage.getItem("whatsappMessagesLength")||0;
   // Function to fetch balance
   const fetchBuyerBalance = useCallback(async () => {
     try {
@@ -218,6 +219,29 @@ const Dashboard = () => {
 
     fetchSettings();
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchWhatsappSettings = async () => {
+    const mobileNumber = localStorage.getItem("mobileNumber");
+    if (!mobileNumber) return;
+
+    try {
+      const res = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        if (data.data.messages && data.data.messages.length > 0) {
+          localStorage.setItem("whatsappMessagesLength", data.data.messages.length);
+        } else {
+          localStorage.setItem("whatsappMessagesLength", 0);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching settings:", err);
+    }
+  };
+    fetchWhatsappSettings();
+  }, []);
 
   // Calculate metrics based on leads data
   const calculateMetrics = () => {
@@ -534,7 +558,7 @@ const Dashboard = () => {
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>Coming soon<br /><span>WA Messages Sent Today</span></div>
+          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>{metrics.totalLeadsToday*whatsappMessagesLength}<br /><span>WA Messages Sent Today</span></div>
           <div onClick={() => navigate("/emailsSentToday")} className={styles.comingSoon}>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br /><span>Emails Sent Today</span></div>
           <div onClick={() => navigate("/totalEmailsSent")} className={styles.comingSoon}>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)} <br /><span>Total Emails Sent</span></div>
           <div onClick={() => navigate("/totalLeadsCaptured")} className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>

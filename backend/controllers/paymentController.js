@@ -23,7 +23,8 @@ exports.getPaymentsByEmail = async (req, res) => {
       return res.status(400).json({ error: "Email is required" });
     }
 
-    const payments = await Payment.find({ email }); // Query the database
+    // Sort payments in descending order of unique_id
+    const payments = await Payment.find({ email }).sort({ unique_id: -1 });
 
     if (payments.length === 0) {
       return res.status(200).json({ message: "No payment records found" });

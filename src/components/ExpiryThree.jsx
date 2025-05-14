@@ -147,7 +147,7 @@ const ExpiryThree = () => {
 
     const worksheet = XLSX.utils.json_to_sheet(
       filteredSubscriptions.map(sub => ({
-        "Email": sub.email,
+      "Email": sub.email,
       "Contact": sub.contact,
       "Subscription Type": sub.subscription_type,
       "Order ID": sub.unique_id,
@@ -304,7 +304,7 @@ const ExpiryThree = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="10" className={styles.noResults}>
+                <td colSpan="09" className={styles.noResults}>
                   No subscriptions expiring in three days!!!
                 </td>
               </tr>

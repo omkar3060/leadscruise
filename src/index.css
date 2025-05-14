@@ -13,7 +13,7 @@
 }
 
 body {
-  background-image: url('https://static.zohocdn.com/iam/v2/components/images/bg.49756b7c711696d95133fa95451f8e13.svg');
+  background-image: url('./images/background.jpg');
   height: 100vh;
   width: 100vw;
   background-size: cover;   /* Ensures the image covers the full screen */

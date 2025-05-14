@@ -126,9 +126,11 @@ const Whatsapp = () => {
             id: Date.now() + index,
             text
           })));
+          localStorage.setItem("whatsappMessagesLength", data.data.messages.length);
         } else {
           // Default empty message
           setMessages([{ id: Date.now(), text: '' }]);
+          localStorage.setItem("whatsappMessagesLength", 0);
         }
       }
     } catch (err) {

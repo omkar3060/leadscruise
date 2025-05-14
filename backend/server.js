@@ -23,6 +23,7 @@ const { Server } = require("socket.io");
 const referralRoutes = require("./routes/referralRoutes");
 const statusRoutes = require("./routes/snapshRoutes");
 const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
+const analyticsRouter = require("./routes/analytics.js");
 const server = createServer(app); // ✅ Create HTTP server
 const io = new Server(server, {
   path: "/socket.io/",
@@ -186,7 +187,7 @@ app.use("/api/referrals", referralRoutes);
 app.use("/api", emailRoutes);
 app.use("/api", statusRoutes);
 app.use("/api/whatsapp-settings", whatsappSettingsRoutes);
-
+app.use("/api/analytics", analyticsRouter);
 // API Endpoint to check if a number exists in the database
 app.post("/api/check-number", async (req, res) => {
   try {
