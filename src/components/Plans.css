@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  height:440px;
+  height: 440px;
   overflow-y: auto;
   gap: 5px;
 }
@@ -136,7 +136,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: nowrap; /* Prevents wrapping of children */
 }
+
 
 .heading-row h2 {
   margin: 0;
@@ -147,4 +149,40 @@
   font-size: 0.9rem;
   color: #00aa66;
   font-weight: 600;
+  white-space: nowrap; /* Prevents text from wrapping */
 }
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.coupon-input {
+  margin: 1rem 0;
+}
+
+.proceed-button, .cancel-button {
+
+  margin: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+

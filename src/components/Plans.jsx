@@ -15,6 +15,9 @@ const Plans = () => {
   const navigate = useNavigate();
   const [paymentError, setPaymentError] = useState("");
 
+  const [showModal, setShowModal] = useState(false);
+
+
   useEffect(() => {
     localStorage.setItem("selectedPlan", selectedPlan);
   }, [selectedPlan]);
@@ -185,7 +188,16 @@ const Plans = () => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  };   
+  };  
+  
+  const handleNextClick = () => {
+    if (!selectedPlan) {
+      alert("Please select a plan first!");
+      return;
+    }
+    setShowModal(true); // you can later show your coupon popup here
+  };
+
 
   return (
     <div className="signin-container">
@@ -291,7 +303,10 @@ const Plans = () => {
             </div>
           </div>
 
-          <button className="next-button" onClick={paymentHandler}>Next</button>
+          <button className="next-button" onClick={handleNextClick}>
+            Next
+          </button>
+
           <div className="end-block">
             <p className="gback" onClick={() => window.history.back()}>
               Go Back
@@ -395,6 +410,48 @@ const Plans = () => {
           </div>
         </div>
       </div>
+
+         {showModal && (
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <h2>Confirm Your Plan</h2>
+      
+      <div className="plan-summary">
+        <p><strong>Plan:</strong> {
+          selectedPlan === "one-mo" ? "1 Month" :
+          selectedPlan === "three-mo" ? "3 Months" :
+          selectedPlan === "six-mo" ? "6 Months" :
+          "12 Months"
+        }</p>
+        <p><strong>Price:</strong> ₹{localStorage.getItem("selectedPrice")}</p>
+      </div>
+
+      <div className="coupon-section">
+        <label htmlFor="couponInput"><strong>Coupon Code:</strong></label>
+        <input
+          id="couponInput"
+          type="text"
+          value="EARLY62"
+          readOnly
+          className="coupon-input"
+        />
+        <p className="coupon-note">(Auto-applied at checkout)</p>
+      </div>
+
+      <div className="modal-actions" style={{ display: 'flex' }}>
+        <button className="proceed-button" onClick={paymentHandler}>
+          Proceed to Pay
+        </button>
+        <button className="cancel-button" onClick={() => setShowModal(false)}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
     </div>
   );
 };
