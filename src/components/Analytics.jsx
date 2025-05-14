@@ -119,7 +119,7 @@ export default function Analytics() {
                 } : {}}
             />
             <div className="analytics-container">
-                <h2>IndiaMART Analytics</h2>
+                <h2>Leads Provider Analytics</h2>
 
                 {/* Chart Section */}
                 <div className="chart-section">
