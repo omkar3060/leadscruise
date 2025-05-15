@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, use } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
@@ -41,37 +41,46 @@ const Dashboard = () => {
   });
   const [buyerBalance, setBuyerBalance] = useState(null);
   const [showZeroBalanceAlert, setShowZeroBalanceAlert] = useState(false);
-  const [isVisible, setIsVisible] = useState(localStorage.getItem("isVisible") === "true" || false);
-  const whatsappMessagesLength=localStorage.getItem("whatsappMessagesLength")||0;
+  const [isVisible, setIsVisible] = useState(
+    localStorage.getItem("isVisible") === "true" || false
+  );
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    keyword: "",
+    type: null,
+  });
+
   // Function to fetch balance
   const fetchBuyerBalance = useCallback(async () => {
     try {
-      const userEmail = localStorage.getItem('userEmail');
-  
+      const userEmail = localStorage.getItem("userEmail");
+
       if (!userEmail) {
-        console.error('Please login to your leads provider account first.');
+        console.error("Please login to your leads provider account first.");
         return;
       }
-  
-      const response = await fetch(`https://api.leadscruise.com/api/user/balance?email=${userEmail}`);
+
+      const response = await fetch(
+        `https://api.leadscruise.com/api/user/balance?email=${userEmail}`
+      );
       const data = await response.json();
-  
+
       setBuyerBalance(data.buyerBalance);
     } catch (error) {
-      console.error('Error fetching buyer balance:', error);
+      console.error("Error fetching buyer balance:", error);
     }
   }, []);
-  
+
   useEffect(() => {
     // If status changes, check balance immediately
     fetchBuyerBalance();
-  
+
     const balanceInterval = setInterval(() => {
       fetchBuyerBalance();
     }, 60000); // Check every 60 seconds
-  
+
     return () => clearInterval(balanceInterval);
-  }, [status]); // Remove fetchBuyerBalance from dependency 
+  }, [status]); // Remove fetchBuyerBalance from dependency
 
   // Add zero balance alert component
   const ZeroBalanceAlert = () => (
@@ -79,16 +88,32 @@ const Dashboard = () => {
       <div className="maintenance-container">
         <div className="maintenance-content">
           <div className="maintenance-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
           </div>
           <p className="maintenance-message">
-            <span className="mobile-message">Dear user, your buyer balance is zero, add more buyer balance or wait till next day to capture more leads</span>
-            <span className="desktop-message">Dear user, your buyer balance is zero, add more buyer balance or wait till next day to capture more leads</span>
+            <span className="mobile-message">
+              Dear user, your buyer balance is zero, add more buyer balance or
+              wait till next day to capture more leads
+            </span>
+            <span className="desktop-message">
+              Dear user, your buyer balance is zero, add more buyer balance or
+              wait till next day to capture more leads
+            </span>
           </p>
         </div>
-        <button 
+        <button
           className="maintenance-close-button"
           onClick={() => {
             setIsVisible(true);
@@ -96,22 +121,30 @@ const Dashboard = () => {
           }}
           aria-label="Dismiss maintenance notification"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
     </div>
   );
 
-    
   const zeroBalanceAlertMemo = useMemo(() => {
-    if (isVisible ==false && buyerBalance === 0 && status === "Running") {
+    if (isVisible == false && buyerBalance === 0 && status === "Running") {
       return <ZeroBalanceAlert />;
     }
     return null;
   }, [buyerBalance, status, isVisible]);
-
 
   // Fetch leads from backend
   const fetchLeads = async () => {
@@ -122,7 +155,9 @@ const Dashboard = () => {
         return;
       }
 
-      const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
+      const response = await axios.get(
+        `https://api.leadscruise.com/api/get-leads/${mobileNumber}`
+      );
       setLeads(response.data);
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -138,7 +173,9 @@ const Dashboard = () => {
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-status/${userEmail}`);
+        const response = await axios.get(
+          `https://api.leadscruise.com/api/get-status/${userEmail}`
+        );
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
         if (response.data.startTime) {
@@ -173,10 +210,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     setIsLoading(true); // Set loading to true before fetching leads
-    fetchLeads()
-      .finally(() => {
-        setIsLoading(false); // Set loading to false after leads are fetched
-      });
+    fetchLeads().finally(() => {
+      setIsLoading(false); // Set loading to false after leads are fetched
+    });
     const interval = setInterval(fetchLeads, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -202,8 +238,10 @@ const Dashboard = () => {
         return;
       }
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
-        const userSettings = response.data // Extracting 'settings' from response
+        const response = await axios.get(
+          `https://api.leadscruise.com/api/get-settings/${userEmail}`
+        );
+        const userSettings = response.data; // Extracting 'settings' from response
 
         if (!userSettings) {
           alert("No settings found, please configure them first.");
@@ -219,29 +257,6 @@ const Dashboard = () => {
 
     fetchSettings();
   }, [navigate]);
-
-  useEffect(() => {
-    const fetchWhatsappSettings = async () => {
-    const mobileNumber = localStorage.getItem("mobileNumber");
-    if (!mobileNumber) return;
-
-    try {
-      const res = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
-      const data = await res.json();
-
-      if (res.ok) {
-        if (data.data.messages && data.data.messages.length > 0) {
-          localStorage.setItem("whatsappMessagesLength", data.data.messages.length);
-        } else {
-          localStorage.setItem("whatsappMessagesLength", 0);
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching settings:", err);
-    }
-  };
-    fetchWhatsappSettings();
-  }, []);
 
   // Calculate metrics based on leads data
   const calculateMetrics = () => {
@@ -283,7 +298,9 @@ const Dashboard = () => {
       const uniqueId = localStorage.getItem("unique_id");
 
       try {
-        const credCheckRes = await axios.get(`https://api.leadscruise.com/api/check-user-credentials/${userEmail}`);
+        const credCheckRes = await axios.get(
+          `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
+        );
         if (credCheckRes.status !== 200) {
           alert("Please login to your leads provider account first.");
           navigate("/execute-task");
@@ -291,7 +308,9 @@ const Dashboard = () => {
           return;
         }
       } catch (err) {
-        alert(err.response?.data?.message || "Error checking stored credentials");
+        alert(
+          err.response?.data?.message || "Error checking stored credentials"
+        );
         navigate("/execute-task");
         setIsStarting(false);
         return;
@@ -310,7 +329,9 @@ const Dashboard = () => {
         return;
       }
 
-      const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
+      const detailsResponse = await fetch(
+        `https://api.leadscruise.com/api/billing/${userEmail}`
+      );
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
         setIsStarting(false); // Reset starting state on error
@@ -318,7 +339,9 @@ const Dashboard = () => {
       }
 
       // Fetch settings
-      const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+      const response = await axios.get(
+        `https://api.leadscruise.com/api/get-settings/${userEmail}`
+      );
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
       setSettings(response.data);
@@ -345,20 +368,24 @@ const Dashboard = () => {
       console.log("Sending the following settings to backend:", userSettings);
 
       // Send the fetched settings instead of using the state
-      const cycleResponse = await axios.post("https://api.leadscruise.com/api/cycle", {
-        sentences: userSettings.sentences,
-        wordArray: userSettings.wordArray,
-        h2WordArray: userSettings.h2WordArray,
-        mobileNumber,
-        password,
-        uniqueId,
-        userEmail,
-      });
+      const cycleResponse = await axios.post(
+        "https://api.leadscruise.com/api/cycle",
+        {
+          sentences: userSettings.sentences,
+          wordArray: userSettings.wordArray,
+          h2WordArray: userSettings.h2WordArray,
+          mobileNumber,
+          password,
+          uniqueId,
+          userEmail,
+        }
+      );
       setIsStarting(false); // Reset starting state after process completes
-      alert("AI started successfully!Please navigate to the whatsapp page to login and send messages to the buyers if you already have not done so.");
+      alert(
+        "AI started successfully!Please navigate to the whatsapp page to login and send messages to the buyers if you already have not done so."
+      );
       setStatus("Running");
       // Note: we don't reset isStarting here because the status is now "Running"
-
     } catch (error) {
       if (error.response?.status === 403) {
         alert("Lead limit reached. Cannot capture more leads today.");
@@ -432,7 +459,10 @@ const Dashboard = () => {
       }
 
       try {
-        const response = await axios.post("https://api.leadscruise.com/api/stop", { userEmail, uniqueId });
+        const response = await axios.post(
+          "https://api.leadscruise.com/api/stop",
+          { userEmail, uniqueId }
+        );
         alert(response.data.message);
 
         // Update the status in localStorage
@@ -453,7 +483,7 @@ const Dashboard = () => {
 
         // Set up interval to update the cooldown timer
         const interval = setInterval(() => {
-          setCooldownTime(prevTime => {
+          setCooldownTime((prevTime) => {
             if (prevTime <= 1) {
               clearInterval(interval);
               setCooldownActive(false);
@@ -463,7 +493,6 @@ const Dashboard = () => {
             return prevTime - 1;
           });
         }, 1000);
-
       } catch (error) {
         alert(error.response?.data?.message || "Failed to stop the AI.");
         console.error("Error stopping script:", error);
@@ -478,7 +507,8 @@ const Dashboard = () => {
 
   // Function to handle sorting
   const handleSort = (field) => {
-    const newSortOrder = sortField === field && sortOrder === "asc" ? "desc" : "asc";
+    const newSortOrder =
+      sortField === field && sortOrder === "asc" ? "desc" : "asc";
     setSortField(field);
     setSortOrder(newSortOrder);
   };
@@ -507,9 +537,9 @@ const Dashboard = () => {
 
     const formattedData = leads.map((lead, index) => ({
       "Sl. No": index + 1,
-      "Name": lead.name || "N/A",
-      "Email": lead.email || "N/A",
-      "Phone": lead.mobile || lead.user_mobile_number || "N/A",
+      Name: lead.name || "N/A",
+      Email: lead.email || "N/A",
+      Phone: lead.mobile || lead.user_mobile_number || "N/A",
       "Product(s)": lead.lead_bought || "N/A",
       "Captured At": new Date(lead.createdAt).toLocaleString(),
     }));
@@ -524,11 +554,56 @@ const Dashboard = () => {
     XLSX.writeFile(workbook, filename);
   };
 
+  const handleConfirmAction = async () => {
+    const { keyword, type } = confirmModal;
+    const rejected = settings.h2WordArray || [];
+
+    let updatedRejected = [...rejected];
+
+    if (type === "reject") {
+      if (!updatedRejected.includes(keyword)) {
+        updatedRejected.push(keyword); // Add to rejected
+      }
+    } else if (type === "accept") {
+      updatedRejected = updatedRejected.filter((word) => word !== keyword); // Remove from rejected
+    }
+
+    const updatedSettings = {
+      ...settings,
+      h2WordArray: updatedRejected,
+    };
+
+    // Save to DB
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) {
+      alert("User email not found!");
+      return;
+    }
+
+    try {
+      await axios.post("https://api.leadscruise.com/api/save-settings", {
+        userEmail,
+        sentences: updatedSettings.sentences || [],
+        wordArray: updatedSettings.wordArray || [],
+        h2WordArray: updatedSettings.h2WordArray || [],
+      });
+
+      // Update state after DB save
+      setSettings(updatedSettings);
+      alert("Settings saved successfully!");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      alert("Failed to save settings.");
+    }
+
+    // Close modal
+    setConfirmModal({ open: false, keyword: "", type: null });
+  };
+
   return (
     <div className={styles.dashboardContainer}>
-
-       {zeroBalanceAlertMemo}
-       {/* <ZeroBalanceAlert/> */}
+      {zeroBalanceAlertMemo}
+      {/* <ZeroBalanceAlert/> */}
 
       {/* Loading Screen */}
       {isLoading && <LoadingScreen />}
@@ -552,16 +627,44 @@ const Dashboard = () => {
 
         {/* Metrics Section */}
         <div className={styles.metricsSection}>
-          <div onClick={() => navigate("/totalLeadsToday")} className={styles.metricBox}>{metrics.totalLeadsToday} <br /><span>Total Leads Today</span></div>
-          <div onClick={() => navigate("/totalLeadsThisWeek")} className={styles.metricBox}>{metrics.totalLeadsThisWeek} <br /><span>Total Leads This Week</span></div>
-          <div onClick={() => navigate("/repliesSentToday")} className={styles.metricBox}>
-            {metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br />
+          <div
+            onClick={() => navigate("/totalLeadsToday")}
+            className={styles.metricBox}
+          >
+            {metrics.totalLeadsToday} <br />
+            <span>Total Leads Today</span>
+          </div>
+          <div
+            onClick={() => navigate("/totalLeadsThisWeek")}
+            className={styles.metricBox}
+          >
+            {metrics.totalLeadsThisWeek} <br />
+            <span>Total Leads This Week</span>
+          </div>
+          <div className={styles.metricBox}>
+            {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
+            <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.comingSoon} style={{ "color": "#28a745" }}>{metrics.totalLeadsToday*whatsappMessagesLength}<br /><span>WA Messages Sent Today</span></div>
-          <div onClick={() => navigate("/emailsSentToday")} className={styles.comingSoon}>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)} <br /><span>Emails Sent Today</span></div>
-          <div onClick={() => navigate("/totalEmailsSent")} className={styles.comingSoon}>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)} <br /><span>Total Emails Sent</span></div>
-          <div onClick={() => navigate("/totalLeadsCaptured")} className={styles.metricBox}>{metrics.totalLeadsCaptured} <br /><span>Total Leads Captured</span></div>
+          <div className={styles.comingSoon} style={{ color: "#28a745" }}>
+            Coming soon
+            <br />
+            <span>WA Messages Sent Today</span>
+          </div>
+          <div className={styles.comingSoon}>
+            {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
+            <br />
+            <span>Emails Sent Today</span>
+          </div>
+          <div className={styles.comingSoon}>
+            {metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}
+            <br />
+            <span>Total Emails Sent</span>
+          </div>
+          <div className={styles.metricBox}>
+            {metrics.totalLeadsCaptured} <br />
+            <span>Total Leads Captured</span>
+          </div>
         </div>
 
         {/* Recent Leads Table */}
@@ -570,9 +673,13 @@ const Dashboard = () => {
             <p>Use Desktop to login to see recent leads captured information</p>
           </div>
 
-
           <div style={{ display: "flex", justifyContent: "end" }}>
-            <button style={{ width: "10%", padding: "20px 60px" }} onClick={handleDownloadLeadsExcel}>Download</button>
+            <button
+              style={{ width: "10%", padding: "20px 60px" }}
+              onClick={handleDownloadLeadsExcel}
+            >
+              Download
+            </button>
           </div>
           <div className={styles.tableWrapper}>
             <table className={styles.leadsTable}>
@@ -585,38 +692,111 @@ const Dashboard = () => {
                     { label: "Email", field: "email" },
                     { label: "Purchase Date", field: "createdAt" },
                   ].map(({ label, field }) => (
-                    <th key={field} onClick={() => handleSort(field)} style={{ cursor: "pointer" }}>
-                      {label} {sortField === field && (sortOrder === "asc" ? "🔼" : "🔽")}
+                    <th
+                      key={field}
+                      onClick={() => handleSort(field)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {label}
+                      {sortField === field &&
+                        (sortOrder === "asc" ? "🔼" : "🔽")}
                     </th>
                   ))}
+                  <th>Action</th> {/* New column */}
                 </tr>
               </thead>
+
               <tbody>
                 {sortedLeads.length > 0 ? (
-                  sortedLeads.map((lead, index) => (
-                    <tr key={index}>
-                      <td>{lead.lead_bought || "N/A"}</td>
-                      <td>{lead.name || "N/A"}</td>
-                      <td>{lead.mobile || "N/A"}</td>
-                      <td>{lead.email || "N/A"}</td>
-                      <td>{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "N/A"}</td>
-                    </tr>
-                  ))
+                  sortedLeads.map((lead, index) => {
+                    const keyword = lead.lead_bought;
+                    const isRejected = settings.h2WordArray.includes(keyword);
+
+                    return (
+                      <tr key={index}>
+                        <td>{keyword || "N/A"}</td>
+                        <td>{lead.name || "N/A"}</td>
+                        <td>{lead.mobile || "N/A"}</td>
+                        <td>{lead.email || "N/A"}</td>
+                        <td>{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "N/A"}</td>
+                        <td>
+                          <button
+                            style={{
+                              backgroundColor: isRejected ? "green" : "red",
+                              color: "white",
+                              padding: "4px 10px",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                            }}
+                            onClick={() =>
+                              setConfirmModal({
+                                open: true,
+                                keyword,
+                                type: isRejected ? "accept" : "reject", // label logic
+                              })
+                            }
+                          >
+                            {isRejected ? "Accept" : "Reject"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: "center" }}>No leads available</td>
+                    <td colSpan="6" style={{ textAlign: "center" }}>No leads available</td>
                   </tr>
                 )}
               </tbody>
+
             </table>
           </div>
-
         </div>
         <div className={styles.scrollDownText}>
           scroll down to see old captured leads
         </div>
       </div>
-
+      {confirmModal.open && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <p>
+              Are you sure you want to put
+              <strong>{confirmModal.keyword}</strong> into
+              <strong>
+                {confirmModal.type === "reject" ? "rejected" : "accepted"}
+              </strong>
+              list?
+            </p>
+            <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
+              <button
+                onClick={handleConfirmAction}
+                style={{
+                  padding: "6px 12px",
+                  backgroundColor: "#4caf50",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                Okay
+              </button>
+              <button
+                onClick={() =>
+                  setConfirmModal({ open: false, keyword: "", type: null })
+                }
+                style={{
+                  padding: "6px 12px",
+                  backgroundColor: "#f44336",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
