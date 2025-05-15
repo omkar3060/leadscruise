@@ -1,6 +1,9 @@
 const puppeteer = require('puppeteer');
 const express = require('express');
 const router = express.Router();
+const IndiaMARTAnalytics = require('../models/IndiaMARTAnalytics');
+const cron = require('node-cron');
+const mongoose = require("mongoose");
 
 async function fetchIndiaMartData(mobileNumber, password) {
   const browser = await puppeteer.launch({
@@ -140,43 +143,102 @@ async function fetchIndiaMartData(mobileNumber, password) {
   }
 }
 
-router.get("/charts", async (req, res) => {
-  const { mobileNumber, password } = req.query;
-
-  if (!mobileNumber || !password) {
-    return res.status(400).json({ success: false, error: "mobileNumber & password are required" });
-  }
-
+async function fetchAndStoreIndiaMARTData() {
+  const User = mongoose.model('User'); // Assuming this is how your User model is defined
+  
   try {
-    const data = await fetchIndiaMartData(mobileNumber, password);
-    res.json({
-      success: true,
-      charts: data.charts,
-      tables: data.tables
+    // Find all users with IndiaMART credentials
+    const users = await User.find({
+      mobileNumber: { $exists: true, $ne: null },
+      savedPassword: { $exists: true, $ne: null }
     });
-  } catch (err) {
-    console.error("Analytics error:", err);
-    res.status(500).json({ success: false, error: `Failed to fetch data: ${err.message}` });
+    
+    console.log(`Scheduled IndiaMART data fetch starting for ${users.length} users`);
+    
+    // Process each user
+    for (const user of users) {
+      try {
+        // Decrypt the saved password (implement your decryption method)
+        
+        // Fetch the data from IndiaMART
+        const data = await fetchIndiaMartData(user.mobileNumber, user.savedPassword);
+        
+        await IndiaMARTAnalytics.findOneAndUpdate(
+          { userId: user._id },
+          {
+            userId: user._id,
+            charts: data.charts,
+            tables: data.tables,
+            fetchedAt: new Date()
+          },
+          { upsert: true, new: true }
+        );
+        console.log(`IndiaMART data stored successfully for user ${user._id}`);
+      } catch (userError) {
+        console.error(`Failed to fetch IndiaMART data for user ${user._id}:`, userError);
+        // Continue with the next user even if this one fails
+      }
+    }
+    
+    console.log('Scheduled IndiaMART data fetch completed');
+  } catch (error) {
+    console.error('Error in fetchAndStoreIndiaMARTData:', error);
   }
+}
+
+// Schedule the task: '0 0 * * *' = At 00:00 (12 AM) every day
+cron.schedule('0 0 * * *', async () => {
+  console.log('Running scheduled IndiaMART data fetch at', new Date().toISOString());
+  await fetchAndStoreIndiaMARTData();
 });
 
-// Keep the old endpoint for backward compatibility
-router.get("/chart", async (req, res) => {
-  const { mobileNumber, password, period = 'weekly' } = req.query;
-
-  if (!mobileNumber || !password) {
-    return res.status(400).json({ success: false, error: "mobileNumber & password are required" });
-  }
-
+router.get("/charts", async (req, res) => {
   try {
-    const charts = await fetchIndiaMartCharts(mobileNumber, password);
-    res.json({
-      success: true,
-      chart: charts[period]
-    });
+    const { mobileNumber, savedPassword } = req.query;
+
+    if (!mobileNumber || !savedPassword) {
+      return res.status(400).json({ success: false, error: "Missing mobile number or password" });
+    }
+
+    const user = await mongoose.model('User').findOne({ mobileNumber });
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    const latestAnalytics = await IndiaMARTAnalytics.findOne({ userId: user._id });
+
+    if (latestAnalytics) {
+
+      return res.json({
+        success: true,
+        charts: latestAnalytics.charts,
+        tables: latestAnalytics.tables,
+        fetchedAt: latestAnalytics.fetchedAt
+      });
+    } else {
+      // First-time fetch for this user
+      const data = await fetchIndiaMartData(mobileNumber, savedPassword);
+
+      const newAnalytics = new IndiaMARTAnalytics({
+        userId: user._id,
+        charts: data.charts,
+        tables: data.tables,
+        fetchedAt: new Date()
+      });
+
+      await newAnalytics.save();
+
+      return res.json({
+        success: true,
+        charts: data.charts,
+        tables: data.tables,
+        fetchedAt: newAnalytics.fetchedAt
+      });
+    }
   } catch (err) {
-    console.error(`Analytics error (${period}):`, err);
-    res.status(500).json({ success: false, error: `Failed to fetch ${period} chart: ${err.message}` });
+    console.error("Analytics error:", err);
+    res.status(500).json({ success: false, error: `Error: ${err.message}` });
   }
 });
 
