@@ -275,6 +275,17 @@ def redirect_and_refresh(driver, wait):
             try:
                 driver.refresh()
                 time.sleep(3)  # Static wait
+
+                # First try to remove the overlay if it exists
+                try:
+                    overlay = driver.find_element(By.CLASS_NAME, "overlay_fltr")
+                    if overlay.is_displayed():
+                        # Remove the overlay using JavaScript
+                        driver.execute_script("arguments[0].style.display = 'none';", overlay)
+                        print("Removed overlay element blocking the India label.")
+                        time.sleep(2)
+                except Exception as e:
+                    print(f"No overlay found or couldn't remove it: {e}")
                 
                 india_label = driver.find_element(By.XPATH, "//label[contains(text(), 'India')]")
                 india_label.click()
