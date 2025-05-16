@@ -69,4 +69,54 @@ const deleteSettings = async (req, res) => {
   }
 };
 
-module.exports = { saveSettings, getSettings, deleteSettings };
+const updateMinOrder= async (req, res) => {
+  try {
+    const { userEmail, minOrder } = req.body;
+
+    if(minOrder < 0) {
+      return res.status(400).json({ message: "Minimum order value cannot be negative" });
+    }
+
+    if (!userEmail || typeof minOrder !== "number") {
+      return res.status(400).json({ message: "Invalid input" });
+    }
+
+    const updated = await Settings.findOneAndUpdate(
+      { userEmail },
+      { minOrder },
+      { new: true, upsert: true }
+    );
+
+    return res.status(200).json({ message: "Minimum order value updated successfully", data: updated });
+  } catch (error) {
+    console.error("Error updating min order:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getMinOrder = async (req, res) => {
+  try {
+    const { userEmail } = req.query;
+
+    if (!userEmail) {
+      return res.status(400).json({ message: "Missing userEmail" });
+    }
+
+    const userSettings = await Settings.findOne({ userEmail });
+
+    if (!userSettings) {
+      return res.status(404).json({ message: "Settings not found" });
+    }
+
+    res.status(200).json({
+      minOrder: userSettings.minOrder,
+      lastUpdatedMinOrder: userSettings.lastUpdatedMinOrder,
+    });
+  } catch (error) {
+    console.error("Error fetching min order:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+module.exports = { saveSettings, getSettings, deleteSettings, updateMinOrder, getMinOrder };

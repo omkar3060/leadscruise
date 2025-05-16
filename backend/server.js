@@ -483,7 +483,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("http://localhost:5000/api/cycle", {
+        await axios.post("https://api.leadscruise.com/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,
@@ -512,6 +512,7 @@ app.post("/api/cycle", async (req, res) => {
     password,
     uniqueId,
     userEmail,
+    minOrder,
   } = req.body;
 
   if (!req.body || Object.keys(req.body).length === 0) {
@@ -582,6 +583,7 @@ app.post("/api/cycle", async (req, res) => {
     mobileNumber,
     password,
     uniqueId,
+    minOrder,
   });
 
   console.log("Spawning Python process for 'final_inside_script_server.py'...");

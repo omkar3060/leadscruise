@@ -8,9 +8,32 @@ from selenium.webdriver.support import expected_conditions as EC
 from pyvirtualdisplay import Display
 import os
 import time
-import subprocess
-from selenium.webdriver import ActionChains
-from selenium.webdriver.common.keys import Keys
+import sys
+import json
+input_data = json.loads(sys.stdin.read()) 
+
+import requests
+
+def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
+    url = "http://localhost:5000/api/store-lead"  # Backend API endpoint
+    data = {
+        "name": name,
+        "mobile": mobile,
+        "user_mobile_number": user_mobile_number  # Store the user's own mobile number
+    }
+    
+    if email:
+        data["email"] = email  # Add email only if it's available
+
+    try:
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            print("Lead data sent successfully!", flush=True)
+        else:
+            print(f"Failed to send data: {response.text}", flush=True)
+    except Exception as e:
+        print(f"Error sending data to backend: {e}", flush=True)
+
 
 def extend_word_array(word_array):
     """
