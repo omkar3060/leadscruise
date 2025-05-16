@@ -33,7 +33,7 @@ lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
     global lead_bought  # Access the global variable
     
-    url = "http://localhost:5000/api/store-lead"
+    url = "https://api.leadscruise.com/api/store-lead"
     data = {
         "name": name,
         "mobile": mobile,
@@ -220,7 +220,9 @@ def enter_custom_order_value(driver):
         # Find the input field for custom minimum value
         min_input = driver.find_element(By.ID, "min_order_val")
         min_input.clear()
-        min_input.send_keys("1000")
+        minOrderValue = input_data.get("minOrder", "")
+        min_input.send_keys(minOrderValue)
+        print(f"Entered custom minimum value: {minOrderValue}", flush=True)
         time.sleep(1)
 
         # Press enter to trigger filtering (assuming that's the intended trigger)

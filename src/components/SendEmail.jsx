@@ -98,7 +98,7 @@ const SendEmail = () => {
 
       // Example API call to save to database
       // In a real application, replace with your actual API endpoint
-      const response = await fetch('http://localhost:5000/api/upload-email', {
+      const response = await fetch('https://api.leadscruise.com/api/upload-email', {
         method: 'POST',
         body: formData,
       });

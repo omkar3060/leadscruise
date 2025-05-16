@@ -52,10 +52,10 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
 
     // Calculate immediately
     calculateTimeLeft();
-    
+
     // Then update every second
     const timer = setInterval(calculateTimeLeft, 1000);
-    
+
     // Clean up the interval on component unmount
     return () => clearInterval(timer);
   }, [editLockedUntil]);
@@ -82,7 +82,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const [isEditingMaxCaptures, setIsEditingMaxCaptures] = useState(false);
   const [tempCaptures, setTempCaptures] = useState(maxCaptures);
 
-  const [minOrder, setminOrder] = useState(1000);
+  const [minOrder, setminOrder] = useState(0);
   const [isEditingminOrder, setIsEditingminOrder] = useState(false);
   const [tempMin, setTempMin] = useState(minOrder);
 
@@ -120,7 +120,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/api/update-max-captures", {
+      const response = await axios.post("https://api.leadscruise.com/api/update-max-captures", {
         user_mobile_number: userMobileNumber,
         maxCaptures: tempCaptures,
       });
@@ -142,7 +142,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     const fetchMaxCaptures = async () => {
       try {
         const userMobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`http://localhost:5000/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
 
         if (response.data) {
           setMaxCaptures(response.data.maxCaptures);
@@ -164,6 +164,23 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     fetchMaxCaptures();
   }, []);
 
+  useEffect(() => {
+  const fetchMinOrder = async () => {
+    try {
+      const userEmail = localStorage.getItem("userEmail"); // adjust key if needed
+      const response = await axios.get(`https://api.leadscruise.com/api/get-min-order?userEmail=${userEmail}`);
+
+      if (response.data) {
+        setminOrder(response.data.minOrder);
+      }
+    } catch (error) {
+      console.error("Error fetching min order:", error);
+    }
+  };
+
+  fetchMinOrder();
+}, []);
+
   // Function to handle password update for LeadsCruise
   const handlePasswordUpdate = async () => {
     try {
@@ -174,7 +191,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/api/update-password", {
+      const response = await axios.post("https://api.leadscruise.com/api/update-password", {
         email: localStorage.getItem("userEmail"),
         newPassword,
       });
@@ -198,7 +215,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/api/update-saved-password", {
+      const response = await axios.post("https://api.leadscruise.com/api/update-saved-password", {
         email: localStorage.getItem("userEmail"),
         newPassword: savedNewPassword,
       });
@@ -228,16 +245,16 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const unlinkWhatsappNumber = async () => {
     const confirmed = window.confirm("Are you sure you want to unlink your WhatsApp number?");
     if (!confirmed) return;
-  
+
     try {
-      const res = await fetch("http://localhost:5000/api/whatsapp-settings/whatsapp-logout", {
+      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/whatsapp-logout", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ mobileNumber })
       });
-  
+
       const data = await res.json();
       if (res.ok) {
         alert("WhatsApp unlinked successfully");
@@ -260,61 +277,61 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         setEditLockedUntil(null);
         localStorage.removeItem("editLockedUntil");
       }, editLockedUntil - Date.now());
-  
+
       return () => clearTimeout(timeout);
     }
   }, [editLockedUntil]);
 
   useEffect(() => {
-    if (justUpdated && verificationCode ||( verificationCode === "111")) {
+    if (justUpdated && verificationCode || (verificationCode === "111")) {
       // Allow editing again after verification received or if login is successful
       setEditLockedUntil(null);
       localStorage.removeItem("editLockedUntil");
     }
   }, [verificationCode, justUpdated]);
 
-    // For demonstration of the countdown timer
-    const getButtonStyle = (baseColor) => {
-      return {
-        background: countdown > 0 ? "#6c757d" : baseColor,
-        cursor: countdown > 0 ? "not-allowed" : "pointer",
-      };
+  // For demonstration of the countdown timer
+  const getButtonStyle = (baseColor) => {
+    return {
+      background: countdown > 0 ? "#6c757d" : baseColor,
+      cursor: countdown > 0 ? "not-allowed" : "pointer",
     };
-  
-    const getButtonTitle = (action) => {
-      return countdown > 0
-        ? `${action} locked. Try again in ${countdown}s`
-        : `${action} your WhatsApp number`;
-    };
+  };
 
-    const handleSaveminOrder = async () => {
-      try {
-        const userEmail = localStorage.getItem("userEmail");
-    
-        // Prevent API call if minOrder is the same
-        if (tempMin === minOrder) {
-          alert("Minimum order value is unchanged.");
-          setIsEditingminOrder(false);
-          return;
-        }
-    
-        const response = await axios.post("https://api.leadscruise.com/api/update-min-order", {
-          userEmail,
-          minOrder: tempMin,
-        });
-    
-        setMinOrder(tempMin);
+  const getButtonTitle = (action) => {
+    return countdown > 0
+      ? `${action} locked. Try again in ${countdown}s`
+      : `${action} your WhatsApp number`;
+  };
+
+  const handleSaveminOrder = async () => {
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+
+      // Prevent API call if minOrder is the same
+      if (tempMin === minOrder) {
+        alert("Minimum order value is unchanged.");
         setIsEditingminOrder(false);
-        alert(response.data.message);
-      } catch (error) {
-        if (error.response?.status === 403) {
-          alert(error.response.data.message);
-        } else {
-          console.error("Failed to update minimum order:", error);
-          alert("Error updating minimum order. Try again.");
-        }
+        return;
       }
-    };    
+
+      const response = await axios.post("https://api.leadscruise.com/api/update-min-order", {
+        userEmail,
+        minOrder: tempMin,
+      });
+
+      setminOrder(tempMin);
+      setIsEditingminOrder(false);
+      alert(response.data.message);
+    } catch (error) {
+      if (error.response?.status === 403) {
+        alert(error.response.data.message);
+      } else {
+        console.error("Failed to update minimum order:", error);
+        alert(error.response.data.message || "Error updating minimum order. Try again.");
+      }
+    }
+  };
 
   return (
     <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
@@ -344,7 +361,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         </div>
       )}
 
-{isSettingsPage && !isWhatsAppPage && (
+      {isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">
           <div className="credentials-header">Minimum order value</div>
           <div className="max-captures-content">
@@ -355,8 +372,8 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               <>
                 <input
                   type="number"
-                  className="max-captures-input"
-                  value={tempCaptures}
+                  className="max-captures-input min-order"
+                  value={tempMin}
                   onChange={(e) => setTempMin(Number(e.target.value))}
                   min="1"
                 />
@@ -375,47 +392,47 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
           <div className="credentials-content">
             <div className="credential-group">
               <label>Your WhatsApp Number</label>
-            <div className="whatsapp-number-container">
-              {!isEditingWhatsapp ? (
-                <span className="mobile-text">{newWhatsappNumber || "No WhatsApp Number Set"}</span>
-              ) : (
-                <input
-                  type="text"
-                  className="api-key-input"
-                  value={newWhatsappNumber}
-                  placeholder="Enter new WhatsApp Number..."
-                  onChange={(e) => setNewWhatsappNumber(e.target.value)}
-                />
-              )}
-              {!isEditingWhatsapp ? (
-                verificationCode === "111" ? (
-                <button
-                  className="unlink-button"
-                  style={getButtonStyle("#dc3545")}
-                  disabled={countdown > 0}
-                  title={getButtonTitle("Unlink")}
-                  onClick={unlinkWhatsappNumber}
-                >
-                  Unlink {countdown > 0 && `(${countdown}s)`}
-                </button>
+              <div className="whatsapp-number-container">
+                {!isEditingWhatsapp ? (
+                  <span className="mobile-text">{newWhatsappNumber || "No WhatsApp Number Set"}</span>
                 ) : (
-                  <button
-                  className="edit-button"
-                  style={getButtonStyle("#28a745")}
-                  disabled={countdown > 0}
-                  title={getButtonTitle("Edit")}
-                  onClick={() => setIsEditingWhatsapp(true)}
-                >
-                  Edit {countdown > 0 && `(${countdown}s)`}
-                </button>
-                )
-              ) : (
-                <div className="edit-button-container">
-                  <button className="update-api-btn" onClick={updateWhatsappNumber}>Update</button>
-                  <button className="cancel-button" onClick={() => setIsEditingWhatsapp(false)}>Cancel</button>
-                </div>
-              )}
-            </div>
+                  <input
+                    type="text"
+                    className="api-key-input"
+                    value={newWhatsappNumber}
+                    placeholder="Enter new WhatsApp Number..."
+                    onChange={(e) => setNewWhatsappNumber(e.target.value)}
+                  />
+                )}
+                {!isEditingWhatsapp ? (
+                  verificationCode === "111" ? (
+                    <button
+                      className="unlink-button"
+                      style={getButtonStyle("#dc3545")}
+                      disabled={countdown > 0}
+                      title={getButtonTitle("Unlink")}
+                      onClick={unlinkWhatsappNumber}
+                    >
+                      Unlink {countdown > 0 && `(${countdown}s)`}
+                    </button>
+                  ) : (
+                    <button
+                      className="edit-button"
+                      style={getButtonStyle("#28a745")}
+                      disabled={countdown > 0}
+                      title={getButtonTitle("Edit")}
+                      onClick={() => setIsEditingWhatsapp(true)}
+                    >
+                      Edit {countdown > 0 && `(${countdown}s)`}
+                    </button>
+                  )
+                ) : (
+                  <div className="edit-button-container">
+                    <button className="update-api-btn" onClick={updateWhatsappNumber}>Update</button>
+                    <button className="cancel-button" onClick={() => setIsEditingWhatsapp(false)}>Cancel</button>
+                  </div>
+                )}
+              </div>
             </div>
             {error && <div className="error-message">{error}</div>}
 
