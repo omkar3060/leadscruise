@@ -5,6 +5,8 @@ import DashboardHeader from "./DashboardHeader";
 import styles from "./Dashboard.module.css"; // Import CSS module
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import redFlag from "../images/red_flag.png";
+import greyFlag from "../images/grey_flag.png";
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -600,6 +602,9 @@ const Dashboard = () => {
     setConfirmModal({ open: false, keyword: "", type: null });
   };
 
+
+
+
   return (
     <div className={styles.dashboardContainer}>
       {zeroBalanceAlertMemo}
@@ -682,6 +687,8 @@ const Dashboard = () => {
             </button>
           </div>
           <div className={styles.tableWrapper}>
+
+
             <table className={styles.leadsTable}>
               <thead>
                 <tr>
@@ -698,11 +705,10 @@ const Dashboard = () => {
                       style={{ cursor: "pointer" }}
                     >
                       {label}
-                      {sortField === field &&
-                        (sortOrder === "asc" ? "🔼" : "🔽")}
+                      {sortField === field && (sortOrder === "asc" ? "🔼" : "🔽")}
                     </th>
                   ))}
-                  <th>Action</th> {/* New column */}
+                  <th style={{ width: "6%" }}>Action</th>
                 </tr>
               </thead>
 
@@ -718,39 +724,42 @@ const Dashboard = () => {
                         <td>{lead.name || "N/A"}</td>
                         <td>{lead.mobile || "N/A"}</td>
                         <td>{lead.email || "N/A"}</td>
-                        <td>{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "N/A"}</td>
                         <td>
-                          <button
+                          {lead.createdAt
+                            ? new Date(lead.createdAt).toLocaleDateString()
+                            : "N/A"}
+                        </td>
+                        <td>
+                          <img
+                            src={isRejected ? redFlag : greyFlag}
+                            alt={isRejected ? "Reject Flag" : "Accept Flag"}
                             style={{
-                              backgroundColor: isRejected ? "green" : "red",
-                              color: "white",
-                              padding: "4px 10px",
-                              border: "none",
-                              borderRadius: "4px",
+                              width: "20px",
+                              height: "20px",
                               cursor: "pointer",
                             }}
                             onClick={() =>
                               setConfirmModal({
                                 open: true,
                                 keyword,
-                                type: isRejected ? "accept" : "reject", // label logic
+                                type: isRejected ? "accept" : "reject",
                               })
                             }
-                          >
-                            {isRejected ? "Accept" : "Reject"}
-                          </button>
+                          />
                         </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: "center" }}>No leads available</td>
+                    <td colSpan="6" style={{ textAlign: "center" }}>
+                      No leads available
+                    </td>
                   </tr>
                 )}
               </tbody>
-
             </table>
+
           </div>
         </div>
         <div className={styles.scrollDownText}>
@@ -762,11 +771,12 @@ const Dashboard = () => {
           <div className="modal-content">
             <p>
               Are you sure you want to put
-              <strong>{confirmModal.keyword}</strong> into
+              {" "}<strong>{confirmModal.keyword}</strong> into{" "}
               <strong>
-                {confirmModal.type === "reject" ? "rejected" : "accepted"}
+                {confirmModal.type === "reject" ? "Rejected" : "Accepted"}
               </strong>
-              list?
+              {" "}
+              List?
             </p>
             <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
               <button
