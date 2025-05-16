@@ -112,7 +112,7 @@ const Whatsapp = () => {
     if (!mobileNumber) return;
 
     try {
-      const res = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
+      const res = await fetch(`http://localhost:5000/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
       const data = await res.json();
 
       if (res.ok) {
@@ -149,7 +149,7 @@ const Whatsapp = () => {
       console.log("Fetching verification code for:", mobileNumber);
 
       // Using native fetch API
-      const response = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/verification-code/${mobileNumber}`);
+      const response = await fetch(`http://localhost:5000/api/whatsapp-settings/verification-code/${mobileNumber}`);
 
       if (!response.ok) {
         console.error(`Error response: ${response.status}`);
@@ -226,7 +226,7 @@ const Whatsapp = () => {
     formData.append("messages", JSON.stringify(messages.map(msg => msg.text)));
 
     try {
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/save", {
+      const res = await fetch("http://localhost:5000/api/whatsapp-settings/save", {
         method: "POST",
         body: formData,
       });
@@ -275,7 +275,7 @@ const Whatsapp = () => {
     try {
       const mobileNumber = localStorage.getItem("mobileNumber");
 
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/update-whatsapp-number", {
+      const res = await fetch("http://localhost:5000/api/whatsapp-settings/update-whatsapp-number", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
@@ -404,7 +404,7 @@ const Whatsapp = () => {
     }
 
     try {
-      await axios.post("https://api.leadscruise.com/api/whatsapp-settings/save", {
+      await axios.post("http://localhost:5000/api/whatsapp-settings/save", {
         mobileNumber,
         whatsappNumber: newWhatsappNumber,
         verificationCode,

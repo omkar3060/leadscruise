@@ -483,7 +483,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("https://api.leadscruise.com/api/cycle", {
+        await axios.post("http://localhost:5000/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,

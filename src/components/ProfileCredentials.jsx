@@ -82,6 +82,10 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const [isEditingMaxCaptures, setIsEditingMaxCaptures] = useState(false);
   const [tempCaptures, setTempCaptures] = useState(maxCaptures);
 
+  const [minOrder, setminOrder] = useState(1000);
+  const [isEditingminOrder, setIsEditingminOrder] = useState(false);
+  const [tempMin, setTempMin] = useState(minOrder);
+
   // Check if password is valid
   const validatePassword = (password) => {
     return passwordRegex.test(password);
@@ -116,7 +120,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-max-captures", {
+      const response = await axios.post("http://localhost:5000/api/update-max-captures", {
         user_mobile_number: userMobileNumber,
         maxCaptures: tempCaptures,
       });
@@ -138,7 +142,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     const fetchMaxCaptures = async () => {
       try {
         const userMobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`https://api.leadscruise.com/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
+        const response = await axios.get(`http://localhost:5000/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
 
         if (response.data) {
           setMaxCaptures(response.data.maxCaptures);
@@ -170,7 +174,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-password", {
+      const response = await axios.post("http://localhost:5000/api/update-password", {
         email: localStorage.getItem("userEmail"),
         newPassword,
       });
@@ -194,7 +198,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-saved-password", {
+      const response = await axios.post("http://localhost:5000/api/update-saved-password", {
         email: localStorage.getItem("userEmail"),
         newPassword: savedNewPassword,
       });
@@ -226,7 +230,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     if (!confirmed) return;
   
     try {
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/whatsapp-logout", {
+      const res = await fetch("http://localhost:5000/api/whatsapp-settings/whatsapp-logout", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
@@ -283,6 +287,35 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         : `${action} your WhatsApp number`;
     };
 
+    const handleSaveminOrder = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+    
+        // Prevent API call if minOrder is the same
+        if (tempMin === minOrder) {
+          alert("Minimum order value is unchanged.");
+          setIsEditingminOrder(false);
+          return;
+        }
+    
+        const response = await axios.post("https://api.leadscruise.com/api/update-min-order", {
+          userEmail,
+          minOrder: tempMin,
+        });
+    
+        setMinOrder(tempMin);
+        setIsEditingminOrder(false);
+        alert(response.data.message);
+      } catch (error) {
+        if (error.response?.status === 403) {
+          alert(error.response.data.message);
+        } else {
+          console.error("Failed to update minimum order:", error);
+          alert("Error updating minimum order. Try again.");
+        }
+      }
+    };    
+
   return (
     <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
       {/* Show Max Captures per Day only on Settings page */}
@@ -306,6 +339,31 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               </>
             ) : (
               <button className="edit-max-captures" onClick={() => setIsEditingMaxCaptures(true)}>Edit</button>
+            )}
+          </div>
+        </div>
+      )}
+
+{isSettingsPage && !isWhatsAppPage && (
+        <div className="credentials-section">
+          <div className="credentials-header">Minimum order value</div>
+          <div className="max-captures-content">
+            <span className="credential-value">
+              QTY : {minOrder < 10 ? `0${minOrder}` : minOrder}
+            </span>
+            {isEditingminOrder ? (
+              <>
+                <input
+                  type="number"
+                  className="max-captures-input"
+                  value={tempCaptures}
+                  onChange={(e) => setTempMin(Number(e.target.value))}
+                  min="1"
+                />
+                <button className="edit-max-captures" onClick={(e) => { e.preventDefault(); handleSaveminOrder(); }}>Save</button>
+              </>
+            ) : (
+              <button className="edit-max-captures" onClick={() => setIsEditingminOrder(true)}>Edit</button>
             )}
           </div>
         </div>
@@ -433,7 +491,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         </div>
       )}
       {/* LeadsCruise Credentials */}
-      {!isWhatsAppPage && (
+      {!isWhatsAppPage && !isSettingsPage && (
         <div className="credentials-section">
           <h3 className="credentials-header">LeadsCruise Credentials</h3>
           <div className="credentials-content">

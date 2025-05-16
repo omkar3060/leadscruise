@@ -30,7 +30,7 @@ const CheckNumber = () => {
     try {
       localStorage.setItem("mobileNumber", mobileNumber);
       const response = await axios.post(
-        "https://api.leadscruise.com/api/check-number",
+        "http://localhost:5000/api/check-number",
         { mobileNumber }
       );
       if (response.data.exists) {
@@ -48,7 +48,7 @@ const CheckNumber = () => {
     const userEmail = localStorage.getItem("userEmail");
   
     try {
-      await axios.post("https://api.leadscruise.com/api/logout", { email: userEmail });
+      await axios.post("http://localhost:5000/api/logout", { email: userEmail });
   
       localStorage.clear();
       if (window.location.hostname === "app.leadscruise.com") {

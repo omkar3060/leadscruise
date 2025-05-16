@@ -9,6 +9,8 @@ from pyvirtualdisplay import Display
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.keys import Keys
 # from webdriver_manager.chrome import ChromeDriverManager
 import os
 import time
@@ -31,7 +33,7 @@ lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
     global lead_bought  # Access the global variable
     
-    url = "https://api.leadscruise.com/api/store-lead"
+    url = "http://localhost:5000/api/store-lead"
     data = {
         "name": name,
         "mobile": mobile,
@@ -200,6 +202,37 @@ def click_contact_buyer_now_button(driver, wait):
     except Exception as e:
         print(f"Failed to click the 'Contact Buyer Now' button: {e}",flush=True)
         return False  # Return False if an error occurred
+
+def enter_custom_order_value(driver):
+    try:
+        print("Hovering over 'Order Value' section...")
+
+        # Hover over the Order Value section
+        order_value_element = driver.find_element(By.ID, "order_val_sec")
+        ActionChains(driver).move_to_element(order_value_element).perform()
+        time.sleep(2)
+
+        # Ensure the hover menu is displayed
+        hover_menu = driver.find_element(By.CLASS_NAME, "order_val_hover_1")
+        driver.execute_script("arguments[0].style.display = 'block';", hover_menu)
+        time.sleep(1)
+
+        # Find the input field for custom minimum value
+        min_input = driver.find_element(By.ID, "min_order_val")
+        min_input.clear()
+        min_input.send_keys("1000")
+        time.sleep(1)
+
+        # Press enter to trigger filtering (assuming that's the intended trigger)
+        min_input.send_keys(Keys.ENTER)
+        print("Entered custom minimum value and submitted.")
+        time.sleep(5)
+
+    except Exception as e:
+        print(f"Error while entering custom order value: {e}")
+        driver.save_screenshot("order_value_error.png")
+        print("Screenshot saved as order_value_error.png")
+    
     
 def redirect_and_refresh(driver, wait):
     global lead_bought
@@ -253,6 +286,8 @@ def redirect_and_refresh(driver, wait):
                 print(f"Failed to click the 'India' label: {e}",flush=True)
                 driver.save_screenshot("screenshot_after_login.png")
                 print("Screenshot saved as screenshot_after_login.png",flush=True)
+
+            enter_custom_order_value(driver)
 
             # Read the data from the span element with color: rgb(42, 166, 153)
             span_result = False

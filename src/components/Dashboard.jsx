@@ -63,7 +63,7 @@ const Dashboard = () => {
       }
 
       const response = await fetch(
-        `https://api.leadscruise.com/api/user/balance?email=${userEmail}`
+        `http://localhost:5000/api/user/balance?email=${userEmail}`
       );
       const data = await response.json();
 
@@ -158,7 +158,7 @@ const Dashboard = () => {
       }
 
       const response = await axios.get(
-        `https://api.leadscruise.com/api/get-leads/${mobileNumber}`
+        `http://localhost:5000/api/get-leads/${mobileNumber}`
       );
       setLeads(response.data);
     } catch (error) {
@@ -176,7 +176,7 @@ const Dashboard = () => {
         }
 
         const response = await axios.get(
-          `https://api.leadscruise.com/api/get-status/${userEmail}`
+          `http://localhost:5000/api/get-status/${userEmail}`
         );
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
@@ -241,7 +241,7 @@ const Dashboard = () => {
       }
       try {
         const response = await axios.get(
-          `https://api.leadscruise.com/api/get-settings/${userEmail}`
+          `http://localhost:5000/api/get-settings/${userEmail}`
         );
         const userSettings = response.data; // Extracting 'settings' from response
 
@@ -301,7 +301,7 @@ const Dashboard = () => {
 
       try {
         const credCheckRes = await axios.get(
-          `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
+          `http://localhost:5000/api/check-user-credentials/${userEmail}`
         );
         if (credCheckRes.status !== 200) {
           alert("Please login to your leads provider account first.");
@@ -332,7 +332,7 @@ const Dashboard = () => {
       }
 
       const detailsResponse = await fetch(
-        `https://api.leadscruise.com/api/billing/${userEmail}`
+        `http://localhost:5000/api/billing/${userEmail}`
       );
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
@@ -342,7 +342,7 @@ const Dashboard = () => {
 
       // Fetch settings
       const response = await axios.get(
-        `https://api.leadscruise.com/api/get-settings/${userEmail}`
+        `http://localhost:5000/api/get-settings/${userEmail}`
       );
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
@@ -371,7 +371,7 @@ const Dashboard = () => {
 
       // Send the fetched settings instead of using the state
       const cycleResponse = await axios.post(
-        "https://api.leadscruise.com/api/cycle",
+        "http://localhost:5000/api/cycle",
         {
           sentences: userSettings.sentences,
           wordArray: userSettings.wordArray,
@@ -462,7 +462,7 @@ const Dashboard = () => {
 
       try {
         const response = await axios.post(
-          "https://api.leadscruise.com/api/stop",
+          "http://localhost:5000/api/stop",
           { userEmail, uniqueId }
         );
         alert(response.data.message);
@@ -583,7 +583,7 @@ const Dashboard = () => {
     }
 
     try {
-      await axios.post("https://api.leadscruise.com/api/save-settings", {
+      await axios.post("http://localhost:5000/api/save-settings", {
         userEmail,
         sentences: updatedSettings.sentences || [],
         wordArray: updatedSettings.wordArray || [],
