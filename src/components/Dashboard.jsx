@@ -55,19 +55,19 @@ const Dashboard = () => {
   const [messageCount, setMessageCount] = useState(null);
 
   useEffect(() => {
-  const fetchMessageCount = async () => {
-    try {
-      const mobileNumber = localStorage.getItem("mobileNumber");
-      const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
+    const fetchMessageCount = async () => {
+      try {
+        const mobileNumber = localStorage.getItem("mobileNumber");
+        const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
 
-      setMessageCount(response.data.messageCount);
-    } catch (error) {
-      console.error("Failed to fetch message count:", error);
-    }
-  };
+        setMessageCount(response.data.messageCount);
+      } catch (error) {
+        console.error("Failed to fetch message count:", error);
+      }
+    };
 
-  fetchMessageCount();
-}, []);
+    fetchMessageCount();
+  }, []);
 
   // Function to fetch balance
   const fetchBuyerBalance = useCallback(async () => {
@@ -399,6 +399,11 @@ const Dashboard = () => {
           userEmail,
           minOrder: userSettings.minOrder || 0,
           leadTypes: userSettings.leadTypes || [],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
       );
       setIsStarting(false); // Reset starting state after process completes
