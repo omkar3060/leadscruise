@@ -75,7 +75,6 @@ exports.saveSettings = async (req, res) => {
   }
 };
 
-
 exports.getSettings = async (req, res) => {
   try {
     // Change from req.params to req.query
@@ -140,5 +139,26 @@ exports.removeFile = async (req, res) => {
   } catch (err) {
     console.error("Error removing file:", err);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.getTodaysMessageCount = async (req, res) => {
+  try {
+    const { mobileNumber } = req.query;
+
+    if (!mobileNumber) {
+      return res.status(400).json({ message: "Mobile number is required" });
+    }
+
+    const settings = await WhatsAppSettings.findOne({ mobileNumber });
+
+    if (!settings) {
+      return res.status(404).json({ message: "No WhatsApp settings found" });
+    }
+
+    res.json({ messageCount: settings.messages.length });
+  } catch (error) {
+    console.error("Error fetching today's message count:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

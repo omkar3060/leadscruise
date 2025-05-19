@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { saveSettings, getSettings, removeFile } = require("../controllers/whatsappSettingsController");
+const { saveSettings, getSettings, removeFile, getTodaysMessageCount } = require("../controllers/whatsappSettingsController");
 const WhatsAppSettings = require("../models/WhatsAppSettings");
 const multer = require('multer');
 const fs = require("fs-extra");
@@ -51,6 +51,7 @@ router.post(
 );
 router.get("/get", getSettings);
 router.delete('/remove-file', removeFile);
+router.get("/get-message-count", getTodaysMessageCount);
 router.put("/update-whatsapp-number", async (req, res) => {
   try {
     const { mobileNumber, newWhatsappNumber } = req.body;

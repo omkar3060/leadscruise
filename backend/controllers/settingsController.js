@@ -118,5 +118,45 @@ const getMinOrder = async (req, res) => {
   }
 };
 
+const updateLeadTypes= async (req, res) => {
+  try {
+    const { userEmail, leadTypes } = req.body;
 
-module.exports = { saveSettings, getSettings, deleteSettings, updateMinOrder, getMinOrder };
+    if (!userEmail || !Array.isArray(leadTypes)) {
+      return res.status(400).json({ message: "Missing or invalid fields" });
+    }
+    const updated = await Settings.findOneAndUpdate(
+      { userEmail },
+      { leadTypes },
+      { new: true, upsert: true }
+    );
+
+    res.json({ message: "Lead types updated successfully", data: updated });
+  } catch (error) {
+    console.error("Error updating lead types:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getLeadTypes = async (req, res) => {
+  try {
+    const { userEmail } = req.query;
+
+    if (!userEmail) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const settings = await Settings.findOne({ userEmail });
+
+    if (!settings) {
+      return res.status(404).json({ message: "Settings not found" });
+    }
+
+    res.json({ leadTypes: settings.leadTypes || [] });
+  } catch (error) {
+    console.error("Error fetching lead types:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports = { saveSettings, getSettings, deleteSettings, updateMinOrder, getMinOrder, updateLeadTypes, getLeadTypes };

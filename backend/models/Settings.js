@@ -5,7 +5,8 @@ const SettingsSchema = new mongoose.Schema({
   sentences: { type: [String], default: [] },
   wordArray: { type: [String], default: [] },
   h2WordArray: { type: [String], default: [] },
-  minOrder: { type: Number, default: 0 }, 
+  minOrder: { type: Number, default: 0 },
+  leadTypes: { type: [String], default: [] },
 });
 
 module.exports = mongoose.model("Settings", SettingsSchema);

@@ -19,7 +19,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const location = useLocation();
   const isSettingsPage = location.pathname === "/settings";
   const isWhatsAppPage = location.pathname === "/whatsapp";
-  const isSheetsPage = location.pathname === "/sheets" || location.pathname === "/profile";
+  const isSheetsPage = location.pathname === "/sheets";
   const [shakeError, setShakeError] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -27,6 +27,9 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const [isEditingSavedPassword, setIsEditingSavedPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [savedNewPassword, setSavedNewPassword] = useState("");
+  const [leadTypes, setLeadTypes] = useState([]); // Final selected types
+  const [tempLeadTypes, setTempLeadTypes] = useState([]); // Temp for editing
+  const [isEditingLeadTypes, setIsEditingLeadTypes] = useState(false);
 
   // Separate validation states for each password field
   const [showLeadsCruiseValidation, setShowLeadsCruiseValidation] = useState(false);
@@ -165,21 +168,21 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   }, []);
 
   useEffect(() => {
-  const fetchMinOrder = async () => {
-    try {
-      const userEmail = localStorage.getItem("userEmail"); // adjust key if needed
-      const response = await axios.get(`https://api.leadscruise.com/api/get-min-order?userEmail=${userEmail}`);
+    const fetchMinOrder = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail"); // adjust key if needed
+        const response = await axios.get(`https://api.leadscruise.com/api/get-min-order?userEmail=${userEmail}`);
 
-      if (response.data) {
-        setminOrder(response.data.minOrder);
+        if (response.data) {
+          setminOrder(response.data.minOrder);
+        }
+      } catch (error) {
+        console.error("Error fetching min order:", error);
       }
-    } catch (error) {
-      console.error("Error fetching min order:", error);
-    }
-  };
+    };
 
-  fetchMinOrder();
-}, []);
+    fetchMinOrder();
+  }, []);
 
   // Function to handle password update for LeadsCruise
   const handlePasswordUpdate = async () => {
@@ -333,6 +336,49 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     }
   };
 
+  const handleSaveLeadTypes = async () => {
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+
+      if (JSON.stringify(leadTypes.sort()) === JSON.stringify(tempLeadTypes.sort())) {
+        alert("Lead types are unchanged.");
+        setIsEditingLeadTypes(false);
+        return;
+      }
+
+      const response = await axios.post("https://api.leadscruise.com/api/update-lead-types", {
+        userEmail,
+        leadTypes: tempLeadTypes,
+      });
+
+      setLeadTypes(tempLeadTypes);
+      setIsEditingLeadTypes(false);
+      alert(response.data.message);
+    } catch (error) {
+      console.error("Error updating lead types:", error);
+      alert("Failed to update lead types. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    const fetchLeadTypes = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        const response = await axios.get(
+          `https://api.leadscruise.com/api/get-lead-types?userEmail=${userEmail}`
+        );
+
+        if (response.data.leadTypes) {
+          setLeadTypes(response.data.leadTypes);
+        }
+      } catch (error) {
+        console.error("Failed to fetch lead types:", error);
+      }
+    };
+
+    fetchLeadTypes();
+  }, []);
+
   return (
     <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
       {/* Show Max Captures per Day only on Settings page */}
@@ -366,7 +412,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
           <div className="credentials-header">Minimum order value</div>
           <div className="max-captures-content">
             <span className="credential-value">
-              QTY : {minOrder < 10 ? `0${minOrder}` : minOrder}
+              VALUE (INR) : {minOrder < 10 ? `0${minOrder}` : minOrder}
             </span>
             {isEditingminOrder ? (
               <>
@@ -381,6 +427,53 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               </>
             ) : (
               <button className="edit-max-captures" onClick={() => setIsEditingminOrder(true)}>Edit</button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isSettingsPage && !isWhatsAppPage && (
+        <div className="credentials-section">
+          <div className="credentials-header">Lead Types</div>
+          <div className="max-captures-content lead-types">
+            <span className="credential-value">
+              {leadTypes.length === 0 ? "None selected" : leadTypes.join(", ").toUpperCase()}
+            </span>
+
+            {isEditingLeadTypes ? (
+              <>
+                <div className="lead-types-checkboxes">
+                  {["bulk", "business", "gst"].map((type) => (
+                    <label key={type} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={tempLeadTypes.includes(type)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setTempLeadTypes([...tempLeadTypes, type]);
+                          } else {
+                            setTempLeadTypes(tempLeadTypes.filter((t) => t !== type));
+                          }
+                        }}
+                      />
+                      {type.toUpperCase()}
+                    </label>
+                  ))}
+                </div>
+                <button
+                  className="edit-max-captures"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSaveLeadTypes();
+                  }}
+                >
+                  Save
+                </button>
+              </>
+            ) : (
+              <button className="edit-max-captures" onClick={() => setIsEditingLeadTypes(true)}>
+                Edit
+              </button>
             )}
           </div>
         </div>
@@ -460,7 +553,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       )}
 
       {/* IndiaMart Account Credentials */}
-      {!isWhatsAppPage && !isSheetsPage && (
+      {!isWhatsAppPage && !isSheetsPage && !isSettingsPage && (
         <div className="credentials-section">
           <h3 className="credentials-header"> Leads Provider credentials</h3>
           <div className="credentials-content">

@@ -52,6 +52,22 @@ const Dashboard = () => {
     keyword: "",
     type: null,
   });
+  const [messageCount, setMessageCount] = useState(null);
+
+  useEffect(() => {
+  const fetchMessageCount = async () => {
+    try {
+      const mobileNumber = localStorage.getItem("mobileNumber");
+      const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
+
+      setMessageCount(response.data.messageCount);
+    } catch (error) {
+      console.error("Failed to fetch message count:", error);
+    }
+  };
+
+  fetchMessageCount();
+}, []);
 
   // Function to fetch balance
   const fetchBuyerBalance = useCallback(async () => {
@@ -382,6 +398,7 @@ const Dashboard = () => {
           uniqueId,
           userEmail,
           minOrder: userSettings.minOrder || 0,
+          leadTypes: userSettings.leadTypes || [],
         }
       );
       setIsStarting(false); // Reset starting state after process completes
@@ -604,9 +621,6 @@ const Dashboard = () => {
     setConfirmModal({ open: false, keyword: "", type: null });
   };
 
-
-
-
   return (
     <div className={styles.dashboardContainer}>
       {zeroBalanceAlertMemo}
@@ -654,7 +668,7 @@ const Dashboard = () => {
             <span>Replies Sent Today</span>
           </div>
           <div className={styles.comingSoon} style={{ color: "#28a745" }}>
-            Coming soon
+            {messageCount * metrics.totalLeadsToday || 0}
             <br />
             <span>WA Messages Sent Today</span>
           </div>
@@ -689,7 +703,6 @@ const Dashboard = () => {
             </button>
           </div>
           <div className={styles.tableWrapper}>
-
 
             <table className={styles.leadsTable}>
               <thead>

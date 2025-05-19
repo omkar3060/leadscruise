@@ -491,6 +491,8 @@ cron.schedule("0 6 * * *", async () => {
           password: user.savedPassword,
           userEmail: user.email,
           uniqueId: latestUniqueId,
+          minOrder: settings.minOrder,
+          leadTypes: settings.leadTypes,
         });
         console.log(`Started script for ${user.email}`);
       } catch (error) {
@@ -513,6 +515,7 @@ app.post("/api/cycle", async (req, res) => {
     uniqueId,
     userEmail,
     minOrder,
+    leadTypes,
   } = req.body;
 
   if (!req.body || Object.keys(req.body).length === 0) {
@@ -584,6 +587,7 @@ app.post("/api/cycle", async (req, res) => {
     password,
     uniqueId,
     minOrder,
+    leadTypes,
   });
 
   console.log("Spawning Python process for 'final_inside_script_server.py'...");

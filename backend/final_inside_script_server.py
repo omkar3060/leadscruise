@@ -236,6 +236,7 @@ def enter_custom_order_value(driver):
         print("Screenshot saved as order_value_error.png")
 
 def select_lead_type(driver):
+    lead_types = input_data.get("leadTypes", [])
     try:
         print("Setting lead type filters...")
         
@@ -247,45 +248,54 @@ def select_lead_type(driver):
         driver.execute_script("arguments[0].scrollIntoView(true);", lead_type_header)
         time.sleep(1)
         
-        # Select "Bulk" lead type
-        bulk_checkbox = driver.find_element(By.ID, "lead_type_2")
-        if not bulk_checkbox.is_selected():
-            # Use JavaScript to click in case of any overlay issues
-            driver.execute_script("arguments[0].click();", bulk_checkbox)
-            print("Selected 'Bulk' lead type.")
+        # Only select "Bulk" lead type if it's in the lead_types array
+        if "bulk" in [lt.lower() for lt in lead_types]:
+            bulk_checkbox = driver.find_element(By.ID, "lead_type_2")
+            if not bulk_checkbox.is_selected():
+                # Use JavaScript to click in case of any overlay issues
+                driver.execute_script("arguments[0].click();", bulk_checkbox)
+                print("Selected 'Bulk' lead type.")
+                time.sleep(2)
+        else:
+            print("'Bulk' lead type not in selection criteria, skipping.")
+        
+        # Only select "Business" lead type if it's in the lead_types array
+        if "business" in [lt.lower() for lt in lead_types]:
+            business_checkbox = driver.find_element(By.ID, "business_type_id")
+            if not business_checkbox.is_selected():
+                driver.execute_script("arguments[0].click();", business_checkbox)
+                print("Selected 'Business' lead type.")
+                time.sleep(2)
+        else:
+            print("'Business' lead type not in selection criteria, skipping.")
+        
+        # Only expand submenu and select GST if it's in the lead_types array
+        if "gst" in [lt.lower() for lt in lead_types]:
+            # Click the arrow to expand the submenu for additional options
+            arrow_menu = driver.find_element(By.CLASS_NAME, "arwMenu")
+            driver.execute_script("arguments[0].click();", arrow_menu)
             time.sleep(2)
+            
+            # Make sure the hover menu is displayed
+            hover_menu = driver.find_element(By.CLASS_NAME, "lead_type_hover_1")
+            driver.execute_script("arguments[0].style.display = 'block';", hover_menu)
+            time.sleep(1)
+            
+            # Select "GST" option
+            gst_checkbox = driver.find_element(By.ID, "gst_type_id")
+            if not gst_checkbox.is_selected():
+                driver.execute_script("arguments[0].click();", gst_checkbox)
+                print("Selected 'GST' option.")
+                time.sleep(2)
+        else:
+            print("'GST' option not in selection criteria, skipping.")
         
-        # Select "Business" lead type
-        business_checkbox = driver.find_element(By.ID, "business_type_id")
-        if not business_checkbox.is_selected():
-            driver.execute_script("arguments[0].click();", business_checkbox)
-            print("Selected 'Business' lead type.")
-            time.sleep(2)
-        
-        # Click the arrow to expand the submenu for additional options
-        arrow_menu = driver.find_element(By.CLASS_NAME, "arwMenu")
-        driver.execute_script("arguments[0].click();", arrow_menu)
-        time.sleep(2)
-        
-        # Make sure the hover menu is displayed
-        hover_menu = driver.find_element(By.CLASS_NAME, "lead_type_hover_1")
-        driver.execute_script("arguments[0].style.display = 'block';", hover_menu)
-        time.sleep(1)
-        
-        # Select "GST" option
-        gst_checkbox = driver.find_element(By.ID, "gst_type_id")
-        if not gst_checkbox.is_selected():
-            driver.execute_script("arguments[0].click();", gst_checkbox)
-            print("Selected 'GST' option.")
-            time.sleep(2)
-        
-        print("Successfully set all lead type filters.")
+        print("Successfully set all requested lead type filters.")
     except Exception as e:
         print(f"Error while setting lead type filters: {e}")
-        #driver.save_screenshot("lead_type_error.png")
+        driver.save_screenshot("lead_type_error.png")
         print("Screenshot saved as lead_type_error.png")
-    
-    
+   
 def redirect_and_refresh(driver, wait):
     global lead_bought
     """
@@ -316,7 +326,6 @@ def redirect_and_refresh(driver, wait):
         buyer_balance_element = driver.find_element(By.ID, "cstm_bl_bal1")
         buyer_balance = int(buyer_balance_element.text)
         print(f"BUYER_BALANCE:{buyer_balance}", flush=True)
-        
 
         if buyer_balance > 0:
             print("Buyer balance is greater than 0. Redirecting back to the first link...",flush=True)
