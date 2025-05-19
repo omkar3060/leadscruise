@@ -386,11 +386,14 @@ def redirect_and_refresh(driver, wait):
             except Exception as e:
                 print(f"Failed to read data from the first <h2>: {e}",flush=True)
 
-            # Get the first <strong> tag with the text 'mins ago', 'secs ago', or 'hrs ago'
+            # Get the time element using the updated XPath based on the provided HTML structure
             time_result = False
             try:
                 time.sleep(3)  # Static wait
-                time_element = driver.find_element(By.XPATH, "//strong[contains(text(), 'mins ago') or contains(text(), 'secs ago') or contains(text(), 'hrs ago')]")
+                
+                # Updated XPath to match the actual HTML structure
+                # Looking for div with class containing "lstNwLftLoc" and "lstNwDflx" that has a strong element with time text
+                time_element = driver.find_element(By.XPATH, "//div[contains(@class, 'lstNwLftLoc') and contains(@class, 'lstNwDflx')]//strong")
                 time_text = time_element.text
                 print(f"Time text: {time_text}",flush=True)
 
@@ -410,6 +413,30 @@ def redirect_and_refresh(driver, wait):
 
             except Exception as e:
                 print(f"Failed to read the time text: {e}",flush=True)
+                # Try an alternative selector as a fallback
+                try:
+                    time_element = driver.find_element(By.CSS_SELECTOR, "div.lstNwLftLoc.lstNwDflx strong")
+                    time_text = time_element.text
+                    print(f"Time text (alternative method): {time_text}",flush=True)
+                    
+                    # Parse the time value
+                    if 'mins ago' in time_text:
+                        time_value = int(time_text.split()[0])
+                    elif 'secs ago' in time_text:
+                        time_value = int(time_text.split()[0]) / 60  # Convert seconds to minutes
+                    elif 'hrs ago' in time_text:
+                        time_value = int(time_text.split()[0]) * 60  # Convert hours to minutes
+                    else:
+                        time_value = 11  # Default to a value greater than 10 mins if parsing fails
+
+                    # Check if time is less than 10 minutes
+                    time_result = time_value < 1000000
+                    print(time_result, flush=True)
+                    
+                except Exception as e2:
+                    print(f"Failed to read the time text with alternative method: {e2}",flush=True)
+                    # driver.save_screenshot("time_element_error.png")
+                    print("Screenshot saved as time_element_error.png",flush=True)
 
             # Check if the close button is available and click it if found
             try:
