@@ -232,8 +232,58 @@ def enter_custom_order_value(driver):
 
     except Exception as e:
         print(f"Error while entering custom order value: {e}")
-        driver.save_screenshot("order_value_error.png")
+        #driver.save_screenshot("order_value_error.png")
         print("Screenshot saved as order_value_error.png")
+
+def select_lead_type(driver):
+    try:
+        print("Setting lead type filters...")
+        
+        # Click on the Lead Type section to expand it if needed
+        lead_type_div = driver.find_element(By.CLASS_NAME, "lead_type_wrap")
+        lead_type_header = lead_type_div.find_element(By.CLASS_NAME, "lead_type")
+        
+        # Make sure it's visible and clickable
+        driver.execute_script("arguments[0].scrollIntoView(true);", lead_type_header)
+        time.sleep(1)
+        
+        # Select "Bulk" lead type
+        bulk_checkbox = driver.find_element(By.ID, "lead_type_2")
+        if not bulk_checkbox.is_selected():
+            # Use JavaScript to click in case of any overlay issues
+            driver.execute_script("arguments[0].click();", bulk_checkbox)
+            print("Selected 'Bulk' lead type.")
+            time.sleep(2)
+        
+        # Select "Business" lead type
+        business_checkbox = driver.find_element(By.ID, "business_type_id")
+        if not business_checkbox.is_selected():
+            driver.execute_script("arguments[0].click();", business_checkbox)
+            print("Selected 'Business' lead type.")
+            time.sleep(2)
+        
+        # Click the arrow to expand the submenu for additional options
+        arrow_menu = driver.find_element(By.CLASS_NAME, "arwMenu")
+        driver.execute_script("arguments[0].click();", arrow_menu)
+        time.sleep(2)
+        
+        # Make sure the hover menu is displayed
+        hover_menu = driver.find_element(By.CLASS_NAME, "lead_type_hover_1")
+        driver.execute_script("arguments[0].style.display = 'block';", hover_menu)
+        time.sleep(1)
+        
+        # Select "GST" option
+        gst_checkbox = driver.find_element(By.ID, "gst_type_id")
+        if not gst_checkbox.is_selected():
+            driver.execute_script("arguments[0].click();", gst_checkbox)
+            print("Selected 'GST' option.")
+            time.sleep(2)
+        
+        print("Successfully set all lead type filters.")
+    except Exception as e:
+        print(f"Error while setting lead type filters: {e}")
+        #driver.save_screenshot("lead_type_error.png")
+        print("Screenshot saved as lead_type_error.png")
     
     
 def redirect_and_refresh(driver, wait):
@@ -301,6 +351,8 @@ def redirect_and_refresh(driver, wait):
                 print("Screenshot saved as screenshot_after_login.png",flush=True)
 
             enter_custom_order_value(driver)
+            time.sleep(3)
+            select_lead_type(driver)
 
             # Read the data from the span element with color: rgb(42, 166, 153)
             span_result = False
