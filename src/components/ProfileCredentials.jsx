@@ -433,8 +433,13 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       )}
 
       {isSettingsPage && !isWhatsAppPage && (
-        <div className="credentials-section">
+        <div className="credentials-section enhanced-lead-types">
           <div className="credentials-header">Lead Types</div>
+
+          <p className="lead-types-description">
+            Select the type of leads you want to capture. This helps the system filter incoming leads based on your business requirements.
+          </p>
+
           <div className="max-captures-content lead-types">
             <span className="credential-value">
               {leadTypes.length === 0 ? "None selected" : leadTypes.join(", ").toUpperCase()}
@@ -444,7 +449,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               <>
                 <div className="lead-types-checkboxes">
                   {["bulk", "business", "gst"].map((type) => (
-                    <label key={type} className="checkbox-label">
+                    <label key={type} className="checkbox-label styled-checkbox" title={`Enable ${type.toUpperCase()} leads`}>
                       <input
                         type="checkbox"
                         checked={tempLeadTypes.includes(type)}
@@ -456,12 +461,13 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                           }
                         }}
                       />
+                      <span className="checkmark" />
                       {type.toUpperCase()}
                     </label>
                   ))}
                 </div>
                 <button
-                  className="edit-max-captures"
+                  className="edit-max-captures save-btn"
                   onClick={(e) => {
                     e.preventDefault();
                     handleSaveLeadTypes();
