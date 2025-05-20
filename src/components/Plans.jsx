@@ -285,7 +285,7 @@ const Plans = () => {
             >
               <div className="part-1">
                 <div className="heading-row">
-                  <h2>Yearly Subscription</h2>
+                  <h2>One Year Subscription</h2>
                   <div className="coupon-text">(COUPON : EARLY62)</div>
                 </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
