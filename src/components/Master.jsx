@@ -347,6 +347,10 @@ const Master = () => {
     navigate('/master/expired');
   }
 
+  const handleSupportClick = () => {
+    navigate("/master/support");
+};
+
   return (
     <div className={masterstyles.dashboardContainer}>
       {isLoading && <LoadingScreen />}
@@ -433,6 +437,13 @@ const Master = () => {
             </div>
 
             <div className={masterstyles.tableActions}>
+              <button
+              className={masterstyles.downloadButton}
+              onClick={handleSupportClick}
+              title="Support Team Details"
+            >
+              <span className={masterstyles.icon}>🧑‍💻</span>
+     </button>
               <button
                 className={masterstyles.downloadButton}
                 onClick={() => navigate('/master/user-status')}

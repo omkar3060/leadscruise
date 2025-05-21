@@ -41,8 +41,9 @@ import RepliesSentToday from "./components/RepliesSentToday"; // Adjust path as 
 import EmailsSentToday from "./components/EmailsSentToday"; // Adjust path as needed
 import TotalEmailsSent from "./components/TotalEmailsSent"; // Adjust path as needed
 import TotalLeadsCaptured from "./components/TotalLeadsCaptured"; // Adjust path as needed
-import UserStatus from "./components/UserStatus"; 
+import UserStatus from "./components/UserStatus";
 import Analytics from "./components/Analytics";
+import ExpertsDashboard from "./components/ExpertsDashboard";
 
 const Layout = () => {
   const location = useLocation();
@@ -149,7 +150,7 @@ const Layout = () => {
           }
         />
 
-         <Route
+        <Route
           path="/master/user-status"
           element={
             <ProtectedRoute adminOnly={true}>
@@ -157,6 +158,10 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/master/support" element={<ProtectedRoute adminOnly={true}>
+          <ExpertsDashboard />
+        </ProtectedRoute>} />
 
         <Route
           path="/master/active-users"
