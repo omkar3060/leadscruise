@@ -111,15 +111,14 @@ def go_to_message_center_and_click(driver):
         print("Clicked the first element with the specified class parameters.", flush=True)
         time.sleep(2)
 
-        message_input = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//div[@class='lh150 pdb10 mxhgt125 m240130 edt_div edit_div_new fs15 overfw_yauto prewrap ' and @contenteditable='true']"))
-        )
+        message_input = WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.XPATH, "//div[@id='massage-text' and @contenteditable='true']")))
 
         sentences = input_data.get("sentences", [])
 
         for sentence in sentences:
             message_input.click()
-            message_input.clear()
+            message_input.send_keys(Keys.CONTROL + "a")
+            message_input.send_keys(Keys.DELETE)
             message_input.send_keys(sentence)
             print(f"Entered message: '{sentence}'", flush=True)
 

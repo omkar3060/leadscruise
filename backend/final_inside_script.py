@@ -8,35 +8,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from pyvirtualdisplay import Display
 import os
 import time
-import sys
-import json
+import subprocess
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
-import subprocess
-input_data = json.loads(sys.stdin.read()) 
-
-import requests
-
-def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
-    url = "https://api.leadscruise.com/api/store-lead"  # Backend API endpoint
-    data = {
-        "name": name,
-        "mobile": mobile,
-        "user_mobile_number": user_mobile_number  # Store the user's own mobile number
-    }
-    
-    if email:
-        data["email"] = email  # Add email only if it's available
-
-    try:
-        response = requests.post(url, json=data)
-        if response.status_code == 200:
-            print("Lead data sent successfully!", flush=True)
-        else:
-            print(f"Failed to send data: {response.text}", flush=True)
-    except Exception as e:
-        print(f"Error sending data to backend: {e}", flush=True)
-
 
 def extend_word_array(word_array):
     """
@@ -93,9 +67,7 @@ def go_to_message_center_and_click(driver):
         print("Clicked the first element with the specified class parameters.")
         time.sleep(2)
 
-        message_input = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//div[@class='lh150 pdb10 mxhgt125 m240130 edt_div edit_div_new fs15 overfw_yauto prewrap ' and @contenteditable='true']"))
-        )
+        message_input = WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.XPATH, "//div[@id='massage-text' and @contenteditable='true']")))
 
         sentences = [
             "Hello, I hope you're doing well!",
@@ -107,7 +79,8 @@ def go_to_message_center_and_click(driver):
 
         for sentence in sentences:
             message_input.click()
-            message_input.clear()
+            message_input.send_keys(Keys.CONTROL + "a")
+            message_input.send_keys(Keys.DELETE)
             message_input.send_keys(sentence)
             print(f"Entered message: '{sentence}'")
 
@@ -136,10 +109,10 @@ def go_to_message_center_and_click(driver):
         left_name = driver.find_element(By.XPATH, "//div[@id='left-name']")
         print(f"Left Name: {left_name.text}")
 
-        mobile_number = driver.find_element(By.XPATH, "//span[@class='fl mxwdt85 ml5 mt2 wbba']")
+        mobile_number = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 mt2 wbba']")
         print(f"Mobile Number: {mobile_number.text}")
 
-        email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt85 ml5 wbba']")
+        email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 wbba']")
         print(f"Email ID: {email_id.text}")
 
     except Exception as e:
@@ -214,8 +187,58 @@ def enter_custom_order_value(driver):
 
     except Exception as e:
         print(f"Error while entering custom order value: {e}")
-        driver.save_screenshot("order_value_error.png")
+        #driver.save_screenshot("order_value_error.png")
         print("Screenshot saved as order_value_error.png")
+        
+def select_lead_type(driver):
+    try:
+        print("Setting lead type filters...")
+        
+        # Click on the Lead Type section to expand it if needed
+        lead_type_div = driver.find_element(By.CLASS_NAME, "lead_type_wrap")
+        lead_type_header = lead_type_div.find_element(By.CLASS_NAME, "lead_type")
+        
+        # Make sure it's visible and clickable
+        driver.execute_script("arguments[0].scrollIntoView(true);", lead_type_header)
+        time.sleep(1)
+        
+        # Select "Bulk" lead type
+        bulk_checkbox = driver.find_element(By.ID, "lead_type_2")
+        if not bulk_checkbox.is_selected():
+            # Use JavaScript to click in case of any overlay issues
+            driver.execute_script("arguments[0].click();", bulk_checkbox)
+            print("Selected 'Bulk' lead type.")
+            time.sleep(2)
+        
+        # Select "Business" lead type
+        business_checkbox = driver.find_element(By.ID, "business_type_id")
+        if not business_checkbox.is_selected():
+            driver.execute_script("arguments[0].click();", business_checkbox)
+            print("Selected 'Business' lead type.")
+            time.sleep(2)
+        
+        # Click the arrow to expand the submenu for additional options
+        arrow_menu = driver.find_element(By.CLASS_NAME, "arwMenu")
+        driver.execute_script("arguments[0].click();", arrow_menu)
+        time.sleep(2)
+        
+        # Make sure the hover menu is displayed
+        hover_menu = driver.find_element(By.CLASS_NAME, "lead_type_hover_1")
+        driver.execute_script("arguments[0].style.display = 'block';", hover_menu)
+        time.sleep(1)
+        
+        # Select "GST" option
+        gst_checkbox = driver.find_element(By.ID, "gst_type_id")
+        if not gst_checkbox.is_selected():
+            driver.execute_script("arguments[0].click();", gst_checkbox)
+            print("Selected 'GST' option.")
+            time.sleep(2)
+        
+        print("Successfully set all lead type filters.")
+    except Exception as e:
+        print(f"Error while setting lead type filters: {e}")
+        #driver.save_screenshot("lead_type_error.png")
+        print("Screenshot saved as lead_type_error.png")
     
 def redirect_and_refresh(driver, wait):
     """
@@ -228,7 +251,7 @@ def redirect_and_refresh(driver, wait):
     second_url = "https://seller.indiamart.com/bltxn/knowyourbuyer"
 
     # Array of words to compare for span text
-    word_array = ["abc"]
+    word_array = ["abc","Power Contactors","Ground & Phase Protection Relay"]
     word_array = extend_word_array(word_array)
 
     # Array of words to compare for <h2> text
@@ -280,6 +303,8 @@ def redirect_and_refresh(driver, wait):
                 print("Screenshot saved as screenshot_after_login.png")
 
             enter_custom_order_value(driver)
+            time.sleep(3)
+            select_lead_type(driver)
 
             # Read the data from the span element with color: rgb(42, 166, 153)
             span_result = False
