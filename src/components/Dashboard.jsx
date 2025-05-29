@@ -798,10 +798,11 @@ const Dashboard = () => {
               {" "}
               List?
             </p>
-            <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
+            <div style={{ marginTop: "1rem",  display: "flex", gap: "1rem" }}>
               <button
                 onClick={handleConfirmAction}
                 style={{
+                  marginBottom: "0px",
                   padding: "6px 12px",
                   backgroundColor: "#4caf50",
                   color: "white",
@@ -815,6 +816,7 @@ const Dashboard = () => {
                   setConfirmModal({ open: false, keyword: "", type: null })
                 }
                 style={{
+                  marginBottom: "0px",
                   padding: "6px 12px",
                   backgroundColor: "#f44336",
                   color: "white",

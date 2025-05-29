@@ -30,6 +30,9 @@ const LoadingScreen = () => (
 );
 
 const SettingsForm = () => {
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingValue, setEditingValue] = useState("");
+
   const [settings, setSettings] = useState({
     sentences: [],
     wordArray: [],
@@ -54,8 +57,8 @@ const SettingsForm = () => {
       setSidebarOpen(window.innerWidth > 768);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -76,7 +79,9 @@ const SettingsForm = () => {
       }
 
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/get-settings/${userEmail}`);
+        const response = await axios.get(
+          `https://api.leadscruise.com/api/get-settings/${userEmail}`
+        );
         if (response.data && response.data.sentences) {
           setSettings(response.data);
         } else {
@@ -104,7 +109,7 @@ const SettingsForm = () => {
     const textarea = textareaRef.current;
     if (textarea) {
       // Reset height to auto to get the correct scrollHeight
-      textarea.style.height = 'auto';
+      textarea.style.height = "auto";
       // Set the height to match the scrollHeight
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
@@ -134,13 +139,13 @@ const SettingsForm = () => {
       setNewItem("");
 
       setTimeout(() => {
-        const listItems = document.querySelectorAll('.modal-content li');
+        const listItems = document.querySelectorAll(".modal-content li");
         if (listItems.length > 0) {
           const lastItem = listItems[listItems.length - 1];
-          lastItem.classList.add('item-added');
+          lastItem.classList.add("item-added");
 
           setTimeout(() => {
-            lastItem.classList.remove('item-added');
+            lastItem.classList.remove("item-added");
           }, 1500);
         }
       }, 10);
@@ -226,7 +231,9 @@ const SettingsForm = () => {
     if (window.confirm("Are you sure you want to revert all settings?")) {
       setIsLoading(true); // Start loading
       try {
-        await axios.delete(`https://api.leadscruise.com/api/delete-settings/${userEmail}`);
+        await axios.delete(
+          `https://api.leadscruise.com/api/delete-settings/${userEmail}`
+        );
         setSettings({ sentences: [], wordArray: [], h2WordArray: [] });
         alert("Settings reverted successfully!");
       } catch (error) {
@@ -242,8 +249,32 @@ const SettingsForm = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const startEditing = (index, value) => {
+    setEditingIndex(index);
+    setEditingValue(value);
+  };
+
+  const updateItemInModal = () => {
+    if (editingValue.trim() === "")
+      return alert("Updated value can't be empty!");
+
+    const updated = [...modalData];
+    updated[editingIndex] = editingValue.trim();
+    setModalData(updated);
+    setEditingIndex(null);
+    setEditingValue("");
+  };
+
+  const cancelEditing = () => {
+    setEditingIndex(null);
+    setEditingValue("");
+  };
+
   return (
-    <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
+    <div
+      className="settings-page-wrapper"
+      style={windowWidth <= 768 ? { marginLeft: 0 } : {}}
+    >
       {/* Loading Screen */}
       {isLoading && <LoadingScreen />}
 
@@ -256,12 +287,16 @@ const SettingsForm = () => {
       <DashboardHeader
         handleSubmit={handleSubmit}
         handleRevert={handleRevert}
-        style={windowWidth <= 768 ? {
-          left: 0,
-          width: '100%',
-          marginLeft: 0,
-          padding: '15px'
-        } : {}}
+        style={
+          windowWidth <= 768
+            ? {
+                left: 0,
+                width: "100%",
+                marginLeft: 0,
+                padding: "15px",
+              }
+            : {}
+        }
       />
 
       {/* Scrollable Settings Container */}
@@ -280,7 +315,11 @@ const SettingsForm = () => {
               <p>No sentences added.</p>
             )}
             <div className="edit-button-container">
-              <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
+              <button
+                type="button"
+                className="edit-button"
+                onClick={() => openModal("sentences")}
+              >
                 Edit
               </button>
             </div>
@@ -299,7 +338,11 @@ const SettingsForm = () => {
               <p>No categories added.</p>
             )}
             <div className="edit-button-container">
-              <button type="button" className="edit-button" onClick={() => openModal("wordArray")}>
+              <button
+                type="button"
+                className="edit-button"
+                onClick={() => openModal("wordArray")}
+              >
                 Edit
               </button>
             </div>
@@ -307,7 +350,7 @@ const SettingsForm = () => {
 
           {/* H2 Word Array Section */}
           <div className="table-container">
-            <h2>Leads to be rejected</h2>
+            <h2>Lea to be rejected</h2>
             {settings.h2WordArray.length > 0 ? (
               <ul>
                 {settings.h2WordArray.map((lead, index) => (
@@ -318,7 +361,11 @@ const SettingsForm = () => {
               <p>No rejected leads added.</p>
             )}
             <div className="edit-button-container">
-              <button type="button" className="edit-button" onClick={() => openModal("h2WordArray")}>
+              <button
+                type="button"
+                className="edit-button"
+                onClick={() => openModal("h2WordArray")}
+              >
                 Edit
               </button>
             </div>
@@ -331,10 +378,20 @@ const SettingsForm = () => {
 
       {/* Modal Popup */}
       {modalType && (
-        <div className="modal-overlay">
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target.className === "modal-overlay") closeModal();
+          }}
+        >
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Edit {modalType.replace("wordArray", "Accepted Categories").replace("h2WordArray", "Rejected Leads")}</h2>
+              <h2>
+                Edit{" "}
+                {modalType
+                  .replace("wordArray", "Accepted Categories")
+                  .replace("h2WordArray", "Rejected Leads")}
+              </h2>
               <button
                 className="modal-close-icon"
                 onClick={closeModal}
@@ -345,9 +402,58 @@ const SettingsForm = () => {
             </div>
             <ul>
               {modalData.map((item, index) => (
-                <li key={index}>
-                  <span>{item}</span>
-                  <button className="delete-button" onClick={() => deleteItemInModal(index)}>Delete</button>
+                <li
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "6px 0",
+                  }}
+                >
+                  {editingIndex === index ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        className="editing-input"
+                        style={{ flex: 1, marginRight: "10px" }}
+                      />
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          className="save-button"
+                          onClick={() => updateItemInModal(index)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="cancel-button"
+                          onClick={cancelEditing}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ flex: 1 }}>{item}</span>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          className="edit-button"
+                          onClick={() => startEditing(index, item)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="delete-button"
+                          onClick={() => deleteItemInModal(index)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
@@ -356,9 +462,13 @@ const SettingsForm = () => {
                 ref={textareaRef}
                 value={newItem}
                 onChange={(e) => setNewItem(e.target.value)}
-                placeholder={modalType === "sentences" ? "Enter new message" : "Enter new item"}
+                placeholder={
+                  modalType === "sentences"
+                    ? "Enter new message"
+                    : "Enter new item"
+                }
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     addItemInModal();
                   }
@@ -366,29 +476,40 @@ const SettingsForm = () => {
                 className="adaptable-textarea"
                 rows={1}
                 style={{
-                  resize: 'none',
-                  overflow: 'hidden',
-                  minHeight: '38px',
-                  width: '100%',
-                  maxWidth: '100%',  // Prevents horizontal expansion
-                  padding: '8px 12px',
-                  boxSizing: 'border-box',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontFamily: 'inherit',
-                  fontSize: 'inherit',
-                  lineHeight: '1.5',
-                  wordWrap: 'break-word',  // Forces text to wrap within the textarea
-                  whiteSpace: 'pre-wrap'   // Preserves line breaks but wraps text
+                  resize: "none",
+                  overflow: "hidden",
+                  minHeight: "38px",
+                  width: "100%",
+                  maxWidth: "100%", // Prevents horizontal expansion
+                  padding: "8px 12px",
+                  boxSizing: "border-box",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  lineHeight: "1.5",
+                  wordWrap: "break-word", // Forces text to wrap within the textarea
+                  whiteSpace: "pre-wrap", // Preserves line breaks but wraps text
                 }}
               />
-              <button type="button" className="add-button" onClick={addItemInModal}>Add</button>
+              <button
+                type="button"
+                className="add-button"
+                onClick={addItemInModal}
+              >
+                Add
+              </button>
             </div>
             <div className="modal-buttons">
-              <button className="save-button" onClick={() => saveChanges(modalType, modalData)}>
+              <button
+                className="save-button"
+                onClick={() => saveChanges(modalType, modalData)}
+              >
                 Save Changes
               </button>
-              <button className="settings-close-button" onClick={closeModal}>Close</button>
+              <button className="settings-close-button" onClick={closeModal}>
+                Close
+              </button>
             </div>
           </div>
         </div>

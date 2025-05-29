@@ -361,3 +361,86 @@
   .support-info-width{
     width: calc(100% - 420px);
   }
+
+  .modal-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-text {
+  flex: 1;
+  word-break: break-word;
+  font-size: 14px;
+}
+
+/* .modal-input {
+  flex: 1;
+  font-size: 14px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  height: 38px; 
+} */
+
+.modal-button-group {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* .btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  height: 38px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+} */
+
+.modal-input,
+.btn {
+  height: 38px;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-btn {
+  background-color: #28a745;
+  color: white;
+  margin-bottom: 0px;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+  margin-bottom: 0px;
+}
+
+.save-btn {
+  background-color: #28a745;
+  color: white;
+  margin-bottom: 0px;
+}
+
+.cancel-btn {
+  background-color: #dc3545;
+  color: white;
+  margin-bottom: 0px;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}

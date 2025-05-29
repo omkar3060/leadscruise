@@ -4,7 +4,7 @@ import ProfileCredentials from "./ProfileCredentials";
 import Sidebar from "./Sidebar";
 import axios from "axios";
 import DashboardHeader from "./DashboardHeader";
-import './Whatsapp.css';
+import "./Whatsapp.css";
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -38,7 +38,9 @@ const Whatsapp = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customMessage, setCustomMessage] = useState("");
   const [isLoading, setIsLoading] = useState(() => {
-    const savedLoadingState = localStorage.getItem("whatsappVerificationLoading");
+    const savedLoadingState = localStorage.getItem(
+      "whatsappVerificationLoading"
+    );
     // Parse the string "true" to boolean true, or default to false
     return savedLoadingState === "true";
   });
@@ -50,25 +52,30 @@ const Whatsapp = () => {
   const [error, setError] = useState(null);
   const [newWhatsappNumber, setNewWhatsappNumber] = useState("");
   const [isEditingWhatsapp, setIsEditingWhatsapp] = useState(false);
-  const [messages, setMessages] = useState([{ id: Date.now(), text: '' }]);
-  const [verificationCode, setVerificationCode] = useState('');
+  const [messages, setMessages] = useState([{ id: Date.now(), text: "" }]);
+  const [verificationCode, setVerificationCode] = useState("");
   const addMessage = () => {
-    setMessages([...messages, { id: Date.now(), text: '' }]);
+    setMessages([...messages, { id: Date.now(), text: "" }]);
   };
 
   const updateLoadingState = (newLoadingState) => {
     setIsLoading(newLoadingState);
-    localStorage.setItem("whatsappVerificationLoading", newLoadingState.toString());
+    localStorage.setItem(
+      "whatsappVerificationLoading",
+      newLoadingState.toString()
+    );
   };
 
   const removeMessage = (id) => {
     if (messages.length >= 1) {
-      setMessages(messages.filter(msg => msg.id !== id));
+      setMessages(messages.filter((msg) => msg.id !== id));
     }
   };
 
   const handleMessageChange = (id, text) => {
-    setMessages(messages.map(msg => msg.id === id ? { ...msg, text } : msg));
+    setMessages(
+      messages.map((msg) => (msg.id === id ? { ...msg, text } : msg))
+    );
   };
 
   useEffect(() => {
@@ -112,24 +119,31 @@ const Whatsapp = () => {
     if (!mobileNumber) return;
 
     try {
-      const res = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`);
+      const res = await fetch(
+        `https://api.leadscruise.com/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`
+      );
       const data = await res.json();
 
       if (res.ok) {
         setWhatsappNumber(data.data.whatsappNumber);
         setNewWhatsappNumber(data.data.whatsappNumber);
-        setVerificationCode(data.data.verificationCode || '');
+        setVerificationCode(data.data.verificationCode || "");
 
         // Updated to access messages correctly from data.data
         if (data.data.messages && data.data.messages.length > 0) {
-          setMessages(data.data.messages.map((text, index) => ({
-            id: Date.now() + index,
-            text
-          })));
-          localStorage.setItem("whatsappMessagesLength", data.data.messages.length);
+          setMessages(
+            data.data.messages.map((text, index) => ({
+              id: Date.now() + index,
+              text,
+            }))
+          );
+          localStorage.setItem(
+            "whatsappMessagesLength",
+            data.data.messages.length
+          );
         } else {
           // Default empty message
-          setMessages([{ id: Date.now(), text: '' }]);
+          setMessages([{ id: Date.now(), text: "" }]);
           localStorage.setItem("whatsappMessagesLength", 0);
         }
       }
@@ -149,7 +163,9 @@ const Whatsapp = () => {
       console.log("Fetching verification code for:", mobileNumber);
 
       // Using native fetch API
-      const response = await fetch(`https://api.leadscruise.com/api/whatsapp-settings/verification-code/${mobileNumber}`);
+      const response = await fetch(
+        `https://api.leadscruise.com/api/whatsapp-settings/verification-code/${mobileNumber}`
+      );
 
       if (!response.ok) {
         console.error(`Error response: ${response.status}`);
@@ -181,7 +197,12 @@ const Whatsapp = () => {
   };
 
   useEffect(() => {
-    console.log("Component updated with isLoading:", isLoading, "verificationCode:", verificationCode);
+    console.log(
+      "Component updated with isLoading:",
+      isLoading,
+      "verificationCode:",
+      verificationCode
+    );
   }, [isLoading, verificationCode]);
 
   // Use a ref to store the interval ID so we can clear it from within fetchVerificationCode
@@ -189,7 +210,6 @@ const Whatsapp = () => {
 
   // Simplified polling with fewer dependencies
   useEffect(() => {
-
     // Initial fetch
     fetchVerificationCode();
 
@@ -216,20 +236,33 @@ const Whatsapp = () => {
   const handleSubmit = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
 
-    if (!mobileNumber || !whatsappNumber || messages.length === 0 || messages.some(msg => !msg.text)) {
-      return alert("All fields are required and you need at least one message!");
+    if (
+      !mobileNumber ||
+      !whatsappNumber ||
+      messages.length === 0 ||
+      messages.some((msg) => !msg.text)
+    ) {
+      return alert(
+        "All fields are required and you need at least one message!"
+      );
     }
 
     const formData = new FormData();
     formData.append("mobileNumber", mobileNumber);
     formData.append("whatsappNumber", whatsappNumber);
-    formData.append("messages", JSON.stringify(messages.map(msg => msg.text)));
+    formData.append(
+      "messages",
+      JSON.stringify(messages.map((msg) => msg.text))
+    );
 
     try {
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/save", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "https://api.leadscruise.com/api/whatsapp-settings/save",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const data = await res.json();
       if (res.ok) {
@@ -275,17 +308,22 @@ const Whatsapp = () => {
     try {
       const mobileNumber = localStorage.getItem("mobileNumber");
 
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/update-whatsapp-number", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
-      });
+      const res = await fetch(
+        "https://api.leadscruise.com/api/whatsapp-settings/update-whatsapp-number",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
+        }
+      );
       const lockUntil = Date.now() + 15 * 60 * 1000;
       localStorage.setItem("editLockedUntil", lockUntil);
       setEditLockedUntil(lockUntil);
       const data = await res.json();
       if (res.ok) {
-        alert("WhatsApp number updated successfully! Please wait a few minutes for a verification code. Enter it in WhatsApp to enable messaging buyers.");
+        alert(
+          "WhatsApp number updated successfully! Please wait a few minutes for a verification code. Enter it in WhatsApp to enable messaging buyers."
+        );
         setWhatsappNumber(newWhatsappNumber);
         setIsEditingWhatsapp(false);
       } else {
@@ -326,10 +364,10 @@ const Whatsapp = () => {
 
   useEffect(() => {
     // Find all auto-expanding textareas and set their height
-    const textareas = document.querySelectorAll('.auto-expanding-input');
-    textareas.forEach(textarea => {
-      textarea.style.height = 'auto';
-      textarea.style.height = textarea.scrollHeight + 'px';
+    const textareas = document.querySelectorAll(".auto-expanding-input");
+    textareas.forEach((textarea) => {
+      textarea.style.height = "auto";
+      textarea.style.height = textarea.scrollHeight + "px";
     });
   }, [messages]);
 
@@ -344,7 +382,7 @@ const Whatsapp = () => {
     const textarea = textareaRef.current;
     if (textarea) {
       // Reset height to auto to get the correct scrollHeight
-      textarea.style.height = 'auto';
+      textarea.style.height = "auto";
       // Set the height to match the scrollHeight
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
@@ -374,13 +412,13 @@ const Whatsapp = () => {
       setNewItem("");
 
       setTimeout(() => {
-        const listItems = document.querySelectorAll('.modal-content li');
+        const listItems = document.querySelectorAll(".modal-content li");
         if (listItems.length > 0) {
           const lastItem = listItems[listItems.length - 1];
-          lastItem.classList.add('item-added');
+          lastItem.classList.add("item-added");
 
           setTimeout(() => {
-            lastItem.classList.remove('item-added');
+            lastItem.classList.remove("item-added");
           }, 1500);
         }
       }, 10);
@@ -404,18 +442,23 @@ const Whatsapp = () => {
     }
 
     try {
-      await axios.post("https://api.leadscruise.com/api/whatsapp-settings/save", {
-        mobileNumber,
-        whatsappNumber: newWhatsappNumber,
-        verificationCode,
-        messages: modalData, // Save new message list
-      });
+      await axios.post(
+        "https://api.leadscruise.com/api/whatsapp-settings/save",
+        {
+          mobileNumber,
+          whatsappNumber: newWhatsappNumber,
+          verificationCode,
+          messages: modalData, // Save new message list
+        }
+      );
 
       // Update local state
-      setMessages(modalData.map((text, index) => ({
-        id: Date.now() + index,
-        text,
-      })));
+      setMessages(
+        modalData.map((text, index) => ({
+          id: Date.now() + index,
+          text,
+        }))
+      );
 
       alert("Messages saved successfully!");
     } catch (err) {
@@ -426,16 +469,26 @@ const Whatsapp = () => {
     closeModal();
   };
 
+  const [editIndex, setEditIndex] = useState(null);
+  const [tempValue, setTempValue] = useState("");
+
   return (
-    <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
+    <div
+      className="settings-page-wrapper"
+      style={windowWidth <= 768 ? { marginLeft: 0 } : {}}
+    >
       {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
       <DashboardHeader
-        style={windowWidth <= 768 ? {
-          left: 0,
-          width: "100%",
-          marginLeft: 0,
-          padding: "15px"
-        } : {}}
+        style={
+          windowWidth <= 768
+            ? {
+                left: 0,
+                width: "100%",
+                marginLeft: 0,
+                padding: "15px",
+              }
+            : {}
+        }
       />
       <div className="settings-scroll-container">
         <div className="sheets-container">
@@ -452,7 +505,11 @@ const Whatsapp = () => {
               <p>No messages added.</p>
             )}
             <div className="edit-button-container">
-              <button type="button" className="edit-button" onClick={() => openModal("sentences")}>
+              <button
+                type="button"
+                className="edit-button"
+                onClick={() => openModal("sentences")}
+              >
                 Edit
               </button>
             </div>
@@ -479,11 +536,61 @@ const Whatsapp = () => {
                 </div>
                 <ul>
                   {modalData.map((item, index) => (
-                    <li key={index}>
-                      <span>{item}</span>
-                      <button className="delete-button" onClick={() => deleteItemInModal(index)}>
-                        Delete
-                      </button>
+                    <li key={index} className="modal-list-item">
+                      {editIndex === index ? (
+                        <>
+                          <input
+                            type="text"
+                            value={tempValue}
+                            onChange={(e) => setTempValue(e.target.value)}
+                            className="modal-input"
+                          />
+                          <div className="modal-button-group">
+                            <button
+                              className="btn save-btn"
+                              onClick={() => {
+                                const updated = [...modalData];
+                                updated[index] = tempValue;
+                                setModalData(updated);
+                                setEditIndex(null);
+                                setTempValue("");
+                              }}
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="btn cancel-btn"
+                              onClick={() => {
+                                setEditIndex(null);
+                                setTempValue("");
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="modal-text">{item}</span>
+                          <div className="modal-button-group">
+                            <button
+                              className="btn edit-btn"
+                              onClick={() => {
+                                setEditIndex(index);
+                                setTempValue(item);
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn delete-btn"
+                              onClick={() => deleteItemInModal(index)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -518,15 +625,25 @@ const Whatsapp = () => {
                       whiteSpace: "pre-wrap",
                     }}
                   />
-                  <button type="button" className="add-button" onClick={addItemInModal}>
+                  <button
+                    type="button"
+                    className="add-button"
+                    onClick={addItemInModal}
+                  >
                     Add
                   </button>
                 </div>
                 <div className="modal-buttons">
-                  <button className="save-button" onClick={() => saveChanges(modalType, modalData)}>
+                  <button
+                    className="save-button"
+                    onClick={() => saveChanges(modalType, modalData)}
+                  >
                     Save Changes
                   </button>
-                  <button className="settings-close-button" onClick={closeModal}>
+                  <button
+                    className="settings-close-button"
+                    onClick={closeModal}
+                  >
                     Close
                   </button>
                 </div>
@@ -534,8 +651,8 @@ const Whatsapp = () => {
             </div>
           )}
 
-
-          <ProfileCredentials isProfilePage={true}
+          <ProfileCredentials
+            isProfilePage={true}
             newWhatsappNumber={newWhatsappNumber}
             setNewWhatsappNumber={setNewWhatsappNumber}
             isEditingWhatsapp={isEditingWhatsapp}
@@ -548,12 +665,24 @@ const Whatsapp = () => {
             setEditLockedUntil={setEditLockedUntil}
             justUpdated={justUpdated}
             setJustUpdated={setJustUpdated}
-            error={error} />
+            error={error}
+          />
         </div>
       </div>
       <div className="support-info support-info-width">
         <h3 className="support-info__title">
-          <svg xmlns="http://www.w3.org/2000/svg" className="support-info__title-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="support-info__title-icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="16" x2="12" y2="12"></line>
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -562,27 +691,66 @@ const Whatsapp = () => {
         </h3>
         <div className="support-info__content">
           <p className="support-info__paragraph">
-            <svg xmlns="http://www.w3.org/2000/svg" className="support-info__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="support-info__icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
               <polyline points="22,6 12,13 2,6"></polyline>
             </svg>
-            If you encounter any issues, contact our support team at &nbsp;{' '}
-            <a href="mailto:support@leadscruise.com" className="support-info__link">
+            If you encounter any issues, contact our support team at &nbsp;{" "}
+            <a
+              href="mailto:support@leadscruise.com"
+              className="support-info__link"
+            >
               support@leadscruise.com
             </a>
           </p>
           <p className="support-info__paragraph">
-            <svg xmlns="http://www.w3.org/2000/svg" className="support-info__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="support-info__icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
               <line x1="16" y1="17" x2="8" y2="17"></line>
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            For FAQs, visit our&nbsp;{' '}
-            <a href="https://leadscruise.com" className="support-info__link support-info__link--with-icon">
+            For FAQs, visit our&nbsp;{" "}
+            <a
+              href="https://leadscruise.com"
+              className="support-info__link support-info__link--with-icon"
+            >
               Landing Page
-              <svg xmlns="http://www.w3.org/2000/svg" className="support-info__external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="support-info__external-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                 <polyline points="15 3 21 3 21 9"></polyline>
                 <line x1="10" y1="14" x2="21" y2="3"></line>
@@ -590,16 +758,48 @@ const Whatsapp = () => {
             </a>
           </p>
           <p className="support-info__paragraph">
-            <svg xmlns="http://www.w3.org/2000/svg" className="support-info__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="support-info__icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect
+                x="2"
+                y="2"
+                width="20"
+                height="20"
+                rx="2.18"
+                ry="2.18"
+              ></rect>
               <line x1="10" y1="15" x2="10" y2="9"></line>
               <line x1="14" y1="15" x2="14" y2="9"></line>
               <line x1="7" y1="12" x2="17" y2="12"></line>
             </svg>
-            Watch our&nbsp;{' '}
-            <a href="https://www.youtube.com/watch?v=yQgrVTUYlvk" className="support-info__link support-info__link--with-icon">
+            Watch our&nbsp;{" "}
+            <a
+              href="https://www.youtube.com/watch?v=yQgrVTUYlvk"
+              className="support-info__link support-info__link--with-icon"
+            >
               Demo Video
-              <svg xmlns="http://www.w3.org/2000/svg" className="support-info__external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="support-info__external-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                 <polyline points="15 3 21 3 21 9"></polyline>
                 <line x1="10" y1="14" x2="21" y2="3"></line>
@@ -609,7 +809,6 @@ const Whatsapp = () => {
           </p>
         </div>
       </div>
-
     </div>
   );
 };

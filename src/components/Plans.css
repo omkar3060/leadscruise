@@ -152,7 +152,7 @@
   font-weight: 600;
   white-space: nowrap; /* Prevents text from wrapping */
 }
-
+/* 
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -184,7 +184,110 @@
   margin: 0.5rem;
   padding: 0.5rem 1rem;
   cursor: pointer;
+} */
+ .popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px); /* subtle background blur */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
 }
+.popup-content {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.modal-content h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #333333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.modal-content p {
+  font-size: 1rem;
+  margin: 0.5rem 0;
+  color: #333;
+  font-weight: 500;
+}
+
+/* .modal-content p:first-of-type {
+  margin-top: 1rem;
+} */
+
+.modal-content p span {
+  color: #555;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.modal-content input {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.modal-content input:focus {
+  outline: none;
+  border-color: #6ca3ea;
+  box-shadow: 0 0 0 3px rgba(108, 163, 234, 0.2);
+  background-color: #fff;
+}
+
+.proceed-button,
+.cancel-button {
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.proceed-button {
+  background-color: #4a90e2;
+  color: #fff;
+  margin-right: 10px;
+}
+
+.proceed-button:hover {
+  background-color: #3a7bd5;
+  transform: translateY(-1px);
+}
+
+.cancel-button {
+  background-color: #ff4d4f;
+  color: white;
+
+}
+
+.cancel-button:hover {
+  background-color: #e04344;
+  transform: translateY(-1px);
+}
+
 
 @media screen and (min-width: 1025px) and (max-width: 1285px) {
   .heading-row {
