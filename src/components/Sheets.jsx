@@ -125,7 +125,7 @@ const Sheets = () => {
       />
       <div className="settings-scroll-container">
         <div className="sheets-container">
-          <div className="table-container">
+          <div className="table-container whatsapp-settings-table">
             <h2>Google Sheets Status</h2>
             {sheetsId && apiKey ? (
               <>
