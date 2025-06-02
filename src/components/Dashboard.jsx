@@ -61,7 +61,7 @@ const Dashboard = () => {
     const fetchMessageCount = async () => {
       try {
         const mobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`http://localhost:5000/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
 
         setMessageCount(response.data.messageCount);
       } catch (error) {
@@ -83,7 +83,7 @@ const Dashboard = () => {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/user/balance?email=${userEmail}`
+        `https://api.leadscruise.com/api/user/balance?email=${userEmail}`
       );
       const data = await response.json();
 
@@ -178,7 +178,7 @@ const Dashboard = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:5000/api/get-leads/${mobileNumber}`
+        `https://api.leadscruise.com/api/get-leads/${mobileNumber}`
       );
       setLeads(response.data);
     } catch (error) {
@@ -196,7 +196,7 @@ const Dashboard = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:5000/api/get-status/${userEmail}`
+          `https://api.leadscruise.com/api/get-status/${userEmail}`
         );
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
@@ -261,7 +261,7 @@ const Dashboard = () => {
       }
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/get-settings/${userEmail}`
+          `https://api.leadscruise.com/api/get-settings/${userEmail}`
         );
         const userSettings = response.data; // Extracting 'settings' from response
 
@@ -320,7 +320,7 @@ const Dashboard = () => {
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
 
-      await axios.post("http://localhost:5000/api/submit-otp", {
+      await axios.post("https://api.leadscruise.com/api/submit-otp", {
         otp: otpValue,
         userEmail,
         uniqueId,
@@ -346,7 +346,7 @@ const Dashboard = () => {
     const otpCheckInterval = setInterval(async () => {
       if (status === "Running") {
         try {
-          const response = await axios.get(`http://localhost:5000/api/check-otp-request/${uniqueId}`);
+          const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
           if (response.data.otpRequired) {
             setOtpRequestId(response.data.requestId);
             setShowOtpPopup(true);
@@ -372,7 +372,7 @@ const Dashboard = () => {
 
       try {
         const credCheckRes = await axios.get(
-          `http://localhost:5000/api/check-user-credentials/${userEmail}`
+          `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
         );
         if (credCheckRes.status !== 200) {
           alert("Please login to your leads provider account first.");
@@ -403,7 +403,7 @@ const Dashboard = () => {
       }
 
       const detailsResponse = await fetch(
-        `http://localhost:5000/api/billing/${userEmail}`
+        `https://api.leadscruise.com/api/billing/${userEmail}`
       );
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
@@ -413,7 +413,7 @@ const Dashboard = () => {
 
       // Fetch settings
       const response = await axios.get(
-        `http://localhost:5000/api/get-settings/${userEmail}`
+        `https://api.leadscruise.com/api/get-settings/${userEmail}`
       );
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
@@ -442,7 +442,7 @@ const Dashboard = () => {
 
       // Send the fetched settings instead of using the state
       const cycleResponse = await axios.post(
-        "http://localhost:5000/api/cycle",
+        "https://api.leadscruise.com/api/cycle",
         {
           sentences: userSettings.sentences,
           wordArray: userSettings.wordArray,
@@ -540,7 +540,7 @@ const Dashboard = () => {
 
       try {
         const response = await axios.post(
-          "http://localhost:5000/api/stop",
+          "https://api.leadscruise.com/api/stop",
           { userEmail, uniqueId }
         );
         alert(response.data.message);
@@ -661,7 +661,7 @@ const Dashboard = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/save-settings", {
+      await axios.post("https://api.leadscruise.com/api/save-settings", {
         userEmail,
         sentences: updatedSettings.sentences || [],
         wordArray: updatedSettings.wordArray || [],
@@ -684,48 +684,48 @@ const Dashboard = () => {
     <div className={styles.dashboardContainer}>
 
       {showOtpPopup && (
-        <>
-          <div className="otp-popup-overlay">
-            <div className="otp-popup-container">
-              <h3 className="otp-popup-title">Enter OTP</h3>
-              <p className="otp-popup-description">
-                Please enter the 4-digit OTP sent to your mobile number.
-              </p>
-              <input
-                type="text"
-                value={otpValue}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                  setOtpValue(value);
-                }}
-                placeholder="Enter 4-digit OTP"
-                className="otp-input"
-                maxLength="4"
-                autoFocus
-              />
-              <div className="otp-buttons">
-                <button
-                  onClick={() => {
-                    setShowOtpPopup(false);
-                    setOtpValue('');
-                    setOtpRequestId(null);
-                  }}
-                  className="otp-button otp-button-cancel"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleOtpSubmit}
-                  disabled={otpValue.length !== 4}
-                  className="otp-button otp-button-submit"
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+  <>
+    <div className={styles['otp-popup-overlay']}>
+      <div className={styles['otp-popup-container']}>
+        <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
+        <p className={styles['otp-popup-description']}>
+          Please enter the 4-digit OTP sent to your mobile number.
+        </p>
+        <input
+          type="text"
+          value={otpValue}
+          onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+            setOtpValue(value);
+          }}
+          placeholder="Enter 4-digit OTP"
+          className={styles['otp-input']}
+          maxLength="4"
+          autoFocus
+        />
+        <div className={styles['otp-buttons']}>
+          <button
+            onClick={() => {
+              setShowOtpPopup(false);
+              setOtpValue('');
+              setOtpRequestId(null);
+            }}
+            className={`${styles['otp-button']} ${styles['otp-button-cancel']}`}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleOtpSubmit}
+            disabled={otpValue.length !== 4}
+            className={`${styles['otp-button']} ${styles['otp-button-submit']}`}
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  </>
+)}
 
       {zeroBalanceAlertMemo}
       {/* <ZeroBalanceAlert/> */}

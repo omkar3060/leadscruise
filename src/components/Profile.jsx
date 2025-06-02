@@ -55,7 +55,7 @@ const Profile = () => {
         }
 
         // Fetch billing history
-        const historyResponse = await fetch(`http://localhost:5000/api/payments?email=${userEmail}`);
+        const historyResponse = await fetch(`https://api.leadscruise.com/api/payments?email=${userEmail}`);
         if (!historyResponse.ok) throw new Error("Failed to fetch billing history");
 
         const historyData = await historyResponse.json();
@@ -68,7 +68,7 @@ const Profile = () => {
 
       try {
         // Fetch billing details
-        const detailsResponse = await fetch(`http://localhost:5000/api/billing/${userEmail}`);
+        const detailsResponse = await fetch(`https://api.leadscruise.com/api/billing/${userEmail}`);
         if (!detailsResponse.ok) throw new Error("Failed to fetch billing details");
 
         const detailsResult = await detailsResponse.json();
@@ -110,7 +110,7 @@ const Profile = () => {
     try {
       setIsLoading(true); // Show loading while saving
 
-      const response = await fetch("http://localhost:5000/api/billing/update", {
+      const response = await fetch("https://api.leadscruise.com/api/billing/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(billingDetails),
@@ -139,7 +139,7 @@ const Profile = () => {
       await Promise.all(
         billingHistory.map(async (item) => {
           try {
-            const res = await axios.head(`http://localhost:5000/api/get-invoice/${item.unique_id}`);
+            const res = await axios.head(`https://api.leadscruise.com/api/get-invoice/${item.unique_id}`);
             result[item.unique_id] = res.status === 200;
           } catch (err) {
             result[item.unique_id] = false;
@@ -158,7 +158,7 @@ const Profile = () => {
     try {
       setIsLoading(true); // Show loading while downloading
 
-      const response = await axios.get(`http://localhost:5000/api/get-invoice/${orderId}`, {
+      const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${orderId}`, {
         responseType: "blob", // Get binary data
       });
 

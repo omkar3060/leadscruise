@@ -31,7 +31,7 @@ const Referrals = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/referrals",
+          "https://api.leadscruise.com/api/referrals",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -121,7 +121,7 @@ const Referrals = () => {
     console.log(newReferral);
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/referrals",
+        "https://api.leadscruise.com/api/referrals",
         newReferral,
         {
           headers: {
@@ -172,7 +172,7 @@ const Referrals = () => {
     setLoading(true);
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/referrals/${editingReferral._id}`,
+        `https://api.leadscruise.com/api/referrals/${editingReferral._id}`,
         newReferral,
         {
           headers: {
@@ -234,7 +234,7 @@ const Referrals = () => {
 
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:5000/api/referrals/${referralId}`, {
+      await axios.delete(`https://api.leadscruise.com/api/referrals/${referralId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

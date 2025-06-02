@@ -485,7 +485,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("http://localhost:5000/api/cycle", {
+        await axios.post("https://api.leadscruise.com/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,
@@ -596,14 +596,13 @@ app.post("/api/cycle", async (req, res) => {
 
   console.log("Spawning Python process for 'final_inside_script_server.py'...");
 
-  const pythonProcess = spawn("python3", ["final_inside_script_server.py"]);
+  const pythonProcess = spawn("python3", ["-u", "final_inside_script_server.py"]);
 
   // Store the Python process reference using `uniqueId`
   activePythonProcesses.set(uniqueId, pythonProcess);
 
   console.log("Sending data to Python script:", inputData);
   pythonProcess.stdin.write(inputData + "\n");
-  pythonProcess.stdin.end();
 
   let result = "";
   let error = "";
@@ -682,9 +681,10 @@ app.post("/api/cycle", async (req, res) => {
   }, 3000); // Check every 3 seconds
 
   pythonProcess.on("close", async (code) => {
+    pythonProcess.stdin.end();
     clearInterval(leadCheckInterval); // Stop checking when script completes
     activePythonProcesses.delete(uniqueId); // Remove from tracking
-
+    otpRequests.delete(uniqueId);
     console.log(`Python script exited with code: ${code}`);
 
     // Cleanup display lock file
@@ -710,7 +710,6 @@ app.post("/api/cycle", async (req, res) => {
   });
 });
 
-// New endpoint to check for OTP requests
 app.get("/api/check-otp-request/:uniqueId", (req, res) => {
   const { uniqueId } = req.params;
   const otpRequest = otpRequests.get(uniqueId);

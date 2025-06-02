@@ -123,7 +123,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/api/update-max-captures", {
+      const response = await axios.post("https://api.leadscruise.com/api/update-max-captures", {
         user_mobile_number: userMobileNumber,
         maxCaptures: tempCaptures,
       });
@@ -145,7 +145,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     const fetchMaxCaptures = async () => {
       try {
         const userMobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`http://localhost:5000/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
 
         if (response.data) {
           setMaxCaptures(response.data.maxCaptures);
@@ -171,7 +171,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     const fetchMinOrder = async () => {
       try {
         const userEmail = localStorage.getItem("userEmail"); // adjust key if needed
-        const response = await axios.get(`http://localhost:5000/api/get-min-order?userEmail=${userEmail}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/get-min-order?userEmail=${userEmail}`);
 
         if (response.data) {
           setminOrder(response.data.minOrder);
@@ -194,7 +194,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/api/update-password", {
+      const response = await axios.post("https://api.leadscruise.com/api/update-password", {
         email: localStorage.getItem("userEmail"),
         newPassword,
       });
@@ -218,7 +218,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/api/update-saved-password", {
+      const response = await axios.post("https://api.leadscruise.com/api/update-saved-password", {
         email: localStorage.getItem("userEmail"),
         newPassword: savedNewPassword,
       });
@@ -250,7 +250,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     if (!confirmed) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/whatsapp-settings/whatsapp-logout", {
+      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/whatsapp-logout", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
@@ -318,7 +318,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/api/update-min-order", {
+      const response = await axios.post("https://api.leadscruise.com/api/update-min-order", {
         userEmail,
         minOrder: tempMin,
       });
@@ -346,7 +346,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("http://localhost:5000/api/update-lead-types", {
+      const response = await axios.post("https://api.leadscruise.com/api/update-lead-types", {
         userEmail,
         leadTypes: tempLeadTypes,
       });
@@ -365,7 +365,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       try {
         const userEmail = localStorage.getItem("userEmail");
         const response = await axios.get(
-          `http://localhost:5000/api/get-lead-types?userEmail=${userEmail}`
+          `https://api.leadscruise.com/api/get-lead-types?userEmail=${userEmail}`
         );
 
         if (response.data.leadTypes) {

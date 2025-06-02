@@ -20,33 +20,65 @@ import json
 import signal
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import threading
+import select
 # Global variable to store OTP when received
 received_otp = None
 otp_event = threading.Event()
+stdin_lock = threading.Lock()
+
+def read_stdin_non_blocking():
+    """Read from stdin without blocking"""
+    try:
+        if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
+            line = sys.stdin.readline()
+            return line.strip() if line else None
+    except:
+        pass
+    return None
 
 def listen_for_otp():
     """Listen for OTP input from Node.js backend"""
     global received_otp
     
-    while True:
+    print("Starting OTP listener thread...",flush=True)
+    sys.stdout.flush()
+    
+    while not otp_event.is_set():
         try:
-            line = sys.stdin.readline()
-            if not line:
-                break
+            # Check for input with a short timeout
+            if select.select([sys.stdin], [], [], 0.5) == ([sys.stdin], [], []):
+                with stdin_lock:
+                    line = sys.stdin.readline()
+                    if not line:
+                        time.sleep(0.1)
+                        continue
+                    
+                    try:
+                        data = json.loads(line.strip())
+                        print(f"Received data in OTP thread: {data}",flush=True)
+                        sys.stdout.flush()
+                        
+                        if data.get("type") == "OTP_RESPONSE":
+                            received_otp = data.get("otp")
+                            print(f"OTP captured: {received_otp}",flush=True)
+                            sys.stdout.flush()
+                            otp_event.set()  # Signal that OTP is received
+                            return
+                    except json.JSONDecodeError as e:
+                        print(f"JSON decode error in OTP thread: {e}",flush=True)
+                        sys.stdout.flush()
+                        continue
+            else:
+                # No input available, continue with short sleep
+                time.sleep(0.1)
                 
-            try:
-                data = json.loads(line.strip())
-                if data.get("type") == "OTP_RESPONSE":
-                    received_otp = data.get("otp")
-                    print(f"Received OTP: {received_otp}")
-                    otp_event.set()  # Signal that OTP is received
-            except json.JSONDecodeError:
-                # This might be the initial input data, ignore
-                continue
         except Exception as e:
-            print(f"Error reading OTP: {e}")
-            break
-
+            print(f"Error in OTP listener: {e}",flush=True)
+            sys.stdout.flush()
+            time.sleep(0.1)
+    
+    print("OTP listener thread exiting...",flush=True)
+    sys.stdout.flush()
 
 # Define the signal handler
 def stop_execution(signum, frame):
@@ -56,13 +88,14 @@ def stop_execution(signum, frame):
 # Bind signal handler
 signal.signal(signal.SIGINT, stop_execution)
 
-input_data = json.loads(sys.stdin.read())
+input_line = sys.stdin.readline()
+input_data = json.loads(input_line.strip())
 import requests
 lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
     global lead_bought  # Access the global variable
     
-    url = "http://localhost:5000/api/store-lead"
+    url = "https://api.leadscruise.com/api/store-lead"
     data = {
         "name": name,
         "mobile": mobile,
@@ -512,7 +545,7 @@ def execute_task_one(driver, wait):
     
     try:
         # Refresh page
-        print("Refreshing page...")
+        print("Refreshing page...",flush=True)
         driver.refresh()
         time.sleep(3)
         
@@ -523,14 +556,14 @@ def execute_task_one(driver, wait):
         input_field = wait.until(EC.presence_of_element_located((By.ID, "mobNo")))
         input_field.clear()
         input_field.send_keys(user_mobile_number)
-        print(f"Entered mobile number {user_mobile_number}.")
+        print(f"Entered mobile number {user_mobile_number}.",flush=True)
         
         # Click 'Start Selling'
         start_selling_button = wait.until(
             EC.element_to_be_clickable((By.CLASS_NAME, "login_btn"))
         )
         start_selling_button.click()
-        print("Clicked 'Start Selling' button.")
+        print("Clicked 'Start Selling' button.",flush=True)
         
         # Try password login flow first
         try:
@@ -538,32 +571,34 @@ def execute_task_one(driver, wait):
                 EC.element_to_be_clickable((By.ID, "passwordbtn1"))
             )
             enter_password_button.click()
-            print("Clicked 'Enter Password' button.")
+            print("Clicked 'Enter Password' button.",flush=True)
             
             user_password = input_data.get("password", "")
             password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
             password_input.clear()
             password_input.send_keys(user_password)
-            print("Entered the password.")
-            
+            print("Entered the password.",flush=True)
+
             sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
             sign_in_button.click()
-            print("Clicked 'Sign In' button.")
+            print("Clicked 'Sign In' button.",flush=True)
             
         except (TimeoutException, NoSuchElementException):
             # Password login not available, try OTP flow
-            print("Password login not available. Proceeding with OTP flow...")
+            print("Password login not available. Proceeding with OTP flow...",flush=True)
             
             try:
                 # Click 'Request OTP on Mobile' button
+                received_otp = None
+                otp_event.clear()
                 otp_request_button = wait.until(
                     EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
                 )
                 otp_request_button.click()
-                print("Clicked 'Request OTP on Mobile' button.")
+                print("Clicked 'Request OTP on Mobile' button.",flush=True)
                 
                 # Signal to backend that OTP request has been initiated
-                print("OTP_REQUEST_INITIATED")
+                print("OTP_REQUEST_INITIATED",flush=True)
                 sys.stdout.flush()
                 
                 # Start OTP listener thread
@@ -571,8 +606,8 @@ def execute_task_one(driver, wait):
                 otp_thread.start()
                 
                 # Wait for OTP to be received (with timeout)
-                print("Waiting for OTP input...")
-                if otp_event.wait(timeout=300):  # Wait up to 5 minutes for OTP
+                print("Waiting for OTP input...",flush=True)
+                if otp_event.wait(timeout=60):  # Wait up to 60 seconds for OTP
                     if received_otp and len(received_otp) == 4 and received_otp.isdigit():
                         # Enter OTP digit by digit
                         otp_fields = ["first", "second", "third", "fourth_num"]
@@ -582,29 +617,24 @@ def execute_task_one(driver, wait):
                                 otp_input.clear()
                                 otp_input.send_keys(received_otp[i])
                             except (TimeoutException, NoSuchElementException):
-                                print(f"Could not find OTP field: {field_id}")
+                                print(f"Could not find OTP field: {field_id}",flush=True)
                                 return "Unsuccessful"
                         
-                        print("Entered OTP successfully.")
+                        print("Entered OTP successfully.",flush=True)
                         
                         # Click submit OTP button if it exists
-                        try:
-                            submit_otp_button = wait.until(
-                                EC.element_to_be_clickable((By.ID, "verifyOtp"))
-                            )
-                            submit_otp_button.click()
-                            print("Clicked 'Verify OTP' button.")
-                        except (TimeoutException, NoSuchElementException):
-                            print("Submit OTP button not found, OTP might be auto-submitted.")
+                        sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
+                        sign_in_button.click()
+                        print("Clicked 'Sign In' button.",flush=True)
                     else:
-                        print("Invalid OTP received.")
+                        print("Invalid OTP received.",flush=True)
                         return "Unsuccessful"
                 else:
-                    print("Timeout waiting for OTP.")
+                    print("Timeout waiting for OTP.",flush=True)
                     return "Unsuccessful"
                     
             except (TimeoutException, NoSuchElementException) as e:
-                print(f"OTP flow failed: {e}")
+                print(f"OTP flow failed: {e}",flush=True)
                 return "Unsuccessful"
         
         # Final check for dashboard
@@ -613,14 +643,14 @@ def execute_task_one(driver, wait):
             dashboard_element = wait.until(
                 EC.presence_of_element_located((By.ID, "leftnav_dash_link"))
             )
-            print("Sign in successful. 'Dashboard' element found.")
+            print("Sign in successful. 'Dashboard' element found.",flush=True)
             return "Success"
         except TimeoutException:
-            print("Dashboard element not found after login. Sign in may have failed.")
+            print("Dashboard element not found after login. Sign in may have failed.",flush=True)
             return "Unsuccessful"
             
     except Exception as e:
-        print(f"An error occurred during login: {e}")
+        print(f"An error occurred during login: {e}",flush=True)
         return "Unsuccessful"
     
 def main():

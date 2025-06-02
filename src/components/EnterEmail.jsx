@@ -39,7 +39,7 @@ const EnterEmail = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/check-email",
+        "https://api.leadscruise.com/api/check-email",
         {
           method: "POST",
           headers: {
@@ -56,7 +56,7 @@ const EnterEmail = () => {
       }
 
       const resetResponse = await fetch(
-        "http://localhost:5000/api/send-reset-email",
+        "https://api.leadscruise.com/api/send-reset-email",
         {
           method: "POST",
           headers: {
@@ -91,7 +91,7 @@ const EnterEmail = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/logout", {
+      await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
 
