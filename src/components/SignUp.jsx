@@ -58,7 +58,7 @@ const SignUp = () => {
 
     if (refId) {
       try {
-        await axios.get(`https://api.leadscruise.com/api/referrals/${refId}`);
+        await axios.get(`http://localhost:5000/api/referrals/${refId}`);
       } catch (error) {
         setIsLoading(false);
         alert(error.response?.data?.message + " -- " + "Invalid Referral ID.");
@@ -67,7 +67,7 @@ const SignUp = () => {
     }
 
     try {
-      const res = await axios.post("https://api.leadscruise.com/api/signup", {
+      const res = await axios.post("http://localhost:5000/api/signup", {
         refId,
         email,
         mobileNumber,

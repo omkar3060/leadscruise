@@ -53,12 +53,15 @@ const Dashboard = () => {
     type: null,
   });
   const [messageCount, setMessageCount] = useState(null);
+  const [showOtpPopup, setShowOtpPopup] = useState(false);
+  const [otpValue, setOtpValue] = useState('');
+  const [otpRequestId, setOtpRequestId] = useState(null);
 
   useEffect(() => {
     const fetchMessageCount = async () => {
       try {
         const mobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
+        const response = await axios.get(`http://localhost:5000/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
 
         setMessageCount(response.data.messageCount);
       } catch (error) {
@@ -80,7 +83,7 @@ const Dashboard = () => {
       }
 
       const response = await fetch(
-        `https://api.leadscruise.com/api/user/balance?email=${userEmail}`
+        `http://localhost:5000/api/user/balance?email=${userEmail}`
       );
       const data = await response.json();
 
@@ -175,7 +178,7 @@ const Dashboard = () => {
       }
 
       const response = await axios.get(
-        `https://api.leadscruise.com/api/get-leads/${mobileNumber}`
+        `http://localhost:5000/api/get-leads/${mobileNumber}`
       );
       setLeads(response.data);
     } catch (error) {
@@ -193,7 +196,7 @@ const Dashboard = () => {
         }
 
         const response = await axios.get(
-          `https://api.leadscruise.com/api/get-status/${userEmail}`
+          `http://localhost:5000/api/get-status/${userEmail}`
         );
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
@@ -258,7 +261,7 @@ const Dashboard = () => {
       }
       try {
         const response = await axios.get(
-          `https://api.leadscruise.com/api/get-settings/${userEmail}`
+          `http://localhost:5000/api/get-settings/${userEmail}`
         );
         const userSettings = response.data; // Extracting 'settings' from response
 
@@ -306,6 +309,57 @@ const Dashboard = () => {
 
   const metrics = calculateMetrics();
 
+  // Add OTP submission handler
+  const handleOtpSubmit = async () => {
+    if (!otpValue || otpValue.length !== 4) {
+      alert("Please enter a valid 4-digit OTP");
+      return;
+    }
+
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const uniqueId = localStorage.getItem("unique_id");
+
+      await axios.post("http://localhost:5000/api/submit-otp", {
+        otp: otpValue,
+        userEmail,
+        uniqueId,
+        requestId: otpRequestId
+      });
+
+      setShowOtpPopup(false);
+      setOtpValue('');
+      setOtpRequestId(null);
+      alert("OTP submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting OTP:", error);
+      alert("Failed to submit OTP. Please try again.");
+    }
+  };
+
+  // Add WebSocket or polling to listen for OTP requests
+  useEffect(() => {
+    const uniqueId = localStorage.getItem("unique_id");
+    if (!uniqueId) return;
+
+    // Poll for OTP requests every 2 seconds when automation is running
+    const otpCheckInterval = setInterval(async () => {
+      if (status === "Running") {
+        try {
+          const response = await axios.get(`http://localhost:5000/api/check-otp-request/${uniqueId}`);
+          if (response.data.otpRequired) {
+            setOtpRequestId(response.data.requestId);
+            setShowOtpPopup(true);
+          }
+        } catch (error) {
+          // Silently handle errors - the backend might not have an OTP request yet
+        }
+      }
+    }, 2000);
+
+    return () => clearInterval(otpCheckInterval);
+  }, [status]);
+
   const handleStart = async () => {
     try {
       // Set a "Starting" state
@@ -318,7 +372,7 @@ const Dashboard = () => {
 
       try {
         const credCheckRes = await axios.get(
-          `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
+          `http://localhost:5000/api/check-user-credentials/${userEmail}`
         );
         if (credCheckRes.status !== 200) {
           alert("Please login to your leads provider account first.");
@@ -349,7 +403,7 @@ const Dashboard = () => {
       }
 
       const detailsResponse = await fetch(
-        `https://api.leadscruise.com/api/billing/${userEmail}`
+        `http://localhost:5000/api/billing/${userEmail}`
       );
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
@@ -359,7 +413,7 @@ const Dashboard = () => {
 
       // Fetch settings
       const response = await axios.get(
-        `https://api.leadscruise.com/api/get-settings/${userEmail}`
+        `http://localhost:5000/api/get-settings/${userEmail}`
       );
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
@@ -388,7 +442,7 @@ const Dashboard = () => {
 
       // Send the fetched settings instead of using the state
       const cycleResponse = await axios.post(
-        "https://api.leadscruise.com/api/cycle",
+        "http://localhost:5000/api/cycle",
         {
           sentences: userSettings.sentences,
           wordArray: userSettings.wordArray,
@@ -486,7 +540,7 @@ const Dashboard = () => {
 
       try {
         const response = await axios.post(
-          "https://api.leadscruise.com/api/stop",
+          "http://localhost:5000/api/stop",
           { userEmail, uniqueId }
         );
         alert(response.data.message);
@@ -607,7 +661,7 @@ const Dashboard = () => {
     }
 
     try {
-      await axios.post("https://api.leadscruise.com/api/save-settings", {
+      await axios.post("http://localhost:5000/api/save-settings", {
         userEmail,
         sentences: updatedSettings.sentences || [],
         wordArray: updatedSettings.wordArray || [],
@@ -628,6 +682,51 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboardContainer}>
+
+      {showOtpPopup && (
+        <>
+          <div className="otp-popup-overlay">
+            <div className="otp-popup-container">
+              <h3 className="otp-popup-title">Enter OTP</h3>
+              <p className="otp-popup-description">
+                Please enter the 4-digit OTP sent to your mobile number.
+              </p>
+              <input
+                type="text"
+                value={otpValue}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setOtpValue(value);
+                }}
+                placeholder="Enter 4-digit OTP"
+                className="otp-input"
+                maxLength="4"
+                autoFocus
+              />
+              <div className="otp-buttons">
+                <button
+                  onClick={() => {
+                    setShowOtpPopup(false);
+                    setOtpValue('');
+                    setOtpRequestId(null);
+                  }}
+                  className="otp-button otp-button-cancel"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleOtpSubmit}
+                  disabled={otpValue.length !== 4}
+                  className="otp-button otp-button-submit"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {zeroBalanceAlertMemo}
       {/* <ZeroBalanceAlert/> */}
 
@@ -798,7 +897,7 @@ const Dashboard = () => {
               {" "}
               List?
             </p>
-            <div style={{ marginTop: "1rem",  display: "flex", gap: "1rem" }}>
+            <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
               <button
                 onClick={handleConfirmAction}
                 style={{

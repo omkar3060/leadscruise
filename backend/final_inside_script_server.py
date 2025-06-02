@@ -18,6 +18,35 @@ import subprocess
 import sys
 import json
 import signal
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import threading
+# Global variable to store OTP when received
+received_otp = None
+otp_event = threading.Event()
+
+def listen_for_otp():
+    """Listen for OTP input from Node.js backend"""
+    global received_otp
+    
+    while True:
+        try:
+            line = sys.stdin.readline()
+            if not line:
+                break
+                
+            try:
+                data = json.loads(line.strip())
+                if data.get("type") == "OTP_RESPONSE":
+                    received_otp = data.get("otp")
+                    print(f"Received OTP: {received_otp}")
+                    otp_event.set()  # Signal that OTP is received
+            except json.JSONDecodeError:
+                # This might be the initial input data, ignore
+                continue
+        except Exception as e:
+            print(f"Error reading OTP: {e}")
+            break
+
 
 # Define the signal handler
 def stop_execution(signum, frame):
@@ -33,7 +62,7 @@ lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
     global lead_bought  # Access the global variable
     
-    url = "https://api.leadscruise.com/api/store-lead"
+    url = "http://localhost:5000/api/store-lead"
     data = {
         "name": name,
         "mobile": mobile,
@@ -477,74 +506,123 @@ def redirect_and_refresh(driver, wait):
     
 def execute_task_one(driver, wait):
     """
-    Executes the login process:
-    1. Prompts the user for mobile number and password.
-    2. Enters credentials, clicks the buttons to log in.
-    3. Checks if the 'Dashboard' element is present after login.
+    Executes the login process, supporting both password and OTP flows.
     """
+    global received_otp, otp_event
+    
     try:
-        # Refresh the page first
-        print("Refreshing page...",flush=True)
+        # Refresh page
+        print("Refreshing page...")
         driver.refresh()
         time.sleep(3)
-
-        # Prompt the user for the mobile number
+        
+        # Get mobile number from input data
         user_mobile_number = input_data.get("mobileNumber", "")
-
-        # Wait for the input field to be present
+        
+        # Enter mobile number
         input_field = wait.until(EC.presence_of_element_located((By.ID, "mobNo")))
-
-        # Enter the mobile number
         input_field.clear()
         input_field.send_keys(user_mobile_number)
-        print(f"Entered mobile number {user_mobile_number}.",flush=True)
-
-        # Wait for the "Start Selling" button to be clickable and click it
+        print(f"Entered mobile number {user_mobile_number}.")
+        
+        # Click 'Start Selling'
         start_selling_button = wait.until(
             EC.element_to_be_clickable((By.CLASS_NAME, "login_btn"))
         )
         start_selling_button.click()
-        print("Clicked 'Start Selling' button.",flush=True)
-
-        # Wait for the "Enter Password" button to be clickable and click it
-        enter_password_button = wait.until(
-            EC.element_to_be_clickable((By.ID, "passwordbtn1"))
-        )
-        enter_password_button.click()
-        print("Clicked 'Enter Password' button.",flush=True)
-
-        # Prompt the user for the password
-        user_password = input_data.get("password", "")
-
-        # Wait for the password input field and enter the password
-        password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
-        password_input.clear()
-        password_input.send_keys(user_password)
-        print("Entered the password.",flush=True)
-
-        # Wait for the "Sign In" button to be clickable and click it
-        sign_in_button = wait.until(
-            EC.element_to_be_clickable((By.ID, "signWP"))
-        )
-        sign_in_button.click()
-        print("Clicked 'Sign In' button.",flush=True)
-
-        # Wait for 5 seconds and check if the 'Dashboard' element is present
+        print("Clicked 'Start Selling' button.")
+        
+        # Try password login flow first
+        try:
+            enter_password_button = wait.until(
+                EC.element_to_be_clickable((By.ID, "passwordbtn1"))
+            )
+            enter_password_button.click()
+            print("Clicked 'Enter Password' button.")
+            
+            user_password = input_data.get("password", "")
+            password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
+            password_input.clear()
+            password_input.send_keys(user_password)
+            print("Entered the password.")
+            
+            sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
+            sign_in_button.click()
+            print("Clicked 'Sign In' button.")
+            
+        except (TimeoutException, NoSuchElementException):
+            # Password login not available, try OTP flow
+            print("Password login not available. Proceeding with OTP flow...")
+            
+            try:
+                # Click 'Request OTP on Mobile' button
+                otp_request_button = wait.until(
+                    EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+                )
+                otp_request_button.click()
+                print("Clicked 'Request OTP on Mobile' button.")
+                
+                # Signal to backend that OTP request has been initiated
+                print("OTP_REQUEST_INITIATED")
+                sys.stdout.flush()
+                
+                # Start OTP listener thread
+                otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
+                otp_thread.start()
+                
+                # Wait for OTP to be received (with timeout)
+                print("Waiting for OTP input...")
+                if otp_event.wait(timeout=300):  # Wait up to 5 minutes for OTP
+                    if received_otp and len(received_otp) == 4 and received_otp.isdigit():
+                        # Enter OTP digit by digit
+                        otp_fields = ["first", "second", "third", "fourth_num"]
+                        for i, field_id in enumerate(otp_fields):
+                            try:
+                                otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+                                otp_input.clear()
+                                otp_input.send_keys(received_otp[i])
+                            except (TimeoutException, NoSuchElementException):
+                                print(f"Could not find OTP field: {field_id}")
+                                return "Unsuccessful"
+                        
+                        print("Entered OTP successfully.")
+                        
+                        # Click submit OTP button if it exists
+                        try:
+                            submit_otp_button = wait.until(
+                                EC.element_to_be_clickable((By.ID, "verifyOtp"))
+                            )
+                            submit_otp_button.click()
+                            print("Clicked 'Verify OTP' button.")
+                        except (TimeoutException, NoSuchElementException):
+                            print("Submit OTP button not found, OTP might be auto-submitted.")
+                    else:
+                        print("Invalid OTP received.")
+                        return "Unsuccessful"
+                else:
+                    print("Timeout waiting for OTP.")
+                    return "Unsuccessful"
+                    
+            except (TimeoutException, NoSuchElementException) as e:
+                print(f"OTP flow failed: {e}")
+                return "Unsuccessful"
+        
+        # Final check for dashboard
         time.sleep(5)
         try:
             dashboard_element = wait.until(
                 EC.presence_of_element_located((By.ID, "leftnav_dash_link"))
             )
-            print("Sign in successful. 'Dashboard' element found.",flush=True)
+            print("Sign in successful. 'Dashboard' element found.")
             return "Success"
-        except:
-            print("Dashboard element not found after login. Sign in failed.",flush=True)
+        except TimeoutException:
+            print("Dashboard element not found after login. Sign in may have failed.")
             return "Unsuccessful"
+            
     except Exception as e:
-        print(f"An error occurred during login: {e}",flush=True)
+        print(f"An error occurred during login: {e}")
         return "Unsuccessful"
-
-
+    
 def main():
     """
     Main function to run the program.

@@ -21,7 +21,7 @@
 //         setLoading(true);
 //         // Call your specific API endpoint
 //         const response = await fetch(
-//           "https://api.leadscruise.com/api/support/experts",
+//           "http://localhost:5000/api/support/experts",
 //           {
 //             method: "POST",
 //             headers: {
@@ -250,7 +250,7 @@ const ExpertsDashboard = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          "https://api.leadscruise.com/api/support/getSupport"
+          "http://localhost:5000/api/support/getSupport"
         );
         setUsers(response.data);
       } catch (err) {

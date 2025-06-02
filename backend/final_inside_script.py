@@ -11,6 +11,7 @@ import time
 import subprocess
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 def extend_word_array(word_array):
     """
@@ -67,7 +68,7 @@ def go_to_message_center_and_click(driver):
         print("Clicked the first element with the specified class parameters.")
         time.sleep(2)
 
-        message_input = WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.XPATH, "//div[@id='massage-text' and @contenteditable='true']")))
+        message_input = message_input = WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.XPATH, "//div[@id='massage-text' and @contenteditable='true']")))
 
         sentences = [
             "Hello, I hope you're doing well!",
@@ -390,62 +391,77 @@ def redirect_and_refresh(driver, wait):
     except Exception as e:
         print(f"Error while checking buyer balance: {e}")
         return
-    
+
 def execute_task_one(driver, wait):
     """
-    Executes the login process:
-    1. Prompts the user for mobile number and password.
-    2. Enters credentials, clicks the buttons to log in.
-    3. Checks if the 'Dashboard' element is present after login.
+    Executes the login process, supporting both password and OTP flows.
     """
     try:
-        # Refresh the page first
+        # Refresh page
         print("Refreshing page...")
         driver.refresh()
         time.sleep(3)
 
-        # Prompt the user for the mobile number
+        # Ask for mobile number
         user_mobile_number = input("Enter the mobile number: ")
 
-        # Wait for the input field to be present
+        # Enter mobile number
         input_field = wait.until(EC.presence_of_element_located((By.ID, "mobNo")))
-
-        # Enter the mobile number
         input_field.clear()
         input_field.send_keys(user_mobile_number)
         print(f"Entered mobile number {user_mobile_number}.")
 
-        # Wait for the "Start Selling" button to be clickable and click it
+        # Click 'Start Selling'
         start_selling_button = wait.until(
             EC.element_to_be_clickable((By.CLASS_NAME, "login_btn"))
         )
         start_selling_button.click()
         print("Clicked 'Start Selling' button.")
 
-        # Wait for the "Enter Password" button to be clickable and click it
-        enter_password_button = wait.until(
-            EC.element_to_be_clickable((By.ID, "passwordbtn1"))
-        )
-        enter_password_button.click()
-        print("Clicked 'Enter Password' button.")
+        # Try password login flow
+        try:
+            enter_password_button = wait.until(
+                EC.element_to_be_clickable((By.ID, "passwordbtn1"))
+            )
+            enter_password_button.click()
+            print("Clicked 'Enter Password' button.")
 
-        # Prompt the user for the password
-        user_password = input("Enter the password: ")
+            user_password = input("Enter the password: ")
+            password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
+            password_input.clear()
+            password_input.send_keys(user_password)
+            print("Entered the password.")
 
-        # Wait for the password input field and enter the password
-        password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
-        password_input.clear()
-        password_input.send_keys(user_password)
-        print("Entered the password.")
+            sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
+            sign_in_button.click()
+            print("Clicked 'Sign In' button.")
 
-        # Wait for the "Sign In" button to be clickable and click it
-        sign_in_button = wait.until(
-            EC.element_to_be_clickable((By.ID, "signWP"))
-        )
-        sign_in_button.click()
-        print("Clicked 'Sign In' button.")
+        except (TimeoutException, NoSuchElementException):
+            # Password login not available, try OTP flow
+            print("Password login not available. Proceeding with OTP flow...")
 
-        # Wait for 5 seconds and check if the 'Dashboard' element is present
+            # Click 'Request OTP on Mobile' button (assumed ID/class)
+            otp_request_button = wait.until(
+                EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+            )
+            otp_request_button.click()
+            print("Clicked 'Request OTP on Mobile' button.")
+
+            otp = input("Enter the 4-digit OTP received: ").strip()
+            if len(otp) != 4 or not otp.isdigit():
+                print("Invalid OTP format.")
+                return "Unsuccessful"
+
+            # Enter OTP digit by digit
+            otp_fields = ["first", "second", "third", "fourth_num"]
+            for i, field_id in enumerate(otp_fields):
+                otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+                otp_input.clear()
+                otp_input.send_keys(otp[i])
+
+            print("Entered OTP.")
+
+        # Final check for dashboard
         time.sleep(5)
         try:
             dashboard_element = wait.until(
@@ -454,12 +470,12 @@ def execute_task_one(driver, wait):
             print("Sign in successful. 'Dashboard' element found.")
             return "Success"
         except:
-            print("Dashboard element not found after login. Sign in failed.")
+            print("Dashboard element not found after login. Sign in may have failed.")
             return "Unsuccessful"
+
     except Exception as e:
         print(f"An error occurred during login: {e}")
         return "Unsuccessful"
-
 
 def main():
     """

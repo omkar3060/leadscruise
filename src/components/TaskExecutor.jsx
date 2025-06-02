@@ -42,7 +42,7 @@ const TaskExecutor = () => {
 
     try {
       // First check if the mobile number is already used by another user
-      const checkResponse = await axios.post("https://api.leadscruise.com/api/check-mobile", {
+      const checkResponse = await axios.post("http://localhost:5000/api/check-mobile", {
         mobileNumber,
         email,
       });
@@ -69,7 +69,7 @@ const TaskExecutor = () => {
       localStorage.setItem("savedpassword", password);
 
       const response = await axios.post(
-        "https://api.leadscruise.com/api/execute-task",
+        "http://localhost:5000/api/execute-task",
         {
           mobileNumber,
           password,
@@ -98,7 +98,7 @@ const TaskExecutor = () => {
     const userEmail = localStorage.getItem("userEmail");
 
     try {
-      await axios.post("https://api.leadscruise.com/api/logout", {
+      await axios.post("http://localhost:5000/api/logout", {
         email: userEmail,
       });
 

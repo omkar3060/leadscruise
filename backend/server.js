@@ -485,7 +485,7 @@ cron.schedule("0 6 * * *", async () => {
       }
 
       try {
-        await axios.post("https://api.leadscruise.com/api/cycle", {
+        await axios.post("http://localhost:5000/api/cycle", {
           sentences: settings.sentences,
           wordArray: settings.wordArray,
           h2WordArray: settings.h2WordArray,
@@ -505,6 +505,8 @@ cron.schedule("0 6 * * *", async () => {
     console.error("Cron job error:", err.message);
   }
 });
+
+const otpRequests = new Map();
 
 app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
@@ -634,6 +636,19 @@ app.post("/api/cycle", async (req, res) => {
         // Just log this for now, the balance update above will handle setting to 0
         console.log("Zero balance detected for user:", userEmail);
       }
+
+    // Check for OTP request from Python script
+    if (dataString.includes("OTP_REQUEST_INITIATED")) {
+      console.log("OTP request detected for uniqueId:", uniqueId);
+      const requestId = Date.now().toString(); // Generate unique request ID
+      otpRequests.set(uniqueId, {
+        requestId,
+        timestamp: new Date(),
+        otpReceived: false,
+        otp: null
+      });
+    }
+
     });
 
   pythonProcess.stderr.on("data", (data) => {
@@ -692,6 +707,75 @@ app.post("/api/cycle", async (req, res) => {
         message: `AI failed`,
       });
     }
+  });
+});
+
+// New endpoint to check for OTP requests
+app.get("/api/check-otp-request/:uniqueId", (req, res) => {
+  const { uniqueId } = req.params;
+  const otpRequest = otpRequests.get(uniqueId);
+  
+  if (otpRequest && !otpRequest.otpReceived) {
+    res.json({
+      otpRequired: true,
+      requestId: otpRequest.requestId
+    });
+  } else {
+    res.json({
+      otpRequired: false
+    });
+  }
+});
+
+// New endpoint to submit OTP
+app.post("/api/submit-otp", async (req, res) => {
+  const { otp, userEmail, uniqueId, requestId } = req.body;
+  
+  if (!otp || !uniqueId || !requestId) {
+    return res.status(400).json({
+      status: "error",
+      message: "OTP, uniqueId, and requestId are required."
+    });
+  }
+  
+  const otpRequest = otpRequests.get(uniqueId);
+  
+  if (!otpRequest || otpRequest.requestId !== requestId) {
+    return res.status(400).json({
+      status: "error",
+      message: "Invalid OTP request."
+    });
+  }
+  
+  // Update the OTP request with the received OTP
+  otpRequest.otp = otp;
+  otpRequest.otpReceived = true;
+  otpRequests.set(uniqueId, otpRequest);
+  
+  // Send OTP to Python script
+  const pythonProcess = activePythonProcesses.get(uniqueId);
+  if (pythonProcess && !pythonProcess.killed) {
+    try {
+      const otpData = JSON.stringify({ type: "OTP_RESPONSE", otp: otp });
+      pythonProcess.stdin.write(otpData + "\n");
+      console.log(`Sent OTP ${otp} to Python process for uniqueId: ${uniqueId}`);
+    } catch (error) {
+      console.error("Error sending OTP to Python process:", error);
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to send OTP to automation script."
+      });
+    }
+  } else {
+    return res.status(400).json({
+      status: "error",
+      message: "Automation script is not running."
+    });
+  }
+  
+  res.json({
+    status: "success",
+    message: "OTP submitted successfully."
   });
 });
 
