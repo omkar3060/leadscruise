@@ -93,17 +93,17 @@ input_line = sys.stdin.readline()
 input_data = json.loads(input_line.strip())
 import requests
 lead_bought=""
-def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
+def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, timestamp_text=None):
     global lead_bought  # Access the global variable
     
-    url = "https://api.leadscruise.com/api/store-lead"
+    url = "https://api.leadscruise.com/api/store-fetched-lead"
     data = {
         "name": name,
         "mobile": mobile,
-        "user_mobile_number": user_mobile_number, 
-        "lead_bought": lead_bought if lead_bought else "Not Available"  # Provide default value
+        "user_mobile_number": user_mobile_number,
+        "lead_bought": lead_bought if lead_bought else "Not Available",  # Provide default value
+        "timestamp": timestamp_text
     }
-    
     if email:
         data["email"] = email
     
@@ -144,6 +144,7 @@ def set_browser_zoom(driver, zoom_level=0.75):
     #print(f"Browser zoom set to {zoom_level * 100}% using Chrome DevTools Protocol.")
 
 def go_to_message_center_and_click(driver):
+    global lead_bought
     print("Waiting for 3 seconds before going to the message center...", flush=True)
     time.sleep(3)
 
@@ -168,11 +169,17 @@ def go_to_message_center_and_click(driver):
 
     for index, msg in enumerate(messages):
         try:
+            try:
+                lead_bought_element = msg.find_element(By.XPATH, ".//div[contains(@class, 'fs14') and contains(@class, 'fwb')]")
+                lead_bought = lead_bought_element.text.strip()
+            except NoSuchElementException:
+                lead_bought = "Not Available"
+
             time_element = msg.find_element(By.XPATH, ".//div[contains(@class, 'fr')]/span[contains(@class, 'fs12')]")
             timestamp_text = time_element.text.strip()
 
             if not is_within_30_days(timestamp_text, thirty_days_ago):
-                continue  # Skip if older than 30 days
+                sys.exit(0)  # Skip if older than 30 days
 
             driver.execute_script("arguments[0].scrollIntoView(true);", msg)
             msg.click()
@@ -198,7 +205,7 @@ def go_to_message_center_and_click(driver):
                 email_id = None
 
             user_mobile_number = input_data.get("mobileNumber", "")
-            send_data_to_dashboard(left_name, mobile_number, email_id, user_mobile_number)
+            send_data_to_dashboard(left_name, mobile_number, email_id, user_mobile_number,timestamp_text)
         except Exception as e:
             print(f"Error with message #{index+1}: {e}", flush=True)
 
@@ -242,56 +249,74 @@ def execute_task_one(driver, wait):
         )
         start_selling_button.click()
         print("Clicked 'Start Selling' button.",flush=True)
-            
+
         try:
-            # Click 'Request OTP on Mobile' button
-            received_otp = None
-            otp_event.clear()
-            otp_request_button = wait.until(
-                EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+            enter_password_button = wait.until(
+                EC.element_to_be_clickable((By.ID, "passwordbtn1"))
             )
-            otp_request_button.click()
-            print("Clicked 'Request OTP on Mobile' button.",flush=True)
-            
-            # Signal to backend that OTP request has been initiated
-            print("OTP_REQUEST_INITIATED",flush=True)
-            sys.stdout.flush()
-            
-            # Start OTP listener thread
-            otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
-            otp_thread.start()
-            
-            # Wait for OTP to be received (with timeout)
-            print("Waiting for OTP input...",flush=True)
-            if otp_event.wait(timeout=60):  # Wait up to 60 seconds for OTP
-                if received_otp and len(received_otp) == 4 and received_otp.isdigit():
-                    # Enter OTP digit by digit
-                    otp_fields = ["first", "second", "third", "fourth_num"]
-                    for i, field_id in enumerate(otp_fields):
-                        try:
-                            otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
-                            otp_input.clear()
-                            otp_input.send_keys(received_otp[i])
-                        except (TimeoutException, NoSuchElementException):
-                            print(f"Could not find OTP field: {field_id}",flush=True)
-                            return "Unsuccessful"
-                    
-                    print("Entered OTP successfully.",flush=True)
-                    
-                    # Click submit OTP button if it exists
-                    otp_submit_button = wait.until(EC.element_to_be_clickable((By.ID, "sbmtbtnOtp")))
-                    otp_submit_button.click()
-                    print("Clicked 'Submit OTP' button.",flush=True)
-                else:
-                    print("Invalid OTP received.",flush=True)
-                    return "Unsuccessful"
-            else:
-                print("Timeout waiting for OTP.",flush=True)
-                return "Unsuccessful"
+            enter_password_button.click()
+            print("Clicked 'Enter Password' button.")
+
+            user_password = input("Enter the password: ")
+            password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
+            password_input.clear()
+            password_input.send_keys(user_password)
+            print("Entered the password.")
+
+            sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
+            sign_in_button.click()
+            print("Clicked 'Sign In' button.")
+
+        except (TimeoutException, NoSuchElementException):
+            try:
+                # Click 'Request OTP on Mobile' button
+                received_otp = None
+                otp_event.clear()
+                otp_request_button = wait.until(
+                    EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+                )
+                otp_request_button.click()
+                print("Clicked 'Request OTP on Mobile' button.",flush=True)
                 
-        except (TimeoutException, NoSuchElementException) as e:
-            print(f"OTP flow failed: {e}",flush=True)
-            return "Unsuccessful"
+                # Signal to backend that OTP request has been initiated
+                print("OTP_REQUEST_INITIATED",flush=True)
+                sys.stdout.flush()
+                
+                # Start OTP listener thread
+                otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
+                otp_thread.start()
+                
+                # Wait for OTP to be received (with timeout)
+                print("Waiting for OTP input...",flush=True)
+                if otp_event.wait(timeout=60):  # Wait up to 60 seconds for OTP
+                    if received_otp and len(received_otp) == 4 and received_otp.isdigit():
+                        # Enter OTP digit by digit
+                        otp_fields = ["first", "second", "third", "fourth_num"]
+                        for i, field_id in enumerate(otp_fields):
+                            try:
+                                otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+                                otp_input.clear()
+                                otp_input.send_keys(received_otp[i])
+                            except (TimeoutException, NoSuchElementException):
+                                print(f"Could not find OTP field: {field_id}",flush=True)
+                                return "Unsuccessful"
+                        
+                        print("Entered OTP successfully.",flush=True)
+                        
+                        # Click submit OTP button if it exists
+                        otp_submit_button = wait.until(EC.element_to_be_clickable((By.ID, "sbmtbtnOtp")))
+                        otp_submit_button.click()
+                        print("Clicked 'Submit OTP' button.",flush=True)
+                    else:
+                        print("Invalid OTP received.",flush=True)
+                        return "Unsuccessful"
+                else:
+                    print("Timeout waiting for OTP.",flush=True)
+                    return "Unsuccessful"
+                    
+            except (TimeoutException, NoSuchElementException) as e:
+                print(f"OTP flow failed: {e}",flush=True)
+                return "Unsuccessful"
         
         # Final check for dashboard
         time.sleep(5)

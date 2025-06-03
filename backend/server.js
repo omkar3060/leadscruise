@@ -710,6 +710,96 @@ app.post("/api/cycle", async (req, res) => {
   });
 });
 
+app.post("/api/start-fetching-leads", async (req, res) => {
+  console.log("Received raw data:", JSON.stringify(req.body, null, 2));
+  let {
+    mobileNumber,
+    password,
+    uniqueId,
+    userEmail,
+  } = req.body;
+
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).json({
+      status: "error",
+      message: "Empty request body. Ensure the request has a JSON payload.",
+    });
+  }
+
+  if (!mobileNumber || !password || !userEmail || !uniqueId) {
+    return res.status(400).json({
+      status: "error",
+      message: "Mobile number, Email, password, and uniqueId are required.",
+    });
+  }
+
+  // Get current time
+  const startTime = new Date();
+
+  const inputData = JSON.stringify({
+    mobileNumber,
+    password,
+    uniqueId,
+  });
+
+  console.log("Spawning Python process for 'lead_fetch_script.py'...");
+
+  const pythonProcess = spawn("python3", ["-u", "lead_fetch_script.py"]);
+
+  // Store the Python process reference using `uniqueId`
+  activePythonProcesses.set(uniqueId+100000, pythonProcess);
+
+  console.log("Sending data to Python script:", inputData);
+  pythonProcess.stdin.write(inputData + "\n");
+
+  let result = "";
+  let error = "";
+
+  pythonProcess.stdout.on("data", (data) => {
+    const dataString = data.toString();
+    console.log("Python script stdout:", data.toString());
+    result += data.toString();
+
+    // Check for OTP request from Python script
+    if (dataString.includes("OTP_REQUEST_INITIATED")) {
+      console.log("OTP request detected for uniqueId:", uniqueId);
+      const requestId = Date.now().toString(); // Generate unique request ID
+      otpRequests.set(uniqueId, {
+        requestId,
+        timestamp: new Date(),
+        otpReceived: false,
+        otp: null
+      });
+    }
+
+    });
+
+  pythonProcess.stderr.on("data", (data) => {
+    console.error("Python script stderr:", data.toString());
+    error += data.toString();
+  });
+
+  pythonProcess.on("close", async (code) => {
+    pythonProcess.stdin.end();
+    clearInterval(leadCheckInterval); // Stop checking when script completes
+    activePythonProcesses.delete(uniqueId); // Remove from tracking
+    otpRequests.delete(uniqueId);
+    console.log(`Python script exited with code: ${code}`);
+
+    // Cleanup display lock file
+    cleanupDisplay(uniqueId);
+
+    if (code === 0) {
+      res.json({ status: "success", message: "Successfully executed!!" });
+    } else {
+      res.status(500).json({
+        status: "error",
+        message: `AI failed`,
+      });
+    }
+  });
+});
+
 app.get("/api/check-otp-request/:uniqueId", (req, res) => {
   const { uniqueId } = req.params;
   const otpRequest = otpRequests.get(uniqueId);
@@ -1081,6 +1171,52 @@ app.post("/api/store-lead", async (req, res) => {
         console.error("Error in WhatsApp script execution:", pythonError);
       }
     }
+  } catch (error) {
+    console.error("Error saving lead:", error);
+  }
+});
+
+app.post("/api/store-fetched-lead", async (req, res) => {
+  try {
+    const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text } = req.body;
+
+    if (!name || !mobile || !user_mobile_number || !lead_bought || !timestamp_text) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    
+    // Check for duplicate leads
+    const existingLead = await Lead.findOne({
+      mobile,
+      user_mobile_number,
+      lead_bought,
+    });
+    
+    // If duplicate found within last X minutes
+    if (existingLead) {
+      const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
+      if (timeDiff < 300) { // e.g. within 5 minutes
+        console.log("Duplicate lead detected. Skipping.");
+        return res.status(409).json({ error: "Duplicate lead detected" });
+      }
+    }
+    
+    // Store the new lead
+    const newLead = new Lead({
+      name,
+      email,
+      mobile,
+      user_mobile_number,
+      lead_bought,
+      createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
+    });
+    await newLead.save();
+    
+    // Increment lead count
+    userCounter.leadCount += 1;
+    await userCounter.save();
+    
+    console.log("Lead Data Stored:", newLead);
+    
   } catch (error) {
     console.error("Error saving lead:", error);
   }
