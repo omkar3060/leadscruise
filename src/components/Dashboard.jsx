@@ -56,6 +56,7 @@ const Dashboard = () => {
   const [showOtpPopup, setShowOtpPopup] = useState(false);
   const [otpValue, setOtpValue] = useState('');
   const [otpRequestId, setOtpRequestId] = useState(null);
+  const [showOtpWaitPopup, setShowOtpWaitPopup] = useState(true);
 
   useEffect(() => {
     const fetchMessageCount = async () => {
@@ -316,6 +317,9 @@ const Dashboard = () => {
       return;
     }
 
+    const confirmSubmit = window.confirm(`Are you sure you want to submit OTP: ${otpValue}?`);
+    if (!confirmSubmit) return;
+
     try {
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
@@ -338,27 +342,34 @@ const Dashboard = () => {
   };
 
   // Add WebSocket or polling to listen for OTP requests
-  useEffect(() => {
-    const uniqueId = localStorage.getItem("unique_id");
-    if (!uniqueId) return;
+useEffect(() => {
+  const uniqueId = localStorage.getItem("unique_id");
+  if (!uniqueId) return;
 
-    // Poll for OTP requests every 2 seconds when automation is running
-    const otpCheckInterval = setInterval(async () => {
-      if (status === "Running") {
-        try {
-          const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
-          if (response.data.otpRequired) {
-            setOtpRequestId(response.data.requestId);
-            setShowOtpPopup(true);
-          }
-        } catch (error) {
-          // Silently handle errors - the backend might not have an OTP request yet
+  // Show the wait popup initially when automation starts
+  if (status === "Running") {
+    setShowOtpWaitPopup(true);
+  } else {
+    setShowOtpWaitPopup(false);
+  }
+
+  const otpCheckInterval = setInterval(async () => {
+    if (status === "Running") {
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
+        if (response.data.otpRequired) {
+          setOtpRequestId(response.data.requestId);
+          setShowOtpPopup(true);
+          setShowOtpWaitPopup(false); // Hide wait popup once OTP is needed
         }
+      } catch (error) {
+        // Silently ignore
       }
-    }, 2000);
+    }
+  }, 2000);
 
-    return () => clearInterval(otpCheckInterval);
-  }, [status]);
+  return () => clearInterval(otpCheckInterval);
+}, [status]);
 
   const handleStart = async () => {
     try {
@@ -682,49 +693,58 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboardContainer}>
+{showOtpWaitPopup && !showOtpPopup && (
+  <div className={styles['otp-popup-overlay']}>
+    <div className={styles['otp-popup-container']}>
+      <h3 className={styles['otp-popup-title']}>Please Wait...</h3>
+      <p className={styles['otp-popup-description']}>
+        We are requesting the OTP. You will be able to enter it shortly.
+      </p>
+    </div>
+  </div>
+)}
 
-      {showOtpPopup && (
-  <>
-    <div className={styles['otp-popup-overlay']}>
-      <div className={styles['otp-popup-container']}>
-        <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
-        <p className={styles['otp-popup-description']}>
-          Please enter the 4-digit OTP sent to your mobile number.
-        </p>
-        <input
-          type="text"
-          value={otpValue}
-          onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-            setOtpValue(value);
+{showOtpPopup && (
+  <div className={styles['otp-popup-overlay']}>
+    <div className={styles['otp-popup-container']}>
+      <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
+      <p className={styles['otp-popup-description']}>
+        Please enter the 4-digit OTP sent to your mobile number.
+      </p>
+      <input
+        type="text"
+        value={otpValue}
+        onChange={(e) => {
+          const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+          setOtpValue(value);
+        }}
+        placeholder="Enter 4-digit OTP"
+        className={styles['otp-input']}
+        maxLength="4"
+        autoFocus
+      />
+      <div className={styles['otp-buttons']}>
+        <button
+          onClick={() => {
+            setShowOtpPopup(false);
+            setShowOtpWaitPopup(false);
+            setOtpValue('');
+            setOtpRequestId(null);
           }}
-          placeholder="Enter 4-digit OTP"
-          className={styles['otp-input']}
-          maxLength="4"
-          autoFocus
-        />
-        <div className={styles['otp-buttons']}>
-          <button
-            onClick={() => {
-              setShowOtpPopup(false);
-              setOtpValue('');
-              setOtpRequestId(null);
-            }}
-            className={`${styles['otp-button']} ${styles['otp-button-cancel']}`}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleOtpSubmit}
-            disabled={otpValue.length !== 4}
-            className={`${styles['otp-button']} ${styles['otp-button-submit']}`}
-          >
-            Submit
-          </button>
-        </div>
+          className={`${styles['otp-button']} ${styles['otp-button-cancel']}`}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleOtpSubmit}
+          disabled={otpValue.length !== 4}
+          className={`${styles['otp-button']} ${styles['otp-button-submit']}`}
+        >
+          Submit
+        </button>
       </div>
     </div>
-  </>
+  </div>
 )}
 
       {zeroBalanceAlertMemo}
