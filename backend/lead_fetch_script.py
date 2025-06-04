@@ -93,23 +93,48 @@ input_line = sys.stdin.readline()
 input_data = json.loads(input_line.strip())
 import requests
 lead_bought=""
+
+def parse_timestamp(timestamp_text):
+    now = datetime.now()
+
+    if "AM" in timestamp_text or "PM" in timestamp_text:
+        # Just a time — assume today's date
+        dt = datetime.strptime(timestamp_text, "%I:%M %p")
+        combined = now.replace(hour=dt.hour, minute=dt.minute, second=0, microsecond=0)
+        return combined.isoformat()
+
+    elif timestamp_text.lower() == "yesterday":
+        # Use yesterday's date, set time to 12:00 PM (or any default time)
+        combined = (now - timedelta(days=1)).replace(hour=12, minute=0, second=0, microsecond=0)
+        return combined.isoformat()
+
+    else:
+        # e.g., "28 May" — append year and parse
+        dt = datetime.strptime(f"{timestamp_text} {now.year}", "%d %b %Y")
+        return dt.isoformat()
+
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, timestamp_text=None):
     global lead_bought  # Access the global variable
-    
+
+    try:
+        iso_timestamp = parse_timestamp(timestamp_text)
+    except Exception as e:
+        print(f"Timestamp parsing failed: {e}", flush=True)
+        return
+
     url = "https://api.leadscruise.com/api/store-fetched-lead"
     data = {
         "name": name,
         "mobile": mobile,
         "user_mobile_number": user_mobile_number,
-        "lead_bought": lead_bought if lead_bought else "Not Available",  # Provide default value
-        "timestamp": timestamp_text
+        "lead_bought": lead_bought if lead_bought else "Not Available",
+        "timestamp_text": iso_timestamp
     }
     if email:
         data["email"] = email
-    
-    # Print the data being sent for debugging
+
     print(f"Sending data to dashboard: {data}", flush=True)
-    
+
     try:
         response = requests.post(url, json=data)
         if response.status_code == 200:
@@ -143,85 +168,317 @@ def set_browser_zoom(driver, zoom_level=0.75):
     })
     #print(f"Browser zoom set to {zoom_level * 100}% using Chrome DevTools Protocol.")
 
-def go_to_message_center_and_click(driver):
+def process_messages_incrementally(driver):
+    """
+    Simple approach: Process messages as they become available
+    Keep scrolling and processing until we reach 30-day limit
+    """
     global lead_bought
-    print("Waiting for 3 seconds before going to the message center...", flush=True)
-    time.sleep(3)
-
+    print("Starting incremental message processing...", flush=True)
+    
     third_url = "https://seller.indiamart.com/messagecentre/"
-    print(f"Redirecting to {third_url} to interact with the message center...", flush=True)
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    processed_messages = 0
+    processed_identifiers = set()
+    
+    # Navigate to message center
     driver.get(third_url)
     time.sleep(5)
-
-    # Hide tooltip if needed
+    
+    # Hide tooltip
     try:
         driver.execute_script("""
             const tooltip = document.querySelector('.Headertooltip');
             if (tooltip) tooltip.style.display = 'none';
         """)
-    except Exception:
-        pass
-
-    messages = driver.find_elements(By.XPATH, "//div[@class='por lftcntctnew pl25 fl pd10 w100 hgt105 cp']")
-
-    print(f"Found {len(messages)} messages. Checking timestamps...", flush=True)
-    thirty_days_ago = datetime.now() - timedelta(days=30)
-
-    for index, msg in enumerate(messages):
-        try:
-            try:
-                lead_bought_element = msg.find_element(By.XPATH, ".//div[contains(@class, 'fs14') and contains(@class, 'fwb')]")
-                lead_bought = lead_bought_element.text.strip()
-            except NoSuchElementException:
-                lead_bought = "Not Available"
-
-            time_element = msg.find_element(By.XPATH, ".//div[contains(@class, 'fr')]/span[contains(@class, 'fs12')]")
-            timestamp_text = time_element.text.strip()
-
-            if not is_within_30_days(timestamp_text, thirty_days_ago):
-                sys.exit(0)  # Skip if older than 30 days
-
-            driver.execute_script("arguments[0].scrollIntoView(true);", msg)
-            msg.click()
-            print(f"Clicked message #{index+1} with timestamp: {timestamp_text}", flush=True)
-            time.sleep(2)
-
-            # Click 'View More'
-            try:
-                view_more_button = WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'View More')]"))
-                )
-                view_more_button.click()
-                time.sleep(2)
-            except:
-                print("View More button not found or not clickable.")
-
-            # Extract contact details
-            left_name = driver.find_element(By.XPATH, "//div[@id='left-name']").text
-            mobile_number = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 mt2 wbba']").text
-            try:
-                email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 wbba']").text
-            except NoSuchElementException:
-                email_id = None
-
-            user_mobile_number = input_data.get("mobileNumber", "")
-            send_data_to_dashboard(left_name, mobile_number, email_id, user_mobile_number,timestamp_text)
-        except Exception as e:
-            print(f"Error with message #{index+1}: {e}", flush=True)
-
-def is_within_30_days(timestamp_text, thirty_days_ago):
-    try:
-        if "AM" in timestamp_text or "PM" in timestamp_text:
-            return True  # Assume today
-        elif timestamp_text.lower() == "yesterday":
-            return True
-        else:
-            # e.g., "28 May"
-            timestamp_date = datetime.strptime(f"{timestamp_text} {datetime.now().year}", "%d %b %Y")
-            return timestamp_date >= thirty_days_ago
     except:
+        pass
+    
+    # Get scroll container
+    try:
+        scroll_container = driver.find_element(By.CLASS_NAME, "ReactVirtualized__List")
+    except:
+        print("Could not find scroll container", flush=True)
+        return
+    
+    scroll_position = 0
+    max_scroll_attempts = 200  # Prevent infinite loops
+    scroll_attempts = 0
+    no_new_messages_count = 0
+    
+    while scroll_attempts < max_scroll_attempts:
+        driver.get(third_url)
+        print(f"\n--- Scroll attempt {scroll_attempts + 1} ---", flush=True)
+        
+        # Scroll to current position
+        driver.execute_script("arguments[0].scrollTop = arguments[1];", scroll_container, scroll_position)
+        time.sleep(2)  # Wait for messages to load
+        
+        # Get currently visible messages
+        current_messages = driver.find_elements(By.XPATH, "//div[contains(@class, 'por lftcntctnew')]")
+        print(f"Found {len(current_messages)} messages at scroll position {scroll_position}", flush=True)
+        
+        new_messages_processed = 0
+        messages_to_stop = False
+        
+        # Process each visible message
+        for msg_index, msg in enumerate(current_messages):
+            try:
+                # Extract basic info for identification
+                timestamp_elem = msg.find_element(By.XPATH, ".//div[contains(@class, 'fr')]/span[contains(@class, 'fs12')]")
+                timestamp_text = timestamp_elem.text.strip()
+                
+                try:
+                    company_elem = msg.find_element(By.XPATH, ".//div[contains(@class, 'fs14') and contains(@class, 'fwb')]")
+                    company_text = company_elem.text.strip()
+                except:
+                    company_text = "Unknown"
+                
+                # Create identifier
+                message_id = f"{timestamp_text}_{company_text}_{msg_index}"
+                
+                # Skip if already processed
+                if message_id in processed_identifiers:
+                    continue
+                
+                print(f"Processing new message: {company_text} - {timestamp_text}", flush=True)
+                
+                # Check 30-day limit
+                if not is_within_30_days(timestamp_text, thirty_days_ago):
+                    print(f"Reached 30-day limit at: {timestamp_text}", flush=True)
+                    messages_to_stop = True
+                    break
+                
+                # Process this message
+                success = process_single_message(driver, msg, timestamp_text, company_text, third_url)
+                
+                if success:
+                    processed_messages += 1
+                    processed_identifiers.add(message_id)
+                    new_messages_processed += 1
+                    print(f"Successfully processed message #{processed_messages}", flush=True)
+                
+                # Break after processing one message to refresh the page
+                break
+                
+            except Exception as e:
+                print(f"Error processing message {msg_index}: {e}", flush=True)
+                continue
+        
+        if messages_to_stop:
+            print("Reached 30-day limit. Stopping processing.", flush=True)
+            break
+        
+        # If no new messages were processed, scroll down
+        if new_messages_processed == 0:
+            no_new_messages_count += 1
+            print(f"No new messages processed (count: {no_new_messages_count})", flush=True)
+            
+            if no_new_messages_count >= 5:  # If no new messages for 5 attempts
+                print("No new messages found after multiple attempts. Ending process.", flush=True)
+                break
+            
+            # Scroll down
+            scroll_position += 400  # Scroll by 400px
+            
+            # Get scroll container height to check if we're at bottom
+            try:
+                scroll_height = driver.execute_script("return arguments[0].scrollHeight;", scroll_container)
+                if scroll_position >= scroll_height:
+                    print("Reached bottom of scroll container.", flush=True)
+                    break
+            except:
+                pass
+        else:
+            no_new_messages_count = 0  # Reset counter if we processed messages
+            # Don't change scroll position if we processed a message
+            # The page refresh will reset our position
+        
+        scroll_attempts += 1
+        
+        # Safety check - if we've processed a reasonable number, we might be done
+        if processed_messages >= 500:  # Adjust this number as needed
+            print(f"Processed {processed_messages} messages. Stopping for safety.", flush=True)
+            break
+    
+    print(f"\nCompleted processing. Total messages processed: {processed_messages}", flush=True)
+    return processed_messages
+
+def process_single_message(driver, message_element, timestamp, company, return_url):
+    """Process a single message and return success status"""
+    global lead_bought
+    
+    try:
+        # Scroll message into view
+        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", message_element)
+        time.sleep(1)
+        
+        # Click the message
+        driver.execute_script("arguments[0].click();", message_element)
+        time.sleep(2)
+        
+        # Set lead_bought
+        lead_bought = company
+        
+        # Click 'View More' if available
+        try:
+            view_more_button = WebDriverWait(driver, 3).until(
+                EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'View More')]"))
+            )
+            view_more_button.click()
+            time.sleep(2)
+        except:
+            pass  # View More not available
+        
+        # Extract contact details
+        try:
+            left_name = driver.find_element(By.XPATH, "//div[@id='left-name']").text
+        except:
+            left_name = "Name not found"
+        
+        try:
+            mobile_number = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 mt2 wbba']").text
+        except:
+            mobile_number = "Mobile not found"
+        
+        try:
+            email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 wbba']").text
+        except:
+            email_id = None
+        
+        # Get user mobile number from input_data
+        user_mobile_number = input_data.get("mobileNumber", "")
+        
+        # Send data to dashboard
+        try:
+            send_data_to_dashboard(left_name, mobile_number, email_id, user_mobile_number, timestamp)
+            print(f"Successfully sent data to dashboard", flush=True)
+        except Exception as e:
+            print(f"Error sending data to dashboard: {e}", flush=True)
+        
+        # Return to message center
+        driver.get(return_url)
+        time.sleep(3)
+        
+        # Hide tooltip again
+        try:
+            driver.execute_script("""
+                const tooltip = document.querySelector('.Headertooltip');
+                if (tooltip) tooltip.style.display = 'none';
+            """)
+        except:
+            pass
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error processing single message: {e}", flush=True)
+        
+        # Try to return to message center
+        try:
+            driver.get(return_url)
+            time.sleep(3)
+        except:
+            pass
+        
         return False
 
+# REPLACE YOUR EXISTING FUNCTION WITH THIS ONE:
+def go_to_message_center_and_click(driver):
+    """Updated main function using incremental processing"""
+    print("Starting message center processing with incremental approach...", flush=True)
+    
+    # Navigate to message center
+    third_url = "https://seller.indiamart.com/messagecentre/"
+    driver.get(third_url)
+    time.sleep(5)
+    
+    # Hide tooltip
+    try:
+        driver.execute_script("""
+            const tooltip = document.querySelector('.Headertooltip');
+            if (tooltip) tooltip.style.display = 'none';
+        """)
+    except:
+        pass
+    
+    # Use incremental processing
+    total_processed = process_messages_incrementally(driver)
+    
+    print(f"Message processing completed. Total messages processed: {total_processed}", flush=True)
+
+def is_within_30_days(timestamp_text, thirty_days_ago):
+    """Check if the timestamp is within the last 30 days"""
+    try:
+        current_year = datetime.now().year
+        
+        # Handle time formats like "11:35 AM" or "2:15 PM" (assume today)
+        if "AM" in timestamp_text.upper() or "PM" in timestamp_text.upper():
+            print(f"Time format detected ({timestamp_text}). Assuming it's from today - within 30 days.", flush=True)
+            return True
+        
+        # Handle "Yesterday"
+        elif timestamp_text.lower() == "yesterday":
+            print(f"Yesterday detected - within 30 days.", flush=True)
+            return True
+        
+        # Handle "Today"
+        elif timestamp_text.lower() == "today":
+            print(f"Today detected - within 30 days.", flush=True)
+            return True
+        
+        # Handle formats like "28 May", "15 Dec", etc.
+        elif any(month in timestamp_text for month in ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]):
+            # Parse date like "28 May"
+            try:
+                timestamp_date = datetime.strptime(f"{timestamp_text} {current_year}", "%d %b %Y")
+                
+                # If the parsed date is in the future, it's probably from last year
+                if timestamp_date > datetime.now():
+                    timestamp_date = timestamp_date.replace(year=current_year - 1)
+                
+                is_within = timestamp_date >= thirty_days_ago
+                print(f"Date format parsed: {timestamp_text} -> {timestamp_date.strftime('%Y-%m-%d')}. Within 30 days: {is_within}", flush=True)
+                return is_within
+            except ValueError as e:
+                print(f"Could not parse date format: {timestamp_text}. Error: {e}. Assuming it's recent.", flush=True)
+                return True
+        
+        # Handle full date formats like "28 May 2024"
+        elif len(timestamp_text.split()) == 3:
+            try:
+                timestamp_date = datetime.strptime(timestamp_text, "%d %b %Y")
+                is_within = timestamp_date >= thirty_days_ago
+                print(f"Full date format parsed: {timestamp_text} -> {timestamp_date.strftime('%Y-%m-%d')}. Within 30 days: {is_within}", flush=True)
+                return is_within
+            except ValueError as e:
+                print(f"Could not parse full date format: {timestamp_text}. Error: {e}. Assuming it's recent.", flush=True)
+                return True
+        
+        # Handle numeric dates like "28/05/2024" or "28-05-2024"
+        elif "/" in timestamp_text or "-" in timestamp_text:
+            separator = "/" if "/" in timestamp_text else "-"
+            date_parts = timestamp_text.split(separator)
+            if len(date_parts) == 3:
+                # Try different date formats
+                for date_format in ["%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%m-%d-%Y"]:
+                    try:
+                        timestamp_date = datetime.strptime(timestamp_text, date_format)
+                        is_within = timestamp_date >= thirty_days_ago
+                        print(f"Numeric date format parsed: {timestamp_text} -> {timestamp_date.strftime('%Y-%m-%d')}. Within 30 days: {is_within}", flush=True)
+                        return is_within
+                    except ValueError:
+                        continue
+        
+        # If we can't parse the date, assume it's recent to be safe
+        print(f"Could not parse timestamp: {timestamp_text}. Assuming it's recent.", flush=True)
+        return True
+        
+    except Exception as e:
+        print(f"Error parsing timestamp '{timestamp_text}': {e}. Assuming it's recent.", flush=True)
+        return True
+    
 def execute_task_one(driver, wait):
     """
     Executes the login process, supporting both password and OTP flows.
@@ -257,7 +514,7 @@ def execute_task_one(driver, wait):
             enter_password_button.click()
             print("Clicked 'Enter Password' button.")
 
-            user_password = input("Enter the password: ")
+            user_password = input_data.get("password", "")
             password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
             password_input.clear()
             password_input.send_keys(user_password)

@@ -1176,53 +1176,6 @@ app.post("/api/store-lead", async (req, res) => {
   }
 });
 
-app.post("/api/store-fetched-lead", async (req, res) => {
-  try {
-    const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text } = req.body;
-
-    if (!name || !mobile || !user_mobile_number || !lead_bought || !timestamp_text) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-    
-    // Check for duplicate leads
-    const existingLead = await Lead.findOne({
-      mobile,
-      user_mobile_number,
-      lead_bought,
-    });
-    
-    // If duplicate found within last X minutes
-    if (existingLead) {
-      const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
-      if (timeDiff < 300) { // e.g. within 5 minutes
-        console.log("Duplicate lead detected. Skipping.");
-        return res.status(409).json({ error: "Duplicate lead detected" });
-      }
-    }
-    
-    // Store the new lead
-    const newLead = new Lead({
-      name,
-      email,
-      mobile,
-      user_mobile_number,
-      lead_bought,
-      createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
-    });
-    await newLead.save();
-    
-    // Increment lead count
-    userCounter.leadCount += 1;
-    await userCounter.save();
-    
-    console.log("Lead Data Stored:", newLead);
-    
-  } catch (error) {
-    console.error("Error saving lead:", error);
-  }
-});
-
-// Endpoint to retrieve all leads from DB
 app.get("/api/get-all-leads", async (req, res) => {
   try {
     const leads = await Lead.find().sort({ createdAt: -1 }); // Sort by latest leads first
@@ -1250,6 +1203,264 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
   } catch (error) {
     console.error("Error fetching leads:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+const FetchedLead = mongoose.model("FetchedLead", leadSchema, "fetchedleads"); 
+
+app.post("/api/store-fetched-lead", async (req, res) => {
+  try {
+    const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text } = req.body;
+
+    if (!name || !mobile || !user_mobile_number || !lead_bought || !timestamp_text) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    
+    // Check for duplicate leads
+    const existingLead = await FetchedLead.findOne({
+      mobile,
+      user_mobile_number,
+      lead_bought,
+    });
+    
+    // If duplicate found within last X minutes
+    if (existingLead) {
+      const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
+      if (timeDiff < 300) { // e.g. within 5 minutes
+        console.log("Duplicate lead detected. Skipping.");
+        return res.status(409).json({ error: "Duplicate lead detected" });
+      }
+    }
+    
+    // Store the new lead
+    const newLead = new FetchedLead({
+      name,
+      email,
+      mobile,
+      user_mobile_number,
+      lead_bought,
+      createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
+    });
+    await newLead.save();
+    
+    console.log("Lead Data Stored:", newLead);
+    
+  } catch (error) {
+    console.error("Error saving lead:", error);
+  }
+});
+
+// Backend API endpoint to fetch all leads for a user
+app.get("/api/get-user-leads/:userMobile", async (req, res) => {
+  try {
+    const { userMobile } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    if (!userMobile) {
+      return res.status(400).json({ error: "User mobile number is required" });
+    }
+
+    // Get total count for pagination
+    const totalLeads = await FetchedLead.countDocuments({
+      user_mobile_number: userMobile
+    });
+
+    // Fetch leads with pagination
+    const leads = await FetchedLead.find({
+      user_mobile_number: userMobile
+    })
+    .sort({ createdAt: -1 }) // Sort by newest first
+    .skip(skip)
+    .limit(limit)
+    .select('name email mobile lead_bought createdAt'); // Select only needed fields
+
+    const totalPages = Math.ceil(totalLeads / limit);
+
+    res.status(200).json({
+      success: true,
+      leads,
+      totalLeads,
+      totalPages,
+      currentPage: page,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    });
+
+  } catch (error) {
+    console.error("Error fetching user leads:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: error.message 
+    });
+  }
+});
+
+// Optional: Get leads count for a specific user
+app.get("/api/get-user-leads-count/:userMobile", async (req, res) => {
+  try {
+    const { userMobile } = req.params;
+
+    if (!userMobile) {
+      return res.status(400).json({ error: "User mobile number is required" });
+    }
+
+    const count = await FetchedLead.countDocuments({
+      user_mobile_number: userMobile
+    });
+
+    res.status(200).json({
+      success: true,
+      count
+    });
+
+  } catch (error) {
+    console.error("Error fetching leads count:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: error.message 
+    });
+  }
+});
+
+// Optional: Get leads with filters (date range, lead source, etc.)
+app.get("/api/get-filtered-leads/:userMobile", async (req, res) => {
+  try {
+    const { userMobile } = req.params;
+    const { 
+      page = 1, 
+      limit = 10, 
+      leadSource, 
+      startDate, 
+      endDate,
+      search 
+    } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    if (!userMobile) {
+      return res.status(400).json({ error: "User mobile number is required" });
+    }
+
+    // Build filter query
+    let filterQuery = { user_mobile_number: userMobile };
+
+    // Filter by lead source
+    if (leadSource) {
+      filterQuery.lead_bought = leadSource;
+    }
+
+    // Filter by date range
+    if (startDate || endDate) {
+      filterQuery.createdAt = {};
+      if (startDate) {
+        filterQuery.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        filterQuery.createdAt.$lte = new Date(endDate);
+      }
+    }
+
+    // Search in name, email, or mobile
+    if (search) {
+      filterQuery.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { mobile: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get total count for pagination
+    const totalLeads = await FetchedLead.countDocuments(filterQuery);
+
+    // Fetch leads with filters and pagination
+    const leads = await FetchedLead.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .select('name email mobile lead_bought createdAt');
+
+    const totalPages = Math.ceil(totalLeads / parseInt(limit));
+
+    res.status(200).json({
+      success: true,
+      leads,
+      totalLeads,
+      totalPages,
+      currentPage: parseInt(page),
+      hasNextPage: parseInt(page) < totalPages,
+      hasPrevPage: parseInt(page) > 1,
+      filters: {
+        leadSource,
+        startDate,
+        endDate,
+        search
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching filtered leads:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: error.message 
+    });
+  }
+});
+
+// Export leads to CSV
+app.get("/api/export-leads/:userMobile", async (req, res) => {
+  try {
+    const { userMobile } = req.params;
+    const { leadSource, startDate, endDate } = req.query;
+
+    if (!userMobile) {
+      return res.status(400).json({ error: "User mobile number is required" });
+    }
+
+    // Build filter query
+    let filterQuery = { user_mobile_number: userMobile };
+
+    if (leadSource) {
+      filterQuery.lead_bought = leadSource;
+    }
+
+    if (startDate || endDate) {
+      filterQuery.createdAt = {};
+      if (startDate) {
+        filterQuery.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        filterQuery.createdAt.$lte = new Date(endDate);
+      }
+    }
+
+    // Fetch all leads matching the filter
+    const leads = await FetchedLead.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .select('name email mobile lead_bought createdAt');
+
+    // Convert to CSV format
+    const csvHeader = 'Name,Email,Mobile,Lead Source,Date\n';
+    const csvRows = leads.map(lead => {
+      const date = new Date(lead.createdAt).toLocaleDateString();
+      return `"${lead.name}","${lead.email || ''}","${lead.mobile}","${lead.lead_bought}","${date}"`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="leads_${userMobile}_${new Date().toISOString().split('T')[0]}.csv"`);
+    
+    res.status(200).send(csvContent);
+
+  } catch (error) {
+    console.error("Error exporting leads:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: error.message 
+    });
   }
 });
 

@@ -61,86 +61,86 @@ const SUBSCRIPTION_DURATIONS = {
   "year-mo": 365,
 };
 
-cron.schedule(
-  "0 * * * *", // Runs every hour
-  async () => {
-    console.log("Running scheduled task: Updating Sheets IDs...");
+// cron.schedule(
+//   "0 * * * *", // Runs every hour
+//   async () => {
+//     console.log("Running scheduled task: Updating Sheets IDs...");
 
-    try {
-      // Get users with valid API key & Sheets ID
-      const eligibleUsers = await User.find(
-        { apiKey: { $ne: null }, sheetsId: { $ne: null } },
-        "email apiKey sheetsId"
-      );
+//     try {
+//       // Get users with valid API key & Sheets ID
+//       const eligibleUsers = await User.find(
+//         { apiKey: { $ne: null }, sheetsId: { $ne: null } },
+//         "email apiKey sheetsId"
+//       );
 
-      console.log(
-        `Found ${eligibleUsers.length} users with valid API and Sheets ID.`
-      );
+//       console.log(
+//         `Found ${eligibleUsers.length} users with valid API and Sheets ID.`
+//       );
 
-      let processedCount = 0;
+//       let processedCount = 0;
 
-      for (const user of eligibleUsers) {
-        // Get latest payment record for the user
-        const lastPayment = await Payment.findOne({ email: user.email }).sort({
-          created_at: -1,
-        });
+//       for (const user of eligibleUsers) {
+//         // Get latest payment record for the user
+//         const lastPayment = await Payment.findOne({ email: user.email }).sort({
+//           created_at: -1,
+//         });
 
-        if (!lastPayment) {
-          console.log(`Skipping ${user.email}: No payment record found.`);
-          continue;
-        }
+//         if (!lastPayment) {
+//           console.log(`Skipping ${user.email}: No payment record found.`);
+//           continue;
+//         }
 
-        // Calculate expiration date
-        const subscriptionDays =
-          SUBSCRIPTION_DURATIONS[lastPayment.subscription_type];
-        if (!subscriptionDays) {
-          console.log(`Skipping ${user.email}: Unknown subscription type.`);
-          continue;
-        }
+//         // Calculate expiration date
+//         const subscriptionDays =
+//           SUBSCRIPTION_DURATIONS[lastPayment.subscription_type];
+//         if (!subscriptionDays) {
+//           console.log(`Skipping ${user.email}: Unknown subscription type.`);
+//           continue;
+//         }
 
-        const expirationDate = new Date(lastPayment.created_at);
-        expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+//         const expirationDate = new Date(lastPayment.created_at);
+//         expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
 
-        // Check if the subscription is still active
-        if (new Date() > expirationDate) {
-          console.log(
-            `Skipping ${
-              user.email
-            }: Subscription expired on ${expirationDate.toDateString()}.`
-          );
-          continue;
-        }
+//         // Check if the subscription is still active
+//         if (new Date() > expirationDate) {
+//           console.log(
+//             `Skipping ${
+//               user.email
+//             }: Subscription expired on ${expirationDate.toDateString()}.`
+//           );
+//           continue;
+//         }
 
-        try {
-          console.log(`Updating Sheets ID for: ${user.email}`);
+//         try {
+//           console.log(`Updating Sheets ID for: ${user.email}`);
 
-          await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
-            email: user.email,
-            apiKey: user.apiKey,
-            sheetsId: user.sheetsId,
-            throughUpdate: 0,
-          });
+//           await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
+//             email: user.email,
+//             apiKey: user.apiKey,
+//             sheetsId: user.sheetsId,
+//             throughUpdate: 0,
+//           });
 
-          console.log(`Successfully updated Sheets ID for ${user.email}`);
-          processedCount++;
-        } catch (error) {
-          console.error(
-            `Error updating Sheets ID for ${user.email}:`,
-            error.message
-          );
-        }
-      }
+//           console.log(`Successfully updated Sheets ID for ${user.email}`);
+//           processedCount++;
+//         } catch (error) {
+//           console.error(
+//             `Error updating Sheets ID for ${user.email}:`,
+//             error.message
+//           );
+//         }
+//       }
 
-      console.log(`Completed processing. Updated ${processedCount} users.`);
-    } catch (error) {
-      console.error("Error fetching users:", error.message);
-    }
-  },
-  {
-    scheduled: true,
-    timezone: "Asia/Kolkata",
-  }
-);
+//       console.log(`Completed processing. Updated ${processedCount} users.`);
+//     } catch (error) {
+//       console.error("Error fetching users:", error.message);
+//     }
+//   },
+//   {
+//     scheduled: true,
+//     timezone: "Asia/Kolkata",
+//   }
+// );
 router.post("/check-script-status", checkScriptStatus);
 router.post("/stop-api-script", stopScript);
 
