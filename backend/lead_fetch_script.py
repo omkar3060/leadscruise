@@ -88,6 +88,7 @@ def stop_execution(signum, frame):
 
 # Bind signal handler
 signal.signal(signal.SIGINT, stop_execution)
+signal.signal(signal.SIGTERM, stop_execution)
 
 input_line = sys.stdin.readline()
 input_data = json.loads(input_line.strip())
@@ -113,7 +114,7 @@ def parse_timestamp(timestamp_text):
         dt = datetime.strptime(f"{timestamp_text} {now.year}", "%d %b %Y")
         return dt.isoformat()
 
-def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, timestamp_text=None):
+def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, timestamp_text=None, uniqueId=None):
     global lead_bought  # Access the global variable
 
     try:
@@ -128,7 +129,8 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, ti
         "mobile": mobile,
         "user_mobile_number": user_mobile_number,
         "lead_bought": lead_bought if lead_bought else "Not Available",
-        "timestamp_text": iso_timestamp
+        "timestamp_text": iso_timestamp,
+        "uniqueId": uniqueId  # Add uniqueId to identify the process
     }
     if email:
         data["email"] = email
@@ -137,10 +139,22 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, ti
 
     try:
         response = requests.post(url, json=data)
-        if response.status_code == 200:
+        
+        # Check for duplicate lead detection - stop script immediately
+        if response.status_code == 409:
+            response_data = response.json() if response.headers.get('content-type') == 'application/json' else {}
+            if response_data.get('error') == 'DUPLICATE_LEAD_STOP_SCRIPT' or 'script_terminated' in response.text:
+                print("Duplicate lead detected. Stopping script immediately...", flush=True)
+                print(f"Response: {response.text}", flush=True)
+                sys.exit(0)  # Stop the script immediately
+        
+        elif response.status_code == 200:
             print("Lead data sent successfully!", flush=True)
         else:
             print(f"Failed to send data: {response.text}", flush=True)
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Request error sending data to backend: {e}", flush=True)
     except Exception as e:
         print(f"Error sending data to backend: {e}", flush=True)
 
@@ -207,7 +221,6 @@ def process_messages_incrementally(driver):
     no_new_messages_count = 0
     
     while scroll_attempts < max_scroll_attempts:
-        driver.get(third_url)
         print(f"\n--- Scroll attempt {scroll_attempts + 1} ---", flush=True)
         
         # Scroll to current position
@@ -235,7 +248,7 @@ def process_messages_incrementally(driver):
                     company_text = "Unknown"
                 
                 # Create identifier
-                message_id = f"{timestamp_text}_{company_text}_{msg_index}"
+                message_id = f"{timestamp_text}_{company_text}"
                 
                 # Skip if already processed
                 if message_id in processed_identifiers:
@@ -357,7 +370,7 @@ def process_single_message(driver, message_element, timestamp, company, return_u
             print(f"Error sending data to dashboard: {e}", flush=True)
         
         # Return to message center
-        driver.get(return_url)
+        # driver.get(return_url)
         time.sleep(3)
         
         # Hide tooltip again
@@ -376,7 +389,6 @@ def process_single_message(driver, message_element, timestamp, company, return_u
         
         # Try to return to message center
         try:
-            driver.get(return_url)
             time.sleep(3)
         except:
             pass
@@ -390,7 +402,6 @@ def go_to_message_center_and_click(driver):
     
     # Navigate to message center
     third_url = "https://seller.indiamart.com/messagecentre/"
-    driver.get(third_url)
     time.sleep(5)
     
     # Hide tooltip

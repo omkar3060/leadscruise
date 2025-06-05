@@ -582,34 +582,54 @@ def execute_task_one(driver, wait):
             # Start OTP listener thread
             otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
             otp_thread.start()
-            
-            # Wait for OTP to be received (with timeout)
-            print("Waiting for OTP input...",flush=True)
-            if otp_event.wait(timeout=60):  # Wait up to 60 seconds for OTP
-                if received_otp and len(received_otp) == 4 and received_otp.isdigit():
-                    # Enter OTP digit by digit
-                    otp_fields = ["first", "second", "third", "fourth_num"]
-                    for i, field_id in enumerate(otp_fields):
+            start_time = time.time()
+            print("Waiting for OTP input...", flush=True)
+
+            while time.time() - start_time < 90:
+                if otp_event.wait(timeout=5):  # Wait for OTP signal in small chunks
+                    otp_event.clear()  # Reset event for next attempt
+
+                    if received_otp and len(received_otp) == 4 and received_otp.isdigit():
+                        otp_fields = ["first", "second", "third", "fourth_num"]
+                        for i, field_id in enumerate(otp_fields):
+                            try:
+                                otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+                                otp_input.clear()
+                                otp_input.send_keys(received_otp[i])
+                            except (TimeoutException, NoSuchElementException):
+                                print(f"Could not find OTP field: {field_id}", flush=True)
+                                return "Unsuccessful"
+
+                        print("Entered OTP successfully.", flush=True)
+
                         try:
-                            otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
-                            otp_input.clear()
-                            otp_input.send_keys(received_otp[i])
-                        except (TimeoutException, NoSuchElementException):
-                            print(f"Could not find OTP field: {field_id}",flush=True)
-                            return "Unsuccessful"
-                    
-                    print("Entered OTP successfully.",flush=True)
-                    
-                    # Click submit OTP button if it exists
-                    otp_submit_button = wait.until(EC.element_to_be_clickable((By.ID, "sbmtbtnOtp")))
-                    otp_submit_button.click()
-                    print("Clicked 'Submit OTP' button.",flush=True)
+                            otp_submit_button = wait.until(EC.element_to_be_clickable((By.ID, "sbmtbtnOtp")))
+                            otp_submit_button.click()
+                            print("Clicked 'Submit OTP' button.", flush=True)
+                            time.sleep(2)
+
+                            # Check if OTP was correct
+                            try:
+                                error_elem = driver.find_element(By.ID, "otp_verify_err")
+                                if error_elem.is_displayed() and "Incorrect OTP" in error_elem.text:
+                                    print("OTP_FAILED_INCORRECT", flush=True)
+                                    continue  # Allow another attempt if time allows
+                            except NoSuchElementException:
+                                pass  # No error means success, break out of loop
+                            break
+                        except Exception as e:
+                            print(f"Failed to click OTP submit button: {e}", flush=True)
+                            continue
+                    else:
+                        print("Invalid OTP format received.", flush=True)
                 else:
-                    print("Invalid OTP received.",flush=True)
-                    return "Unsuccessful"
-            else:
-                print("Timeout waiting for OTP.",flush=True)
+                    print("Still waiting for OTP...", flush=True)
+
+            # Final check after loop ends
+            if time.time() - start_time >= 90:
+                print("Timeout waiting for correct OTP.", flush=True)
                 return "Unsuccessful"
+            
                 
         except (TimeoutException, NoSuchElementException) as e:
             print(f"OTP flow failed: {e}",flush=True)

@@ -507,6 +507,7 @@ cron.schedule("0 6 * * *", async () => {
 });
 
 const otpRequests = new Map();
+const otpFailures = new Map(); // <uniqueId, true>
 
 app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
@@ -611,30 +612,30 @@ app.post("/api/cycle", async (req, res) => {
     const dataString = data.toString();
     console.log("Python script stdout:", data.toString());
     result += data.toString();
-      // Check for buyer balance information
-      if (dataString.includes("BUYER_BALANCE:")) {
-        const balanceMatch = dataString.match(/BUYER_BALANCE:(\d+)/);
-        if (balanceMatch && balanceMatch[1]) {
-          const balance = parseInt(balanceMatch[1], 10);
-          
-          // Update user's balance in the database
-          User.findOneAndUpdate(
-            { email: userEmail },
-            { buyerBalance: balance },
-            { new: true }
-          ).then((updatedUser) => {
-            console.log(`Updated buyer balance for ${userEmail} to ${balance}`);
-          }).catch(err => {
-            console.error("Error updating buyer balance:", err);
-          });
-        }
+    // Check for buyer balance information
+    if (dataString.includes("BUYER_BALANCE:")) {
+      const balanceMatch = dataString.match(/BUYER_BALANCE:(\d+)/);
+      if (balanceMatch && balanceMatch[1]) {
+        const balance = parseInt(balanceMatch[1], 10);
+
+        // Update user's balance in the database
+        User.findOneAndUpdate(
+          { email: userEmail },
+          { buyerBalance: balance },
+          { new: true }
+        ).then((updatedUser) => {
+          console.log(`Updated buyer balance for ${userEmail} to ${balance}`);
+        }).catch(err => {
+          console.error("Error updating buyer balance:", err);
+        });
       }
-      
-      // Check for zero balance alert
-      if (dataString.includes("ZERO_BALANCE_DETECTED")) {
-        // Just log this for now, the balance update above will handle setting to 0
-        console.log("Zero balance detected for user:", userEmail);
-      }
+    }
+
+    // Check for zero balance alert
+    if (dataString.includes("ZERO_BALANCE_DETECTED")) {
+      // Just log this for now, the balance update above will handle setting to 0
+      console.log("Zero balance detected for user:", userEmail);
+    }
 
     // Check for OTP request from Python script
     if (dataString.includes("OTP_REQUEST_INITIATED")) {
@@ -648,7 +649,12 @@ app.post("/api/cycle", async (req, res) => {
       });
     }
 
-    });
+    if (dataString.includes("OTP_FAILED_INCORRECT")) {
+      console.log("Incorrect OTP detected for", uniqueId);
+      otpFailures.set(uniqueId, true);
+    }
+
+  });
 
   pythonProcess.stderr.on("data", (data) => {
     console.error("Python script stderr:", data.toString());
@@ -685,6 +691,7 @@ app.post("/api/cycle", async (req, res) => {
     clearInterval(leadCheckInterval); // Stop checking when script completes
     activePythonProcesses.delete(uniqueId); // Remove from tracking
     otpRequests.delete(uniqueId);
+    otpFailures.delete(uniqueId);
     console.log(`Python script exited with code: ${code}`);
 
     // Cleanup display lock file
@@ -710,100 +717,10 @@ app.post("/api/cycle", async (req, res) => {
   });
 });
 
-app.post("/api/start-fetching-leads", async (req, res) => {
-  console.log("Received raw data:", JSON.stringify(req.body, null, 2));
-  let {
-    mobileNumber,
-    password,
-    uniqueId,
-    userEmail,
-  } = req.body;
-
-  if (!req.body || Object.keys(req.body).length === 0) {
-    return res.status(400).json({
-      status: "error",
-      message: "Empty request body. Ensure the request has a JSON payload.",
-    });
-  }
-
-  if (!mobileNumber || !password || !userEmail || !uniqueId) {
-    return res.status(400).json({
-      status: "error",
-      message: "Mobile number, Email, password, and uniqueId are required.",
-    });
-  }
-
-  // Get current time
-  const startTime = new Date();
-
-  const inputData = JSON.stringify({
-    mobileNumber,
-    password,
-    uniqueId,
-  });
-
-  console.log("Spawning Python process for 'lead_fetch_script.py'...");
-
-  const pythonProcess = spawn("python3", ["-u", "lead_fetch_script.py"]);
-
-  // Store the Python process reference using `uniqueId`
-  activePythonProcesses.set(uniqueId+100000, pythonProcess);
-
-  console.log("Sending data to Python script:", inputData);
-  pythonProcess.stdin.write(inputData + "\n");
-
-  let result = "";
-  let error = "";
-
-  pythonProcess.stdout.on("data", (data) => {
-    const dataString = data.toString();
-    console.log("Python script stdout:", data.toString());
-    result += data.toString();
-
-    // Check for OTP request from Python script
-    if (dataString.includes("OTP_REQUEST_INITIATED")) {
-      console.log("OTP request detected for uniqueId:", uniqueId);
-      const requestId = Date.now().toString(); // Generate unique request ID
-      otpRequests.set(uniqueId, {
-        requestId,
-        timestamp: new Date(),
-        otpReceived: false,
-        otp: null
-      });
-    }
-
-    });
-
-  pythonProcess.stderr.on("data", (data) => {
-    console.error("Python script stderr:", data.toString());
-    error += data.toString();
-  });
-
-  pythonProcess.on("close", async (code) => {
-    pythonProcess.stdin.end();
-    clearInterval(leadCheckInterval); // Stop checking when script completes
-    activePythonProcesses.delete(uniqueId); // Remove from tracking
-    otpRequests.delete(uniqueId);
-    console.log(`Python script exited with code: ${code}`);
-
-    // Cleanup display lock file
-    cleanupDisplay(uniqueId);
-
-    if (code === 0) {
-      res.json({ status: "success", message: "Successfully executed!!" });
-    } else {
-      res.status(500).json({
-        status: "error",
-        message: `AI failed`,
-      });
-    }
-  });
-});
-
 app.get("/api/check-otp-request/:uniqueId", (req, res) => {
   const { uniqueId } = req.params;
   const otpRequest = otpRequests.get(uniqueId);
-  
+
   if (otpRequest && !otpRequest.otpReceived) {
     res.json({
       otpRequired: true,
@@ -816,31 +733,40 @@ app.get("/api/check-otp-request/:uniqueId", (req, res) => {
   }
 });
 
+app.get("/api/check-otp-failure/:uniqueId", (req, res) => {
+  const { uniqueId } = req.params;
+  if (otpFailures.has(uniqueId)) {
+    return res.json({ otpFailed: true });
+  } else {
+    return res.json({ otpFailed: false });
+  }
+});
+
 // New endpoint to submit OTP
 app.post("/api/submit-otp", async (req, res) => {
   const { otp, userEmail, uniqueId, requestId } = req.body;
-  
+
   if (!otp || !uniqueId || !requestId) {
     return res.status(400).json({
       status: "error",
       message: "OTP, uniqueId, and requestId are required."
     });
   }
-  
+
   const otpRequest = otpRequests.get(uniqueId);
-  
+
   if (!otpRequest || otpRequest.requestId !== requestId) {
     return res.status(400).json({
       status: "error",
       message: "Invalid OTP request."
     });
   }
-  
+
   // Update the OTP request with the received OTP
   otpRequest.otp = otp;
   otpRequest.otpReceived = true;
   otpRequests.set(uniqueId, otpRequest);
-  
+
   // Send OTP to Python script
   const pythonProcess = activePythonProcesses.get(uniqueId);
   if (pythonProcess && !pythonProcess.killed) {
@@ -861,7 +787,7 @@ app.post("/api/submit-otp", async (req, res) => {
       message: "Automation script is not running."
     });
   }
-  
+
   res.json({
     status: "success",
     message: "OTP submitted successfully."
@@ -944,12 +870,12 @@ function cleanupDisplay(uniqueId) {
 app.get("/api/user/balance", async (req, res) => {
   try {
     const { email } = req.query;
-    const user = await User.findOne({ email});
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    
-    res.json({ 
+
+    res.json({
       buyerBalance: user.buyerBalance,
       hasZeroBalance: user.buyerBalance === 0
     });
@@ -970,22 +896,22 @@ const leadSchema = new mongoose.Schema({
 });
 
 const Lead = mongoose.model("Lead", leadSchema);
-const WhatsAppSettings = require("./models/WhatsAppSettings"); 
+const WhatsAppSettings = require("./models/WhatsAppSettings");
 // Endpoint to receive lead data from Selenium script and store in DB
 app.post("/api/store-lead", async (req, res) => {
   try {
     const { name, email, mobile, user_mobile_number, lead_bought } = req.body;
-    
+
     if (!name || !mobile || !user_mobile_number || !lead_bought) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    
+
     // Fetch user lead counter
     let userCounter = await UserLeadCounter.findOne({ user_mobile_number });
     if (!userCounter) {
       userCounter = new UserLeadCounter({ user_mobile_number, leadCount: 0 });
     }
-    
+
     // Stop script if limit is reached
     if (userCounter.leadCount >= userCounter.maxCaptures) {
       console.log("Lead limit reached for user:", user_mobile_number);
@@ -993,14 +919,14 @@ app.post("/api/store-lead", async (req, res) => {
         error: "Lead limit reached. Cannot capture more leads today.",
       });
     }
-    
+
     // Check for duplicate leads
     const existingLead = await Lead.findOne({
       mobile,
       user_mobile_number,
       lead_bought,
     });
-    
+
     // If duplicate found within last X minutes
     if (existingLead) {
       const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
@@ -1009,7 +935,7 @@ app.post("/api/store-lead", async (req, res) => {
         return res.status(409).json({ error: "Duplicate lead detected" });
       }
     }
-    
+
     // Store the new lead
     const newLead = new Lead({
       name,
@@ -1020,16 +946,16 @@ app.post("/api/store-lead", async (req, res) => {
       createdAt: new Date(),
     });
     await newLead.save();
-    
+
     // Increment lead count
     userCounter.leadCount += 1;
     await userCounter.save();
-    
+
     console.log("Lead Data Stored:", newLead);
-    
+
     // Fetch WhatsApp settings
     const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
-    
+
     if (!settings || !settings.whatsappNumber || !settings.messages) {
       console.warn("No WhatsApp settings found for this user");
       return res.json({ message: "Lead data stored successfully", lead: newLead });
@@ -1037,14 +963,14 @@ app.post("/api/store-lead", async (req, res) => {
       const receiverNumber = mobile; // Use the mobile number from the lead
       const messagesJSON = JSON.stringify(settings.messages);
       const whatsappNumber = settings.whatsappNumber;
-      
+
       console.log("Launching WhatsApp script with parameters:");
       console.log("WhatsApp Number:", whatsappNumber);
       console.log("Receiver Number:", receiverNumber);
-      
+
       // Do NOT respond to the client yet - we'll wait for the full WhatsApp process
       // to complete or timeout before responding
-      
+
       // Process the WhatsApp messaging and WAIT for completion
       try {
         // Create a promise to handle the Python process
@@ -1052,7 +978,7 @@ app.post("/api/store-lead", async (req, res) => {
           let verificationCode = null;
           let errorOutput = "";
           let isCompleted = false;
-          
+
           // Start the Python process
           const pythonProcess = spawn('python3', [
             'whatsapp.py',
@@ -1060,25 +986,25 @@ app.post("/api/store-lead", async (req, res) => {
             messagesJSON,
             receiverNumber,
           ]);
-          
+
           const rl = readline.createInterface({ input: pythonProcess.stdout });
-          
+
           rl.on('line', async (line) => {
             console.log(`Python output: ${line}`);
-            
+
             // Handle specific errors that should be ignored
-            if (line.includes("504 Gateway Time-out") || 
-                line.includes("Failed to send data") ||
-                line.includes("Send button not found or not clickable")) {
+            if (line.includes("504 Gateway Time-out") ||
+              line.includes("Failed to send data") ||
+              line.includes("Send button not found or not clickable")) {
               console.warn("Detected known error but continuing execution:", line);
               // These are expected errors we want to ignore
             }
-            
+
             const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
             if (codeMatch && codeMatch[1]) {
               verificationCode = codeMatch[1];
               console.log(`Verification code captured: ${verificationCode}`);
-              
+
               try {
                 // Update the verificationCode immediately in DB
                 await WhatsAppSettings.findOneAndUpdate(
@@ -1093,80 +1019,80 @@ app.post("/api/store-lead", async (req, res) => {
               }
             }
           });
-          
+
           pythonProcess.stderr.on('data', (data) => {
             const errorMsg = data.toString();
             errorOutput += errorMsg;
             console.error(`Python error: ${errorMsg}`);
-            
+
             // Don't fail for specific errors that we want to tolerate
             if (errorMsg.includes("Send button not found or not clickable")) {
               console.warn("Send button issue detected, continuing with process");
               // We don't want to fail the entire process for this error
             }
           });
-          
+
           pythonProcess.on('close', (code) => {
             if (isCompleted) return; // Prevent double resolution
             isCompleted = true;
-            
+
             console.log(`WhatsApp script exited with code ${code}`);
-            
+
             if (code === 0 || code === null) {
               // Consider both 0 and null (killed by timeout) as successful completions
               resolve({ success: true, verificationCode });
             } else {
-              resolve({ 
-                success: false, 
-                code, 
+              resolve({
+                success: false,
+                code,
                 error: errorOutput,
                 message: `WhatsApp script failed with code ${code}`
               });
             }
           });
-          
+
           pythonProcess.on('error', (err) => {
             if (isCompleted) return;
             isCompleted = true;
-            
+
             console.error("Failed to start Python process:", err);
             reject(err);
           });
-          
+
           // Set a hard timeout to ensure we ALWAYS wait the full 10 minutes
           // This guarantees we won't process another WhatsApp request until this one is done
           const timeout = setTimeout(() => {
             if (isCompleted) return;
             isCompleted = true;
-            
+
             console.log("WhatsApp script reached the mandatory 10-minute timeout, completing process");
             pythonProcess.kill();
-            resolve({ 
-              success: true, 
+            resolve({
+              success: true,
               timeout: true,
               message: "WhatsApp script completed after full 10-minute wait",
               verificationCode
             });
           }, 10 * 60 * 1000); // Full 10 minutes (600,000 ms)
-          
+
           // Clear the timeout if the process completes before timeout
           pythonProcess.on('close', () => {
             clearTimeout(timeout);
           });
         });
-        
+
         // Wait for the Python process to complete - this will block for up to 10 minutes
         console.log("Waiting for WhatsApp script to complete (up to 10 minutes)...");
         const result = await pythonProcessPromise;
         console.log("WhatsApp script process completed:", result);
-        
+
         // NOW respond to the client after WhatsApp script has fully completed
         return res.json({
           message: "Lead data stored successfully and WhatsApp messaging completed",
           lead: newLead,
           whatsapp: result
         });
-        
+
       } catch (pythonError) {
         console.error("Error in WhatsApp script execution:", pythonError);
       }
@@ -1206,33 +1132,74 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
   }
 });
 
-const FetchedLead = mongoose.model("FetchedLead", leadSchema, "fetchedleads"); 
+const FetchedLead = mongoose.model("FetchedLead", leadSchema, "fetchedleads");
 
 app.post("/api/store-fetched-lead", async (req, res) => {
   try {
-    const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text } = req.body;
+    const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text, uniqueId } = req.body;
 
     if (!name || !mobile || !user_mobile_number || !lead_bought || !timestamp_text) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    
-    // Check for duplicate leads
+
+    // Check for duplicate leads     
     const existingLead = await FetchedLead.findOne({
+      name,
       mobile,
       user_mobile_number,
       lead_bought,
     });
-    
-    // If duplicate found within last X minutes
+
+    // If duplicate found, stop the Python script for this user
     if (existingLead) {
-      const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
-      if (timeDiff < 300) { // e.g. within 5 minutes
-        console.log("Duplicate lead detected. Skipping.");
-        return res.status(409).json({ error: "Duplicate lead detected" });
+      console.log("Duplicate lead detected. Stopping script for user:", user_mobile_number);
+
+      // Find and terminate the Python process for this user
+      const processKey = uniqueId ? uniqueId + 100000 : null;
+      if (processKey && activePythonProcesses.has(processKey)) {
+        const pythonProcess = activePythonProcesses.get(processKey);
+
+        // Try graceful termination first
+        try {
+          pythonProcess.kill('SIGTERM');
+
+          // If graceful termination doesn't work after 2 seconds, force kill
+          setTimeout(() => {
+            if (activePythonProcesses.has(processKey)) {
+              console.log(`Force killing Python process for uniqueId: ${uniqueId}`);
+              pythonProcess.kill('SIGKILL');
+            }
+          }, 2000);
+
+        } catch (error) {
+          console.error("Error terminating Python process:", error);
+          // Force kill if SIGTERM fails
+          pythonProcess.kill('SIGKILL');
+        }
+
+        // Remove from active processes
+        activePythonProcesses.delete(processKey);
+
+        // Clean up OTP requests
+        if (uniqueId && otpRequests.has(uniqueId)) {
+          otpRequests.delete(uniqueId);
+          otpFailures.delete(uniqueId);
+        }
+
+        // Cleanup display lock file
+        cleanupDisplay(uniqueId);
+
+        console.log(`Python process terminated for uniqueId: ${uniqueId}`);
       }
+
+      return res.status(409).json({
+        error: "DUPLICATE_LEAD_STOP_SCRIPT",
+        message: "Lead fetching stopped due to duplicate detection",
+        action: "script_terminated"
+      });
     }
-    
-    // Store the new lead
+
+    // Store the new lead     
     const newLead = new FetchedLead({
       name,
       email,
@@ -1242,12 +1209,119 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
     });
     await newLead.save();
-    
+
     console.log("Lead Data Stored:", newLead);
-    
+    return res.status(200).json({
+      message: "Lead stored successfully",
+      leadId: newLead._id
+    });
+
   } catch (error) {
     console.error("Error saving lead:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
+});
+
+app.post("/api/start-fetching-leads", async (req, res) => {
+  console.log("Received raw data:", JSON.stringify(req.body, null, 2));
+  let {
+    mobileNumber,
+    password,
+    uniqueId,
+    userEmail,
+  } = req.body;
+
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).json({
+      status: "error",
+      message: "Empty request body. Ensure the request has a JSON payload.",
+    });
+  }
+
+  if (!mobileNumber || !password || !userEmail || !uniqueId) {
+    return res.status(400).json({
+      status: "error",
+      message: "Mobile number, Email, password, and uniqueId are required.",
+    });
+  }
+
+  // Get current time
+  const startTime = new Date();
+  const inputData = JSON.stringify({
+    mobileNumber,
+    password,
+    uniqueId,
+  });
+
+  console.log("Spawning Python process for 'lead_fetch_script.py'...");
+  const pythonProcess = spawn("python3", ["-u", "lead_fetch_script.py"]);
+
+  // Store the Python process reference using `uniqueId`
+  const processKey = uniqueId + 100000;
+  activePythonProcesses.set(processKey, pythonProcess);
+
+  console.log("Sending data to Python script:", inputData);
+  pythonProcess.stdin.write(inputData + "\n");
+
+  let result = "";
+  let error = "";
+
+  pythonProcess.stdout.on("data", (data) => {
+    const dataString = data.toString();
+    console.log("Python script stdout:", data.toString());
+    result += data.toString();
+
+    // Check for OTP request from Python script
+    if (dataString.includes("OTP_REQUEST_INITIATED")) {
+      console.log("OTP request detected for uniqueId:", uniqueId);
+      const requestId = Date.now().toString(); // Generate unique request ID
+      otpRequests.set(uniqueId, {
+        requestId,
+        timestamp: new Date(),
+        otpReceived: false,
+        otp: null
+      });
+    }
+  });
+
+  pythonProcess.stderr.on("data", (data) => {
+    console.error("Python script stderr:", data.toString());
+    error += data.toString();
+  });
+
+  pythonProcess.on("close", async (code) => {
+    pythonProcess.stdin.end();
+    activePythonProcesses.delete(processKey); // Remove from tracking
+    otpRequests.delete(uniqueId);
+    otpFailures.delete(uniqueId);
+    console.log(`Python script exited with code: ${code}`);
+
+    // Cleanup display lock file
+    cleanupDisplay(uniqueId);
+
+    if (code === 0) {
+      res.json({ status: "success", message: "Successfully executed!!" });
+    } else if (code === null || code === 15) { // SIGTERM signal
+      res.json({
+        status: "terminated",
+        message: "Script terminated due to duplicate lead detection"
+      });
+    } else {
+      res.status(500).json({
+        status: "error",
+        message: `AI failed`,
+      });
+    }
+  });
+
+  // Handle process termination errors
+  pythonProcess.on('error', (err) => {
+    console.error('Python process error:', err);
+    activePythonProcesses.delete(processKey);
+    otpRequests.delete(uniqueId);
+    otpFailures.delete(uniqueId);
+    cleanupDisplay(uniqueId);
+  });
 });
 
 // Backend API endpoint to fetch all leads for a user
@@ -1271,10 +1345,10 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
     const leads = await FetchedLead.find({
       user_mobile_number: userMobile
     })
-    .sort({ createdAt: -1 }) // Sort by newest first
-    .skip(skip)
-    .limit(limit)
-    .select('name email mobile lead_bought createdAt'); // Select only needed fields
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(skip)
+      .limit(limit)
+      .select('name email mobile lead_bought createdAt'); // Select only needed fields
 
     const totalPages = Math.ceil(totalLeads / limit);
 
@@ -1290,9 +1364,9 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
 
   } catch (error) {
     console.error("Error fetching user leads:", error);
-    res.status(500).json({ 
-      error: "Internal server error", 
-      message: error.message 
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message
     });
   }
 });
@@ -1317,9 +1391,9 @@ app.get("/api/get-user-leads-count/:userMobile", async (req, res) => {
 
   } catch (error) {
     console.error("Error fetching leads count:", error);
-    res.status(500).json({ 
-      error: "Internal server error", 
-      message: error.message 
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message
     });
   }
 });
@@ -1328,13 +1402,13 @@ app.get("/api/get-user-leads-count/:userMobile", async (req, res) => {
 app.get("/api/get-filtered-leads/:userMobile", async (req, res) => {
   try {
     const { userMobile } = req.params;
-    const { 
-      page = 1, 
-      limit = 10, 
-      leadSource, 
-      startDate, 
+    const {
+      page = 1,
+      limit = 10,
+      leadSource,
+      startDate,
       endDate,
-      search 
+      search
     } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -1401,9 +1475,9 @@ app.get("/api/get-filtered-leads/:userMobile", async (req, res) => {
 
   } catch (error) {
     console.error("Error fetching filtered leads:", error);
-    res.status(500).json({ 
-      error: "Internal server error", 
-      message: error.message 
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message
     });
   }
 });
@@ -1452,14 +1526,14 @@ app.get("/api/export-leads/:userMobile", async (req, res) => {
     // Set headers for file download
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="leads_${userMobile}_${new Date().toISOString().split('T')[0]}.csv"`);
-    
+
     res.status(200).send(csvContent);
 
   } catch (error) {
     console.error("Error exporting leads:", error);
-    res.status(500).json({ 
-      error: "Internal server error", 
-      message: error.message 
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message
     });
   }
 });

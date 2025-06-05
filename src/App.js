@@ -245,7 +245,7 @@ const Layout = () => {
           path="/sheets"
           element={
             <ProtectedRoute>
-              <ComingSoonFeature />
+              <Sheets />
             </ProtectedRoute>
           }
         />
