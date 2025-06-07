@@ -134,12 +134,6 @@ const Sheets = () => {
     return date.toLocaleDateString();
   };
 
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      fetchLeads(newPage);
-    }
-  };
-
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
