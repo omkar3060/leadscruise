@@ -114,7 +114,7 @@ def parse_timestamp(timestamp_text):
         dt = datetime.strptime(f"{timestamp_text} {now.year}", "%d %b %Y")
         return dt.isoformat()
 
-def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, timestamp_text=None, uniqueId=None):
+def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, timestamp_text=None, uniqueId=None):
     global lead_bought  # Access the global variable
 
     try:
@@ -364,7 +364,7 @@ def process_single_message(driver, message_element, timestamp, company, return_u
         
         # Send data to dashboard
         try:
-            send_data_to_dashboard(left_name, mobile_number, email_id, user_mobile_number, timestamp)
+            send_data_to_sheets(left_name, mobile_number, email_id, user_mobile_number, timestamp)
             print(f"Successfully sent data to dashboard", flush=True)
         except Exception as e:
             print(f"Error sending data to dashboard: {e}", flush=True)
@@ -396,7 +396,7 @@ def process_single_message(driver, message_element, timestamp, company, return_u
         return False
 
 # REPLACE YOUR EXISTING FUNCTION WITH THIS ONE:
-def go_to_message_center_and_click(driver):
+def go_to_message_center_and_fetch(driver):
     """Updated main function using incremental processing"""
     print("Starting message center processing with incremental approach...", flush=True)
     
@@ -663,7 +663,7 @@ def main():
                 EC.presence_of_element_located((By.ID, "leftnav_dash_link"))
             )
             print("Dashboard found.",flush=True)
-            go_to_message_center_and_click(driver)
+            go_to_message_center_and_fetch(driver)
         except:
             print("Dashboard not found. Executing login process...",flush=True)
             result = execute_task_one(driver, wait)
@@ -683,7 +683,7 @@ def main():
                     EC.presence_of_element_located((By.ID, "leftnav_dash_link"))
                 )
                 print("Dashboard found.",flush=True)
-                go_to_message_center_and_click(driver)
+                go_to_message_center_and_fetch(driver)
             except:
                 print("Dashboard not found. Executing login process...",flush=True)
                 result = execute_task_one(driver, wait)
