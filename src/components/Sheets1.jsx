@@ -37,7 +37,7 @@ const Sheets = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalLeads, setTotalLeads] = useState(0);
   const leadsPerPage = 10;
-  
+
   const status = localStorage.getItem("status");
   const [isLoading, setIsLoading] = useState(true);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -102,25 +102,23 @@ const Sheets = () => {
     }
   };
 
-  const fetchLeads = async (page = 1) => {
+  const fetchLeads = async () => {
     try {
       setIsLoadingLeads(true);
       const userMobile = localStorage.getItem("mobileNumber");
-      
+
       if (!userMobile) {
         alert("User mobile number not found!");
         return;
       }
 
       const response = await axios.get(
-        `https://api.leadscruise.com/api/get-user-leads/${userMobile}?page=${page}&limit=${leadsPerPage}`
+        `https://api.leadscruise.com/api/get-user-leads/${userMobile}`
       );
 
       if (response.status === 200) {
         setLeads(response.data.leads);
-        setTotalPages(response.data.totalPages);
         setTotalLeads(response.data.totalLeads);
-        setCurrentPage(page);
       }
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -130,9 +128,13 @@ const Sheets = () => {
     }
   };
 
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    return date.toLocaleDateString();
   };
 
   const handlePageChange = (newPage) => {
@@ -172,101 +174,76 @@ const Sheets = () => {
       />
       <div className="settings-scroll-container">
         <div className="sheets-container">
-          <div className="table-container whatsapp-settings-table">
-            <button onClick={handleStart} style={{ marginBottom: '20px' }}>
-            Start
-          </button>
+          <div className="table-container">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2>Leads ({totalLeads})</h2>
-              <button 
-                onClick={() => fetchLeads(currentPage)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Refresh
-              </button>
             </div>
-            
+
             {isLoadingLeads ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
                 Loading leads...
               </div>
             ) : leads.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                No leads found
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  backgroundColor: '#fefefe',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                  maxWidth: '500px',
+                  margin: '40px auto',
+                }}
+              >
+                <div style={{ fontSize: '40px', color: '#999', marginBottom: '16px' }}>
+                  <span role="img" aria-label="no leads">📭</span>
+                </div>
+                <h3 style={{ color: '#555', marginBottom: '8px' }}>No leads found</h3>
+                <p style={{ color: '#777', fontSize: '14px' }}>
+                  We couldn't find any leads in the last 30 days.Try to fetch start by clicking on the start button.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  style={{
+                    marginTop: '20px',
+                    padding: '8px 16px',
+                    backgroundColor: '#007bff',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    marginBottom: '0px',
+                  }}
+                >
+                  Refresh
+                </button>
               </div>
             ) : (
-              <>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#f8f9fa' }}>
-                        <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Name</th>
-                        <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Email</th>
-                        <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Mobile</th>
-                        <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Lead Source</th>
-                        <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Date</th>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8f9fa' }}>
+                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Name</th>
+                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Email</th>
+                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Mobile</th>
+                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Lead Source</th>
+                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leads.map((lead, index) => (
+                      <tr key={lead._id || index} style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}>
+                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.name}</td>
+                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.email || 'N/A'}</td>
+                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.mobile}</td>
+                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.lead_bought}</td>
+                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{formatDate(lead.createdAt)}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {leads.map((lead, index) => (
-                        <tr key={lead._id || index} style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}>
-                          <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.name}</td>
-                          <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.email || 'N/A'}</td>
-                          <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.mobile}</td>
-                          <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.lead_bought}</td>
-                          <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{formatDate(lead.createdAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      style={{
-                        padding: '8px 12px',
-                        backgroundColor: currentPage === 1 ? '#6c757d' : '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      Previous
-                    </button>
-                    
-                    <span style={{ margin: '0 10px' }}>
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      style={{
-                        padding: '8px 12px',
-                        backgroundColor: currentPage === totalPages ? '#6c757d' : '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
           <ProfileCredentials isProfilePage={true} />

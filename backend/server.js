@@ -1324,42 +1324,30 @@ app.post("/api/start-fetching-leads", async (req, res) => {
   });
 });
 
-// Backend API endpoint to fetch all leads for a user
 app.get("/api/get-user-leads/:userMobile", async (req, res) => {
   try {
     const { userMobile } = req.params;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
 
     if (!userMobile) {
       return res.status(400).json({ error: "User mobile number is required" });
     }
 
-    // Get total count for pagination
+    // Get total count
     const totalLeads = await FetchedLead.countDocuments({
       user_mobile_number: userMobile
     });
 
-    // Fetch leads with pagination
+    // Fetch all leads without pagination
     const leads = await FetchedLead.find({
       user_mobile_number: userMobile
     })
       .sort({ createdAt: -1 }) // Sort by newest first
-      .skip(skip)
-      .limit(limit)
       .select('name email mobile lead_bought createdAt'); // Select only needed fields
-
-    const totalPages = Math.ceil(totalLeads / limit);
 
     res.status(200).json({
       success: true,
       leads,
-      totalLeads,
-      totalPages,
-      currentPage: page,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
+      totalLeads
     });
 
   } catch (error) {
@@ -1371,7 +1359,7 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
   }
 });
 
-// Optional: Get leads count for a specific user
+// Keep the count endpoint if needed elsewhere
 app.get("/api/get-user-leads-count/:userMobile", async (req, res) => {
   try {
     const { userMobile } = req.params;
