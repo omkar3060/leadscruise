@@ -33,8 +33,6 @@ const Sheets = () => {
   });
   const [leads, setLeads] = useState([]);
   const [isLoadingLeads, setIsLoadingLeads] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [totalLeads, setTotalLeads] = useState(0);
   const leadsPerPage = 10;
 
@@ -118,7 +116,6 @@ const Sheets = () => {
 
       if (response.status === 200) {
         setLeads(response.data.leads);
-        setTotalLeads(response.data.totalLeads);
       }
     } catch (error) {
       console.error("Error fetching leads:", error);
@@ -176,7 +173,7 @@ const Sheets = () => {
         <div className="sheets-container">
           <div className="table-container">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Leads ({totalLeads})</h2>
+              <h2>Leads purchased in the past 30 days</h2>
             </div>
 
             {isLoadingLeads ? (
@@ -201,7 +198,7 @@ const Sheets = () => {
                 </div>
                 <h3 style={{ color: '#555', marginBottom: '8px' }}>No leads found</h3>
                 <p style={{ color: '#777', fontSize: '14px' }}>
-                  We couldn't find any leads in the last 30 days.Try to fetch start by clicking on the start button.
+                  We couldn't find any leads in the last 30 days. Try to fetch them by clicking on the start button.
                 </p>
                 <button
                   onClick={() => window.location.reload()}
