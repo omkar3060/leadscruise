@@ -1018,8 +1018,7 @@ def execute_task_one(driver, wait):
             if time.time() - start_time >= 90:
                 print("Timeout waiting for correct OTP.", flush=True)
                 return "Unsuccessful"
-            
-                
+                    
         except (TimeoutException, NoSuchElementException) as e:
             print(f"OTP flow failed: {e}",flush=True)
             return "Unsuccessful"
@@ -1031,6 +1030,7 @@ def execute_task_one(driver, wait):
                 EC.presence_of_element_located((By.ID, "leftnav_dash_link"))
             )
             print("Sign in successful. 'Dashboard' element found.",flush=True)
+
             return "Success"
         except TimeoutException:
             print("Dashboard element not found after login. Sign in may have failed.",flush=True)
@@ -1040,6 +1040,97 @@ def execute_task_one(driver, wait):
         print(f"An error occurred during login: {e}",flush=True)
         return "Unsuccessful"
     
+def send_to_node_api(expert_details):
+    url = "https://api.leadscruise.com/api/support/bulk"
+
+    payload = []
+    for expert in expert_details:
+        if expert["email"]:
+            payload.append({
+                "name": expert.get("name", "Unknown"),
+                "email": expert["email"],
+                "phoneNumber": expert.get("phone", ""),
+            })
+
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        
+        print("Status Code:", response.status_code)
+        print("Raw Response Text:", response.text)
+
+        try:
+            data = response.json()
+            print("Parsed JSON Response:", data)
+        except ValueError:
+            print("Response is not JSON!")
+
+    except Exception as e:
+        print(f"Failed to send data to API: {e}")
+ 
+def get_expert_details(driver):
+    """
+    Extracts expert details from the '#expert_assistance_main_box' section.
+    Returns a list of dictionaries with name, role, phone, email, videoMeet, and photoUrl.
+    """
+    try:
+        # Wait for the DOM to load
+        time.sleep(2)
+
+        try:
+            expert_box = driver.find_element(By.ID, "expert_assistance_main_box")
+        except NoSuchElementException:
+            print("Expert box not found.")
+            return []
+
+        expert_elements = expert_box.find_elements(By.CLASS_NAME, "avtar_cont")
+        experts = []
+
+        for expert in expert_elements:
+            try:
+                name = expert.find_element(By.CSS_SELECTOR, "p.Dash_c10.SLC_f14.SLC_fwb").text.strip()
+            except NoSuchElementException:
+                name = None
+
+            try:
+                role = expert.find_element(By.CSS_SELECTOR, "p.SLC_f14.Dash_c11.Dash_p2").text.strip()
+            except NoSuchElementException:
+                role = None
+
+            try:
+                phone = expert.find_element(By.CSS_SELECTOR, ".SLC_dflx.SLC_aic .Dash_c12").text.strip()
+            except NoSuchElementException:
+                phone = None
+
+            try:
+                email = expert.find_element(By.CSS_SELECTOR, "a[href^='mailto:']").text.strip()
+            except NoSuchElementException:
+                email = None
+
+            try:
+                video_meet = expert.find_element(By.ID, "req_meet").text.strip()
+            except NoSuchElementException:
+                video_meet = None
+
+            try:
+                photo_url = expert.find_element(By.TAG_NAME, "img").get_attribute("src")
+            except NoSuchElementException:
+                photo_url = None
+
+            experts.append({
+                "name": name,
+                "role": role,
+                "phone": phone,
+                "email": email,
+                "videoMeet": video_meet,
+                "photoUrl": photo_url
+            })
+
+        return experts
+
+    except Exception as e:
+        print(f"Error while fetching expert details: {e}")
+        return []
+
 def main():
     global redirect_count
     """
@@ -1105,7 +1196,12 @@ def main():
             print("Dashboard not found. Executing login process...", flush=True)
             result = execute_task_one(driver, wait)
             print(f"Task Result: {result}", flush=True)
-
+            if result == "Success":
+                expert_details = get_expert_details(driver)
+                print(expert_details)
+                send_to_node_api(expert_details)
+            else:
+                print("Login failed, skipping expert data extraction.")
             # Exit if the login process is unsuccessful
             if result == "Unsuccessful":
                 print("Login failed. Exiting program...", flush=True)

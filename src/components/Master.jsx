@@ -349,7 +349,7 @@ const Master = () => {
 
   const handleSupportClick = () => {
     navigate("/master/support");
-};
+  };
 
   return (
     <div className={masterstyles.dashboardContainer}>
@@ -438,12 +438,12 @@ const Master = () => {
 
             <div className={masterstyles.tableActions}>
               <button
-              className={masterstyles.downloadButton}
-              onClick={handleSupportClick}
-              title="Support Team Details"
-            >
-              <span className={masterstyles.icon}>🧑‍💻</span>
-     </button>
+                className={masterstyles.downloadButton}
+                onClick={handleSupportClick}
+                title="Support Team Details"
+              >
+                <span className={masterstyles.icon}>🧑‍💻</span>
+              </button>
               <button
                 className={masterstyles.downloadButton}
                 onClick={() => navigate('/master/user-status')}

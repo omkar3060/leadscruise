@@ -87,7 +87,9 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
         const diffTime = renewalDate - today;
         const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+        if(remainingDays < 0) {
+          remainingDays = 0; // Ensure days left is not negative
+        }
         setDaysLeft(remainingDays);
         setIsSubscriptionActive(remainingDays > 0);
 

@@ -607,7 +607,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         </div>
       )}
       {/* LeadsCruise Credentials */}
-      {!isWhatsAppPage && !isSettingsPage && (
+      {!isWhatsAppPage && !isSettingsPage && !isSheetsPage && (
         <div className="credentials-section">
           <h3 className="credentials-header">LeadsCruise Credentials</h3>
           <div className="credentials-content">

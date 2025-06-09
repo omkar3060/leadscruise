@@ -194,6 +194,26 @@ router.get("/test/support-fetch", async (req, res) => {
   }
 });
 
+router.post("/bulk", async (req, res) => {
+  try {
+    const data = req.body;
+
+    const filtered = data.map((item) => ({
+      name: item.name || "Unknown",
+      email: item.email || `no-email-${Date.now()}@fake.com`,
+      phoneNumber: item.phone || "",
+    }));
+
+    // Use insertMany with upsert-like behavior
+    const inserted = await Support.insertMany(filtered, { ordered: false });
+
+    res.status(200).json({ message: "Support experts saved.", inserted });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to insert experts", error: err });
+  }
+});
+
 cron.schedule("0 0 * * *", async () => {
   console.log(
     "Running scheduled Support data fetch at",
