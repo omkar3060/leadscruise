@@ -225,7 +225,7 @@ def process_messages_incrementally(driver):
                 timestamp_text = timestamp_elem.text.strip()
                 
                 try:
-                    company_elem = msg.find_element(By.XPATH, ".//div[contains(@class, 'fs14') and contains(@class, 'fwb')]")
+                    company_elem = msg.find_element(By.XPATH, ".//div[contains(@class, 'fs12') and contains(@class, 'fwb')]")
                     company_text = company_elem.text.strip()
                 except:
                     company_text = "Unknown"
@@ -953,7 +953,6 @@ def execute_task_one(driver, wait):
         start_selling_button.click()
         print("Clicked 'Start Selling' button.",flush=True)
 
-            
         try:
             # Click 'Request OTP on Mobile' button
             received_otp = None

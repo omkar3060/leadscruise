@@ -237,7 +237,6 @@ const Sheets = () => {
               </div>
             )}
           </div>
-          <ProfileCredentials isProfilePage={true} />
         </div>
       </div>
     </div>

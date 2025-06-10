@@ -214,12 +214,4 @@ router.post("/bulk", async (req, res) => {
   }
 });
 
-cron.schedule("0 0 * * *", async () => {
-  console.log(
-    "Running scheduled Support data fetch at",
-    new Date().toISOString()
-  );
-  await fetchAndStoreSupportData();
-});
-
 module.exports = router;

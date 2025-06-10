@@ -53,10 +53,17 @@ const Dashboard = () => {
     type: null,
   });
   const [messageCount, setMessageCount] = useState(null);
-  const [showOtpPopup, setShowOtpPopup] = useState(false);
+  const [showOtpPopup, setShowOtpPopup] = useState(() => {
+  return localStorage.getItem("showOtpPopup") === "true";
+});
   const [otpValue, setOtpValue] = useState('');
   const [otpRequestId, setOtpRequestId] = useState(null);
-  const [showOtpWaitPopup, setShowOtpWaitPopup] = useState(false);
+  const [showOtpWaitPopup, setShowOtpWaitPopup] = useState(() => {
+    return localStorage.getItem("showOtpWaitPopup") === "true";
+  });
+  const [cancelled, setCancelled] = useState(() => {
+    return localStorage.getItem("cancelled") === "true";
+  });
   const [otpError, setOtpError] = useState('');
 
   useEffect(() => {
@@ -254,6 +261,16 @@ const Dashboard = () => {
   }, [timer, isDisabled]);
 
   useEffect(() => {
+  const status = localStorage.getItem("status");
+
+  if (status === "Running") {
+    localStorage.setItem("cancelled", "true");
+  } else {
+    localStorage.setItem("cancelled", "false");
+  }
+}, []);  // Reacts to status changes in localStorage
+
+  useEffect(() => {
     const fetchSettings = async () => {
       const userEmail = localStorage.getItem("userEmail");
 
@@ -336,23 +353,29 @@ const Dashboard = () => {
       setOtpValue('');
       // setOtpRequestId(null);
       alert("OTP submitted successfully!");
+      localStorage.setItem("cancelled", "false");
     } catch (error) {
       console.error("Error submitting OTP:", error);
       alert("Failed to submit OTP. Please try again.");
     }
   };
 
-useEffect(() => {
+  useEffect(() => {
   const uniqueId = localStorage.getItem("unique_id");
-  if (!uniqueId) return;
+
+  if (!uniqueId) return; // ⛔ Skip check if cancelled
 
   const failureInterval = setInterval(async () => {
+    const cancelled = localStorage.getItem("cancelled") === "true";
+    if (cancelled) return; // 🚫 Skip if cancelled
     try {
       const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
-      if (response.data.otpFailed) {
+      if (response.data.otpFailed && !cancelled) { // ✅ Ensure popup doesn't reappear
         setOtpError("Incorrect OTP. Please try again.");
         setShowOtpPopup(true);
-        setShowOtpWaitPopup(false); // Hide wait popup if OTP failed
+        localStorage.setItem("showOtpPopup", "true");
+        setShowOtpWaitPopup(false);
+        localStorage.setItem("showOtpWaitPopup", "false");
       }
     } catch (err) {
       // Ignore silently
@@ -362,35 +385,41 @@ useEffect(() => {
   return () => clearInterval(failureInterval);
 }, [showOtpPopup, otpRequestId]);
 
-  // Add WebSocket or polling to listen for OTP requests
-  useEffect(() => {
-    const uniqueId = localStorage.getItem("unique_id");
-    if (!uniqueId) return;
+useEffect(() => {
+  const uniqueId = localStorage.getItem("unique_id");
 
-    // Show the wait popup initially when automation starts
-    if (status === "Running" && timer > 150) {
-      setShowOtpWaitPopup(true);
-    } else {
-      setShowOtpWaitPopup(false);
-    }
+  if (!uniqueId) return;
 
-    const otpCheckInterval = setInterval(async () => {
-      if (status === "Running") {
-        try {
-          const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
-          if (response.data.otpRequired) {
-            setOtpRequestId(response.data.requestId);
-            setShowOtpPopup(true);
-            setShowOtpWaitPopup(false); // Hide wait popup once OTP is needed
-          }
-        } catch (error) {
-          // Silently ignore
-        }
+  if (status === "Running" && timer > 210) {
+    setShowOtpWaitPopup(true);
+    localStorage.setItem("showOtpWaitPopup", "true");
+  } else {
+    setShowOtpWaitPopup(false);
+    localStorage.setItem("showOtpWaitPopup", "false");
+  }
+
+  const otpCheckInterval = setInterval(async () => {
+    const cancelled = localStorage.getItem("cancelled") === "true"; // ✅ moved inside
+    if (cancelled || status !== "Running") return;
+
+    try {
+      const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
+      if (response.data.otpRequired) {
+        setOtpRequestId(response.data.requestId);
+        setShowOtpPopup(true);
+        localStorage.setItem("showOtpPopup", "true");
+        setShowOtpWaitPopup(false);
+        localStorage.setItem("showOtpWaitPopup", "false");
       }
-    }, 2000);
+    } catch (error) {
+      // Silently ignore
+    }
+  }, 2000);
 
-    return () => clearInterval(otpCheckInterval);
-  }, [status]);
+  return () => clearInterval(otpCheckInterval);
+}, [status]);
+
+
 
   const handleStart = async () => {
     try {
@@ -715,7 +744,7 @@ useEffect(() => {
   return (
     <div className={styles.dashboardContainer}>
 
-      {showOtpWaitPopup && !showOtpPopup && (
+      {showOtpWaitPopup && !showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
             <h3 className={styles['otp-popup-title']}>Please Wait...</h3>
@@ -746,15 +775,19 @@ useEffect(() => {
               autoFocus
             />
             {otpError && (
-        <p className={styles['otp-popup-description']}>{otpError}</p> // 👈 Display error here
-      )}
+              <p className={styles['otp-popup-description']}>{otpError}</p> // 👈 Display error here
+            )}
             <div className={styles['otp-buttons']}>
               <button
                 onClick={() => {
                   setShowOtpPopup(false);
+                  localStorage.setItem("showOtpPopup", "false");
                   setShowOtpWaitPopup(false);
+                  localStorage.setItem("showOtpWaitPopup", "false");
                   setOtpValue('');
                   setOtpRequestId(null);
+                  setCancelled(true);
+                  localStorage.setItem("cancelled", "true");
                 }}
                 className={`${styles['otp-button']} ${styles['otp-button-cancel']}`}
               >
