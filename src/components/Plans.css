@@ -199,7 +199,7 @@
   z-index: 1000;
   animation: fadeIn 0.3s ease-in-out;
 }
-.popup-content {
+/* .popup-content {
   background: #ffffff;
   padding: 2rem;
   border-radius: 16px;
@@ -207,7 +207,7 @@
   max-width: 420px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   font-family: 'Segoe UI', sans-serif;
-}
+} */
 
 .modal-content h2 {
   font-size: 1.4rem;

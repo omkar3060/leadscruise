@@ -197,20 +197,55 @@ router.get("/test/support-fetch", async (req, res) => {
 router.post("/bulk", async (req, res) => {
   try {
     const data = req.body;
+    console.log("Received data:", JSON.stringify(data, null, 2));
+    
+    const filtered = data.map((item, index) => {
+      const mappedItem = {
+        name: item.name || "Unknown",
+        email: item.email || `no-email-${Date.now()}-${index}@example.com`,
+        phoneNumber: item.phoneNumber || "", // Fixed: was item.phone
+      };
+      console.log(`Mapped item ${index}:`, mappedItem);
+      return mappedItem;
+    });
 
-    const filtered = data.map((item) => ({
-      name: item.name || "Unknown",
-      email: item.email || `no-email-${Date.now()}@fake.com`,
-      phoneNumber: item.phone || "",
-    }));
+    console.log("Filtered data:", JSON.stringify(filtered, null, 2));
 
-    // Use insertMany with upsert-like behavior
-    const inserted = await Support.insertMany(filtered, { ordered: false });
-
-    res.status(200).json({ message: "Support experts saved.", inserted });
+    // Try to insert and catch specific errors
+    const inserted = await Support.insertMany(filtered, { 
+      ordered: false,
+      rawResult: true // This gives more detailed results
+    });
+    
+    console.log("Insert result:", inserted);
+    
+    // Also check what's actually in the database
+    const count = await Support.countDocuments();
+    console.log("Total documents in Support collection:", count);
+    
+    res.status(200).json({ 
+      message: "Support experts processed.", 
+      inserted: inserted.insertedCount || inserted.length,
+      total: count
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to insert experts", error: err });
+    console.error("Detailed error:", err);
+    
+    // If it's a validation error, log the specific issues
+    if (err.name === 'ValidationError') {
+      console.error("Validation errors:", err.errors);
+    }
+    
+    // If it's a bulk write error, log the write errors
+    if (err.writeErrors) {
+      console.error("Write errors:", err.writeErrors);
+    }
+    
+    res.status(500).json({ 
+      message: "Failed to insert experts", 
+      error: err.message,
+      details: err.writeErrors || err.errors
+    });
   }
 });
 

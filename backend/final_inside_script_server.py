@@ -197,7 +197,7 @@ def process_messages_incrementally(driver):
         return
     
     scroll_position = 0
-    max_scroll_attempts = 200  # Prevent infinite loops
+    max_scroll_attempts = 1000  # Prevent infinite loops
     scroll_attempts = 0
     no_new_messages_count = 0
     
