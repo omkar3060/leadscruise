@@ -166,9 +166,10 @@
 /* Leads Section */
 .leadsSection {
   border-radius: 8px;
-  max-height: 400px; /* Prevents unwanted shrinking */
+  /* max-height: 400px; Prevents unwanted shrinking */
   display: flex;
   flex-direction: column;
+  height: 59%;
 }
 
 /* Table Wrapper */
@@ -176,7 +177,6 @@
   overflow-y: auto;
   overflow-x: auto; /* Allows horizontal scrolling if needed */
   z-index: 0;
-
 
 }
 
@@ -197,6 +197,7 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 600px; /* Prevents column shrink on small screens */
+  height: 100vh;
 }
 
 /* Table Cells */
@@ -214,7 +215,7 @@
   font-weight: bold;
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 0;
 }
 
 .leadsTable td {
@@ -222,7 +223,7 @@
 }
 
 .leadsTable tr:hover {
-  background: #f9f9f9;
+  background: #f9f9f9 !important;
 }
 
 /* ✅ Responsive Fixes for Small Screens */
@@ -242,12 +243,24 @@
   .metricsSection {
     grid-template-columns: repeat(4, minmax(120px, 1fr)); /* Adjust columns */
   }
+
   .scrollDownText{
     margin-top: 0px !important;
   }
 }
 
+@media screen and (min-width: 1440px) {
+  .leadsSection {
+    height:68%;
+  }
+}
+
 @media (max-width: 768px) {
+    .leadsSection {
+    width: 100%;
+    height: 40%;
+    margin-top: 20px;
+  }
 
   .dashboardContent {
     margin-left: 0px;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import DashboardHeader from "./DashboardHeader";
 import Sidebar from "./Sidebar";
 import "./Analytics.css";
+import styles from "./Dashboard.module.css";
 
 const LoadingScreen = () => (
     <div className="loading-overlay">
@@ -157,17 +158,17 @@ export default function Analytics() {
                 {/* Table Section - Modified for side-by-side display */}
                 <div className="tables-container">
                     {/* Categories Table */}
-                    <div className="table-section">
+                    <div className={`${styles.leadsTable} table-section`}>
                         <div className="table-title">Top Categories</div>
-                        <div className="Enquiries_tableRen__3RhuF">
-                            <div className="Enquiries_outline__17sL7">
-                                <table id="Enquiries_reportTableCSS__38-9b">
+                        <div>
+                            <div>
+                                <table>
                                     <thead>
-                                        <tr className="Enquiries_rowBorder__3rVFn">
-                                            <th className="Enquiries_cellHeader__2Bbtd" style={{ textAlign: 'left' }}>Category</th>
-                                            <th className="Enquiries_cellHeader__2Bbtd" style={{ textAlign: 'center' }}>Leads Consumed</th>
-                                            <th className="Enquiries_cellHeader__2Bbtd" style={{ textAlign: 'center' }}>Enquiries</th>
-                                            <th className="Enquiries_cellHeader__2Bbtd" style={{ textAlign: 'center' }}>Calls</th>
+                                        <tr>
+                                            <th style={{ textAlign: 'left' }}>Category</th>
+                                            <th style={{ textAlign: 'center' }}>Leads Consumed</th>
+                                            <th style={{ textAlign: 'center' }}>Enquiries</th>
+                                            <th style={{ textAlign: 'center' }}>Calls</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -196,17 +197,17 @@ export default function Analytics() {
                     </div>
 
                     {/* Locations Table */}
-                    <div className="table-section">
+                    <div className={`${styles.leadsTable} table-section`}>
                         <div className="table-title">Top Locations</div>
-                        <div className="Enquiries_tableRen__3RhuF">
-                            <div className="Enquiries_outline__17sL7">
-                                <table id="Enquiries_reportTableCSS__38-9b">
+                        <div>
+                            <div>
+                                <table>
                                     <thead>
-                                        <tr className="Enquiries_rowBorder__3rVFn">
-                                            <th className="Enquiries_cellHeader__2Bbtd" style={{ textAlign: 'left' }}>Location</th>
-                                            <th className="Enquiries_cellHeader__2Bbtd" style={{ textAlign: 'center' }}>Leads Consumed</th>
-                                            <th className="Enquiries_cellHeader__2Bbtd" style={{ textAlign: 'center' }}>Enquiries</th>
-                                            <th className="Enquiries_cellHeader__2Bbtd" style={{ textAlign: 'center' }}>Calls</th>
+                                        <tr>
+                                            <th style={{ textAlign: 'left' }}>Location</th>
+                                            <th style={{ textAlign: 'center' }}>Leads Consumed</th>
+                                            <th style={{ textAlign: 'center' }}>Enquiries</th>
+                                            <th style={{ textAlign: 'center' }}>Calls</th>
                                         </tr>
                                     </thead>
                                     <tbody>

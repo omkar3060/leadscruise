@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar";
 import axios from "axios";
 import DashboardHeader from "./DashboardHeader";
 import { useNavigate } from "react-router-dom";
+import styles from "./Dashboard.module.css";
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -42,7 +43,7 @@ const Sheets = () => {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const navigate = useNavigate();
   const userEmail = localStorage.getItem("userEmail");
-
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const handleStart = async () => {
     try {
       const mobileNumber = localStorage.getItem("mobileNumber");
@@ -151,6 +152,99 @@ const Sheets = () => {
     }
   }, []);
 
+  const getSettingsFromStorage = () => {
+    try {
+      const settings = localStorage.getItem('settings');
+      return settings ? JSON.parse(settings) : null;
+    } catch (error) {
+      console.error('Error parsing settings from localStorage:', error);
+      return null;
+    }
+  };
+
+  // Function to update settings in localStorage
+  const updateSettingsInStorage = (updatedSettings) => {
+    try {
+      localStorage.setItem('settings', JSON.stringify(updatedSettings));
+    } catch (error) {
+      console.error('Error updating settings in localStorage:', error);
+    }
+  };
+
+  // Function to handle toggle action
+  const handleToggleRejected = async (leadProduct, isCurrentlyRejected) => {
+  const action = isCurrentlyRejected ? 'remove from' : 'add to';
+  const confirmMessage = `Are you sure you want to ${action} the rejected list?\n\nProduct: ${leadProduct}`;
+  
+  if (!window.confirm(confirmMessage)) {
+    return; // User cancelled the action
+  }
+    try {
+      const settings = getSettingsFromStorage();
+      if (!settings) {
+        console.error('No settings found in localStorage');
+        return;
+      }
+
+      let updatedH2WordArray = [...(settings.h2WordArray || [])];
+
+      if (isCurrentlyRejected) {
+        // Remove from rejected list
+        updatedH2WordArray = updatedH2WordArray.filter(item => item !== leadProduct);
+      } else {
+        // Add to rejected list
+        if (!updatedH2WordArray.includes(leadProduct)) {
+          updatedH2WordArray.push(leadProduct);
+        }
+      }
+
+      // Update settings object
+      const updatedSettings = {
+        ...settings,
+        h2WordArray: updatedH2WordArray
+      };
+
+      // Update localStorage
+      updateSettingsInStorage(updatedSettings);
+
+      // Make API call to update database
+      const response = await fetch('https://api.leadscruise.com/api/settings/toggle-rejected-lead', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          leadProduct: leadProduct,
+          action: isCurrentlyRejected ? 'remove' : 'add',
+          userEmail: settings.userEmail
+        })
+      });
+
+      if (response.ok) {
+        console.log('Lead status updated successfully');
+        alert(`Lead ${isCurrentlyRejected ? 'removed from' : 'added to'} rejected list successfully!`);
+        setRefreshTrigger(prev => prev + 1);
+        // Force re-render by updating a state variable if needed
+        // You might want to call a function to refresh the component
+      } else {
+        console.error('Failed to update lead status in database');
+        // Revert localStorage changes if API call fails
+        updateSettingsInStorage(settings);
+      }
+    } catch (error) {
+      console.error('Error updating lead status:', error);
+    }
+  };
+
+  // Check if a lead is in the rejected list by comparing product text
+  const isLeadRejected = (leadProduct) => {
+    const settings = getSettingsFromStorage();
+    if (!settings || !settings.h2WordArray) {
+      return false;
+    }
+    return settings.h2WordArray.includes(leadProduct);
+  };
+
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
       {/* {isLoading && <LoadingScreen />} */}
@@ -212,26 +306,58 @@ const Sheets = () => {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                <table className={styles.leadsTable} >
                   <thead>
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Name</th>
-                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Email</th>
-                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Mobile</th>
-                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Lead Source</th>
-                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>Date</th>
+                    <tr>
+                      <th>Product Requested</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Mobile</th>
+                      <th>Date</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {leads.map((lead, index) => (
-                      <tr key={lead._id || index} style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}>
-                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.name}</td>
-                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.email || 'N/A'}</td>
-                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.mobile}</td>
-                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{lead.lead_bought}</td>
-                        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>{formatDate(lead.createdAt)}</td>
-                      </tr>
-                    ))}
+                    {leads.map((lead, index) => {
+                      const isRejected = isLeadRejected(lead.lead_bought);
+                      return (
+                        <tr key={lead._id || index} style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}>
+                          <td>{lead.lead_bought}</td>
+                          <td>{lead.name}</td>
+                          <td>{lead.email || 'N/A'}</td>
+                          <td>{lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile}</td>
+                          <td>{formatDate(lead.createdAt)}</td>
+                          <td style={{ textAlign: 'center' }}>
+                            <button
+                              onClick={() => handleToggleRejected(lead.lead_bought, isRejected)}
+                              style={{
+                                padding: '8px 0px',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '22px',
+                                backgroundColor: 'transparent',
+                                transition: 'transform 0.2s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                margin: '0 auto',
+                                height: '40px',
+                              }}
+                              onMouseOver={(e) => {
+                                e.target.style.transform = 'scale(1.1)';
+                              }}
+                              onMouseOut={(e) => {
+                                e.target.style.transform = 'scale(1)';
+                              }}
+                              title={isRejected ? 'Remove from Rejected' : 'Add to Rejected'}
+                            >
+                              {isRejected ? '🚩' : '🏳️'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

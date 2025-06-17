@@ -291,6 +291,9 @@ const Dashboard = () => {
         }
 
         setSettings(userSettings);
+        localStorage.setItem(
+          "settings", JSON.stringify(userSettings)
+        );
       } catch (error) {
         console.error("Error fetching settings:", error);
       }
@@ -919,7 +922,7 @@ useEffect(() => {
                       <tr key={index}>
                         <td>{keyword || "N/A"}</td>
                         <td>{lead.name || "N/A"}</td>
-                        <td>{lead.mobile || "N/A"}</td>
+                        <td>{lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile || "N/A"}</td>
                         <td>{lead.email || "N/A"}</td>
                         <td>
                           {lead.createdAt
