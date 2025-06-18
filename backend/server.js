@@ -892,7 +892,8 @@ const leadSchema = new mongoose.Schema({
   mobile: { type: String, required: true },
   user_mobile_number: { type: String, required: true },
   lead_bought: { type: String },
-  createdAt: { type: Date, default: Date.now }, // Store the current date
+  address: { type: String },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const Lead = mongoose.model("Lead", leadSchema);
@@ -900,7 +901,7 @@ const WhatsAppSettings = require("./models/WhatsAppSettings");
 // Endpoint to receive lead data from Selenium script and store in DB
 app.post("/api/store-lead", async (req, res) => {
   try {
-    const { name, email, mobile, user_mobile_number, lead_bought } = req.body;
+    const { name, email, mobile, user_mobile_number, lead_bought, address } = req.body;
 
     if (!name || !mobile || !user_mobile_number || !lead_bought) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -925,6 +926,7 @@ app.post("/api/store-lead", async (req, res) => {
       mobile,
       user_mobile_number,
       lead_bought,
+      address,
     });
 
     // If duplicate found within last X minutes
@@ -944,6 +946,7 @@ app.post("/api/store-lead", async (req, res) => {
       user_mobile_number,
       lead_bought,
       createdAt: new Date(),
+      address,
     });
     await newLead.save();
 
@@ -1136,7 +1139,7 @@ const FetchedLead = mongoose.model("FetchedLead", leadSchema, "fetchedleads");
 
 app.post("/api/store-fetched-lead", async (req, res) => {
   try {
-    const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text, uniqueId } = req.body;
+    const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text, uniqueId, address } = req.body;
 
     if (!name || !mobile || !user_mobile_number || !lead_bought || !timestamp_text) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -1148,6 +1151,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       mobile,
       user_mobile_number,
       lead_bought,
+      address,
     });
 
     // If duplicate found, stop the Python script for this user
@@ -1206,6 +1210,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       mobile,
       user_mobile_number,
       lead_bought,
+      address,
       createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
     });
     await newLead.save();
@@ -1342,7 +1347,7 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
       user_mobile_number: userMobile
     })
       .sort({ createdAt: -1 }) // Sort by newest first
-      .select('name email mobile lead_bought createdAt'); // Select only needed fields
+      .select('name email mobile lead_bought createdAt address'); // Select only needed fields
 
     res.status(200).json({
       success: true,

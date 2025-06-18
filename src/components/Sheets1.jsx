@@ -910,6 +910,7 @@ const Sheets = () => {
                     <tr>
                       <th style={{ width: '50px' }}>No.</th> {/* New column for row number */}
                       <th>Product Requested</th>
+                      <th>Address</th>
                       <th>Name</th>
                       <th>Email</th>
                       <th>Mobile</th>
@@ -927,6 +928,7 @@ const Sheets = () => {
                         >
                           <td>{index + 1}</td> {/* Row number */}
                           <td>{lead.lead_bought}</td>
+                          <td>{lead.address || 'N/A'}</td>
                           <td>{lead.name}</td>
                           <td>{lead.email || 'N/A'}</td>
                           <td>{lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile}</td>

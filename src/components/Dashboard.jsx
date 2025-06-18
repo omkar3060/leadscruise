@@ -894,6 +894,7 @@ useEffect(() => {
                 <tr>
                   {[
                     { label: "Product", field: "lead_bought" },
+                    { label: "Address", field: "address" },
                     { label: "Name", field: "name" },
                     { label: "Mobile Number", field: "mobile" },
                     { label: "Email", field: "email" },
@@ -921,6 +922,7 @@ useEffect(() => {
                     return (
                       <tr key={index}>
                         <td>{keyword || "N/A"}</td>
+                        <td>{lead.address || "N/A"}</td>
                         <td>{lead.name || "N/A"}</td>
                         <td>{lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile || "N/A"}</td>
                         <td>{lead.email || "N/A"}</td>

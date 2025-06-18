@@ -112,7 +112,7 @@ def parse_timestamp(timestamp_text):
         dt = datetime.strptime(f"{timestamp_text} {now.year}", "%d %b %Y")
         return dt.isoformat()
 
-def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, timestamp_text=None, uniqueId=None):
+def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, timestamp_text=None, address=None, uniqueId=None):
     global lead_bought  # Access the global variable
     global skip_lead, redirect_count
     try:
@@ -132,7 +132,8 @@ def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, times
     }
     if email:
         data["email"] = email
-
+    if address:
+        data["address"] = address
     print(f"Sending data to dashboard: {data}", flush=True)
 
     try:
@@ -341,13 +342,19 @@ def process_single_message(driver, message_element, timestamp, company, return_u
             email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 wbba']").text
         except:
             email_id = None
-        
+
+        try:
+            address_element = driver.find_element(By.XPATH, "//span[contains(text(),'Address')]/following::span[1]/span")
+            address = address_element.text
+        except:
+            address = "Address not found"
+
         # Get user mobile number from input_data
         user_mobile_number = input_data.get("mobileNumber", "")
         
         # Send data to dashboard
         try:
-            send_data_to_sheets(left_name, mobile_number, email_id, user_mobile_number, timestamp)
+            send_data_to_sheets(left_name, mobile_number, email_id, user_mobile_number, timestamp, address)
             if skip_lead:
                 print("Skipping this lead due to duplication...", flush=True)
                 return
@@ -480,7 +487,7 @@ def is_within_30_days(timestamp_text, thirty_days_ago):
         return True
  
 lead_bought=""
-def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
+def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, address=None):
     global lead_bought  # Access the global variable
 
     url = "https://api.leadscruise.com/api/store-lead"
@@ -488,7 +495,8 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
         "name": name,
         "mobile": mobile,
         "user_mobile_number": user_mobile_number,
-        "lead_bought": lead_bought if lead_bought else "Not Available"  # Provide default value
+        "lead_bought": lead_bought if lead_bought else "Not Available",  # Provide default value
+        "address": address if address else "Not Available"  # Provide default value
     }
     
     if email:
@@ -606,8 +614,13 @@ def go_to_message_center_and_click(driver):
         except:
             email_id = None
             print("Email ID not found.", flush=True)
+        try:
+            address_element = driver.find_element(By.XPATH, "//span[contains(text(),'Address')]/following::span[1]/span")
+            address = address_element.text
+        except:
+            address = "Address not found"
         user_mobile_number = input_data.get("mobileNumber", "")  # Get the logged-in user's mobile number
-        send_data_to_dashboard(left_name.text, mobile_number.text, email_id, user_mobile_number)
+        send_data_to_dashboard(left_name.text, mobile_number.text, email_id, user_mobile_number, address)
     except Exception as e:
         print(f"An error occurred while interacting with the message center: {e}", flush=True)
 
@@ -1214,7 +1227,6 @@ def main():
                     print(f"Running redirect_and_refresh (count: {redirect_count + 1}/10)...", flush=True)
                     redirect_count += 1
                     redirect_and_refresh(driver, wait)
-                    
                 else:
                     # Continue with message processing in each loop iteration
                     print("Starting message center processing...", flush=True)

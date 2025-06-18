@@ -197,52 +197,61 @@ router.get("/test/support-fetch", async (req, res) => {
 router.post("/bulk", async (req, res) => {
   try {
     const data = req.body;
-    console.log("Received data:", JSON.stringify(data, null, 2));
-    
-    const filtered = data.map((item, index) => {
-      const mappedItem = {
+
+    // Step 1: Prepare a set of unique identifiers (e.g., email + phoneNumber)
+    const identifiers = data.map(item => ({
+      email: item.email,
+      phoneNumber: item.phoneNumber
+    }));
+
+    // Step 2: Query existing records that match any of the identifiers
+    const existingRecords = await Support.find({
+      $or: identifiers.map(({ email, phoneNumber }) => ({
+        email,
+        phoneNumber
+      }))
+    });
+
+    // Step 3: Build a Set of existing combinations to filter duplicates
+    const existingSet = new Set(
+      existingRecords.map(rec => `${rec.email}-${rec.phoneNumber}`)
+    );
+
+    // Step 4: Filter out duplicates from input data
+    const filtered = data
+      .filter(item => {
+        const key = `${item.email}-${item.phoneNumber}`;
+        return !existingSet.has(key); // keep only new entries
+      })
+      .map((item, index) => ({
         name: item.name || "Unknown",
         email: item.email || `no-email-${Date.now()}-${index}@example.com`,
-        phoneNumber: item.phoneNumber || "", // Fixed: was item.phone
-      };
-      console.log(`Mapped item ${index}:`, mappedItem);
-      return mappedItem;
-    });
+        phoneNumber: item.phoneNumber || ""
+      }));
 
-    console.log("Filtered data:", JSON.stringify(filtered, null, 2));
+    if (filtered.length === 0) {
+      return res.status(200).json({ message: "No new experts to insert", inserted: 0 });
+    }
 
-    // Try to insert and catch specific errors
-    const inserted = await Support.insertMany(filtered, { 
+    // Step 5: Insert new entries
+    const inserted = await Support.insertMany(filtered, {
       ordered: false,
-      rawResult: true // This gives more detailed results
+      rawResult: true
     });
-    
-    console.log("Insert result:", inserted);
-    
-    // Also check what's actually in the database
+
+    // Final DB count
     const count = await Support.countDocuments();
-    console.log("Total documents in Support collection:", count);
-    
-    res.status(200).json({ 
-      message: "Support experts processed.", 
-      inserted: inserted.insertedCount || inserted.length,
+
+    res.status(200).json({
+      message: "Support experts processed.",
+      inserted: inserted.insertedCount || filtered.length,
       total: count
     });
+
   } catch (err) {
     console.error("Detailed error:", err);
-    
-    // If it's a validation error, log the specific issues
-    if (err.name === 'ValidationError') {
-      console.error("Validation errors:", err.errors);
-    }
-    
-    // If it's a bulk write error, log the write errors
-    if (err.writeErrors) {
-      console.error("Write errors:", err.writeErrors);
-    }
-    
-    res.status(500).json({ 
-      message: "Failed to insert experts", 
+    res.status(500).json({
+      message: "Failed to insert experts",
       error: err.message,
       details: err.writeErrors || err.errors
     });
