@@ -5,6 +5,12 @@ const Footer = () => {
   const supportEmail = "support@leadscruise.com";
   const whatsappNumber = "+919579797269"; // Replace with actual support number
   
+  // Check if current page is dashboard and not mobile
+  const isDashboard = window.location.pathname.includes('/dashboard') || 
+                     window.location.pathname === '/dashboard';
+  const isMobile = window.innerWidth <= 768;
+  const showScrollMessage = isDashboard && !isMobile;
+  
   const handleEmailClick = () => {
     window.location.href = `mailto:${supportEmail}`;
   };
@@ -19,8 +25,31 @@ const Footer = () => {
   return (
     <footer className="footer">
       <div className="footer-content">
+        <div className='footer-left'>
+        {showScrollMessage && (
+          <div className="scroll-message">
+            <svg 
+              className="scroll-icon" 
+              viewBox="0 0 24 24" 
+              width="16" 
+              height="16"
+            >
+              <path 
+                d="M7 14l5-5 5 5" 
+                stroke="currentColor" 
+                fill="none" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+            Scroll down to see old captured leads
+          </div>
+        )}
+        
         <div className="copyright">
           © 2025, Leadscruise, Managed by Focus Engineering Products. All Rights Reserved.
+        </div>
         </div>
         <div className="support-button-container">
           <button 

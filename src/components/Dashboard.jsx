@@ -962,9 +962,6 @@ useEffect(() => {
 
           </div>
         </div>
-        <div className={styles.scrollDownText}>
-          scroll down to see old captured leads
-        </div>
       </div>
       {confirmModal.open && (
         <div className="modal-overlay">

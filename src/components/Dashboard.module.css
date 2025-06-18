@@ -218,6 +218,10 @@
   z-index: 0;
 }
 
+.tablePadding td{
+  padding: 8px;
+}
+
 .leadsTable td {
   color: #555;
 }

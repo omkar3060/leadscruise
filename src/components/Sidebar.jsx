@@ -8,6 +8,7 @@ import { AiOutlineHome } from "react-icons/ai";
 import { BiBarChartSquare } from "react-icons/bi";
 import { MdOutlineRecommend } from "react-icons/md"; // Import referral icon
 import axios from "axios";
+import AIIcon from '../images/AI.png';
 
 const Sidebar = ({ status }) => {
   const navigate = useNavigate();
@@ -28,16 +29,16 @@ const Sidebar = ({ status }) => {
 
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
-    
+
     if (!isConfirmed) return; // Stop if user cancels
-  
+
     const userEmail = localStorage.getItem("userEmail");
-  
+
     try {
       await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
-  
+
       localStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
@@ -46,7 +47,7 @@ const Sidebar = ({ status }) => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  };  
+  };
 
   const handleNavigation = () => {
     if (location.pathname.includes("/master")) {
@@ -60,7 +61,7 @@ const Sidebar = ({ status }) => {
     <div className={styles.sidebar}>
       <div className={styles.group}>
         <div className={`${styles.sidebarIcon} ${styles.tooltip}`} onClick={handleNavigation}>
-          <AiOutlineHome className={styles.icon}/>
+          <AiOutlineHome className={styles.icon} />
           <span className={styles.tooltipText}>Home</span>
         </div>
 
@@ -77,9 +78,8 @@ const Sidebar = ({ status }) => {
         {!location.pathname.includes("/master") && (
           <>
             <div
-              className={`${styles.sidebarIcon} ${styles.tooltip} ${
-                status === "Running" ? styles.disabled : ""
-              }`}
+              className={`${styles.sidebarIcon} ${styles.tooltip} ${status === "Running" ? styles.disabled : ""
+                }`}
               onClick={() => {
                 console.log("Status in Sidebar:", status);
                 if (status === "Running") {
@@ -103,18 +103,30 @@ const Sidebar = ({ status }) => {
             </div>
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
-              onClick={() => navigate("/sheets")}
-            >
-              <SiGooglesheets className={styles.icon} />
-              <span className={styles.tooltipText}>Sheets</span>
-            </div>
-            <div
-              className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/analytics")}
             >
               <BiBarChartSquare className={styles.icon} />
               <span className={styles.tooltipText}>Analytics</span>
             </div>
+            {/* <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/ai")}
+            >
+              <img src={AIIcon} className={styles.icon} alt="AI" style={{
+                width: "32px",
+                height: "32px",
+                objectFit: "contain",
+              }} />
+              <span className={styles.tooltipText}>AI</span>
+            </div> */}
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/sheets")}
+            >
+              <SiGooglesheets className={styles.icon} />
+              <span className={styles.tooltipText}>Sheets</span>
+            </div>
+
           </>
         )}
       </div>
