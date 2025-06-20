@@ -10,7 +10,8 @@ import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import CheckNumber from "./components/CheckNumber";
 import TaskExecutor from "./components/TaskExecutor";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./components/Dashboard1";
+import Dashboard1 from "./components/Dashboard";
 import SettingsForm from "./components/SettingsForm";
 import Profile from "./components/Profile";
 import Footer from "./components/Footer";
@@ -110,6 +111,14 @@ const Layout = () => {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ai"
+          element={
+            <ProtectedRoute>
+              <Dashboard1 />
             </ProtectedRoute>
           }
         />

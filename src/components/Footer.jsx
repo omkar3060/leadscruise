@@ -26,7 +26,7 @@ const Footer = () => {
     <footer className="footer">
       <div className="footer-content">
         <div className='footer-left'>
-        {showScrollMessage && (
+        {/* {showScrollMessage && (
           <div className="scroll-message">
             <svg 
               className="scroll-icon" 
@@ -45,7 +45,7 @@ const Footer = () => {
             </svg>
             Scroll down to see old captured leads
           </div>
-        )}
+        )} */}
         
         <div className="copyright">
           © 2025, Leadscruise, Managed by Focus Engineering Products. All Rights Reserved.

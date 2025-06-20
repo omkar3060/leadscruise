@@ -4,10 +4,7 @@ import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
 import styles from "./Dashboard.module.css"; // Import CSS module
 import { useNavigate } from "react-router-dom";
-import * as XLSX from "xlsx";
-import redFlag from "../images/red_flag.png";
-import greyFlag from "../images/grey_flag.png";
-import { minor } from "@mui/material";
+import { CheckCircle, AlertTriangle, TrendingUp, Target, BarChart3, Users, BookOpen, Video } from 'lucide-react';
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -54,8 +51,8 @@ const Dashboard = () => {
   });
   const [messageCount, setMessageCount] = useState(null);
   const [showOtpPopup, setShowOtpPopup] = useState(() => {
-  return localStorage.getItem("showOtpPopup") === "true";
-});
+    return localStorage.getItem("showOtpPopup") === "true";
+  });
   const [otpValue, setOtpValue] = useState('');
   const [otpRequestId, setOtpRequestId] = useState(null);
   const [showOtpWaitPopup, setShowOtpWaitPopup] = useState(() => {
@@ -65,6 +62,105 @@ const Dashboard = () => {
     return localStorage.getItem("cancelled") === "true";
   });
   const [otpError, setOtpError] = useState('');
+  const [userLeads, setUserLeads] = useState([]);
+  const [totalLeads, setTotalLeads] = useState(0);
+  const [tableData, setTableData] = useState({
+    categories: [] // For future implementation
+  });
+
+  const fetchData = async () => {
+    const mobileNumber = localStorage.getItem("mobileNumber");
+    const savedPassword = localStorage.getItem("savedPassword");
+    setIsLoading(true);
+    try {
+      // Fetch charts and tables data from the API
+      const response = await fetch(
+        `https://api.leadscruise.com/api/analytics/charts?mobileNumber=${mobileNumber}&savedPassword=${savedPassword}`
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setTableData({
+          categories: data.tables.categories || []
+        });
+        console.log("Fetched table data:", data.tables.categories);
+      } else {
+        throw new Error(data.error || "Unknown error");
+      }
+    } catch (err) {
+
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+  const createPieChart = () => {
+    const total = 360;
+    let currentAngle = 0;
+
+    return pieChartData.map((segment, index) => {
+      const angle = (segment.value / 100) * total;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + angle;
+      currentAngle += angle;
+
+      const x1 = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
+      const y1 = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
+      const x2 = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
+      const y2 = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
+
+      const largeArcFlag = angle > 180 ? 1 : 0;
+
+      const pathData = [
+        `M 50 50`,
+        `L ${x1} ${y1}`,
+        `A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+        'Z'
+      ].join(' ');
+
+      return (
+        <path
+          key={index}
+          d={pathData}
+          fill={segment.color}
+          stroke="#fff"
+          strokeWidth="2"
+        />
+      );
+    });
+  };
+
+  const fetchLeadsFromSheets = async () => {
+    try {
+      const userMobile = localStorage.getItem("mobileNumber");
+
+      if (!userMobile) {
+        alert("User mobile number not found!");
+        return;
+      }
+
+      const response = await axios.get(
+        `https://api.leadscruise.com/api/get-user-leads/${userMobile}`
+      );
+
+      if (response.status === 200) {
+        setUserLeads(response.data.leads);
+        setTotalLeads(response.data.totalLeads);
+      }
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      alert("Error fetching leads: " + (error.response?.data?.message || error.message));
+    } finally {
+    }
+  };
+
+  useEffect(() => {
+    fetchLeadsFromSheets();
+  }, []);
 
   useEffect(() => {
     const fetchMessageCount = async () => {
@@ -261,14 +357,14 @@ const Dashboard = () => {
   }, [timer, isDisabled]);
 
   useEffect(() => {
-  const status = localStorage.getItem("status");
+    const status = localStorage.getItem("status");
 
-  if (status === "Running") {
-    localStorage.setItem("cancelled", "true");
-  } else {
-    localStorage.setItem("cancelled", "false");
-  }
-}, []);  // Reacts to status changes in localStorage
+    if (status === "Running") {
+      localStorage.setItem("cancelled", "true");
+    } else {
+      localStorage.setItem("cancelled", "false");
+    }
+  }, []);  // Reacts to status changes in localStorage
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -283,7 +379,7 @@ const Dashboard = () => {
           `https://api.leadscruise.com/api/get-settings/${userEmail}`
         );
         const userSettings = response.data; // Extracting 'settings' from response
-
+        console.log("Fetched settings:", userSettings);
         if (!userSettings) {
           alert("No settings found, please configure them first.");
           navigate("/settings");
@@ -364,65 +460,63 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-  const uniqueId = localStorage.getItem("unique_id");
+    const uniqueId = localStorage.getItem("unique_id");
 
-  if (!uniqueId) return; // ⛔ Skip check if cancelled
+    if (!uniqueId) return; // ⛔ Skip check if cancelled
 
-  const failureInterval = setInterval(async () => {
-    const cancelled = localStorage.getItem("cancelled") === "true";
-    if (cancelled) return; // 🚫 Skip if cancelled
-    try {
-      const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
-      if (response.data.otpFailed && !cancelled) { // ✅ Ensure popup doesn't reappear
-        setOtpError("Incorrect OTP. Please try again.");
-        setShowOtpPopup(true);
-        localStorage.setItem("showOtpPopup", "true");
-        setShowOtpWaitPopup(false);
-        localStorage.setItem("showOtpWaitPopup", "false");
+    const failureInterval = setInterval(async () => {
+      const cancelled = localStorage.getItem("cancelled") === "true";
+      if (cancelled) return; // 🚫 Skip if cancelled
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
+        if (response.data.otpFailed && !cancelled) { // ✅ Ensure popup doesn't reappear
+          setOtpError("Incorrect OTP. Please try again.");
+          setShowOtpPopup(true);
+          localStorage.setItem("showOtpPopup", "true");
+          setShowOtpWaitPopup(false);
+          localStorage.setItem("showOtpWaitPopup", "false");
+        }
+      } catch (err) {
+        // Ignore silently
       }
-    } catch (err) {
-      // Ignore silently
+    }, 2000);
+
+    return () => clearInterval(failureInterval);
+  }, [showOtpPopup, otpRequestId]);
+
+  useEffect(() => {
+    const uniqueId = localStorage.getItem("unique_id");
+
+    if (!uniqueId) return;
+
+    if (status === "Running" && timer > 210) {
+      setShowOtpWaitPopup(true);
+      localStorage.setItem("showOtpWaitPopup", "true");
+    } else {
+      setShowOtpWaitPopup(false);
+      localStorage.setItem("showOtpWaitPopup", "false");
     }
-  }, 2000);
 
-  return () => clearInterval(failureInterval);
-}, [showOtpPopup, otpRequestId]);
+    const otpCheckInterval = setInterval(async () => {
+      const cancelled = localStorage.getItem("cancelled") === "true"; // ✅ moved inside
+      if (cancelled || status !== "Running") return;
 
-useEffect(() => {
-  const uniqueId = localStorage.getItem("unique_id");
-
-  if (!uniqueId) return;
-
-  if (status === "Running" && timer > 210) {
-    setShowOtpWaitPopup(true);
-    localStorage.setItem("showOtpWaitPopup", "true");
-  } else {
-    setShowOtpWaitPopup(false);
-    localStorage.setItem("showOtpWaitPopup", "false");
-  }
-
-  const otpCheckInterval = setInterval(async () => {
-    const cancelled = localStorage.getItem("cancelled") === "true"; // ✅ moved inside
-    if (cancelled || status !== "Running") return;
-
-    try {
-      const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
-      if (response.data.otpRequired) {
-        setOtpRequestId(response.data.requestId);
-        setShowOtpPopup(true);
-        localStorage.setItem("showOtpPopup", "true");
-        setShowOtpWaitPopup(false);
-        localStorage.setItem("showOtpWaitPopup", "false");
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
+        if (response.data.otpRequired) {
+          setOtpRequestId(response.data.requestId);
+          setShowOtpPopup(true);
+          localStorage.setItem("showOtpPopup", "true");
+          setShowOtpWaitPopup(false);
+          localStorage.setItem("showOtpWaitPopup", "false");
+        }
+      } catch (error) {
+        // Silently ignore
       }
-    } catch (error) {
-      // Silently ignore
-    }
-  }, 2000);
+    }, 2000);
 
-  return () => clearInterval(otpCheckInterval);
-}, [status]);
-
-
+    return () => clearInterval(otpCheckInterval);
+  }, [status]);
 
   const handleStart = async () => {
     try {
@@ -646,106 +740,26 @@ useEffect(() => {
     }
   };
 
-  const [sortField, setSortField] = useState(null);
-  const [sortOrder, setSortOrder] = useState("asc"); // "asc" | "desc"
+  const generatePieChartData = () => {
+    const green = metrics.totalLeadsCaptured || 0;
+    const blue = green * 7;
+    const h2Length = settings.h2WordArray.length;
+    const red = Math.round(blue / (2 * h2Length)) || 0; // Ensure red is at least 0
 
-  // Function to handle sorting
-  const handleSort = (field) => {
-    const newSortOrder =
-      sortField === field && sortOrder === "asc" ? "desc" : "asc";
-    setSortField(field);
-    setSortOrder(newSortOrder);
+    const total = green + blue + red;
+    if (total === 0) return [];
+
+    return [
+      { label: 'Prospects', value: Number(((blue / total) * 100).toFixed(2)), color: '#3B82F6' },   // 🔵
+      { label: 'Saved', value: Number(((green / total) * 100).toFixed(2)), color: '#10B981' },      // 🟢
+      { label: 'Rejected', value: Number(((red / total) * 100).toFixed(2)), color: '#EF4444' }      // 🔴
+    ];
   };
 
-  // Sorting logic
-  const sortedLeads = [...leads].sort((a, b) => {
-    const valueA = a[sortField] || ""; // Handle empty values
-    const valueB = b[sortField] || "";
-
-    if (sortField === "createdAt") {
-      return sortOrder === "asc"
-        ? new Date(valueA) - new Date(valueB)
-        : new Date(valueB) - new Date(valueA);
-    } else {
-      return sortOrder === "asc"
-        ? String(valueA).localeCompare(String(valueB))
-        : String(valueB).localeCompare(String(valueA));
-    }
-  });
-
-  const handleDownloadLeadsExcel = () => {
-    if (!leads || leads.length === 0) {
-      alert("No leads available to download.");
-      return;
-    }
-
-    const formattedData = leads.map((lead, index) => ({
-      "Sl. No": index + 1,
-      Name: lead.name || "N/A",
-      Email: lead.email || "N/A",
-      Phone: lead.mobile || lead.user_mobile_number || "N/A",
-      "Product(s)": lead.lead_bought || "N/A",
-      "Captured At": new Date(lead.createdAt).toLocaleString(),
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "RecentLeads");
-
-    const today = new Date().toISOString().split("T")[0];
-    const filename = `Captured_${today}.xlsx`;
-
-    XLSX.writeFile(workbook, filename);
-  };
-
-  const handleConfirmAction = async () => {
-    const { keyword, type } = confirmModal;
-    const rejected = settings.h2WordArray || [];
-
-    let updatedRejected = [...rejected];
-
-    if (type === "reject") {
-      if (!updatedRejected.includes(keyword)) {
-        updatedRejected.push(keyword); // Add to rejected
-      }
-    } else if (type === "accept") {
-      updatedRejected = updatedRejected.filter((word) => word !== keyword); // Remove from rejected
-    }
-
-    const updatedSettings = {
-      ...settings,
-      h2WordArray: updatedRejected,
-    };
-
-    // Save to DB
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) {
-      alert("User email not found!");
-      return;
-    }
-
-    try {
-      await axios.post("https://api.leadscruise.com/api/save-settings", {
-        userEmail,
-        sentences: updatedSettings.sentences || [],
-        wordArray: updatedSettings.wordArray || [],
-        h2WordArray: updatedSettings.h2WordArray || [],
-      });
-
-      // Update state after DB save
-      setSettings(updatedSettings);
-      alert("Settings saved successfully!");
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      alert("Failed to save settings.");
-    }
-
-    // Close modal
-    setConfirmModal({ open: false, keyword: "", type: null });
-  };
+  const pieChartData = generatePieChartData();
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={`${styles.dashboardContainer} ${styles.dashboardHeight}`}>
 
       {showOtpWaitPopup && !showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
@@ -835,178 +849,240 @@ useEffect(() => {
         <div className={styles.metricsSection}>
           <div
             onClick={() => navigate("/totalLeadsToday")}
-            className={styles.comingSoon}
+            className={styles.metricBox}
           >
             {metrics.totalLeadsToday} <br />
             <span>Total Leads Today</span>
           </div>
           <div
             onClick={() => navigate("/totalLeadsThisWeek")}
-            className={styles.comingSoon}
+            className={styles.metricBox}
           >
             {metrics.totalLeadsThisWeek} <br />
             <span>Total Leads This Week</span>
           </div>
-          <div className={styles.comingSoon}>
+          <div className={styles.metricBox}>
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
             <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.comingSoon} style={{ color: "#28a745" }}>
+          <div className={styles.metricBox} style={{ color: "#28a745" }}>
             {messageCount * metrics.totalLeadsToday || 0}
             <br />
             <span>WA Messages Sent Today</span>
           </div>
-          <div className={styles.comingSoon}>
+          <div className={styles.metricBox}>
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
             <br />
             <span>Emails Sent Today</span>
           </div>
-          <div className={styles.comingSoon}>
+          <div className={styles.metricBox}>
             {metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}
             <br />
             <span>Total Emails Sent</span>
           </div>
-          <div className={styles.comingSoon}>
+          <div className={styles.metricBox}>
             {metrics.totalLeadsCaptured} <br />
             <span>Total Leads Captured</span>
           </div>
         </div>
+        <div className={styles.container}>
+          <div className={styles.gridContainer}>
+            {/* Overall AI Activity Card */}
+            <div className={styles.aiActivityCard}>
+              <div className={styles.aiActivityHeader}>
+                <div className={styles.aiActivityHeaderInner}>
+                  <div className={styles.aiBadge}>
+                    AI
+                  </div>
+                </div>
+                <TrendingUp size={20} className={styles.icon} />
+                <h3 className={styles.cardTitle}>
+                  Overall AI Activity
+                </h3>
+              </div>
 
-        {/* Recent Leads Table */}
-        <div className={styles.leadsSection}>
-          <div className={styles.mobileOnlyMessage}>
-            <p>Use Desktop to login to see recent leads captured information</p>
-          </div>
+              {/* Pie Chart */}
+              <div className={styles.pieChartContainer}>
+                <svg width="250" height="250" viewBox="0 0 100 100">
+                  {createPieChart()}
+                </svg>
+              </div>
 
-          <div style={{ display: "flex", justifyContent: "end" }}>
-            <button
-              style={{ width: "10%", padding: "20px 60px" }}
-              onClick={handleDownloadLeadsExcel}
-            >
-              Download
-            </button>
-          </div>
-          <div className={styles.tableWrapper}>
+              {/* Legend */}
+              <div className={styles.legend}>
+                {pieChartData.map((item, index) => (
+                  <div key={index} className={styles.legendItem}>
+                    <div
+                      className={styles.legendColor}
+                      style={{ backgroundColor: item.color }}
+                    ></div>
+                    <span className={styles.legendLabel}>{item.label}</span>
+                    <span className={styles.legendValue}>
+                      {item.value}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-            <table className={styles.leadsTable}>
-              <thead>
-                <tr>
-                  {[
-                    { label: "Product", field: "lead_bought" },
-                    { label: "Address", field: "address" },
-                    { label: "Name", field: "name" },
-                    { label: "Mobile Number", field: "mobile" },
-                    { label: "Email", field: "email" },
-                    { label: "Purchase Date", field: "createdAt" },
-                  ].map(({ label, field }) => (
-                    <th
-                      key={field}
-                      onClick={() => handleSort(field)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {label}
-                      {sortField === field && (sortOrder === "asc" ? "🔼" : "🔽")}
-                    </th>
-                  ))}
-                  <th style={{ width: "6%" }}>Action</th>
-                </tr>
-              </thead>
+            {/* Attention Required Card */}
+            <div className={styles.attentionColumn}>
+              <div className={styles.attentionCard}>
+                <div className={styles.attentionHeader}>
+                  <Target size={20} className={styles.icon} />
+                  <h3 className={styles.cardTitle}>
+                    Attention Required
+                  </h3>
+                </div>
 
-              <tbody>
-                {sortedLeads.length > 0 ? (
-                  sortedLeads.map((lead, index) => {
-                    const keyword = lead.lead_bought;
-                    const isRejected = settings.h2WordArray.includes(keyword);
+                <div className={styles.systemStatus}>
+                  <CheckCircle size={35} className={styles.greenIcon} />
+                  <div className={styles.systemStatusTextContainer}>
+                    <div className={styles.systemStatusText}>
+                      All systems are
+                    </div>
+                    <div className={styles.systemStatusText}>
+                      fully operational
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                    return (
-                      <tr key={index}>
-                        <td>{keyword || "N/A"}</td>
-                        <td>{lead.address || "N/A"}</td>
-                        <td>{lead.name || "N/A"}</td>
-                        <td>{lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile || "N/A"}</td>
-                        <td>{lead.email || "N/A"}</td>
-                        <td>
-                          {lead.createdAt
-                            ? new Date(lead.createdAt).toLocaleDateString()
-                            : "N/A"}
-                        </td>
-                        <td>
-                          <img
-                            src={isRejected ? redFlag : greyFlag}
-                            alt={isRejected ? "Reject Flag" : "Accept Flag"}
-                            style={{
-                              width: "20px",
-                              height: "20px",
-                              cursor: "pointer",
-                            }}
-                            onClick={() =>
-                              setConfirmModal({
-                                open: true,
-                                keyword,
-                                type: isRejected ? "accept" : "reject",
-                              })
-                            }
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })
+              <div className={styles.attentionCard}>
+                <div className={styles.attentionHeader}>
+                  <Video size={20} className={styles.icon} />
+                  <div className={styles.tutorialText}>
+                    New Tutorials Available
+                  </div>
+                </div>
+
+                <div className={styles.comingSoon}>
+                  <AlertTriangle size={24} className={styles.yellowIcon} />
+                  <div className={styles.comingSoonText}>
+                    Coming Soon
+                  </div>
+                </div>
+
+                <button className={styles.linkButton}>
+                  Go to Youtube Page
+                  <span className={styles.linkArrow}>→</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Latest Leads Captured Card */}
+            <div className={styles.leadsCard}>
+              <div className={styles.leadsHeader}>
+                <Target size={20} className={styles.icon} />
+                <h3 className={styles.cardTitle}>
+                  Latest Leads Captured
+                </h3>
+              </div>
+
+              <div className={styles.leadsContent}>
+                {userLeads && userLeads.length > 0 ? (
+                  userLeads.slice(0, 3).map((lead, index) => (
+                    <div key={index} className={styles.leadBar}>
+                      <div className={styles.leadInfo}>
+                        <div className={styles.leadName}>
+                          {lead.lead_bought || 'Unknown'}
+                        </div>
+                        <div className={styles.leadDetails}>
+                          <span className={styles.leadPhone}>
+                            {lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile}
+                          </span>
+                          <span className={styles.leadDate}>
+                            {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() :
+                              lead.timestamp ? new Date(lead.timestamp).toLocaleDateString() :
+                                'No date'}
+                          </span>
+                        </div>
+                        {lead.source && (
+                          <div className={styles.leadSource}>
+                            Source: {lead.source}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
                 ) : (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: "center" }}>
-                      No leads available
-                    </td>
-                  </tr>
+                  <div className={styles.noLeads}>
+                    <p>No leads found</p>
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+
+              <button className={styles.seeMoreButton}>
+                See More
+                <span className={styles.linkArrow}>→</span>
+              </button>
+            </div>
+
+            {/* Analytics Card */}
+            <div className={styles.analyticsCard}>
+  <div className={styles.analyticsHeader}>
+    <BarChart3 size={20} className={styles.icon} />
+    <h3 className={styles.cardTitle}>
+      Analytics - Top Products by Leads
+    </h3>
+  </div>
+
+  <div className={styles.chartContainer}>
+    {tableData.categories && tableData.categories.length > 0 ? (
+      <div className={styles.barChart}>
+        {tableData.categories.slice(0, 5).map((item, index) => {
+          const maxLeads = Math.max(...tableData.categories.slice(0, 5).map(cat => cat.leadsConsumed));
+          const percentage = (item.leadsConsumed / maxLeads) * 100;
+          
+          return (
+            <div 
+              key={item._id} 
+              className={styles.barItem}
+              style={{
+                '--item-delay': `${index * 0.15}s`
+              }}
+            >
+              <div className={styles.barLabel}>
+                <span className={styles.categoryName}>
+                  {item.category.length > 15 ? 
+                    `${item.category.substring(0, 15)}...` : 
+                    item.category
+                  }
+                </span>
+                <span className={styles.leadsCount}>{item.leadsConsumed}</span>
+              </div>
+              <div className={styles.barWrapper}>
+                <div 
+                  className={styles.barFill}
+                  style={{ 
+                    '--target-width': `${percentage}%`,
+                    '--animation-delay': `${0.3 + index * 0.2}s`,
+                    backgroundColor: `hsl(${210 + index * 15}, 70%, ${60 - index * 5}%)`
+                  }}
+                >
+                  <div className={styles.barValue}>{item.leadsConsumed}</div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    ) : (
+      <div className={styles.noData}>
+        <p>No analytics data available</p>
+      </div>
+    )}
+  </div>
+
+  <button className={styles.analyticsButton}>
+    Go to Analytics Page
+    <span className={styles.linkArrow}>→</span>
+  </button>
+</div>
           </div>
         </div>
       </div>
-      {confirmModal.open && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <p>
-              Are you sure you want to put
-              {" "}<strong>{confirmModal.keyword}</strong> into{" "}
-              <strong>
-                {confirmModal.type === "reject" ? "Rejected" : "Accepted"}
-              </strong>
-              {" "}
-              List?
-            </p>
-            <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
-              <button
-                onClick={handleConfirmAction}
-                style={{
-                  marginBottom: "0px",
-                  padding: "6px 12px",
-                  backgroundColor: "#4caf50",
-                  color: "white",
-                  border: "none",
-                }}
-              >
-                Okay
-              </button>
-              <button
-                onClick={() =>
-                  setConfirmModal({ open: false, keyword: "", type: null })
-                }
-                style={{
-                  marginBottom: "0px",
-                  padding: "6px 12px",
-                  backgroundColor: "#f44336",
-                  color: "white",
-                  border: "none",
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

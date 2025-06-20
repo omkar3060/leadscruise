@@ -108,7 +108,7 @@ const Sidebar = ({ status }) => {
               <BiBarChartSquare className={styles.icon} />
               <span className={styles.tooltipText}>Analytics</span>
             </div>
-            {/* <div
+            <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/ai")}
             >
@@ -118,7 +118,7 @@ const Sidebar = ({ status }) => {
                 objectFit: "contain",
               }} />
               <span className={styles.tooltipText}>AI</span>
-            </div> */}
+            </div>
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/sheets")}
