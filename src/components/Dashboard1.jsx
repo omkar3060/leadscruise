@@ -964,7 +964,7 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <button className={styles.linkButton}>
+                <button className={styles.linkButton} onClick={() => window.open("https://www.youtube.com/@FocusEngineeringProducts", "_blank")}>
                   Go to Youtube Page
                   <span className={styles.linkArrow}>→</span>
                 </button>
@@ -1013,7 +1013,7 @@ const Dashboard = () => {
                 )}
               </div>
 
-              <button className={styles.seeMoreButton}>
+              <button className={styles.seeMoreButton} onClick={() => navigate("/sheets")}>
                 See More
                 <span className={styles.linkArrow}>→</span>
               </button>
@@ -1021,65 +1021,65 @@ const Dashboard = () => {
 
             {/* Analytics Card */}
             <div className={styles.analyticsCard}>
-  <div className={styles.analyticsHeader}>
-    <BarChart3 size={20} className={styles.icon} />
-    <h3 className={styles.cardTitle}>
-      Analytics - Top Products by Leads
-    </h3>
-  </div>
+              <div className={styles.analyticsHeader}>
+                <BarChart3 size={20} className={styles.icon} />
+                <h3 className={styles.cardTitle}>
+                  Analytics - Top Products by Leads
+                </h3>
+              </div>
 
-  <div className={styles.chartContainer}>
-    {tableData.categories && tableData.categories.length > 0 ? (
-      <div className={styles.barChart}>
-        {tableData.categories.slice(0, 5).map((item, index) => {
-          const maxLeads = Math.max(...tableData.categories.slice(0, 5).map(cat => cat.leadsConsumed));
-          const percentage = (item.leadsConsumed / maxLeads) * 100;
-          
-          return (
-            <div 
-              key={item._id} 
-              className={styles.barItem}
-              style={{
-                '--item-delay': `${index * 0.15}s`
-              }}
-            >
-              <div className={styles.barLabel}>
-                <span className={styles.categoryName}>
-                  {item.category.length > 15 ? 
-                    `${item.category.substring(0, 15)}...` : 
-                    item.category
-                  }
-                </span>
-                <span className={styles.leadsCount}>{item.leadsConsumed}</span>
+              <div className={styles.chartContainer}>
+                {tableData.categories && tableData.categories.length > 0 ? (
+                  <div className={styles.barChart}>
+                    {tableData.categories.slice(0, 5).map((item, index) => {
+                      const maxLeads = Math.max(...tableData.categories.slice(0, 5).map(cat => cat.leadsConsumed));
+                      const percentage = (item.leadsConsumed / maxLeads) * 100;
+
+                      return (
+                        <div
+                          key={item._id}
+                          className={styles.barItem}
+                          style={{
+                            '--item-delay': `${index * 0.15}s`
+                          }}
+                        >
+                          <div className={styles.barLabel}>
+                            <span className={styles.categoryName}>
+                              {item.category.length > 30 ?
+                                `${item.category.substring(0, 30)}...` :
+                                item.category
+                              }
+                            </span>
+                            <span className={styles.leadsCount}>{item.leadsConsumed}</span>
+                          </div>
+                          <div className={styles.barWrapper}>
+                            <div
+                              className={styles.barFill}
+                              style={{
+                                '--target-width': `${percentage}%`,
+                                '--animation-delay': `${0.3 + index * 0.2}s`,
+                                backgroundColor: `hsl(${210 + index * 15}, 70%, ${60 - index * 5}%)`
+                              }}
+                            >
+                              <div className={styles.barValue}>{item.leadsConsumed}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className={styles.noData}>
+                    <p>No analytics data available</p>
+                  </div>
+                )}
               </div>
-              <div className={styles.barWrapper}>
-                <div 
-                  className={styles.barFill}
-                  style={{ 
-                    '--target-width': `${percentage}%`,
-                    '--animation-delay': `${0.3 + index * 0.2}s`,
-                    backgroundColor: `hsl(${210 + index * 15}, 70%, ${60 - index * 5}%)`
-                  }}
-                >
-                  <div className={styles.barValue}>{item.leadsConsumed}</div>
-                </div>
-              </div>
+
+              <button className={styles.analyticsButton} onClick={() => navigate("/analytics")}>
+                Go to Analytics Page
+                <span className={styles.linkArrow}>→</span>
+              </button>
             </div>
-          );
-        })}
-      </div>
-    ) : (
-      <div className={styles.noData}>
-        <p>No analytics data available</p>
-      </div>
-    )}
-  </div>
-
-  <button className={styles.analyticsButton}>
-    Go to Analytics Page
-    <span className={styles.linkArrow}>→</span>
-  </button>
-</div>
           </div>
         </div>
       </div>

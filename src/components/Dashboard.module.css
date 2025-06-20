@@ -769,7 +769,7 @@
   transition: all 0.2s ease;
 }
 
-.analyticsButton:hover .linkArrow {
+.analyticsButton:hover .linkArrow, .linkButton:hover .linkArrow, .seeMoreButton:hover .linkArrow {
   transform: translateX(4px);
 }
 
