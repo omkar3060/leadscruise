@@ -538,7 +538,7 @@ def set_browser_zoom(driver, zoom_level=0.75):
     })
     #print(f"Browser zoom set to {zoom_level * 100}% using Chrome DevTools Protocol.")
 
-def go_to_message_center_and_click(driver):
+def go_to_message_center_and_click(driver, first_h2_text):
 
     print("Waiting for 3 seconds before going to the message center...", flush=True)
     time.sleep(3)
@@ -572,14 +572,28 @@ def go_to_message_center_and_click(driver):
         message_input = WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.XPATH, "//div[@id='massage-text' and @contenteditable='true']")))
 
         sentences = input_data.get("sentences", [])
+        
+        print(f"Processing {len(sentences)} message templates...", flush=True)
+        print(f"Product name to replace: '{first_h2_text}'", flush=True)
 
-        for sentence in sentences:
+        for i, sentence in enumerate(sentences):
+            # Replace {Requested_product_name} with first_h2_text if present
+            processed_sentence = sentence
+            if "{Requested_product_name}" in sentence:
+                processed_sentence = sentence.replace("{Requested_product_name}", first_h2_text)
+                print(f"Template {i+1} - Original: '{sentence}'", flush=True)
+                print(f"Template {i+1} - Processed: '{processed_sentence}'", flush=True)
+            else:
+                print(f"Template {i+1} - No replacement needed: '{sentence}'", flush=True)
+            
+            # Clear the input field and enter the processed message
             message_input.click()
             message_input.send_keys(Keys.CONTROL + "a")
             message_input.send_keys(Keys.DELETE)
-            message_input.send_keys(sentence)
-            print(f"Entered message: '{sentence}'", flush=True)
+            message_input.send_keys(processed_sentence)
+            print(f"Entered processed message: '{processed_sentence}'", flush=True)
 
+            # Send the message
             send_div = driver.find_element(By.ID, "send-reply-span")
             send_div.click()
             print("Clicked the send button.", flush=True)
@@ -592,6 +606,8 @@ def go_to_message_center_and_click(driver):
                 print("Closed the popup after sending the message.", flush=True)
             except:
                 print("No popup appeared after message.", flush=True)
+
+        print(f"Successfully sent all {len(sentences)} processed messages.", flush=True)
 
         # Click 'View More'
         view_more_button = WebDriverWait(driver, 10).until(
@@ -619,11 +635,13 @@ def go_to_message_center_and_click(driver):
             address = address_element.text
         except:
             address = "Address not found"
+        
         user_mobile_number = input_data.get("mobileNumber", "")  # Get the logged-in user's mobile number
         send_data_to_dashboard(left_name.text, mobile_number.text, email_id, user_mobile_number, address)
+        
     except Exception as e:
         print(f"An error occurred while interacting with the message center: {e}", flush=True)
-
+        
 def click_contact_buyer_now_button(driver, wait):
     """
     Clicks the first 'Contact Buyer Now' button on the page.
@@ -924,7 +942,7 @@ def redirect_and_refresh(driver, wait):
             if span_result and h2_result and time_result:
                 if click_contact_buyer_now_button(driver, wait):
                     # Call the function to go to message center and click the 'Reply Now' button
-                    go_to_message_center_and_click(driver)
+                    go_to_message_center_and_click(driver, first_h2_text)
                 else:
                     print("Failed to click the 'Contact Buyer Now' button.",flush=True)
 

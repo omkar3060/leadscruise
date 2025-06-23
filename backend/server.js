@@ -247,54 +247,150 @@ app.post("/api/execute-task", async (req, res) => {
   let result = "";
   let error = "";
 
-  // Capture standard output (stdout)
+  // Capture standard output (stdout) and log to console
   pythonProcess.stdout.on("data", (data) => {
-    result += data.toString();
+    const output = data.toString();
+    result += output;
+    console.log("Python stdout:", output.trim());
   });
 
-  // Capture standard error (stderr)
+  // Capture standard error (stderr) and log to console
   pythonProcess.stderr.on("data", (data) => {
-    error += data.toString();
+    const errorOutput = data.toString();
+    error += errorOutput;
+    console.error("Python stderr:", errorOutput.trim());
   });
 
   // Handle Python script execution completion
   pythonProcess.on("close", async (code) => {
+    console.log(`Python process exited with code: ${code}`);
+    
     if (code === 0) {
       try {
-        const extractedApiKey = result.trim(); // Get the API key from Python script output
-        console.log("Extracted API Key:", extractedApiKey);
-
-        let user = await User.findOne({ email });
-
-        if (!user) {
-          return res
-            .status(404)
-            .json({ status: "error", message: "User not found" });
+        // Parse the result from Python script
+        const resultText = result.trim();
+        
+        // Extract JSON between separators
+        const startMarker = "===RESULT_START===";
+        const endMarker = "===RESULT_END===";
+        const startIndex = resultText.indexOf(startMarker);
+        const endIndex = resultText.indexOf(endMarker);
+        
+        let extractedData;
+        if (startIndex !== -1 && endIndex !== -1) {
+          // Extract JSON between markers
+          const jsonString = resultText.substring(startIndex + startMarker.length, endIndex).trim();
+          try {
+            extractedData = JSON.parse(jsonString);
+            console.log("Successfully parsed JSON result:", extractedData);
+          } catch (parseError) {
+            console.error("Error parsing JSON between markers:", parseError);
+            console.error("JSON string was:", jsonString);
+            throw parseError;
+          }
+        } else {
+          console.error("Could not find result markers in output");
+          console.error("Full output:", resultText);
         }
 
-        // ✅ **Update user record with API Key**
+        const { companyName, mobileNumbers, preferredCategories, messageTemplates } = extractedData;
+        console.log("Extracted Company Name:", companyName);
+        console.log("Extracted Mobile Numbers:", mobileNumbers);
+        console.log("Extracted Categories:", preferredCategories);
+        console.log("Generated Message Templates:", messageTemplates);
+
+        // Find the user
+        let user = await User.findOne({ email });
+        if (!user) {
+          return res.status(404).json({ 
+            status: "error", 
+            message: "User not found" 
+          });
+        }
+
+        // Update user record with mobile number and password
         user.mobileNumber = mobileNumber;
         user.savedPassword = password;
-        user.apiKey = extractedApiKey; // ✅ Store extracted API key
+        
+        // Add company name and mobile numbers to user if available
+        if (companyName) {
+          user.companyName = companyName;
+        }
+        if (mobileNumbers && mobileNumbers.length > 0) {
+          user.companyMobileNumbers = mobileNumbers;
+        }
+        
         await user.save();
+        console.log("User record updated successfully");
+
+        // Update or create settings record with preferred categories and message templates
+        if ((preferredCategories && preferredCategories.length > 0) || (messageTemplates && messageTemplates.length > 0)) {
+          try {
+            // Find existing settings or create new one
+            let settings = await Settings.findOne({ userEmail: email });
+            
+            if (!settings) {
+              // Create new settings record
+              settings = new Settings({
+                userEmail: email,
+                wordArray: preferredCategories || [],
+                sentences: messageTemplates || [],
+                h2WordArray: [],
+                minOrder: 0,
+                leadTypes: []
+              });
+              console.log("Creating new settings record for user:", email);
+            } else {
+              // Update existing settings
+              if (preferredCategories && preferredCategories.length > 0) {
+                settings.wordArray = preferredCategories;
+                console.log("Updated wordArray with preferred categories");
+              }
+              
+              if (messageTemplates && messageTemplates.length > 0) {
+                settings.sentences = messageTemplates;
+                console.log("Updated sentences with message templates");
+              }
+              
+              console.log("Updating existing settings record for user:", email);
+            }
+            
+            await settings.save();
+            console.log(`Successfully saved settings - Categories: ${preferredCategories ? preferredCategories.length : 0}, Templates: ${messageTemplates ? messageTemplates.length : 0}`);
+            
+          } catch (settingsError) {
+            console.error("Error saving settings:", settingsError);
+            // Don't fail the whole request if settings save fails
+          }
+        }
 
         return res.json({
           status: "success",
-          message: "API Key extracted and saved!",
-          apiKey: extractedApiKey,
+          message: "Company profile and categories extracted successfully!",
         });
+
       } catch (dbError) {
         console.error("Database error:", dbError);
-        return res
-          .status(500)
-          .json({ status: "error", message: "Database error" });
+        return res.status(500).json({ 
+          status: "error", 
+          message: "Database error" 
+        });
       }
     } else {
       return res.status(500).json({
         status: "error",
-        message: `AI failed with error: ${error.trim()}`,
+        message: `Python script failed with exit code ${code}. Error: ${error.trim()}`,
       });
     }
+  });
+
+  // Handle process errors
+  pythonProcess.on("error", (err) => {
+    console.error("Failed to start Python process:", err);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to start Python process",
+    });
   });
 });
 
@@ -429,82 +525,82 @@ const SUBSCRIPTION_DURATIONS = {
   "year-mo": 365,
 };
 
-cron.schedule("0 6 * * *", async () => {
-  console.log("Running scheduled task at 6:00 AM...");
+// cron.schedule("0 6 * * *", async () => {
+//   console.log("Running scheduled task at 6:00 AM...");
 
-  try {
-    const usersToStart = await User.find({
-      autoStartEnabled: true, // Add this flag per user to control auto-start
-    });
+//   try {
+//     const usersToStart = await User.find({
+//       autoStartEnabled: true, // Add this flag per user to control auto-start
+//     });
 
-    for (const user of usersToStart) {
-      const settings = await Settings.findOne({ userEmail: user.email });
+//     for (const user of usersToStart) {
+//       const settings = await Settings.findOne({ userEmail: user.email });
 
-      if (
-        !settings ||
-        (!settings.sentences?.length && !settings.wordArray?.length && !settings.h2WordArray?.length)
-      ) {
-        console.log(`Skipping ${user.email}: No valid settings found.`);
-        continue;
-      }
+//       if (
+//         !settings ||
+//         (!settings.sentences?.length && !settings.wordArray?.length && !settings.h2WordArray?.length)
+//       ) {
+//         console.log(`Skipping ${user.email}: No valid settings found.`);
+//         continue;
+//       }
 
-      if (!user.mobileNumber || !user.savedPassword) {
-        console.log(`Skipping ${user.email}: Missing credentials.`);
-        continue;
-      }
+//       if (!user.mobileNumber || !user.savedPassword) {
+//         console.log(`Skipping ${user.email}: Missing credentials.`);
+//         continue;
+//       }
 
-      // 3. Get the latest payment (based on created_at)
-      const latestPayment = await Payment.findOne({ email: user.email })
-        .sort({ created_at: -1 });
+//       // 3. Get the latest payment (based on created_at)
+//       const latestPayment = await Payment.findOne({ email: user.email })
+//         .sort({ created_at: -1 });
 
-      if (!latestPayment || !latestPayment.unique_id) {
-        console.log(`⚠️ Skipping ${user.email}: No valid unique_id found in payments.`);
-        continue;
-      }
+//       if (!latestPayment || !latestPayment.unique_id) {
+//         console.log(`⚠️ Skipping ${user.email}: No valid unique_id found in payments.`);
+//         continue;
+//       }
 
-      const latestUniqueId = latestPayment.unique_id;
+//       const latestUniqueId = latestPayment.unique_id;
 
-      const subscriptionDays =
-        SUBSCRIPTION_DURATIONS[latestPayment.subscription_type];
-      if (!subscriptionDays) {
-        console.log(`Skipping ${user.email}: Unknown subscription type.`);
-        continue;
-      }
+//       const subscriptionDays =
+//         SUBSCRIPTION_DURATIONS[latestPayment.subscription_type];
+//       if (!subscriptionDays) {
+//         console.log(`Skipping ${user.email}: Unknown subscription type.`);
+//         continue;
+//       }
 
-      const expirationDate = new Date(latestPayment.created_at);
-      expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+//       const expirationDate = new Date(latestPayment.created_at);
+//       expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
 
-      // Check if the subscription is still active
-      if (new Date() > expirationDate) {
-        console.log(
-          `Skipping ${user.email
-          }: Subscription expired on ${expirationDate.toDateString()}.`
-        );
-        await User.updateOne({ email: user.email }, { status: "stopped" });
-        continue;
-      }
+//       // Check if the subscription is still active
+//       if (new Date() > expirationDate) {
+//         console.log(
+//           `Skipping ${user.email
+//           }: Subscription expired on ${expirationDate.toDateString()}.`
+//         );
+//         await User.updateOne({ email: user.email }, { status: "stopped" });
+//         continue;
+//       }
 
-      try {
-        await axios.post("https://api.leadscruise.com/api/cycle", {
-          sentences: settings.sentences,
-          wordArray: settings.wordArray,
-          h2WordArray: settings.h2WordArray,
-          mobileNumber: user.mobileNumber,
-          password: user.savedPassword,
-          userEmail: user.email,
-          uniqueId: latestUniqueId,
-          minOrder: settings.minOrder,
-          leadTypes: settings.leadTypes,
-        });
-        console.log(`Started script for ${user.email}`);
-      } catch (error) {
-        console.error(`Failed to start script for ${user.email}:`, error.message);
-      }
-    }
-  } catch (err) {
-    console.error("Cron job error:", err.message);
-  }
-});
+//       try {
+//         await axios.post("https://api.leadscruise.com/api/cycle", {
+//           sentences: settings.sentences,
+//           wordArray: settings.wordArray,
+//           h2WordArray: settings.h2WordArray,
+//           mobileNumber: user.mobileNumber,
+//           password: user.savedPassword,
+//           userEmail: user.email,
+//           uniqueId: latestUniqueId,
+//           minOrder: settings.minOrder,
+//           leadTypes: settings.leadTypes,
+//         });
+//         console.log(`Started script for ${user.email}`);
+//       } catch (error) {
+//         console.error(`Failed to start script for ${user.email}:`, error.message);
+//       }
+//     }
+//   } catch (err) {
+//     console.error("Cron job error:", err.message);
+//   }
+// });
 
 const otpRequests = new Map();
 const otpFailures = new Map(); // <uniqueId, true>

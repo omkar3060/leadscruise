@@ -13,7 +13,7 @@ import "./TaskExecutor.css";
 import "./Plans.css";
 
 const TaskExecutor = () => {
-  const [mobileNumber, setMobileNumber]=useState(localStorage.getItem("mobileNumber") || "");
+  const [mobileNumber, setMobileNumber] = useState(localStorage.getItem("mobileNumber") || "");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("idle"); // 'idle', 'loading', 'success', or 'error'
   const [message, setMessage] = useState("");
@@ -46,7 +46,7 @@ const TaskExecutor = () => {
         mobileNumber,
         email,
       });
-  
+
       // If 409 status, someone else is using it
       if (checkResponse.status === 409) {
         setStatus("idle");
@@ -63,7 +63,8 @@ const TaskExecutor = () => {
         setStatus("idle");
         alert("An error occurred while executing the task.");
         return;
-      }}
+      }
+    }
 
     try {
       localStorage.setItem("savedpassword", password);
@@ -139,16 +140,16 @@ const TaskExecutor = () => {
                 </div>
               </div>
               <input
-  type="text"
-  placeholder="Mobile Number"
-  value={mobileNumber}
-  onChange={(e) => {
-    const value = e.target.value;
-    setMobileNumber(value);
-    localStorage.setItem("mobileNumber", value); // always keep it synced
-  }}
-  className="input-field"
-/>
+                type="text"
+                placeholder="Mobile Number"
+                value={mobileNumber}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setMobileNumber(value);
+                  localStorage.setItem("mobileNumber", value); // always keep it synced
+                }}
+                className="input-field"
+              />
               <div className="password-container">
                 <input
                   type={showPassword ? "text" : "password"} // Toggle type

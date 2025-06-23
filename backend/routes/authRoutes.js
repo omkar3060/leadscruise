@@ -53,7 +53,6 @@ router.post("/force-logout", forceLogout);
 router.get("/check-user-credentials/:email", checkUserCredentials);
 router.post("/check-mobile", checkMobileNumber);
 
-
 const SUBSCRIPTION_DURATIONS = {
   "one-mo": 30,
   "three-mo": 60,
