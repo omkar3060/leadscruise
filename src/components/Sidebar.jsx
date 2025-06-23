@@ -78,37 +78,6 @@ const Sidebar = ({ status }) => {
         {!location.pathname.includes("/master") && (
           <>
             <div
-              className={`${styles.sidebarIcon} ${styles.tooltip} ${status === "Running" ? styles.disabled : ""
-                }`}
-              onClick={() => {
-                console.log("Status in Sidebar:", status);
-                if (status === "Running") {
-                  alert(
-                    "You cannot go to settings while the AI is running!"
-                  );
-                } else {
-                  navigate("/settings");
-                }
-              }}
-            >
-              <FiSettings className={styles.icon} />
-              <span className={styles.tooltipText}>Settings</span>
-            </div>
-            <div
-              className={`${styles.sidebarIcon} ${styles.tooltip}`}
-              onClick={() => navigate("/whatsapp")}
-            >
-              <FaWhatsapp className={styles.icon} />
-              <span className={styles.tooltipText}>WhatsApp</span>
-            </div>
-            <div
-              className={`${styles.sidebarIcon} ${styles.tooltip}`}
-              onClick={() => navigate("/analytics")}
-            >
-              <BiBarChartSquare className={styles.icon} />
-              <span className={styles.tooltipText}>Analytics</span>
-            </div>
-            <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/ai")}
             >
@@ -126,7 +95,37 @@ const Sidebar = ({ status }) => {
               <SiGooglesheets className={styles.icon} />
               <span className={styles.tooltipText}>Sheets</span>
             </div>
-
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/analytics")}
+            >
+              <BiBarChartSquare className={styles.icon} />
+              <span className={styles.tooltipText}>Analytics</span>
+            </div>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/whatsapp")}
+            >
+              <FaWhatsapp className={styles.icon} />
+              <span className={styles.tooltipText}>WhatsApp</span>
+            </div>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip} ${status === "Running" ? styles.disabled : ""
+                }`}
+              onClick={() => {
+                console.log("Status in Sidebar:", status);
+                if (status === "Running") {
+                  alert(
+                    "You cannot go to settings while the AI is running!"
+                  );
+                } else {
+                  navigate("/settings");
+                }
+              }}
+            >
+              <FiSettings className={styles.icon} />
+              <span className={styles.tooltipText}>Settings</span>
+            </div>
           </>
         )}
       </div>

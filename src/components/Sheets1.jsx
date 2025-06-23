@@ -775,6 +775,97 @@ const Sheets = () => {
     fetchLeads();
   }, []);
 
+  useEffect(() => {
+    const fetchMessageCount = async () => {
+      try {
+        const mobileNumber = localStorage.getItem("mobileNumber");
+        const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
+
+        setMessageCount(response.data.messageCount);
+      } catch (error) {
+        console.error("Failed to fetch message count:", error);
+      }
+    };
+
+    fetchMessageCount();
+  }, []);
+
+  const calculateMetrics = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    oneWeekAgo.setHours(0, 0, 0, 0);
+
+    const leadsToday = leads.filter((lead) => {
+      const leadDate = new Date(lead.createdAt);
+      leadDate.setHours(0, 0, 0, 0);
+      return leadDate.getTime() === today.getTime();
+    });
+
+    const leadsThisWeek = leads.filter((lead) => {
+      const leadDate = new Date(lead.createdAt);
+      return leadDate >= oneWeekAgo;
+    });
+
+    return {
+      totalLeadsToday: leadsToday.length,
+      totalLeadsThisWeek: leadsThisWeek.length,
+      totalLeadsCaptured: leads.length,
+    };
+  };
+
+  const metrics = calculateMetrics();
+
+  const downloadExcel = () => {
+    try {
+      // Prepare data for Excel export
+      const excelData = leads.map((lead, index) => ({
+        'No.': index + 1,
+        'Product Requested': lead.lead_bought || '',
+        'Address': lead.address || 'N/A',
+        'Name': lead.name || '',
+        'Email': lead.email || 'N/A',
+        'Mobile': lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile || '',
+        'Date': formatDate(lead.createdAt) || '',
+        'Status': isLeadRejected(lead.lead_bought) ? 'Rejected' : 'Active'
+      }));
+
+      // Create CSV content
+      const headers = Object.keys(excelData[0]);
+      const csvContent = [
+        headers.join(','), // Header row
+        ...excelData.map(row =>
+          headers.map(header => {
+            const value = row[header] || '';
+            // Escape commas and quotes in data
+            return value.toString().includes(',') || value.toString().includes('"')
+              ? `"${value.toString().replace(/"/g, '""')}"`
+              : value;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `leads.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error downloading Excel file:', error);
+      alert('Error downloading file. Please try again.');
+    }
+  };
+
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
       {/* {isLoading && <LoadingScreen />} */}
@@ -856,13 +947,83 @@ const Sheets = () => {
         cooldownActive={cooldownActive}
         cooldownTime={cooldownTime}
       />
+      <div className={styles.metricsSection}>
+        <div
+          onClick={() => navigate("/totalLeadsToday")}
+          className={styles.metricBox}
+        >
+          {metrics.totalLeadsToday} <br />
+          <span>Total Leads Today</span>
+        </div>
+        <div
+          onClick={() => navigate("/totalLeadsThisWeek")}
+          className={styles.metricBox}
+        >
+          {metrics.totalLeadsThisWeek} <br />
+          <span>Total Leads This Week</span>
+        </div>
+        <div className={styles.metricBox}>
+          {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
+          <br />
+          <span>Replies Sent Today</span>
+        </div>
+        <div className={styles.metricBox} style={{ color: "#28a745" }}>
+          {messageCount * metrics.totalLeadsToday || 0}
+          <br />
+          <span>WA Messages Sent Today</span>
+        </div>
+        <div className={styles.metricBox}>
+          {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
+          <br />
+          <span>Emails Sent Today</span>
+        </div>
+        <div className={styles.metricBox}>
+          {metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}
+          <br />
+          <span>Total Emails Sent</span>
+        </div>
+        <div className={styles.metricBox}>
+          {metrics.totalLeadsCaptured} <br />
+          <span>Total Leads Captured</span>
+        </div>
+      </div>
       <div className="settings-scroll-container">
         <div className="sheets-container">
-          <div className="table-container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>Leads purchased in the past 30 days: {totalLeads ? totalLeads : 0}</h2>
-            </div>
-
+          <div className="table-container table-container-height">
+            
+              <h2 className="sheets-header">Leads purchased in the past 30 days: {totalLeads ? totalLeads : 0}
+                {leads.length > 0 && (
+                <button
+                  onClick={downloadExcel}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#28a745',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '0px',
+                    width: 'fit-content',
+                    transition: 'background-color 0.2s ease',
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = '#218838';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = '#28a745';
+                  }}
+                  title="Download leads as Excel file"
+                >
+                  <span>📊</span>
+                  Download Excel
+                </button>
+              )}
+              </h2>
             {isLoadingLeads ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
                 Loading leads...

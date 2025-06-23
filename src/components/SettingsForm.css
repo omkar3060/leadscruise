@@ -61,6 +61,17 @@ body {
   overflow-x: hidden;
 }
 
+.table-container-height{
+  height: 65vh;
+}
+
+.sheets-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;  
+  padding: 2px 20px !important;
+}
+
 .header-content {
   display: flex;
   justify-content: space-between;

@@ -425,7 +425,7 @@
 }
 
 .aiBadge {
-  background-color: #1f2937;
+  background-color: black;
   color: white;
   padding: 8px 12px;
   border-radius: 8px;
@@ -466,6 +466,84 @@
   font-weight: 600;
   color: #374151;
 }
+
+.animatedPath {
+  transform-origin: center;
+  transform-box: fill-box;
+  opacity: 0;
+  animation: fadeIn 0.6s ease-out forwards;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.segment {
+  cursor: pointer;
+}
+.segment:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Staggered entry */
+.segment0 { animation-delay: 0s; }
+.segment1 { animation-delay: 0.2s; }
+.segment2 { animation-delay: 0.4s; }
+.segment3 { animation-delay: 0.6s; }
+/* Add more as needed */
+
+@keyframes fadeIn {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Legend fade-in */
+.legendItem {
+  opacity: 0;
+  animation: legendFade 0.8s ease-out forwards;
+}
+.legendItem:nth-child(1) { animation-delay: 0.4s; }
+.legendItem:nth-child(2) { animation-delay: 0.6s; }
+.legendItem:nth-child(3) { animation-delay: 0.8s; }
+/* Add more as needed */
+
+@keyframes legendFade {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Optional: Pulse center point */
+.pulseCircle {
+  fill: white;
+  r: 4;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    r: 4;
+    opacity: 1;
+  }
+  50% {
+    r: 6;
+    opacity: 0.5;
+  }
+  100% {
+    r: 4;
+    opacity: 1;
+  }
+}
+
 
 .attentionColumn {
   display: flex;

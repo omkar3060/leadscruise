@@ -98,6 +98,7 @@ const Dashboard = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
   const createPieChart = () => {
     const total = 360;
     let currentAngle = 0;
@@ -127,8 +128,7 @@ const Dashboard = () => {
           key={index}
           d={pathData}
           fill={segment.color}
-          stroke="#fff"
-          strokeWidth="2"
+          className={`${styles.animatedPath} ${styles.segment} ${styles[`segment${index}`]}`}
         />
       );
     });
@@ -750,8 +750,8 @@ const Dashboard = () => {
     if (total === 0) return [];
 
     return [
-      { label: 'Prospects', value: Number(((blue / total) * 100).toFixed(2)), color: '#3B82F6' },   // 🔵
-      { label: 'Saved', value: Number(((green / total) * 100).toFixed(2)), color: '#10B981' },      // 🟢
+      { label: 'Saved', value: Number(((blue / total) * 100).toFixed(2)), color: '#3B82F6' },   // 🔵
+      { label: 'Prospects', value: Number(((green / total) * 100).toFixed(2)), color: '#10B981' },      // 🟢
       { label: 'Rejected', value: Number(((red / total) * 100).toFixed(2)), color: '#EF4444' }      // 🔴
     ];
   };
@@ -904,7 +904,7 @@ const Dashboard = () => {
 
               {/* Pie Chart */}
               <div className={styles.pieChartContainer}>
-                <svg width="250" height="250" viewBox="0 0 100 100">
+                <svg width="225" height="225" viewBox="0 0 100 100">
                   {createPieChart()}
                 </svg>
               </div>
@@ -924,6 +924,10 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
+              <button className={styles.seeMoreButton} onClick={() => navigate("/ai")}>
+                See More
+                <span className={styles.linkArrow}>→</span>
+              </button>
             </div>
 
             {/* Attention Required Card */}
@@ -932,7 +936,7 @@ const Dashboard = () => {
                 <div className={styles.attentionHeader}>
                   <Target size={20} className={styles.icon} />
                   <h3 className={styles.cardTitle}>
-                    Attention Required
+                    System Status
                   </h3>
                 </div>
 
