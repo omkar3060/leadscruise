@@ -198,7 +198,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
 
       <div className={styles.statusSection}>
         {/* If the user is in settings or profile, show 'Return to Dashboard' */}
-        {location.pathname === "/settings" || location.pathname === "/profile" || location.pathname === "/sheets" || location.pathname === "/whatsapp" || location.pathname === "/analytics" ? (
+        {location.pathname === "/settings" || location.pathname === "/profile" || location.pathname === "/whatsapp" || location.pathname === "/analytics" ? (
           <div className={styles.statusLabel} onClick={() => navigate("/dashboard")}>
             <FaArrowLeft className={styles.iconOnly} /> <span className={styles.statusText}>Return to Dashboard</span>
           </div>
@@ -226,7 +226,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 <FaUndo className={styles.iconOnly} /> <span className={styles.buttonText}>Revert All</span>
               </button>
             </>
-          ) : location.pathname !== "/profile" && location.pathname !== "/sheets" && location.pathname !== "/whatsapp" && location.pathname!=="/analytics" ? (
+          ) : location.pathname !== "/profile" && location.pathname !== "/whatsapp" && location.pathname!=="/analytics" ? (
             <>
               <div
                 className={status === "Running" || isStarting || cooldownActive ? styles.tooltip1 : ""}

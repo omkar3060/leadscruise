@@ -990,40 +990,66 @@ const Sheets = () => {
       <div className="settings-scroll-container">
         <div className="sheets-container">
           <div className="table-container table-container-height">
-            
-              <h2 className="sheets-header">Leads purchased in the past 30 days: {totalLeads ? totalLeads : 0}
-                {leads.length > 0 && (
+
+            <h2 className="sheets-header">
+              All Leads from your leadsprovider: {totalLeads ? totalLeads : 0}
+              {leads.length > 0 && (
                 <button
                   onClick={downloadExcel}
                   style={{
-                    padding: '10px 20px',
+                    width: '40px',
+                    height: '40px',
                     backgroundColor: '#28a745',
                     color: '#fff',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '50%',
                     cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
+                    fontSize: '16px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    justifyContent: 'center',
+                    marginLeft: '12px',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
+                    position: 'relative',
+                    overflow: 'hidden',
                     marginBottom: '0px',
-                    width: 'fit-content',
-                    transition: 'background-color 0.2s ease',
                   }}
                   onMouseOver={(e) => {
                     e.target.style.backgroundColor = '#218838';
+                    // e.target.style.transform = 'translateY(-2px) scale(1.05)';
+                    e.target.style.boxShadow = '0 8px 20px rgba(40, 167, 69, 0.4)';
                   }}
                   onMouseOut={(e) => {
                     e.target.style.backgroundColor = '#28a745';
+                    e.target.style.transform = 'translateY(0) scale(1)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)';
+                  }}
+                  onMouseDown={(e) => {
+                    e.target.style.transform = 'translateY(0) scale(0.95)';
+                  }}
+                  onMouseUp={(e) => {
+                    e.target.style.transform = 'translateY(-2px) scale(1.05)';
                   }}
                   title="Download leads as Excel file"
                 >
-                  <span>📊</span>
-                  Download Excel
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7,10 12,15 17,10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
                 </button>
               )}
-              </h2>
+            </h2>
             {isLoadingLeads ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
                 Loading leads...
