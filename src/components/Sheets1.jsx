@@ -282,40 +282,57 @@ const Sheets = () => {
       });
 
       setShowOtpPopup(false);
+      localStorage.setItem("showOtpPopup", "false");
       setOtpValue('');
       // setOtpRequestId(null);
       alert("OTP submitted successfully!");
-      localStorage.setItem("cancelled", "false");
+      localStorage.setItem("cancelled", "true");
+      setCancelled(true);
     } catch (error) {
       console.error("Error submitting OTP:", error);
       alert("Failed to submit OTP. Please try again.");
     }
   };
 
-  useEffect(() => {
-    const uniqueId = localStorage.getItem("unique_id");
-
-    if (!uniqueId) return; // ⛔ Skip check if cancelled
-
-    const failureInterval = setInterval(async () => {
-      const cancelled = localStorage.getItem("cancelled") === "true";
-      if (cancelled) return; // 🚫 Skip if cancelled
-      try {
-        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
-        if (response.data.otpFailed && !cancelled) { // ✅ Ensure popup doesn't reappear
-          setOtpError("Incorrect OTP. Please try again.");
-          setShowOtpPopup(true);
-          localStorage.setItem("showOtpPopup", "true");
-          setShowOtpWaitPopup(false);
-          localStorage.setItem("showOtpWaitPopup", "false");
+useEffect(() => {
+  const uniqueId = localStorage.getItem("unique_id");
+  if (!uniqueId) return;
+  
+  const failureInterval = setInterval(async () => {
+    const isCancelled = localStorage.getItem("cancelled") === "true";
+    const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
+    
+    // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
+    
+    try {
+      const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
+      // console.log("API Response:", response.data);
+      
+      if (response.data.otpFailed) {
+        // console.log("OTP Failed detected! About to show alert...");
+        
+        setCancelled(true);
+        localStorage.setItem("cancelled", "true");
+        localStorage.setItem("showOtpPopup", "true");
+        localStorage.setItem("showOtpWaitPopup", "false");
+        setShowOtpPopup(true);
+        setShowOtpWaitPopup(false);
+        
+        if (!isAlertShown) {
+          // console.log("Showing alert now...");
+          alert("The OTP you entered is incorrect. Please try again.");
+          localStorage.setItem("otp_alert_shown", "true");
+        } else {
+          // console.log("Alert already shown, skipping...");
         }
-      } catch (err) {
-        // Ignore silently
       }
-    }, 2000);
-
-    return () => clearInterval(failureInterval);
-  }, [showOtpPopup, otpRequestId]);
+    } catch (err) {
+      console.error("API Error:", err);
+    }
+  }, 2000);
+  
+  return () => clearInterval(failureInterval);
+}, [showOtpPopup, otpRequestId]);
 
   useEffect(() => {
     const uniqueId = localStorage.getItem("unique_id");
@@ -355,12 +372,15 @@ const Sheets = () => {
     try {
       // Set a "Starting" state
       setIsStarting(true);
-
+      setCancelled(false);
+      setShowOtpPopup(false);
+      localStorage.setItem("cancelled", "false");
+      localStorage.setItem("otp_alert_shown", "false");
+      localStorage.setItem("showOtpPopup", "false");
       const mobileNumber = localStorage.getItem("mobileNumber");
       const password = localStorage.getItem("savedPassword");
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
-
       try {
         const credCheckRes = await axios.get(
           `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
@@ -880,7 +900,7 @@ const Sheets = () => {
         </div>
       )}
 
-      {showOtpPopup && (
+      {showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
             <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
@@ -899,9 +919,6 @@ const Sheets = () => {
               maxLength="4"
               autoFocus
             />
-            {otpError && (
-              <p className={styles['otp-popup-description']}>{otpError}</p> // 👈 Display error here
-            )}
             <div className={styles['otp-buttons']}>
               <button
                 onClick={() => {

@@ -816,7 +816,7 @@ def redirect_and_refresh(driver, wait):
             span_result = False
             try:
                 time.sleep(3)  # Static wait
-                first_grid = driver.find_element(By.CSS_SELECTOR, "div.bl_grid.Prd_Enq")
+                first_grid = driver.find_element(By.CSS_SELECTOR, "div.Mcat_buylead") 
                 coupling_spans = first_grid.find_elements(By.CSS_SELECTOR, "span[style*='color: rgb(42, 166, 153)']")
                 found_texts = [span.text.strip() for span in coupling_spans if span.text.strip()]
                 print(f"data from span: {found_texts}", flush=True)
@@ -1233,9 +1233,6 @@ def main():
                     print(f"Running redirect_and_refresh (count: {redirect_count + 1}/10)...", flush=True)
                     redirect_count += 1
                     redirect_and_refresh(driver, wait)
-                    expert_details = get_expert_details(driver)
-                    print(expert_details)
-                    send_to_node_api(expert_details)
                     
                 else:
                     # Continue with message processing in each loop iteration
