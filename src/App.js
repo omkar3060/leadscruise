@@ -32,6 +32,7 @@ import ExpiryThree from "./components/ExpiryThree";
 import ExpiredSubscriptions from "./components/Expired";
 import ActiveUsers from "./components/ActiveUsers";
 import Referrals from "./components/Referrals";
+import Team from "./components/Team";
 import SendEmail from "./components/SendEmail";
 import ComingSoon from "./components/ComingSoon";
 import MaintenanceBanner from "./components/MaintenanceBanner"; // Adjust path as needed
@@ -119,6 +120,14 @@ const Layout = () => {
           element={
             <ProtectedRoute>
               <Dashboard1 />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team"
+          element={
+            <ProtectedRoute>
+              <Team />
             </ProtectedRoute>
           }
         />
