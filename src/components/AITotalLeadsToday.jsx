@@ -3,8 +3,8 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 import "./TotalLeadsToday.css"; // Reuse same CSS
 
-const TotalLeadsAllTime = () => {
-  const [allLeads, setAllLeads] = useState([]);
+const AITotalLeadsToday = () => {
+  const [todayLeads, setTodayLeads] = useState([]);
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -15,12 +15,19 @@ const TotalLeadsAllTime = () => {
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-user-leads/${mobileNumber}`);
-        const data = response.data.leads;
+        const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
+        const data = response.data;
 
-        setAllLeads(data);
+        const today = new Date().toISOString().split("T")[0];
+
+        const filtered = data.filter((lead) => {
+          const leadDate = new Date(lead.createdAt).toISOString().split("T")[0];
+          return leadDate === today;
+        });
+
+        setTodayLeads(filtered);
       } catch (error) {
-        console.error("Error fetching all leads:", error);
+        console.error("Error fetching today's leads:", error);
       }
     };
 
@@ -28,25 +35,26 @@ const TotalLeadsAllTime = () => {
   }, []);
 
   const exportToExcel = () => {
-    const cleanedLeads = allLeads.map(({ _v, ...rest }) => rest);  // Remove _v
+    const cleanedLeads = todayLeads.map(({ _v, ...rest }) => rest);  // This removes the _v field
     const worksheet = XLSX.utils.json_to_sheet(cleanedLeads);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "AllLeads");
-    XLSX.writeFile(workbook, "TotalLeadsAllTime.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "TodayLeads");
+    XLSX.writeFile(workbook, "TotalLeadsToday.xlsx");
   };
+  
 
   return (
     <div className="leads-container">
-      <h2>All Captured Leads</h2>
+      <h2>Total Leads Captured Today by AI</h2>
       <div className="download-and-back-div">
         <button className="excel-btn" onClick={exportToExcel}>Download</button>
         <button className="back-btn" onClick={() => window.location.href = "/dashboard"}>
-          Back
+            Back
         </button>
       </div>
 
       <div className="table-container1">
-        {allLeads.length > 0 ? (
+        {todayLeads.length > 0 ? (
           <table>
             <thead>
               <tr>
@@ -59,7 +67,7 @@ const TotalLeadsAllTime = () => {
               </tr>
             </thead>
             <tbody>
-              {allLeads.map((lead, index) => (
+              {todayLeads.map((lead, index) => (
                 <tr key={index}>
                   <td>{lead.lead_bought || "N/A"}</td>
                   <td>{lead.address || "N/A"}</td>
@@ -72,11 +80,11 @@ const TotalLeadsAllTime = () => {
             </tbody>
           </table>
         ) : (
-          <p style={{ textAlign: "center" }}>No leads found.</p>
+          <p style={{ textAlign: "center" }}>No leads captured today.</p>
         )}
       </div>
     </div>
   );
 };
 
-export default TotalLeadsAllTime;
+export default AITotalLeadsToday;

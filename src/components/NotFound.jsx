@@ -18,7 +18,6 @@ const NotFound = () => {
 
   return (
     <div>
-      <Sidebar status={status} />
       <div
         dangerouslySetInnerHTML={{ __html: htmlContent }}
         style={{ padding: "20px", backgroundColor: "#ffffff" }}

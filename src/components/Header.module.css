@@ -1,94 +1,346 @@
 /* Header */
 .dashboardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-    background-color: white;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 10px;
-    border-radius: 8px;
-  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background-color: white;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 10px;
+  border-radius: 8px;
+}
 
-  /* Icons */
+/* Icons */
 .statusIcon {
   font-size: 18px;
 }
-  .statusSection {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+
+.statusSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.startStopButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.startButton,
+.stopButton {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 17.5vh;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+}
+
+.startButton {
+  background: #28a745;
+  color: white;
+}
+
+.stopButton {
+  background: #dc3545;
+  color: white;
+}
+
+.statusLabel {
+  background-color: #007bff;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 15px 20px;
+  border-radius: 5px;
+  text-align: center;
+  width: 36vh;
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+.profileSection {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.profileButton {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 0px;
+  margin-bottom: 0px;
+  font-size: 16px;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.profileButtonGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.balanceContainer {
+  position: relative;
+  z-index: 1;
+}
+
+.balanceDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  min-width: 120px;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      0 2px 6px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+    &::before {
+      left: 100%;
+    }
   }
-  
-  .startStopButtons {
-    display: flex;
-    gap: 10px;
+}
+
+.positiveBalance {
+  background: #28a745;
+  color: white;
+
+  &:hover {
+    background: linear-gradient(135deg,
+        rgba(34, 197, 94, 1) 0%,
+        rgba(16, 185, 129, 1) 50%,
+        rgba(5, 150, 105, 1) 100%);
   }
-  
-  .startButton,
-  .stopButton {
-    padding: 15px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    width:17.5vh;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
+}
+
+.zeroBalance {
+  background: #dc3545;
+  color: white;
+  animation: pulseWarning 2s infinite;
+
+  &:hover {
+    background: linear-gradient(135deg,
+        rgba(239, 68, 68, 1) 0%,
+        rgba(220, 38, 38, 1) 50%,
+        rgba(185, 28, 28, 1) 100%);
   }
-  
-  .startButton {
-    background: #28a745;
-    color: white;
-  }
-  
-  .stopButton {
-    background: #dc3545;
-    color: white;
-  }
-  
-  .statusLabel {
-    background-color: #007bff;
-    color: #ffffff;
-    font-weight: bold;
-    padding: 15px 20px;
-    border-radius: 5px;
-    text-align: center;
-    width: 36vh;
-    margin-top: 15px;
-    margin-bottom: 10px;
-  }
-  
-  .profileSection {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-  }
-  
-  .profileButton {
-    padding: 15px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #007bff;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-top: 15px;
-    margin-bottom: 15px;
-    font-size: 16px;
-  }
-  
-  .renewalText {
-    font-size: 12px;
-    color: #555;
-    margin: 3px;
+}
+
+@keyframes pulseWarning {
+
+  0%,
+  100% {
+    box-shadow:
+      0 4px 12px rgba(239, 68, 68, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
-  /* Advanced Popup Styling */
+  50% {
+    box-shadow:
+      0 4px 20px rgba(239, 68, 68, 0.5),
+      0 2px 8px rgba(239, 68, 68, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+.balanceIcon {
+  font-size: 14px;
+  opacity: 0.9;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.balanceContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.balanceLabel {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.balanceAmount {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.lowBalanceIndicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  z-index: 2;
+}
+
+.warningDot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: #fbbf24;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px rgba(239, 68, 68, 0.9),
+    0 0 8px rgba(251, 191, 36, 0.6);
+  animation: warningPulse 1.5s infinite;
+}
+
+@keyframes warningPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+@media (max-width: 768px) {
+  .balanceDisplay {
+    padding: 6px 12px;
+    min-width: 100px;
+  }
+
+  .balanceAmount {
+    font-size: 12px;
+  }
+
+  .balanceLabel {
+    font-size: 9px;
+  }
+
+  .balanceIcon {
+    font-size: 12px;
+  }
+
+  .profileButtonGroup {
+    gap: 8px;
+  }
+
+  .profileHeader {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .balanceDisplay {
+    padding: 4px 8px;
+    min-width: 80px;
+  }
+
+  .balanceContent {
+    gap: 0;
+  }
+
+  .balanceAmount {
+    font-size: 11px;
+  }
+
+  .balanceLabel {
+    font-size: 8px;
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .balanceDisplay {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Loading state */
+.balanceDisplay.loading {
+  opacity: 0.7;
+
+  .balanceAmount {
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0.2) 25%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0.2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    color: transparent;
+    border-radius: 3px;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .balanceDisplay {
+    border-width: 2px;
+    border-style: solid;
+  }
+
+  .positiveBalance {
+    border-color: #22c55e;
+  }
+
+  .zeroBalance {
+    border-color: #ef4444;
+  }
+}
+
+.renewalText {
+  font-size: 12px;
+  color: #555;
+  margin: 3px;
+}
+
+/* Advanced Popup Styling */
 .popupOverlay {
   position: fixed;
   top: 0;
@@ -182,8 +434,13 @@
 
 /* Animation keyframes */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -191,6 +448,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -203,8 +461,9 @@
     padding: 20px;
     width: 85%;
   }
-  
-  .renewButton, .closeButton {
+
+  .renewButton,
+  .closeButton {
     display: block;
     width: 100%;
     margin: 10px 0;
@@ -212,110 +471,126 @@
 }
 
 @media (max-width: 768px) {
-  .buttonText, .statusText {
-      display: none;
+
+  .buttonText,
+  .statusText {
+    display: none;
   }
 
-  .startButton, .stopButton, .profileButton {
-      width: 40px;
-      height: 40px;
-      justify-content: center;
-      min-width: unset;
-      padding: 10px;
+  .startButton,
+  .stopButton,
+  .profileButton {
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    min-width: unset;
+    padding: 10px;
   }
 
   .statusLabel {
-      width: fit-content;
-      justify-content: center;
-      padding: 10px;
+    width: fit-content;
+    justify-content: center;
+    padding: 10px;
   }
 
   .iconOnly {
-    font-size: 18px; /* Ensure icons remain visible */
-    display: block; /* Explicitly show icons */
-}
+    font-size: 18px;
+    /* Ensure icons remain visible */
+    display: block;
+    /* Explicitly show icons */
+  }
 }
 
 @media (max-width: 768px) {
 
   .dashboardHeader {
-      flex-wrap: wrap;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      width: 98vw;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 98vw;
   }
 
   .statusSection {
-      flex-direction: column;
-      flex-wrap: wrap;
-      justify-content: flex-start;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .startStopButtons {
     display: flex;
-    flex-direction: row; /* Ensure buttons stay in one line */
+    flex-direction: row;
+    /* Ensure buttons stay in one line */
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-}
+  }
 
   .statusLabel {
-      width: auto;
-      text-align: center;
+    width: auto;
+    text-align: center;
   }
 
   .profileButtonGroup {
     display: flex;
-    flex-direction: row; /* Align items horizontally */
+    flex-direction: row;
+    /* Align items horizontally */
     align-items: center;
-    justify-content: flex-end; /* Push buttons to the right */
-    gap: 8px; /* Add space between buttons */
+    justify-content: flex-end;
+    /* Push buttons to the right */
+    gap: 8px;
+    /* Add space between buttons */
     margin-top: 10px;
   }
 
   .subscriptionButton {
-    width: fit-content; /* Reduce width for smaller screens */
-    font-size: 14px !important; /* Reduce font size */
-    padding: 10px !important; /* Adjust padding */
-    height: 40px !important; /* Reduce button height */
-    margin-top:0px !important;
+    width: fit-content;
+    /* Reduce width for smaller screens */
+    font-size: 14px !important;
+    /* Reduce font size */
+    padding: 10px !important;
+    /* Adjust padding */
+    height: 40px !important;
+    /* Reduce button height */
+    margin-top: 0px !important;
   }
 
 }
 
 @media (max-width: 480px) {
   .dashboardHeader {
-      flex-wrap: wrap;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      width: 95vw;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 95vw;
   }
 
   .statusSection {
-      flex-direction: column;
-      flex-wrap: wrap;
-      justify-content: flex-start;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .startStopButtons {
     display: flex;
-    flex-direction: row; /* Ensure buttons stay in one line */
+    flex-direction: row;
+    /* Ensure buttons stay in one line */
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-}
+  }
 
   .statusLabel {
-      width: auto;
-      text-align: center;
+    width: auto;
+    text-align: center;
   }
 
   .profileSection {
-      align-items: flex-end; /* Keep profile section aligned to the right */
+    align-items: flex-end;
+    /* Keep profile section aligned to the right */
   }
 
   .renewalText {
@@ -344,6 +619,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -400,22 +676,23 @@
 
 @media (max-width: 768px) {
   .dashboardHeader {
-      flex-wrap: wrap;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
   }
 
   .statusSection {
-      flex-direction: column;
-      flex-wrap: wrap;
-      justify-content: flex-start;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .startStopButtons {
     display: flex;
-    flex-direction: row; /* Ensure buttons stay in one line */
+    flex-direction: row;
+    /* Ensure buttons stay in one line */
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
@@ -423,26 +700,28 @@
   }
 
   .statusLabel {
-      width: auto;
-      text-align: center;
+    width: auto;
+    text-align: center;
   }
 
   .profileSection {
-      align-items: flex-end; /* Keep profile section aligned to the right */
+    align-items: flex-end;
+    /* Keep profile section aligned to the right */
   }
 }
 
 @media (max-width: 768px) {
+
   /* Show profile dropdown on small screens only */
   .profileDropdown {
     display: block;
   }
-  
+
 }
 
 .subscriptionButton {
   position: relative;
-  background:#007bff;
+  background: #007bff;
   border: none;
   border-radius: 8px;
   color: white;
@@ -505,9 +784,11 @@
   0% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
+
   100% {
     opacity: 1;
   }
@@ -521,11 +802,9 @@
   left: -10%;
   width: 120%;
   height: 120%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0) 70%
-  );
+  background: radial-gradient(circle,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0) 70%);
   pointer-events: none;
 }
 
@@ -593,7 +872,8 @@
   margin-bottom: 20px;
 }
 
-.emailButton, .whatsappButton {
+.emailButton,
+.whatsappButton {
   width: 100%;
   padding: 14px 20px;
   border: none;
@@ -628,7 +908,8 @@
   transform: translateY(-1px);
 }
 
-.mailIcon, .whatsappIcon {
+.mailIcon,
+.whatsappIcon {
   transition: transform 0.3s ease;
 }
 
@@ -646,8 +927,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -655,6 +941,7 @@
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -676,7 +963,8 @@
     padding: 15px;
   }
 
-  .emailButton, .whatsappButton {
+  .emailButton,
+  .whatsappButton {
     padding: 12px 16px;
     font-size: 13px;
   }
@@ -688,21 +976,29 @@
 }
 
 .disabledButton {
-  opacity: 0.6; /* Reduce opacity */
-  cursor: not-allowed; /* Show "not allowed" cursor */
-  pointer-events: none; /* Disable interactions */
-  background-color: #d3d3d3 !important; /* Gray out the button */
-  color: #888 !important; /* Change text color to gray */
-  border: 1px solid #ccc !important; /* Light gray border */
+  opacity: 0.6;
+  /* Reduce opacity */
+  cursor: not-allowed;
+  /* Show "not allowed" cursor */
+  pointer-events: none;
+  /* Disable interactions */
+  background-color: #d3d3d3 !important;
+  /* Gray out the button */
+  color: #888 !important;
+  /* Change text color to gray */
+  border: 1px solid #ccc !important;
+  /* Light gray border */
 }
 
-.tooltip,.tooltip1 {
+.tooltip,
+.tooltip1 {
   position: relative;
   display: inline-block;
 }
 
 /* Tooltip Text */
-.tooltip::after,.tooltip1::after {
+.tooltip::after,
+.tooltip1::after {
   content: attr(data-tooltip);
   visibility: hidden;
   opacity: 0;
@@ -720,12 +1016,13 @@
   transition: opacity 0.3s, visibility 0.3s;
 }
 
-.tooltip1::after{
+.tooltip1::after {
   transform: translateX(-20%) !important;
 }
 
 /* Show Tooltip on Hover */
-.tooltip:hover::after,.tooltip1:hover::after {
+.tooltip:hover::after,
+.tooltip1:hover::after {
   visibility: visible;
   opacity: 1;
 }

@@ -282,9 +282,9 @@ const Dashboard = () => {
       }
 
       const response = await axios.get(
-        `https://api.leadscruise.com/api/get-leads/${mobileNumber}`
+        `https://api.leadscruise.com/api/get-user-leads/${mobileNumber}`
       );
-      setLeads(response.data);
+      setLeads(response.data.leads);
     } catch (error) {
       console.error("Error fetching leads:", error);
     }
@@ -399,30 +399,33 @@ const Dashboard = () => {
 
   // Calculate metrics based on leads data
   const calculateMetrics = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    oneWeekAgo.setHours(0, 0, 0, 0);
+  // Get the start of the current week (Monday)
+  const startOfWeek = new Date(today);
+  const day = today.getDay(); // Sunday: 0, Monday: 1, ..., Saturday: 6
+  const diff = day === 0 ? 6 : day - 1; // if Sunday, go back 6 days to get to Monday
+  startOfWeek.setDate(today.getDate() - diff);
+  startOfWeek.setHours(0, 0, 0, 0);
 
-    const leadsToday = leads.filter((lead) => {
-      const leadDate = new Date(lead.createdAt);
-      leadDate.setHours(0, 0, 0, 0);
-      return leadDate.getTime() === today.getTime();
-    });
+  const leadsToday = leads.filter((lead) => {
+    const leadDate = new Date(lead.createdAt);
+    leadDate.setHours(0, 0, 0, 0);
+    return leadDate.getTime() === today.getTime();
+  });
 
-    const leadsThisWeek = leads.filter((lead) => {
-      const leadDate = new Date(lead.createdAt);
-      return leadDate >= oneWeekAgo;
-    });
+  const leadsThisWeek = leads.filter((lead) => {
+    const leadDate = new Date(lead.createdAt);
+    return leadDate >= startOfWeek;
+  });
 
-    return {
-      totalLeadsToday: leadsToday.length,
-      totalLeadsThisWeek: leadsThisWeek.length,
-      totalLeadsCaptured: leads.length,
-    };
+  return {
+    totalLeadsToday: leadsToday.length,
+    totalLeadsThisWeek: leadsThisWeek.length,
+    totalLeadsCaptured: leads.length,
   };
+};
 
   const metrics = calculateMetrics();
 
@@ -879,27 +882,27 @@ useEffect(() => {
             {metrics.totalLeadsThisWeek} <br />
             <span>Total Leads This Week</span>
           </div>
-          <div className={styles.metricBox}>
+          <div className={styles.metricBox} onClick={() => navigate("/totalLeadsToday")}>
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
             <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.metricBox} style={{ color: "#28a745" }}>
+          <div className={styles.metricBox} style={{ color: "#28a745" }} onClick={() => navigate("/totalLeadsToday")}>
             {messageCount * metrics.totalLeadsToday || 0}
             <br />
             <span>WA Messages Sent Today</span>
           </div>
-          <div className={styles.metricBox}>
+          <div className={styles.metricBox} onClick={() => navigate("/totalLeadsToday")}>
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
             <br />
             <span>Emails Sent Today</span>
           </div>
-          <div className={styles.metricBox}>
+          <div className={styles.metricBox} onClick={() => navigate("/totalLeadsCaptured")}>
             {metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}
             <br />
             <span>Total Emails Sent</span>
           </div>
-          <div className={styles.metricBox}>
+          <div className={styles.metricBox} onClick={() => navigate("/totalLeadsCaptured")}>
             {metrics.totalLeadsCaptured} <br />
             <span>Total Leads Captured</span>
           </div>

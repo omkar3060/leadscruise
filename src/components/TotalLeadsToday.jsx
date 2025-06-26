@@ -15,8 +15,8 @@ const TotalLeadsToday = () => {
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
-        const data = response.data;
+        const response = await axios.get(`https://api.leadscruise.com/api/get-user-leads/${mobileNumber}`);
+        const data = response.data.leads;
 
         const today = new Date().toISOString().split("T")[0];
 
@@ -59,6 +59,7 @@ const TotalLeadsToday = () => {
             <thead>
               <tr>
                 <th>Product</th>
+                <th>Address</th>
                 <th>Name</th>
                 <th>Mobile Number</th>
                 <th>Email</th>
@@ -69,6 +70,7 @@ const TotalLeadsToday = () => {
               {todayLeads.map((lead, index) => (
                 <tr key={index}>
                   <td>{lead.lead_bought || "N/A"}</td>
+                  <td>{lead.address || "N/A"}</td>
                   <td>{lead.name || "N/A"}</td>
                   <td>{lead.mobile || "N/A"}</td>
                   <td>{lead.email || "N/A"}</td>

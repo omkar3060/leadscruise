@@ -3,7 +3,7 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 import "./TotalLeadsToday.css"; // Reuse same CSS
 
-const TotalLeadsThisWeek = () => {
+const AITotalLeadsThisWeek = () => {
   const [weekLeads, setWeekLeads] = useState([]);
 
   useEffect(() => {
@@ -15,8 +15,8 @@ const TotalLeadsThisWeek = () => {
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-user-leads/${mobileNumber}`);
-        const data = response.data.leads;
+        const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
+        const data = response.data;
 
         const now = new Date();
         const startOfWeek = new Date(now);
@@ -47,7 +47,7 @@ const TotalLeadsThisWeek = () => {
   
   return (
     <div className="leads-container">
-      <h2>Total Leads Captured This Week</h2>
+      <h2>Total Leads Captured This Week by AI</h2>
       <div className="download-and-back-div">
         <button className="excel-btn" onClick={exportToExcel}>Download</button>
         <button className="back-btn" onClick={() => window.location.href = "/dashboard"}>
@@ -86,4 +86,4 @@ const TotalLeadsThisWeek = () => {
   );
 };
 
-export default TotalLeadsThisWeek;
+export default AITotalLeadsThisWeek;

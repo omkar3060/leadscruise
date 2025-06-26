@@ -852,40 +852,40 @@ useEffect(() => {
         {/* Metrics Section */}
         <div className={styles.metricsSection}>
           <div
-            onClick={() => navigate("/totalLeadsToday")}
+            onClick={() => navigate("/aiTotalLeadsToday")}
             className={styles.comingSoon}
           >
             {metrics.totalLeadsToday} <br />
             <span>Total Leads Today</span>
           </div>
           <div
-            onClick={() => navigate("/totalLeadsThisWeek")}
+            onClick={() => navigate("/aiTotalLeadsThisWeek")}
             className={styles.comingSoon}
           >
             {metrics.totalLeadsThisWeek} <br />
             <span>Total Leads This Week</span>
           </div>
-          <div className={styles.comingSoon}>
+          <div className={styles.comingSoon} onClick={() => navigate("/aiTotalLeadsToday")}>
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
             <br />
             <span>Replies Sent Today</span>
           </div>
-          <div className={styles.comingSoon} style={{ color: "#28a745" }}>
+          <div className={styles.comingSoon} style={{ color: "#28a745" }} onClick={() => navigate("/aiTotalLeadsToday")}>
             {messageCount * metrics.totalLeadsToday || 0}
             <br />
             <span>WA Messages Sent Today</span>
           </div>
-          <div className={styles.comingSoon}>
+          <div className={styles.comingSoon} onClick={() => navigate("/aiTotalLeadsToday")}>
             {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
             <br />
             <span>Emails Sent Today</span>
           </div>
-          <div className={styles.comingSoon}>
+          <div className={styles.comingSoon} onClick={() => navigate("/aiTotalLeadsCaptured")}>
             {metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}
             <br />
             <span>Total Emails Sent</span>
           </div>
-          <div className={styles.comingSoon}>
+          <div className={styles.comingSoon} onClick={() => navigate("/aiTotalLeadsCaptured")}>
             {metrics.totalLeadsCaptured} <br />
             <span>Total Leads Captured</span>
           </div>

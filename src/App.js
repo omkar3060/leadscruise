@@ -35,17 +35,20 @@ import Referrals from "./components/Referrals";
 import Team from "./components/Team";
 import SendEmail from "./components/SendEmail";
 import ComingSoon from "./components/ComingSoon";
-import MaintenanceBanner from "./components/MaintenanceBanner"; // Adjust path as needed
-import Whatsapp from "./components/Whatsapp"; // Adjust path as needed
-import TotalLeadsToday from "./components/TotalLeadsToday"; // Adjust path as needed
-import TotalLeadsThisWeek from "./components/TotalLeadsThisWeek"; // Adjust path as needed
-import RepliesSentToday from "./components/RepliesSentToday"; // Adjust path as needed
-import EmailsSentToday from "./components/EmailsSentToday"; // Adjust path as needed
-import TotalEmailsSent from "./components/TotalEmailsSent"; // Adjust path as needed
-import TotalLeadsCaptured from "./components/TotalLeadsCaptured"; // Adjust path as needed
+import MaintenanceBanner from "./components/MaintenanceBanner"; 
+import Whatsapp from "./components/Whatsapp"; 
+import TotalLeadsToday from "./components/TotalLeadsToday"; 
+import TotalLeadsThisWeek from "./components/TotalLeadsThisWeek"; 
+import RepliesSentToday from "./components/RepliesSentToday"; 
+import EmailsSentToday from "./components/EmailsSentToday"; 
+import TotalEmailsSent from "./components/TotalEmailsSent"; 
+import TotalLeadsCaptured from "./components/TotalLeadsCaptured"; 
 import UserStatus from "./components/UserStatus";
 import Analytics from "./components/Analytics";
 import ExpertsDashboard from "./components/ExpertsDashboard";
+import AITotalLeadsToday from "./components/AITotalLeadsToday";
+import AITotalLeadsThisWeek from "./components/AITotalLeadsThisWeek";
+import AITotalLeadsCaptured from "./components/AITotalLeadsCaptured";
 
 const Layout = () => {
   const location = useLocation();
@@ -277,10 +280,26 @@ const Layout = () => {
           }
         />
         <Route
+          path="/aiTotalLeadsToday"
+          element={
+            <ProtectedRoute>
+              <AITotalLeadsToday />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/totalLeadsThisWeek"
           element={
             <ProtectedRoute>
               <TotalLeadsThisWeek />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/aiTotalLeadsThisWeek"
+          element={
+            <ProtectedRoute>
+              <AITotalLeadsThisWeek />
             </ProtectedRoute>
           }
         />
@@ -313,6 +332,14 @@ const Layout = () => {
           element={
             <ProtectedRoute>
               <TotalLeadsCaptured />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/aiTotalLeadsCaptured"
+          element={
+            <ProtectedRoute>
+              <AITotalLeadsCaptured />
             </ProtectedRoute>
           }
         />

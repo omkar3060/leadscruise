@@ -3,7 +3,7 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 import "./TotalLeadsToday.css"; // Reuse same CSS
 
-const TotalLeadsAllTime = () => {
+const AITotalLeadsAllTime = () => {
   const [allLeads, setAllLeads] = useState([]);
 
   useEffect(() => {
@@ -15,8 +15,8 @@ const TotalLeadsAllTime = () => {
           return;
         }
 
-        const response = await axios.get(`https://api.leadscruise.com/api/get-user-leads/${mobileNumber}`);
-        const data = response.data.leads;
+        const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
+        const data = response.data;
 
         setAllLeads(data);
       } catch (error) {
@@ -37,7 +37,7 @@ const TotalLeadsAllTime = () => {
 
   return (
     <div className="leads-container">
-      <h2>All Captured Leads</h2>
+      <h2>All Captured Leads by AI</h2>
       <div className="download-and-back-div">
         <button className="excel-btn" onClick={exportToExcel}>Download</button>
         <button className="back-btn" onClick={() => window.location.href = "/dashboard"}>
@@ -79,4 +79,4 @@ const TotalLeadsAllTime = () => {
   );
 };
 
-export default TotalLeadsAllTime;
+export default AITotalLeadsAllTime;
