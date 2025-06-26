@@ -328,6 +328,7 @@ const SignIn = () => {
         // If payment exists but mobileNumber and savedPassword are missing, redirect to execute-task
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
           localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+          localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
           navigate("/execute-task");
           return;
         }

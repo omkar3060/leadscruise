@@ -7,8 +7,78 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import threading
+import select
+import signal
 
-def execute_task_one(mobile_number, password):
+received_otp = None
+otp_event = threading.Event()
+stdin_lock = threading.Lock()
+skip_lead = False  # Global variable to skip lead if duplicate detected
+def read_stdin_non_blocking():
+    """Read from stdin without blocking"""
+    try:
+        if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
+            line = sys.stdin.readline()
+            return line.strip() if line else None
+    except:
+        pass
+    return None
+
+def listen_for_otp():
+    """Listen for OTP input from Node.js backend"""
+    global received_otp
+    
+    print("Starting OTP listener thread...",flush=True)
+    sys.stdout.flush()
+    
+    while not otp_event.is_set():
+        try:
+            # Check for input with a short timeout
+            if select.select([sys.stdin], [], [], 0.5) == ([sys.stdin], [], []):
+                with stdin_lock:
+                    line = sys.stdin.readline()
+                    if not line:
+                        time.sleep(0.1)
+                        continue
+                    
+                    try:
+                        data = json.loads(line.strip())
+                        print(f"Received data in OTP thread: {data}",flush=True)
+                        sys.stdout.flush()
+                        
+                        if data.get("type") == "OTP_RESPONSE":
+                            received_otp = data.get("otp")
+                            print(f"OTP captured: {received_otp}",flush=True)
+                            sys.stdout.flush()
+                            otp_event.set()  # Signal that OTP is received
+                            return
+                    except json.JSONDecodeError as e:
+                        print(f"JSON decode error in OTP thread: {e}",flush=True)
+                        sys.stdout.flush()
+                        continue
+            else:
+                # No input available, continue with short sleep
+                time.sleep(0.1)
+                
+        except Exception as e:
+            print(f"Error in OTP listener: {e}",flush=True)
+            sys.stdout.flush()
+            time.sleep(0.1)
+    
+    print("OTP listener thread exiting...",flush=True)
+    sys.stdout.flush()
+
+# Define the signal handler
+def stop_execution(signum, frame):
+    print("Received stop signal. Exiting gracefully...", flush=True)
+    sys.exit(0)  # Exit script immediately
+
+# Bind signal handler
+signal.signal(signal.SIGINT, stop_execution)
+
+def execute_task_one(mobile_number):
+    global received_otp
     """
     Automates the sign-in process on the IndiaMART seller platform using the provided mobile number and password.
     After login, it navigates to the CRM API page and extracts the API key.
@@ -55,21 +125,74 @@ def execute_task_one(mobile_number, password):
         )
         start_selling_button.click()
 
-        # Check if "Enter Password" button appears after clicking the "Start Selling" button
-        print("Waiting for Enter Password button", flush=True)
-        enter_password_button = wait.until(
-            EC.element_to_be_clickable((By.ID, "passwordbtn1"))
-        )
+        try:
+            # Click 'Request OTP on Mobile' button
+            received_otp = None
+            otp_event.clear()
+            otp_request_button = wait.until(
+                EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+            )
+            otp_request_button.click()
+            print("Clicked 'Request OTP on Mobile' button.",flush=True)
+            
+            # Signal to backend that OTP request has been initiated
+            print("OTP_REQUEST_INITIATED",flush=True)
+            sys.stdout.flush()
+            
+            # Start OTP listener thread
+            otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
+            otp_thread.start()
+            start_time = time.time()
+            print("Waiting for OTP input...", flush=True)
 
-        # Click the "Enter Password" button
-        print("Clicking Enter Password button", flush=True)
-        enter_password_button.click()
+            while time.time() - start_time < 60:
+                if otp_event.wait(timeout=5):  # Wait for OTP signal in small chunks
+                    otp_event.clear()  # Reset event for next attempt
 
-        # Wait for the password input field to appear and enter the password
-        print("Entering password", flush=True)
-        password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
-        password_input.clear()
-        password_input.send_keys(password)
+                    if received_otp and len(received_otp) == 4 and received_otp.isdigit():
+                        otp_fields = ["first", "second", "third", "fourth_num"]
+                        for i, field_id in enumerate(otp_fields):
+                            try:
+                                otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+                                otp_input.clear()
+                                otp_input.send_keys(received_otp[i])
+                            except (TimeoutException, NoSuchElementException):
+                                print(f"Could not find OTP field: {field_id}", flush=True)
+                                return "Unsuccessful"
+
+                        print("Entered OTP successfully.", flush=True)
+
+                        try:
+                            otp_submit_button = wait.until(EC.element_to_be_clickable((By.ID, "sbmtbtnOtp")))
+                            otp_submit_button.click()
+                            print("Clicked 'Submit OTP' button.", flush=True)
+                            time.sleep(2)
+
+                            # Check if OTP was correct
+                            try:
+                                error_elem = driver.find_element(By.ID, "otp_verify_err")
+                                if error_elem.is_displayed() and "Incorrect OTP" in error_elem.text:
+                                    print("OTP_FAILED_INCORRECT", flush=True)
+                                    continue  # Allow another attempt if time allows
+                            except NoSuchElementException:
+                                pass  # No error means success, break out of loop
+                            break
+                        except Exception as e:
+                            print(f"Failed to click OTP submit button: {e}", flush=True)
+                            continue
+                    else:
+                        print("Invalid OTP format received.", flush=True)
+                else:
+                    print("Still waiting for OTP...", flush=True)
+
+            # Final check after loop ends
+            if time.time() - start_time >= 90:
+                print("Timeout waiting for correct OTP.", flush=True)
+                return "Unsuccessful"
+                    
+        except (TimeoutException, NoSuchElementException) as e:
+            print(f"OTP flow failed: {e}",flush=True)
+            return "Unsuccessful"
 
         # Wait for the "Sign In" button to be clickable and click it
         print("Clicking Sign In button", flush=True)
@@ -253,14 +376,13 @@ def execute_task_one(mobile_number, password):
 
 # Main block to handle command-line arguments
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python selenium_script.py <mobileNumber> <password>", flush=True)
+    if len(sys.argv) != 2:
+        print("Usage: python selenium_script.py <mobileNumber>", flush=True)
         sys.exit(3)
 
     mobile_number = sys.argv[1]
-    password = sys.argv[2]
-    print(f"Arguments received - Mobile: {mobile_number}, Password: [HIDDEN]", flush=True)
-    
-    exit_code = execute_task_one(mobile_number, password)
+    print(f"Arguments received - Mobile: {mobile_number}", flush=True)
+
+    exit_code = execute_task_one(mobile_number)
     print(f"Script completed with exit code: {exit_code}", flush=True)
     sys.exit(exit_code)

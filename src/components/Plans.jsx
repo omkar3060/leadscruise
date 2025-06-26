@@ -94,6 +94,7 @@ const Plans = () => {
 
   const getNextPaymentId = async () => {
     const response = await axios.get("https://api.leadscruise.com/api/get-latest-id");
+    localStorage.setItem("unique_id", response.data.latestId);
     return response.data.latestId;
   };
 

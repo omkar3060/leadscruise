@@ -227,13 +227,18 @@ app.post("/api/check-number", async (req, res) => {
   }
 });
 
-app.post("/api/execute-task", async (req, res) => {
-  const { mobileNumber, password, email } = req.body;
+const otpRequests = new Map();
+const otpFailures = new Map(); 
 
-  if (!mobileNumber || !password || !email) {
+const activePythonProcesses = new Map(); 
+
+app.post("/api/execute-task", async (req, res) => {
+  const { mobileNumber, email, uniqueId } = req.body;
+
+  if (!mobileNumber || !email || !uniqueId) {
     return res.status(400).json({
       status: "error",
-      message: "Email, Mobile Number, and Password are required.",
+      message: "Email and Mobile Number are required.",
     });
   }
 
@@ -241,9 +246,8 @@ app.post("/api/execute-task", async (req, res) => {
   const pythonProcess = spawn("python3", [
     "login_check.py",
     mobileNumber,
-    password,
   ]);
-
+  activePythonProcesses.set(uniqueId, pythonProcess);
   let result = "";
   let error = "";
 
@@ -252,6 +256,21 @@ app.post("/api/execute-task", async (req, res) => {
     const output = data.toString();
     result += output;
     console.log("Python stdout:", output.trim());
+    if (output.includes("OTP_REQUEST_INITIATED")) {
+      console.log("OTP request detected for unique_id:", uniqueId);
+      const requestId = Date.now().toString(); // Generate unique request ID
+      otpRequests.set(uniqueId, {
+        requestId,
+        timestamp: new Date(),
+        otpReceived: false,
+        otp: null
+      });
+    }
+
+    if (output.includes("OTP_FAILED_INCORRECT")) {
+      console.log("Incorrect OTP detected for", uniqueId);
+      otpFailures.set(uniqueId, true);
+    }
   });
 
   // Capture standard error (stderr) and log to console
@@ -264,7 +283,10 @@ app.post("/api/execute-task", async (req, res) => {
   // Handle Python script execution completion
   pythonProcess.on("close", async (code) => {
     console.log(`Python process exited with code: ${code}`);
-    
+    activePythonProcesses.delete(uniqueId);
+    cleanupDisplay(uniqueId);
+    otpRequests.delete(uniqueId);
+    otpFailures.delete(uniqueId);
     if (code === 0) {
       try {
         // Parse the result from Python script
@@ -516,8 +538,6 @@ resetLeadCounters();
 // Schedule cron job to run every day at 5 AM
 cron.schedule("0 5 * * *", resetLeadCounters);
 
-const activePythonProcesses = new Map(); // Store active processes by user_mobile_number
-
 const SUBSCRIPTION_DURATIONS = {
   "one-mo": 30,
   "three-mo": 60,
@@ -602,9 +622,6 @@ const SUBSCRIPTION_DURATIONS = {
 //   }
 // });
 
-const otpRequests = new Map();
-const otpFailures = new Map(); // <uniqueId, true>
-
 app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
   let {
@@ -638,10 +655,10 @@ app.post("/api/cycle", async (req, res) => {
     });
   }
 
-  if (!mobileNumber || !password || !userEmail || !uniqueId) {
+  if (!mobileNumber || !userEmail || !uniqueId) {
     return res.status(400).json({
       status: "error",
-      message: "Mobile number, Email, password, and uniqueId are required.",
+      message: "Mobile number, Email, and uniqueId are required.",
     });
   }
 

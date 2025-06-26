@@ -11,6 +11,7 @@ import { Eye, EyeOff } from "lucide-react";
 import "./styles.css";
 import "./TaskExecutor.css";
 import "./Plans.css";
+import styles from "./Dashboard.module.css";
 
 const TaskExecutor = () => {
   const [mobileNumber, setMobileNumber] = useState(localStorage.getItem("mobileNumber") || "");
@@ -21,6 +22,18 @@ const TaskExecutor = () => {
   const [showBanner, setShowBanner] = useState(true);
   const [selected, setSelected] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
+  const [showOtpPopup, setShowOtpPopup] = useState(() => {
+    return localStorage.getItem("showOtpPopup") === "true";
+  });
+  const [otpValue, setOtpValue] = useState('');
+  const [otpRequestId, setOtpRequestId] = useState(null);
+  const [showOtpWaitPopup, setShowOtpWaitPopup] = useState(() => {
+    return localStorage.getItem("showOtpWaitPopup") === "true";
+  });
+  const [cancelled, setCancelled] = useState(() => {
+    return localStorage.getItem("cancelled") === "true";
+  });
+
   useEffect(() => {
     const interval = setInterval(() => {
       setSelected((prev) => (prev + 1) % 2);
@@ -29,10 +42,114 @@ const TaskExecutor = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleTaskExecution = async () => {
-    const email = localStorage.getItem("userEmail");
+  const handleOtpSubmit = async () => {
+    if (!otpValue || otpValue.length !== 4) {
+      alert("Please enter a valid 4-digit OTP");
+      return;
+    }
 
-    if (!mobileNumber || !password || !email) {
+    const confirmSubmit = window.confirm(`Are you sure you want to submit OTP: ${otpValue}?`);
+    if (!confirmSubmit) return;
+
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const uniqueId = localStorage.getItem("unique_id");
+
+      await axios.post("https://api.leadscruise.com/api/submit-otp", {
+        otp: otpValue,
+        userEmail,
+        uniqueId,
+        requestId: otpRequestId
+      });
+
+      setShowOtpPopup(false);
+      localStorage.setItem("showOtpPopup", "false");
+      setOtpValue('');
+      // setOtpRequestId(null);
+      alert("OTP submitted successfully!");
+      localStorage.setItem("cancelled", "true");
+      setCancelled(true);
+    } catch (error) {
+      console.error("Error submitting OTP:", error);
+      alert("Failed to submit OTP. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    const uniqueId = localStorage.getItem("unique_id");
+    if (!uniqueId) return;
+
+    const failureInterval = setInterval(async () => {
+      const isCancelled = localStorage.getItem("cancelled") === "true";
+      const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
+
+      // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
+
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
+        // console.log("API Response:", response.data);
+
+        if (response.data.otpFailed) {
+          // console.log("OTP Failed detected! About to show alert...");
+
+          setCancelled(true);
+          localStorage.setItem("cancelled", "true");
+          localStorage.setItem("showOtpPopup", "true");
+          localStorage.setItem("showOtpWaitPopup", "false");
+          setShowOtpPopup(true);
+          setShowOtpWaitPopup(false);
+
+          if (!isAlertShown) {
+            // console.log("Showing alert now...");
+            alert("The OTP you entered is incorrect. Please try again.");
+            localStorage.setItem("otp_alert_shown", "true");
+          } else {
+            // console.log("Alert already shown, skipping...");
+          }
+        }
+      } catch (err) {
+        console.error("API Error:", err);
+      }
+    }, 2000);
+
+    return () => clearInterval(failureInterval);
+  }, [showOtpPopup, otpRequestId]);
+
+  useEffect(() => {
+    const uniqueId = localStorage.getItem("unique_id");
+
+    if (!uniqueId) return;
+
+    const otpCheckInterval = setInterval(async () => {
+      const cancelled = localStorage.getItem("cancelled") === "true"; // ✅ moved inside
+      if (cancelled) return;
+
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
+        if (response.data.otpRequired) {
+          setOtpRequestId(response.data.requestId);
+          setShowOtpPopup(true);
+          localStorage.setItem("showOtpPopup", "true");
+          setShowOtpWaitPopup(false);
+          localStorage.setItem("showOtpWaitPopup", "false");
+        }
+      } catch (error) {
+        // Silently ignore
+      }
+    }, 2000);
+
+    return () => clearInterval(otpCheckInterval);
+  }, [status]);
+
+  const handleTaskExecution = async () => {
+    setCancelled(false);
+    setShowOtpPopup(false);
+    localStorage.setItem("cancelled", "false");
+    localStorage.setItem("otp_alert_shown", "false");
+    localStorage.setItem("showOtpPopup", "false");
+    const email = localStorage.getItem("userEmail");
+    const uniqueId = localStorage.getItem("unique_id");
+    if (!mobileNumber || !email) {
       setMessage("All fields are required.");
       return;
     }
@@ -73,8 +190,8 @@ const TaskExecutor = () => {
         "https://api.leadscruise.com/api/execute-task",
         {
           mobileNumber,
-          password,
           email,
+          uniqueId,
         }
       );
 
@@ -113,8 +230,57 @@ const TaskExecutor = () => {
     }
   };
 
+  const [tryAgainDisabled, setTryAgainDisabled] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+
+  useEffect(() => {
+    if (status === "error") {
+      const cooldownStart = localStorage.getItem("tryAgainCooldownStart");
+      if (!cooldownStart) {
+        const now = Date.now();
+        localStorage.setItem("tryAgainCooldownStart", now.toString());
+      }
+
+      // Check cooldown immediately when error occurs
+      const checkCooldown = () => {
+        const cooldownStartTime = localStorage.getItem("tryAgainCooldownStart");
+        if (cooldownStartTime) {
+          const elapsed = Math.floor((Date.now() - parseInt(cooldownStartTime)) / 1000);
+          const remaining = 90 - elapsed;
+
+          if (remaining > 0) {
+            setTryAgainDisabled(true);
+            setCooldownRemaining(remaining);
+
+            const interval = setInterval(() => {
+              const newRemaining = 90 - Math.floor((Date.now() - parseInt(cooldownStartTime)) / 1000);
+              if (newRemaining <= 0) {
+                setTryAgainDisabled(false);
+                setCooldownRemaining(0);
+                localStorage.removeItem("tryAgainCooldownStart");
+                clearInterval(interval);
+              } else {
+                setCooldownRemaining(newRemaining);
+              }
+            }, 1000);
+
+            return () => clearInterval(interval);
+          } else {
+            // Cooldown has expired
+            setTryAgainDisabled(false);
+            setCooldownRemaining(0);
+            localStorage.removeItem("tryAgainCooldownStart");
+          }
+        }
+      };
+
+      checkCooldown();
+    }
+  }, [status]);
+
   return (
     <div className="signin-container">
+
       <div className="center-div">
         {/* Main Task Execution Screens */}
         <div className="signin-left">
@@ -126,7 +292,7 @@ const TaskExecutor = () => {
               <div className="instr-wrapper">
                 <div className="para">
                   <p className="te-tis-p">
-                    Enter the login Number and Password
+                    Enter the login Number
                   </p>
                 </div>
                 <div className="red-divs">
@@ -150,7 +316,7 @@ const TaskExecutor = () => {
                 }}
                 className="input-field"
               />
-              <div className="password-container">
+              {/* <div className="password-container">
                 <input
                   type={showPassword ? "text" : "password"} // Toggle type
                   placeholder="Password"
@@ -165,7 +331,7 @@ const TaskExecutor = () => {
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
-              </div>
+              </div> */}
               <p className="confirm">
                 By Clicking next you confirm to connect to LeadsCruise
               </p>
@@ -187,6 +353,54 @@ const TaskExecutor = () => {
             </div>
           )}
 
+          {status === "loading" && showOtpPopup && !cancelled && (
+            <div className={styles['otp-popup-overlay']}>
+              <div className={styles['otp-popup-container']}>
+                <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
+                <p className={styles['otp-popup-description']}>
+                  Please enter the 4-digit OTP sent to your mobile number.
+                </p>
+                <input
+                  type="text"
+                  value={otpValue}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setOtpValue(value);
+                  }}
+                  placeholder="Enter 4-digit OTP"
+                  className={styles['otp-input']}
+                  maxLength="4"
+                  autoFocus
+                />
+
+                <div className={styles['otp-buttons']}>
+                  <button
+                    onClick={() => {
+                      setShowOtpPopup(false);
+                      localStorage.setItem("showOtpPopup", "false");
+                      setShowOtpWaitPopup(false);
+                      localStorage.setItem("showOtpWaitPopup", "false");
+                      setOtpValue('');
+                      setOtpRequestId(null);
+                      setCancelled(true);
+                      localStorage.setItem("cancelled", "true");
+                    }}
+                    className={`${styles['otp-button']} ${styles['otp-button-cancel']}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleOtpSubmit}
+                    disabled={otpValue.length !== 4}
+                    className={`${styles['otp-button']} ${styles['otp-button-submit']}`}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {status === "loading" && (
             <div className="loading-screen">
               <img
@@ -200,9 +414,7 @@ const TaskExecutor = () => {
                   marginBottom: "40px",
                 }}
               />
-              <p
-                style={{ color: "black", fontWeight: "500", fontSize: "20px" }}
-              >
+              <p style={{ color: "black", fontWeight: "500", fontSize: "20px" }}>
                 Please, wait while AI processes your task.
               </p>
             </div>
@@ -263,10 +475,15 @@ const TaskExecutor = () => {
                 Oops, the task execution failed. Try again or contact support.
               </p>
               <button
-                onClick={() => setStatus("idle")}
+                onClick={() => {
+                  localStorage.removeItem("tryAgainCooldownStart");
+                  setStatus("idle");
+                  // Don't manipulate cooldown state here - let the useEffect handle it
+                }}
+                disabled={tryAgainDisabled}
                 className="try-again-button"
               >
-                Try Again
+                {tryAgainDisabled ? `Try Again in ${cooldownRemaining}s` : "Try Again"}
               </button>
               <div className="end-block">
                 <p className="gback" onClick={() => window.location.reload()}>
