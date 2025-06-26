@@ -82,6 +82,7 @@ const Sheets = () => {
       const data = await response.json();
 
       setBuyerBalance(data.buyerBalance);
+      localStorage.setItem("buyerBalance", data.buyerBalance);
     } catch (error) {
       console.error("Error fetching buyer balance:", error);
     }

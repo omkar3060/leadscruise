@@ -33,44 +33,97 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };
 
-  const fetchUserBalance = async () => {
-    const userEmail = localStorage.getItem("userEmail");
-    try {
-      const response = await fetch(`https://api.leadscruise.com/api/user/balance?email=${(userEmail)}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch balance');
-      }
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching balance:', error);
-      return { buyerBalance: 0, hasZeroBalance: true };
+  // const fetchUserBalance = async () => {
+  //   const userEmail = localStorage.getItem("userEmail");
+  //   try {
+  //     const response = await fetch(`https://api.leadscruise.com/api/user/balance?email=${(userEmail)}`);
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch balance');
+  //     }
+  //     const data = await response.json();
+  //     return data;
+  //   } catch (error) {
+  //     console.error('Error fetching balance:', error);
+  //     return { buyerBalance: 0, hasZeroBalance: true };
+  //   }
+  // };
+
+  // Add useEffect to fetch balance on component mount
+  // useEffect(() => {
+  //   const loadBalance = async () => {
+  //     setIsLoadingBalance(true);
+  //     // Get user email from your auth context or state
+  //     const userEmail = localStorage.getItem('userEmail');
+  //     if (userEmail) {
+  //       const balanceData = await fetchUserBalance(userEmail);
+  //       setBalance(balanceData);
+  //     }
+  //     setIsLoadingBalance(false);
+  //   };
+
+  //   loadBalance();
+
+  //   // Optional: Set up interval to refresh balance periodically
+  //   const balanceInterval = setInterval(loadBalance, 30000); // Refresh every 30 seconds
+
+  //   return () => clearInterval(balanceInterval);
+  // }, []);
+
+  const getBalanceFromStorage = () => {
+  try {
+    const storedBalance = localStorage.getItem('buyerBalance');
+    const balance = storedBalance ? parseFloat(storedBalance) : 0;
+    // console.log('Balance retrieved from localStorage:', balance);
+    // console.log("Status", status);
+    return {
+      buyerBalance: balance,
+      hasZeroBalance: balance === 0
+    };
+  } catch (error) {
+    console.error('Error getting balance from localStorage:', error);
+    return { buyerBalance: 0, hasZeroBalance: true };
+  }
+};
+
+// Your existing component code with balance state
+const [balance, setBalance] = useState(() => getBalanceFromStorage());
+
+// Simplified useEffect for localStorage balance management
+useEffect(() => {
+  // Function to update balance from localStorage
+  const updateBalance = () => {
+    const newBalance = getBalanceFromStorage();
+    setBalance(newBalance);
+  };
+
+  // Listen for storage events (when localStorage changes in other tabs)
+  const handleStorageChange = (e) => {
+    if (e.key === 'buyerBalance') {
+      updateBalance();
     }
   };
 
-  const [balance, setBalance] = useState(null);
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  // Listen for custom balance update events
+  const handleBalanceUpdate = (e) => {
+    if (e.detail) {
+      setBalance(e.detail);
+    } else {
+      updateBalance();
+    }
+  };
 
-  // Add useEffect to fetch balance on component mount
-  useEffect(() => {
-    const loadBalance = async () => {
-      setIsLoadingBalance(true);
-      // Get user email from your auth context or state
-      const userEmail = localStorage.getItem('userEmail');
-      if (userEmail) {
-        const balanceData = await fetchUserBalance(userEmail);
-        setBalance(balanceData);
-      }
-      setIsLoadingBalance(false);
-    };
+  window.addEventListener('storage', handleStorageChange);
+  window.addEventListener('balanceUpdated', handleBalanceUpdate);
 
-    loadBalance();
+  // Optional: Set up interval to refresh balance periodically from localStorage
+  const balanceInterval = setInterval(updateBalance, 10000); // Check every 10 seconds
 
-    // Optional: Set up interval to refresh balance periodically
-    const balanceInterval = setInterval(loadBalance, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(balanceInterval);
-  }, []);
+  return () => {
+    window.removeEventListener('storage', handleStorageChange);
+    window.removeEventListener('balanceUpdated', handleBalanceUpdate);
+    clearInterval(balanceInterval);
+  };
+}, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -134,7 +187,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
 
         // Show popup only once after login
         const hasSeenPopup = localStorage.getItem("hasSeenPopup");
-        console.log("userEmail", userEmail);
+        // console.log("userEmail", userEmail); 
         if (
           userEmail?.trim().toLowerCase() !== "support@leadscruise.com" &&
           remainingDays > 0 &&
@@ -371,33 +424,32 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           <div className={styles.profileHeader} style={location.pathname === "/analytics" || location.pathname === "/whatsapp" ? { marginTop: "15px" } : {}}>
             {/* Balance Display for non-profile pages */}
             <div className={styles.balanceContainer}>
-        <div className={`${styles.balanceDisplay} ${
-          status !== 'running' || balance?.hasZeroBalance 
-            ? styles.zeroBalance 
-            : styles.positiveBalance
-        }`}>
-          <FaWallet className={styles.balanceIcon} />
-          <div className={styles.balanceContent}>
-            <span className={styles.balanceLabel}>Balance</span>
-            <span className={styles.balanceAmount}>
-              {subscriptionDetails.status === 'running' 
-                ? (balance?.buyerBalance || '0')
-                : 'OFF'
-              }
-            </span>
-          </div>
-          {(subscriptionDetails.status !== 'running' || balance?.hasZeroBalance) && (
-            <div className={styles.lowBalanceIndicator}>
-              <span className={styles.warningDot}></span>
+              <div className={`${styles.balanceDisplay} ${status !== 'Running' || balance?.hasZeroBalance
+                  ? styles.zeroBalance
+                  : styles.positiveBalance
+                }`}>
+                <FaWallet className={styles.balanceIcon} />
+                <div className={styles.balanceContent}>
+                  <span className={styles.balanceLabel}>Balance</span>
+                  <span className={styles.balanceAmount}>
+                    {status === 'Running'
+                      ? (balance?.buyerBalance || '0')
+                      : 'OFF'
+                    }
+                  </span>
+                </div>
+                {(status !== 'Running' || balance?.hasZeroBalance) && (
+                  <div className={styles.lowBalanceIndicator}>
+                    <span className={styles.warningDot}></span>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </div>
 
             <button
               className={styles.profileButton}
               onClick={toggleProfileDropdown}
-              
+
             >
               <FaUser className={styles.iconOnly} /> <span className={styles.buttonText}>Profile</span>
             </button>
