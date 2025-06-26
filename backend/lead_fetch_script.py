@@ -1229,7 +1229,7 @@ def main():
         while True:
             try:
                 # If we haven't completed redirect_and_refresh yet
-                if redirect_count < 1:
+                if redirect_count < 2:
                     print(f"Running redirect_and_refresh (count: {redirect_count + 1}/10)...", flush=True)
                     redirect_count += 1
                     redirect_and_refresh(driver, wait)
