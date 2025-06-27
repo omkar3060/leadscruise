@@ -423,7 +423,9 @@ useEffect(() => {
         ) : (
           <div className={styles.profileHeader} style={location.pathname === "/analytics" || location.pathname === "/whatsapp" ? { marginTop: "15px" } : {}}>
             {/* Balance Display for non-profile pages */}
-            <div className={styles.balanceContainer}>
+            <div className={`${styles.balanceContainer} ${styles.tooltip2}`} data-tooltip={
+                   `Shows the latest fetched balance from the Leads provider`
+                }>
               <div className={`${styles.balanceDisplay} ${status !== 'Running' || balance?.hasZeroBalance
                   ? styles.zeroBalance
                   : styles.positiveBalance
