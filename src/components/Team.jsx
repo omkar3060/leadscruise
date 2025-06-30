@@ -67,7 +67,7 @@ const Team = () => {
         return localStorage.getItem("cancelled") === "true";
     });
     const [otpError, setOtpError] = useState('');
-    const [teammates, setTeammates] = useState([]);
+    const [teammates, setTeammates] = useState({ names: [], phones: [] });
     const [showPopup, setShowPopup] = useState(false);
     const [newName, setNewName] = useState('');
     const [newPhone, setNewPhone] = useState('');
@@ -119,6 +119,20 @@ const Team = () => {
         } catch (err) {
             console.error('Error adding teammate:', err);
             setError("Failed to add teammate.");
+        }
+    };
+
+    const handleDeleteTeammate = async (index) => {
+        try {
+            await axios.delete('https://api.leadscruise.com/api/teammates', {
+                data: { userEmail, index },
+            });
+
+            alert("Teammate removed successfully!");
+            fetchTeammates(); // Refresh list
+        } catch (err) {
+            console.error("Failed to delete teammate:", err);
+            window.alert("Failed to delete teammate.");
         }
     };
 
@@ -1030,14 +1044,17 @@ const Team = () => {
                     </div>
 
                     <div className="teammates-list">
-                        {teammates.map((teammate) => (
-                            <div key={teammate.id} className="teammate-item">
+                        {teammates.names?.map((name, index) => (
+                            <div key={index} className="teammate-item">
                                 <div className="teammate-info">
-                                    <div className="teammate-name">{teammate.name}</div>
-                                    <div className="teammate-phone">{teammate.phone}</div>
+                                    <div className="teammate-name">{name}</div>
+                                    <div className="teammate-phone">{teammates.phones[index]}</div>
                                 </div>
-                                <div className={`action-icon ${teammate.status}`}>
-                                    {teammate.status === 'add' ? '+' : '×'}
+                                <div
+                                    className="action-icon remove"
+                                    onClick={() => handleDeleteTeammate(index)}
+                                >
+                                    ×
                                 </div>
                             </div>
                         ))}

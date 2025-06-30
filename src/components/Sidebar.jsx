@@ -9,6 +9,7 @@ import { BiBarChartSquare } from "react-icons/bi";
 import { MdOutlineRecommend } from "react-icons/md"; // Import referral icon
 import axios from "axios";
 import AIIcon from '../images/AI.png';
+import { HiUserGroup } from "react-icons/hi";
 
 const Sidebar = ({ status }) => {
   const navigate = useNavigate();
@@ -125,6 +126,13 @@ const Sidebar = ({ status }) => {
             >
               <FiSettings className={styles.icon} />
               <span className={styles.tooltipText}>Settings</span>
+            </div>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/team")}
+            >
+              <HiUserGroup className={styles.icon} />
+              <span className={styles.tooltipText}>Team</span>
             </div>
           </>
         )}
