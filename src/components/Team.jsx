@@ -67,13 +67,11 @@ const Team = () => {
         return localStorage.getItem("cancelled") === "true";
     });
     const [otpError, setOtpError] = useState('');
-    const [teammates] = useState([
-        { id: 1, name: 'Name 01', phone: '+91 9999999999', status: 'remove' },
-        { id: 2, name: 'Name 02', phone: '+91 9999999999', status: 'remove' },
-        { id: 3, name: 'Name 03', phone: '+91 9999999999', status: 'remove' },
-        { id: 4, name: 'Name 04', phone: '+91 9999999999', status: 'remove' },
-        { id: 5, name: 'Name 05', phone: '+91 9999999999', status: 'add' }
-    ]);
+    const [teammates, setTeammates] = useState([]);
+    const [showPopup, setShowPopup] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [newPhone, setNewPhone] = useState('');
+    const [error, setError] = useState('');
 
     const calendarData = [
         { day: 'Friday', date: '20/06/25', newLeads: 10, assigned: 9, inProgress: 4, won: 12, lost: 2 },
@@ -82,6 +80,47 @@ const Team = () => {
         { day: 'Monday', date: '23/06/25', newLeads: 10, assigned: 9, inProgress: 4, won: 12, lost: 2 },
         { day: 'Tuesday', date: '24/06/25', newLeads: 10, assigned: 9, inProgress: 4, won: 12, lost: 2 }
     ];
+
+    useEffect(() => {
+        fetchTeammates();
+    }, []);
+
+    const userEmail = localStorage.getItem("userEmail"); // Save this during login
+
+    const fetchTeammates = async () => {
+        try {
+            const res = await axios.get('https://api.leadscruise.com/api/teammates', {
+                params: { userEmail }
+            });
+            setTeammates(res.data);
+        } catch (err) {
+            console.error('Error fetching teammates:', err);
+        }
+    };
+
+    const handleAddTeammate = async () => {
+        if (!newName.trim() || !newPhone.trim()) {
+            setError("Both fields are required.");
+            return;
+        }
+
+        try {
+            await axios.post('https://api.leadscruise.com/api/teammates', {
+                name: newName,
+                phone: newPhone,
+                userEmail,
+            });
+            setShowPopup(false);
+            setNewName('');
+            setNewPhone('');
+            setError('');
+            fetchTeammates();
+            alert("Teammate added successfully!");
+        } catch (err) {
+            console.error('Error adding teammate:', err);
+            setError("Failed to add teammate.");
+        }
+    };
 
     const fetchBuyerBalance = useCallback(async () => {
         try {
@@ -969,8 +1008,8 @@ const Team = () => {
                     <div className="section-header">
                         <div className="section-title">
                             <div className="team-icon">
-              <HiUserGroup size={40} />
-            </div>
+                                <HiUserGroup size={40} />
+                            </div>
                             <div className="title-text">
                                 <div>Team</div>
                                 <div>Management</div>
@@ -980,7 +1019,7 @@ const Team = () => {
                     </div>
 
                     <div className="action-buttons">
-                        <button className="add-teammate-btn">
+                        <button className="add-teammate-btn" onClick={() => setShowPopup(true)}>
                             <span className="plus-icon">+</span>
                             Add New Teammate
                         </button>
@@ -1004,9 +1043,33 @@ const Team = () => {
                         ))}
                     </div>
 
-                    <div className="scroll-indicator">
+                    {/* <div className="scroll-indicator">
                         Scroll down to see more
-                    </div>
+                    </div> */}
+                    {showPopup && (
+                        <div className="popup-overlay">
+                            <div className="popup-container">
+                                <h3>Add New Teammate</h3>
+                                <input
+                                    type="text"
+                                    placeholder="Name"
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="WhatsApp Number"
+                                    value={newPhone}
+                                    onChange={(e) => setNewPhone(e.target.value)}
+                                />
+                                {error && <p className="error-text">{error}</p>}
+                                <div className="popup-actions">
+                                    <button onClick={handleAddTeammate}>Save</button>
+                                    <button onClick={() => setShowPopup(false)}>Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="right-panel">

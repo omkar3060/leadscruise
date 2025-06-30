@@ -25,6 +25,7 @@ const statusRoutes = require("./routes/snapshRoutes");
 const supportRoutes = require("./routes/support");
 const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
+const teammateRoutes = require('./routes/teammates');
 const server = createServer(app); // ✅ Create HTTP server
 const io = new Server(server, {
   path: "/socket.io/",
@@ -190,6 +191,7 @@ app.use("/api", statusRoutes);
 app.use("/api/whatsapp-settings", whatsappSettingsRoutes);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/support", supportRoutes);
+app.use('/api/teammates', teammateRoutes);
 // API Endpoint to check if a number exists in the database
 app.post("/api/check-number", async (req, res) => {
   try {
