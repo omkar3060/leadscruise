@@ -291,4 +291,28 @@ router.get("/verify-session", async (req, res) => {
   }
 });
 
+router.get("/user-status", async (req, res) => {
+  const userEmail = req.query.email;
+
+  if (!userEmail) {
+    return res.status(400).json({ status: "error", message: "Email is required." });
+  }
+
+  try {
+    const user = await User.findOne({ email: userEmail }).select("status startTime");
+
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found." });
+    }
+
+    res.json({
+      status: user.status,
+      startTime: user.startTime, // this can be start or stop time based on your system
+    });
+  } catch (err) {
+    console.error("Error fetching user status:", err);
+    res.status(500).json({ status: "error", message: "Internal server error." });
+  }
+});
+
 module.exports = router;

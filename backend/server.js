@@ -816,7 +816,7 @@ app.post("/api/cycle", async (req, res) => {
     if (!killedDueToLimit) {
       await User.findOneAndUpdate(
         { email: userEmail },
-        { status: "Stopped", startTime: null, autoStartEnabled: false },
+        { status: "Stopped", startTime: new Date(), autoStartEnabled: false },
         { new: true }
       );
     }
@@ -957,7 +957,7 @@ app.post("/api/stop", async (req, res) => {
   // Reset user status and startTime in DB
   await User.findOneAndUpdate(
     { email: userEmail },
-    { status: "Stopped", startTime: null, autoStartEnabled: false },
+    { status: "Stopped", startTime: new Date(), autoStartEnabled: false },
     { new: true }
   );
 

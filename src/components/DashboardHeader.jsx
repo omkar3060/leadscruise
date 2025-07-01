@@ -23,6 +23,41 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const supportEmail = "support@leadscruise.com";
   const whatsappNumber = "+919579797269"; // Replace with actual number
+  const [scriptStatus, setScriptStatus] = useState("");
+  const [lastTime, setLastTime] = useState(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) {
+        alert("Please log in to view your status.");
+        navigate("/login");
+        return;
+      }
+      try {
+        const res = await axios.get(`https://api.leadscruise.com/api/user-status?email=${userEmail}`);
+        setScriptStatus(res.data.status);
+        setLastTime(res.data.startTime); // unified field
+      } catch (err) {
+        console.error("Error fetching status:", err);
+      }
+    };
+
+    fetchStatus();
+  }, [status, navigate]);
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    return date.toLocaleString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   const handleEmailClick = () => {
     window.location.href = `mailto:${supportEmail}`;
@@ -70,60 +105,60 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   // }, []);
 
   const getBalanceFromStorage = () => {
-  try {
-    const storedBalance = localStorage.getItem('buyerBalance');
-    const balance = storedBalance ? parseFloat(storedBalance) : 0;
-    // console.log('Balance retrieved from localStorage:', balance);
-    // console.log("Status", status);
-    return {
-      buyerBalance: balance,
-      hasZeroBalance: balance === 0
+    try {
+      const storedBalance = localStorage.getItem('buyerBalance');
+      const balance = storedBalance ? parseFloat(storedBalance) : 0;
+      // console.log('Balance retrieved from localStorage:', balance);
+      // console.log("Status", status);
+      return {
+        buyerBalance: balance,
+        hasZeroBalance: balance === 0
+      };
+    } catch (error) {
+      console.error('Error getting balance from localStorage:', error);
+      return { buyerBalance: 0, hasZeroBalance: true };
+    }
+  };
+
+  // Your existing component code with balance state
+  const [balance, setBalance] = useState(() => getBalanceFromStorage());
+
+  // Simplified useEffect for localStorage balance management
+  useEffect(() => {
+    // Function to update balance from localStorage
+    const updateBalance = () => {
+      const newBalance = getBalanceFromStorage();
+      setBalance(newBalance);
     };
-  } catch (error) {
-    console.error('Error getting balance from localStorage:', error);
-    return { buyerBalance: 0, hasZeroBalance: true };
-  }
-};
 
-// Your existing component code with balance state
-const [balance, setBalance] = useState(() => getBalanceFromStorage());
+    // Listen for storage events (when localStorage changes in other tabs)
+    const handleStorageChange = (e) => {
+      if (e.key === 'buyerBalance') {
+        updateBalance();
+      }
+    };
 
-// Simplified useEffect for localStorage balance management
-useEffect(() => {
-  // Function to update balance from localStorage
-  const updateBalance = () => {
-    const newBalance = getBalanceFromStorage();
-    setBalance(newBalance);
-  };
+    // Listen for custom balance update events
+    const handleBalanceUpdate = (e) => {
+      if (e.detail) {
+        setBalance(e.detail);
+      } else {
+        updateBalance();
+      }
+    };
 
-  // Listen for storage events (when localStorage changes in other tabs)
-  const handleStorageChange = (e) => {
-    if (e.key === 'buyerBalance') {
-      updateBalance();
-    }
-  };
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('balanceUpdated', handleBalanceUpdate);
 
-  // Listen for custom balance update events
-  const handleBalanceUpdate = (e) => {
-    if (e.detail) {
-      setBalance(e.detail);
-    } else {
-      updateBalance();
-    }
-  };
+    // Optional: Set up interval to refresh balance periodically from localStorage
+    const balanceInterval = setInterval(updateBalance, 10000); // Check every 10 seconds
 
-  window.addEventListener('storage', handleStorageChange);
-  window.addEventListener('balanceUpdated', handleBalanceUpdate);
-
-  // Optional: Set up interval to refresh balance periodically from localStorage
-  const balanceInterval = setInterval(updateBalance, 10000); // Check every 10 seconds
-
-  return () => {
-    window.removeEventListener('storage', handleStorageChange);
-    window.removeEventListener('balanceUpdated', handleBalanceUpdate);
-    clearInterval(balanceInterval);
-  };
-}, []);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('balanceUpdated', handleBalanceUpdate);
+      clearInterval(balanceInterval);
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -291,8 +326,10 @@ useEffect(() => {
       <div className={styles.statusSection}>
         {/* If the user is in settings or profile, show 'Return to Dashboard' */}
         {location.pathname === "/settings" || location.pathname === "/profile" || location.pathname === "/whatsapp" || location.pathname === "/analytics" ? (
-          <div className={styles.statusLabel} onClick={() => navigate("/dashboard")}>
-            <FaArrowLeft className={styles.iconOnly} /> <span className={styles.statusText}>Return to Dashboard</span>
+          <div>
+            <div className={styles.statusLabel} onClick={() => navigate("/dashboard")}>
+              <FaArrowLeft className={styles.iconOnly} /> <span className={styles.statusText}>Return to Dashboard</span>
+            </div>
           </div>
         ) : (
           <div className={styles.statusLabel}>
@@ -381,23 +418,6 @@ useEffect(() => {
           <>
             {/* Show both Profile & Renew buttons in mobile view */}
             <div className={styles.profileButtonGroup}>
-              {/* Balance Display */}
-              {/* <div className={styles.balanceContainer}>
-                <div className={`${styles.balanceDisplay} ${balance?.hasZeroBalance ? styles.zeroBalance : styles.positiveBalance}`}>
-                  <FaWallet className={styles.balanceIcon} />
-                  <div className={styles.balanceContent}>
-                    <span className={styles.balanceLabel}>Balance</span>
-                    <span className={styles.balanceAmount}>
-                      {balance?.buyerBalance || '0'}
-                    </span>
-                  </div>
-                  {balance?.hasZeroBalance && (
-                    <div className={styles.lowBalanceIndicator}>
-                      <span className={styles.warningDot}></span>
-                    </div>
-                  )}
-                </div>
-              </div> */}
 
               {isMobile && (
                 <button className={styles.profileButton} onClick={toggleProfileDropdown}>
@@ -424,11 +444,11 @@ useEffect(() => {
           <div className={styles.profileHeader} style={location.pathname === "/analytics" || location.pathname === "/whatsapp" ? { marginTop: "15px" } : {}}>
             {/* Balance Display for non-profile pages */}
             <div className={`${styles.balanceContainer} ${styles.tooltip2}`} data-tooltip={
-                   `Shows the latest fetched balance from the Leads provider`
-                }>
+              `Shows the latest fetched balance from the Leads provider`
+            }>
               <div className={`${styles.balanceDisplay} ${status !== 'Running' || balance?.hasZeroBalance
-                  ? styles.zeroBalance
-                  : styles.positiveBalance
+                ? styles.zeroBalance
+                : styles.positiveBalance
                 }`}>
                 <FaWallet className={styles.balanceIcon} />
                 <div className={styles.balanceContent}>
@@ -536,6 +556,9 @@ useEffect(() => {
         )}
 
         <p className={styles.renewalText}>Subscription Next Renewal Date: {subscriptionDetails.renewal_date}</p>
+        <p className={styles.renewalText}>
+          Last {scriptStatus === "Running" ? "Started" : "Stopped"}: {formatTime(lastTime)}
+        </p>
         <p className={styles.renewalText}>Subscription Status: {subscriptionDetails.status}</p>
       </div>
     </div>
