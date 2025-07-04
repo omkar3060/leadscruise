@@ -10,6 +10,8 @@ from pyvirtualdisplay import Display
 import traceback
 import sys
 import shutil
+from selenium.webdriver.common.keys import Keys
+
 def open_whatsapp(whatsapp_number):
     
     # Set environment variables for Firefox
@@ -138,7 +140,26 @@ def open_whatsapp(whatsapp_number):
                 # Handle phone number login flow
                 verification_code = login_and_extract_code(driver, wait, whatsapp_number)
                 print(f"Phone number login completed. Verification code: {verification_code}", flush=True)
-                return 0
+                if verification_code:
+                    print(f"Login successful! Verification code: {verification_code}", flush=True)
+                    
+                    # Wait a bit for WhatsApp to fully load
+                    time.sleep(10)
+                    
+                    # Create group and add contact
+                    group_created = create_group_and_add_contact(
+                        driver, 
+                        wait, 
+                        "9148016901", 
+                        "My New Group"
+                    )
+                    
+                    if group_created:
+                        print("Group creation and contact addition completed successfully!", flush=True)
+                        return 0
+                    else:
+                        print("Failed to create group or add contact.", flush=True)
+                        exit(1)
             except Exception as login_error:
                 print(f"Unable to detect login method: {login_error}", flush=True)
                 print(traceback.format_exc(), flush=True)
@@ -349,7 +370,8 @@ def login_and_extract_code(driver, wait, phone_number):
             print(f"WHATSAPP_VERIFICATION_CODE:{code}", flush=True)
         else:
             print("Unable to extract verification code. Taking screenshot...", flush=True)
-            # driver.save_screenshot("verification_code_missing.png")
+            exit(1)
+            driver.save_screenshot("verification_code_missing.png")
         
         # Wait for "Chats" heading to appear before proceeding (longer timeout)
         print("Waiting for 'Chats' to appear after login...", flush=True)
@@ -377,6 +399,486 @@ def login_and_extract_code(driver, wait, phone_number):
             print("Failed to save screenshot", flush=True)
         return None
 
+def create_group_and_add_contact(driver, wait, phone_number, group_name="New Group"):
+    """
+    Create a new WhatsApp group and add a contact to it
+    
+    Args:
+        driver: WebDriver instance
+        wait: WebDriverWait instance
+        phone_number: Phone number to add to the group (e.g., "9148016901")
+        group_name: Name for the new group (default: "New Group")
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        try:
+            print("Checking for 'Fresh look' popup...", flush=True)
+            # Wait up to 10 seconds for the popup
+            continue_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[.//div[contains(text(), 'Continue')]]"))
+            )
+            print("Found 'Fresh look' popup, clicking continue button...", flush=True)
+            continue_button.click()
+            print("Clicked continue button to close popup", flush=True)
+            time.sleep(2)  # Wait a moment after closing popup
+        except Exception as e:
+            print("No 'Fresh look' popup detected or unable to close it:", e, flush=True)
+        print(f"Starting group creation process...", flush=True)
+        
+        # Wait a bit to ensure WhatsApp is fully loaded
+        time.sleep(3)
+        
+        # Try to scroll to top or dismiss any overlays
+        try:
+            driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(1)
+        except:
+            pass
+        
+        # Click on the menu button (three dots) in the top left
+        menu_button_selectors = [
+            "//button[@aria-label='Menu'][@title='Menu']",
+            "//button[@aria-label='Menu']",
+            "//div[contains(@class, '_ajv7')]//button[@aria-label='Menu']",
+            "//span[@data-icon='more-refreshed']/ancestor::button",
+            "//button[@data-tab='2'][@title='Menu']",
+            "//div[@aria-label='Menu']",
+            "//div[@data-icon='menu']",
+            "//span[@data-icon='menu']",
+            "//button[@title='Menu']"
+        ]
+        
+        menu_button = None
+        for selector in menu_button_selectors:
+            try:
+                menu_button = wait.until(
+                    EC.element_to_be_clickable((By.XPATH, selector))
+                )
+                print(f"Found menu button using selector: {selector}", flush=True)
+                break
+            except:
+                print(f"Could not find menu button with selector: {selector}", flush=True)
+        
+        if not menu_button:
+            print("Could not find menu button. Taking screenshot...", flush=True)
+            # driver.save_screenshot("menu_button_missing.png")
+            return False
+        
+        # Try multiple click methods to handle the obstruction
+        click_successful = False
+        
+        # Method 1: Scroll element into view and click
+        try:
+            driver.execute_script("arguments[0].scrollIntoView(true);", menu_button)
+            time.sleep(1)
+            menu_button.click()
+            click_successful = True
+            print("Successfully clicked menu button using scrollIntoView method.", flush=True)
+        except Exception as e:
+            print(f"Method 1 failed: {e}", flush=True)
+        
+        # Method 2: JavaScript click
+        if not click_successful:
+            try:
+                driver.execute_script("arguments[0].click();", menu_button)
+                click_successful = True
+                print("Successfully clicked menu button using JavaScript click.", flush=True)
+            except Exception as e:
+                print(f"Method 2 failed: {e}", flush=True)
+        
+        # Method 3: ActionChains move and click
+        if not click_successful:
+            try:
+                from selenium.webdriver.common.action_chains import ActionChains
+                actions = ActionChains(driver)
+                actions.move_to_element(menu_button).click().perform()
+                click_successful = True
+                print("Successfully clicked menu button using ActionChains.", flush=True)
+            except Exception as e:
+                print(f"Method 3 failed: {e}", flush=True)
+        
+        # Method 4: Try to find parent element and click
+        if not click_successful:
+            try:
+                parent_button = driver.find_element(By.XPATH, "//div[contains(@class, '_ajv7')]//button")
+                driver.execute_script("arguments[0].click();", parent_button)
+                click_successful = True
+                print("Successfully clicked menu button using parent element.", flush=True)
+            except Exception as e:
+                print(f"Method 4 failed: {e}", flush=True)
+        
+        # Method 5: Try clicking by coordinates
+        if not click_successful:
+            try:
+                location = menu_button.location
+                size = menu_button.size
+                x = location['x'] + size['width'] / 2
+                y = location['y'] + size['height'] / 2
+                
+                actions = ActionChains(driver)
+                actions.move_by_offset(x, y).click().perform()
+                click_successful = True
+                print("Successfully clicked menu button using coordinates.", flush=True)
+            except Exception as e:
+                print(f"Method 5 failed: {e}", flush=True)
+        
+        if not click_successful:
+            print("All click methods failed. Taking screenshot...", flush=True)
+            # driver.save_screenshot("menu_click_failed.png")
+            return False
+        
+        time.sleep(2)
+        
+        # Click on "New group" option
+        new_group_selectors = [
+            "//div[contains(text(), 'New group')]",
+            "//span[contains(text(), 'New group')]",
+            "//div[@role='button' and contains(., 'New group')]",
+            "//li[contains(., 'New group')]",
+            "//div[contains(@class, 'menu-item') and contains(., 'New group')]"
+        ]
+        
+        new_group_button = None
+        for selector in new_group_selectors:
+            try:
+                new_group_button = wait.until(
+                    EC.element_to_be_clickable((By.XPATH, selector))
+                )
+                print(f"Found 'New group' button using selector: {selector}", flush=True)
+                break
+            except:
+                print(f"Could not find 'New group' button with selector: {selector}", flush=True)
+        
+        if not new_group_button:
+            print("Could not find 'New group' button. Taking screenshot...", flush=True)
+            # driver.save_screenshot("new_group_button_missing.png")
+            return False
+        
+        # Click New group with fallback methods
+        try:
+            new_group_button.click()
+            print("Clicked on 'New group' button.", flush=True)
+        except:
+            try:
+                driver.execute_script("arguments[0].click();", new_group_button)
+                print("Clicked on 'New group' button using JavaScript.", flush=True)
+            except Exception as e:
+                print(f"Failed to click 'New group' button: {e}", flush=True)
+                return False
+        
+        time.sleep(3)
+        
+        # Search for the contact by phone number
+        search_input_selectors = [
+    "//input[@placeholder='Search name or number']",  # ✅ move this to top
+    "//div[@role='textbox' and @contenteditable='true']",
+    "//div[@contenteditable='true' and @data-tab='3']",
+    "//div[@contenteditable='true' and contains(@class, 'selectable-text')]",
+    "//div[@role='textbox']",
+    "//div[@contenteditable='true']"
+]
+        
+        search_input = None
+        for selector in search_input_selectors:
+            try:
+                search_input = wait.until(
+                    EC.element_to_be_clickable((By.XPATH, selector))
+                )
+                print(f"Found search input using selector: {selector}", flush=True)
+                break
+            except:
+                print(f"Could not find search input with selector: {selector}", flush=True)
+        
+        if not search_input:
+            print("Could not find search input field. Taking screenshot...", flush=True)
+            # driver.save_screenshot("search_input_missing.png")
+            return False
+        
+        # Clear and enter the phone number
+        search_input.clear()
+        search_input.send_keys(phone_number)
+        print(f"Entered phone number: {phone_number}", flush=True)
+        driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input'));", search_input, phone_number)
+        time.sleep(3)
+        
+        # Click on the contact from search results
+        # Format the phone number to match WhatsApp's display format
+        if phone_number.startswith('+'):
+            # Already formatted with country code
+            formatted_number = phone_number
+        elif phone_number.startswith('91') and len(phone_number) == 12:
+            # 12-digit number starting with 91 (91 + 10 digit mobile)
+            formatted_number = f"+{phone_number[:2]} {phone_number[2:7]} {phone_number[7:]}"
+        elif len(phone_number) == 10:
+            # 10-digit Indian mobile number
+            formatted_number = f"+91 {phone_number[:5]} {phone_number[5:]}"
+        else:
+            # Default: assume it's an Indian number without country code
+            formatted_number = f"+91 {phone_number}"
+        
+        try:
+            # Wait for the contact to appear using the phone number title
+            contact_card = wait.until(
+                EC.element_to_be_clickable((By.XPATH, f"//div[@role='button'][.//span[@title='{formatted_number}']]"))
+            )
+            contact_card.click()
+            print(f"Clicked on contact card for: {formatted_number}", flush=True)
+        except Exception as e:
+            print(f"Failed to select contact: {e}", flush=True)
+            driver.save_screenshot("contact_selection_error.png")
+            print("Taking screenshot of contact selection error.", flush=True)
+            try:
+                contact_cards = wait.until(
+                    EC.presence_of_all_elements_located((By.XPATH, "//div[@role='button']"))
+                )
+                if contact_cards:
+                    driver.execute_script("arguments[0].click();", contact_cards[0])
+                    print("Clicked top contact result as fallback.", flush=True)
+                else:
+                    print("No contact cards found.", flush=True)
+                    return False
+            except Exception as e:
+                print(f"Fallback contact selection failed: {e}", flush=True)
+                return False
+
+        time.sleep(2)
+        
+        try:
+            arrow_forward_button = wait.until(
+                EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and @aria-label='Next']"))
+            )
+            arrow_forward_button.click()
+            print("Clicked Next button", flush=True)
+        except:
+            try:
+                # Fallback to JavaScript click
+                arrow_forward_button = driver.find_element(By.XPATH, "//div[@role='button' and @aria-label='Next']")
+                driver.execute_script("arguments[0].click();", arrow_forward_button)
+                print("Clicked Next button using JavaScript", flush=True)
+            except Exception as e:
+                print(f"Failed to click Next button: {e}", flush=True)
+                return False
+        
+        time.sleep(3)
+        
+        try:
+            checkmark_button = wait.until(
+                EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and @aria-label='Create group']"))
+            )
+            checkmark_button.click()
+            print("Clicked Create group button", flush=True)
+        except:
+            try:
+                # Fallback to JavaScript click
+                checkmark_button = driver.find_element(By.XPATH, "//div[@role='button' and @aria-label='Create group']")
+                driver.execute_script("arguments[0].click();", checkmark_button)
+                print("Clicked Create group button using JavaScript", flush=True)
+            except Exception as e:
+                print(f"Failed to click Create group button: {e}", flush=True)
+                return False
+        
+        try:
+            # Look for the "Name this group" button that's visible in the screenshot
+            name_group_button = wait.until(
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Name this group')]"))
+            )
+            # Scroll into view and click
+            driver.execute_script("arguments[0].scrollIntoView(true);", name_group_button)
+            time.sleep(1)
+            name_group_button.click()
+            print("Clicked 'Name this group' button", flush=True)
+            
+        except Exception as e:
+            try:
+                # Alternative approach - look for button with pencil icon and "Name this group" text
+                name_group_button = wait.until(
+                    EC.element_to_be_clickable((By.XPATH, "//button[.//span[@data-icon='pencil']]"))
+                )
+                driver.execute_script("arguments[0].scrollIntoView(true);", name_group_button)
+                time.sleep(1)
+                name_group_button.click()
+                print("Clicked 'Name this group' button (pencil icon method)", flush=True)
+                
+            except Exception as e2:
+                try:
+                    # JavaScript click as fallback
+                    name_group_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Name this group')]")
+                    driver.execute_script("arguments[0].scrollIntoView(true);", name_group_button)
+                    time.sleep(1)
+                    driver.execute_script("arguments[0].click();", name_group_button)
+                    print("Clicked 'Name this group' button using JavaScript", flush=True)
+                    
+                except Exception as e3:
+                    try:
+                        # Try clicking on any element containing "Name this group"
+                        name_element = driver.find_element(By.XPATH, "//*[contains(text(), 'Name this group')]")
+                        driver.execute_script("arguments[0].scrollIntoView(true);", name_element)
+                        time.sleep(1)
+                        driver.execute_script("arguments[0].click();", name_element)
+                        print("Clicked 'Name this group' element using JavaScript", flush=True)
+                        
+                    except Exception as e4:
+                        print(f"Failed to click 'Name this group' button: {e}, {e2}, {e3}, {e4}", flush=True)
+                        driver.save_screenshot("name_group_button_not_found.png")
+                        return False
+
+        time.sleep(3)  # Wait for the input field to appear
+
+        # Diagnostic version to understand the input field behavior
+
+        try:
+            # Find the input field
+            group_name_input = wait.until(
+                EC.element_to_be_clickable((By.XPATH, "//div[@contenteditable='true']"))
+            )
+            
+            # Get initial state
+            initial_text = group_name_input.text
+            initial_innerHTML = driver.execute_script("return arguments[0].innerHTML;", group_name_input)
+            initial_value = driver.execute_script("return arguments[0].value || '';", group_name_input)
+            
+            print(f"Initial text: '{initial_text}'", flush=True)
+            print(f"Initial innerHTML: '{initial_innerHTML}'", flush=True)
+            print(f"Initial value: '{initial_value}'", flush=True)
+            
+            # Get all attributes
+            attributes = driver.execute_script("""
+                var items = {};
+                for (var i = 0; i < arguments[0].attributes.length; i++) {
+                    items[arguments[0].attributes[i].name] = arguments[0].attributes[i].value;
+                }
+                return items;
+            """, group_name_input)
+            print(f"Element attributes: {attributes}", flush=True)
+            
+            # Try the JavaScript method with logging
+            print("Focusing element...", flush=True)
+            driver.execute_script("arguments[0].focus();", group_name_input)
+            time.sleep(1)
+            
+            print("Clearing content...", flush=True)
+            driver.execute_script("arguments[0].innerHTML = '';", group_name_input)
+            time.sleep(0.5)
+            
+            # Check if clearing worked
+            cleared_text = group_name_input.text
+            cleared_innerHTML = driver.execute_script("return arguments[0].innerHTML;", group_name_input)
+            print(f"After clearing - text: '{cleared_text}', innerHTML: '{cleared_innerHTML}'", flush=True)
+            
+            print(f"Setting text to '{group_name}'...", flush=True)
+            driver.execute_script("arguments[0].textContent = arguments[1];", group_name_input, group_name)
+            time.sleep(1)
+            
+            # Check if setting worked
+            after_text = group_name_input.text
+            after_innerHTML = driver.execute_script("return arguments[0].innerHTML;", group_name_input)
+            print(f"After setting - text: '{after_text}', innerHTML: '{after_innerHTML}'", flush=True)
+            
+            print("Triggering events...", flush=True)
+            driver.execute_script("""
+                var element = arguments[0];
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+                element.dispatchEvent(new Event('keyup', { bubbles: true }));
+                element.dispatchEvent(new Event('blur', { bubbles: true }));
+            """, group_name_input)
+            
+            time.sleep(2)
+            
+            # Final check
+            final_text = group_name_input.text
+            final_innerHTML = driver.execute_script("return arguments[0].innerHTML;", group_name_input)
+            print(f"Final - text: '{final_text}', innerHTML: '{final_innerHTML}'", flush=True)
+            
+            # Try to find and click any confirmation button
+            print("Looking for confirmation button...", flush=True)
+            try:
+                confirm_selectors = [
+                    "//div[@data-icon='checkmark-medium']",
+                    "//span[@data-icon='checkmark']",
+                    "//button[contains(@aria-label, 'Done')]",
+                    "//button[contains(@aria-label, 'Save')]",
+                    "//div[@role='button' and contains(@aria-label, 'Done')]",
+                    "//div[@role='button' and contains(@aria-label, 'Save')]"
+                ]
+                
+                for selector in confirm_selectors:
+                    try:
+                        confirm_button = driver.find_element(By.XPATH, selector)
+                        print(f"Found confirm button with selector: {selector}", flush=True)
+                        confirm_button.click()
+                        print("Clicked confirm button", flush=True)
+                        break
+                    except:
+                        continue
+                else:
+                    print("No confirm button found, trying Enter key", flush=True)
+                    group_name_input.send_keys(Keys.ENTER)
+            
+            except Exception as e:
+                print(f"Error with confirmation: {e}", flush=True)
+            
+            time.sleep(3)
+            driver.save_screenshot("diagnostic_final.png")
+            
+            # Check if the group name changed in the UI
+            try:
+                # Look for the group name in the chat header or anywhere in the page
+                group_name_elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{group_name}')]")
+                if group_name_elements:
+                    print(f"SUCCESS: Found '{group_name}' in {len(group_name_elements)} elements", flush=True)
+                    return True
+                else:
+                    print(f"FAILED: Could not find '{group_name}' anywhere on the page", flush=True)
+                    return False
+            except Exception as e:
+                print(f"Error checking for group name: {e}", flush=True)
+                return False
+
+        except Exception as e:
+            print(f"Diagnostic failed: {e}", flush=True)
+            driver.save_screenshot("diagnostic_error.png")
+            return False
+        # Verify group creation was successful
+        try:
+            # Look for group chat indicators
+            group_indicators = [
+                f"//span[contains(text(), '{group_name}')]",
+                "//div[@data-testid='conversation-header']",
+                "//div[contains(@class, 'group-info')]"
+            ]
+            
+            for indicator in group_indicators:
+                try:
+                    wait.until(
+                        EC.presence_of_element_located((By.XPATH, indicator))
+                    )
+                    print(f"Group creation verified using indicator: {indicator}", flush=True)
+                    break
+                except:
+                    continue
+            
+            print(f"Group '{group_name}' created successfully with contact {phone_number}!", flush=True)
+            # driver.save_screenshot("group_created_success.png")
+            return True
+            
+        except Exception as verify_error:
+            print(f"Could not verify group creation: {verify_error}", flush=True)
+            # driver.save_screenshot("group_creation_verification_failed.png")
+            return False
+        
+    except Exception as e:
+        print(f"Error during group creation process: {e}", flush=True)
+        print(traceback.format_exc(), flush=True)
+        try:
+            # driver.save_screenshot("group_creation_error.png")
+            print("Screenshot saved as group_creation_error.png", flush=True)
+        except:
+            print("Failed to save screenshot", flush=True)
+        return False
+     
 if __name__ == "__main__":
     # Main function to run the WhatsApp automation
     if len(sys.argv) < 1:

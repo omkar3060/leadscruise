@@ -194,8 +194,7 @@ router.put("/update-whatsapp-number", async (req, res) => {
             verificationCode,
             alreadyLoggedIn
           });
-        }, 10 * 60 * 1000); // Full 10 minutes (600,000 ms)
-        
+        }, 20 * 60 * 1000); // Full 20 minutes (1,200,000 ms)
         // Clear the timeout if the process completes before timeout
         pythonProcess.on('close', () => {
           clearTimeout(timeout);
