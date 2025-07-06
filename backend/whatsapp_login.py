@@ -627,7 +627,7 @@ def create_group_and_add_contact(driver, wait, phone_number, group_name="New Gro
             print(f"Clicked on contact card for: {formatted_number}", flush=True)
         except Exception as e:
             print(f"Failed to select contact: {e}", flush=True)
-            driver.save_screenshot("contact_selection_error.png")
+            #driver.save_screenshot("contact_selection_error.png")
             print("Taking screenshot of contact selection error.", flush=True)
             try:
                 contact_cards = wait.until(
@@ -660,215 +660,113 @@ def create_group_and_add_contact(driver, wait, phone_number, group_name="New Gro
             except Exception as e:
                 print(f"Failed to click Next button: {e}", flush=True)
                 return False
-        
+
         time.sleep(3)
-        
+
+        # Target the group subject input field and enter group name
+        group_name = "My New Group"  # Replace with your desired group name
+        group_name_entered = False
+
+        # Method 3: Character-by-character typing (if Method 2 failed)
+        if not group_name_entered:
+            try:
+                print("Attempting Method 3: Character-by-character typing", flush=True)
+                group_name_input = driver.find_element(By.XPATH, "//div[@aria-label='Group subject (optional)' and @contenteditable='true']")
+                
+                # Click and clear
+                driver.execute_script("arguments[0].click();", group_name_input)
+                time.sleep(0.5)
+                
+                # Clear with JavaScript
+                driver.execute_script("arguments[0].innerHTML = '<p class=\"selectable-text copyable-text x15bjb6t x1n2onr6\"><br></p>';", group_name_input)
+                time.sleep(0.5)
+                
+                # Click again to focus
+                group_name_input.click()
+                time.sleep(0.5)
+                
+                # Type character by character
+                for char in group_name:
+                    group_name_input.send_keys(char)
+                    time.sleep(0.1)
+                
+                time.sleep(1)
+                
+                # Verify if text was entered
+                current_text = driver.execute_script("return arguments[0].innerText || arguments[0].textContent;", group_name_input)
+                if current_text.strip() == group_name:
+                    print(f"Method 3 successful: Group name set to '{current_text}'", flush=True)
+                    group_name_entered = True
+                else:
+                    print(f"Method 3 failed: Expected '{group_name}', got '{current_text}'", flush=True)
+                #driver.save_screenshot("group_name_input_success.png")      
+            except Exception as e:
+                print(f"Method 3 failed with error: {e}", flush=True)
+
+        if not group_name_entered:
+            print("Warning: Group name may not have been entered correctly", flush=True)
+            # Take a screenshot for debugging
+            try:
+                #driver.save_screenshot("group_name_issue.png")
+                print("Screenshot saved as group_name_issue.png", flush=True)
+            except:
+                pass
+
+        time.sleep(2)
+
+        # Verify the Create Group button state before clicking
         try:
             checkmark_button = wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//div[@role='button' and @aria-label='Create group']"))
             )
+            
+            # Check if button is enabled
+            button_classes = checkmark_button.get_attribute("class")
+            print(f"Create group button classes: {button_classes}", flush=True)
+            
             checkmark_button.click()
             print("Clicked Create group button", flush=True)
+            
+            # Wait for group creation to complete
+            time.sleep(5)
+            
+            # Verify group creation by checking if we're in a group chat
+            try:
+                # Look for group chat indicators
+                group_indicators = [
+                    "//div[@data-testid='conversation-header']",
+                    "//div[contains(@class, 'group-info')]",
+                    "//span[contains(text(), 'Group info')]"
+                ]
+                
+                for indicator in group_indicators:
+                    try:
+                        element = driver.find_element(By.XPATH, indicator)
+                        if element:
+                            print("Group creation verified - found group chat interface", flush=True)
+                            return True
+                    except:
+                        continue
+                        
+                print("Group creation status unclear - no clear group indicators found", flush=True)
+                return True
+                
+            except Exception as e:
+                print(f"Could not verify group creation: {e}", flush=True)
+                return True
+                
         except:
             try:
                 # Fallback to JavaScript click
                 checkmark_button = driver.find_element(By.XPATH, "//div[@role='button' and @aria-label='Create group']")
                 driver.execute_script("arguments[0].click();", checkmark_button)
                 print("Clicked Create group button using JavaScript", flush=True)
+                time.sleep(5)
+                return True
             except Exception as e:
                 print(f"Failed to click Create group button: {e}", flush=True)
                 return False
-        
-        try:
-            # Look for the "Name this group" button that's visible in the screenshot
-            name_group_button = wait.until(
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Name this group')]"))
-            )
-            # Scroll into view and click
-            driver.execute_script("arguments[0].scrollIntoView(true);", name_group_button)
-            time.sleep(1)
-            name_group_button.click()
-            print("Clicked 'Name this group' button", flush=True)
-            
-        except Exception as e:
-            try:
-                # Alternative approach - look for button with pencil icon and "Name this group" text
-                name_group_button = wait.until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[.//span[@data-icon='pencil']]"))
-                )
-                driver.execute_script("arguments[0].scrollIntoView(true);", name_group_button)
-                time.sleep(1)
-                name_group_button.click()
-                print("Clicked 'Name this group' button (pencil icon method)", flush=True)
-                
-            except Exception as e2:
-                try:
-                    # JavaScript click as fallback
-                    name_group_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Name this group')]")
-                    driver.execute_script("arguments[0].scrollIntoView(true);", name_group_button)
-                    time.sleep(1)
-                    driver.execute_script("arguments[0].click();", name_group_button)
-                    print("Clicked 'Name this group' button using JavaScript", flush=True)
-                    
-                except Exception as e3:
-                    try:
-                        # Try clicking on any element containing "Name this group"
-                        name_element = driver.find_element(By.XPATH, "//*[contains(text(), 'Name this group')]")
-                        driver.execute_script("arguments[0].scrollIntoView(true);", name_element)
-                        time.sleep(1)
-                        driver.execute_script("arguments[0].click();", name_element)
-                        print("Clicked 'Name this group' element using JavaScript", flush=True)
-                        
-                    except Exception as e4:
-                        print(f"Failed to click 'Name this group' button: {e}, {e2}, {e3}, {e4}", flush=True)
-                        driver.save_screenshot("name_group_button_not_found.png")
-                        return False
 
-        time.sleep(3)  # Wait for the input field to appear
-
-        # Diagnostic version to understand the input field behavior
-
-        try:
-            # Find the input field
-            group_name_input = wait.until(
-                EC.element_to_be_clickable((By.XPATH, "//div[@contenteditable='true']"))
-            )
-            
-            # Get initial state
-            initial_text = group_name_input.text
-            initial_innerHTML = driver.execute_script("return arguments[0].innerHTML;", group_name_input)
-            initial_value = driver.execute_script("return arguments[0].value || '';", group_name_input)
-            
-            print(f"Initial text: '{initial_text}'", flush=True)
-            print(f"Initial innerHTML: '{initial_innerHTML}'", flush=True)
-            print(f"Initial value: '{initial_value}'", flush=True)
-            
-            # Get all attributes
-            attributes = driver.execute_script("""
-                var items = {};
-                for (var i = 0; i < arguments[0].attributes.length; i++) {
-                    items[arguments[0].attributes[i].name] = arguments[0].attributes[i].value;
-                }
-                return items;
-            """, group_name_input)
-            print(f"Element attributes: {attributes}", flush=True)
-            
-            # Try the JavaScript method with logging
-            print("Focusing element...", flush=True)
-            driver.execute_script("arguments[0].focus();", group_name_input)
-            time.sleep(1)
-            
-            print("Clearing content...", flush=True)
-            driver.execute_script("arguments[0].innerHTML = '';", group_name_input)
-            time.sleep(0.5)
-            
-            # Check if clearing worked
-            cleared_text = group_name_input.text
-            cleared_innerHTML = driver.execute_script("return arguments[0].innerHTML;", group_name_input)
-            print(f"After clearing - text: '{cleared_text}', innerHTML: '{cleared_innerHTML}'", flush=True)
-            
-            print(f"Setting text to '{group_name}'...", flush=True)
-            driver.execute_script("arguments[0].textContent = arguments[1];", group_name_input, group_name)
-            time.sleep(1)
-            
-            # Check if setting worked
-            after_text = group_name_input.text
-            after_innerHTML = driver.execute_script("return arguments[0].innerHTML;", group_name_input)
-            print(f"After setting - text: '{after_text}', innerHTML: '{after_innerHTML}'", flush=True)
-            
-            print("Triggering events...", flush=True)
-            driver.execute_script("""
-                var element = arguments[0];
-                element.dispatchEvent(new Event('input', { bubbles: true }));
-                element.dispatchEvent(new Event('change', { bubbles: true }));
-                element.dispatchEvent(new Event('keyup', { bubbles: true }));
-                element.dispatchEvent(new Event('blur', { bubbles: true }));
-            """, group_name_input)
-            
-            time.sleep(2)
-            
-            # Final check
-            final_text = group_name_input.text
-            final_innerHTML = driver.execute_script("return arguments[0].innerHTML;", group_name_input)
-            print(f"Final - text: '{final_text}', innerHTML: '{final_innerHTML}'", flush=True)
-            
-            # Try to find and click any confirmation button
-            print("Looking for confirmation button...", flush=True)
-            try:
-                confirm_selectors = [
-                    "//div[@data-icon='checkmark-medium']",
-                    "//span[@data-icon='checkmark']",
-                    "//button[contains(@aria-label, 'Done')]",
-                    "//button[contains(@aria-label, 'Save')]",
-                    "//div[@role='button' and contains(@aria-label, 'Done')]",
-                    "//div[@role='button' and contains(@aria-label, 'Save')]"
-                ]
-                
-                for selector in confirm_selectors:
-                    try:
-                        confirm_button = driver.find_element(By.XPATH, selector)
-                        print(f"Found confirm button with selector: {selector}", flush=True)
-                        confirm_button.click()
-                        print("Clicked confirm button", flush=True)
-                        break
-                    except:
-                        continue
-                else:
-                    print("No confirm button found, trying Enter key", flush=True)
-                    group_name_input.send_keys(Keys.ENTER)
-            
-            except Exception as e:
-                print(f"Error with confirmation: {e}", flush=True)
-            
-            time.sleep(3)
-            driver.save_screenshot("diagnostic_final.png")
-            
-            # Check if the group name changed in the UI
-            try:
-                # Look for the group name in the chat header or anywhere in the page
-                group_name_elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{group_name}')]")
-                if group_name_elements:
-                    print(f"SUCCESS: Found '{group_name}' in {len(group_name_elements)} elements", flush=True)
-                    return True
-                else:
-                    print(f"FAILED: Could not find '{group_name}' anywhere on the page", flush=True)
-                    return False
-            except Exception as e:
-                print(f"Error checking for group name: {e}", flush=True)
-                return False
-
-        except Exception as e:
-            print(f"Diagnostic failed: {e}", flush=True)
-            driver.save_screenshot("diagnostic_error.png")
-            return False
-        # Verify group creation was successful
-        try:
-            # Look for group chat indicators
-            group_indicators = [
-                f"//span[contains(text(), '{group_name}')]",
-                "//div[@data-testid='conversation-header']",
-                "//div[contains(@class, 'group-info')]"
-            ]
-            
-            for indicator in group_indicators:
-                try:
-                    wait.until(
-                        EC.presence_of_element_located((By.XPATH, indicator))
-                    )
-                    print(f"Group creation verified using indicator: {indicator}", flush=True)
-                    break
-                except:
-                    continue
-            
-            print(f"Group '{group_name}' created successfully with contact {phone_number}!", flush=True)
-            # driver.save_screenshot("group_created_success.png")
-            return True
-            
-        except Exception as verify_error:
-            print(f"Could not verify group creation: {verify_error}", flush=True)
-            # driver.save_screenshot("group_creation_verification_failed.png")
-            return False
-        
     except Exception as e:
         print(f"Error during group creation process: {e}", flush=True)
         print(traceback.format_exc(), flush=True)
