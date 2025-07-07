@@ -1038,6 +1038,7 @@ app.post("/api/store-lead", async (req, res) => {
 
     // Check for duplicate leads
     const existingLead = await Lead.findOne({
+      name,
       mobile,
       user_mobile_number,
       lead_bought,
@@ -1047,7 +1048,7 @@ app.post("/api/store-lead", async (req, res) => {
     // If duplicate found within last X minutes
     if (existingLead) {
       const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
-      if (timeDiff < 300) { // e.g. within 5 minutes
+      if (timeDiff < 345600) { // e.g. within 5 minutes
         console.log("Duplicate lead detected. Skipping.");
         return res.status(409).json({ error: "Duplicate lead detected" });
       }
