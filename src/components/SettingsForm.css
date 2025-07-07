@@ -626,6 +626,7 @@ body {
     margin-left: 0;
     padding: 5px;
     height: calc(100vh - 20px);
+    overflow-y: auto;
     /* width: auto; */
   }
   

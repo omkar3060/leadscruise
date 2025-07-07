@@ -1167,9 +1167,7 @@
   .statusRow:hover {
     transform: scale(1.02);
   }
-  
-  .statusLabel {
-    width: 90vw;
-    max-width: 300px;
+  .iconOnly {
+    margin-right: 0px;
   }
 }
