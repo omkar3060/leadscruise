@@ -315,7 +315,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
       {showPopup && localStorage.getItem("userEmail") !== "support@leadscruise.com" && (
         <div className={styles.popupOverlay}>
           <div className={styles.popupContent}>
-            <h2>⚠️ Subscription Expiring Soon!</h2>
+            <h2>Subscription Expiring Soon!</h2>
             <p>Your subscription will expire in {daysLeft} day(s). Please renew it to continue using the service.</p>
             <button onClick={() => navigate("/plans")} className={styles.renewButton}>Renew Now</button>
             <button onClick={handleClosePopup} className={styles.closeButton}>Close</button>
@@ -446,7 +446,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
             <div className={`${styles.balanceContainer} ${styles.tooltip2}`} data-tooltip={
               `Shows the latest fetched balance from the Leads provider`
             }>
-              <div className={`${styles.balanceDisplay} ${status !== 'Running' || balance?.hasZeroBalance
+              <div className={`${styles.balanceDisplay} ${scriptStatus !== 'Running' || balance?.hasZeroBalance
                 ? styles.zeroBalance
                 : styles.positiveBalance
                 }`}>
@@ -454,13 +454,13 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 <div className={styles.balanceContent}>
                   <span className={styles.balanceLabel}>Balance</span>
                   <span className={styles.balanceAmount}>
-                    {status === 'Running'
+                    {scriptStatus === 'Running'
                       ? (balance?.buyerBalance || '0')
                       : 'OFF'
                     }
                   </span>
                 </div>
-                {(status !== 'Running' || balance?.hasZeroBalance) && (
+                {(scriptStatus !== 'Running' || balance?.hasZeroBalance) && (
                   <div className={styles.lowBalanceIndicator}>
                     <span className={styles.warningDot}></span>
                   </div>

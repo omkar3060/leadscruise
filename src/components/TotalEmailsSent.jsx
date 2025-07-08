@@ -40,7 +40,7 @@ const TotalLeadsAllTime = () => {
       <h2>Total Emails Sent</h2>
       <div className="download-and-back-div">
         <button className="excel-btn" onClick={exportToExcel}>Download</button>
-        <button className="back-btn" onClick={() => window.location.href = "/dashboard"}>
+        <button className="back-btn" onClick={() => window.history.back()}>
           Back
         </button>
       </div>

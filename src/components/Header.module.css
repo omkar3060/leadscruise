@@ -379,7 +379,7 @@
 }
 
 .popupContent h2::before {
-  content: "⚠️";
+  /* content: "⚠️"; */
   margin-right: 8px;
   font-size: 20px;
 }
