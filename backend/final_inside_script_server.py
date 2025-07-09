@@ -359,6 +359,7 @@ def process_single_message(driver, message_element, timestamp, company, return_u
                 print("Skipping this lead due to duplication...", flush=True)
                 return
             print(f"Successfully sent data to dashboard", flush=True)
+            time.sleep(300)
         except Exception as e:
             print(f"Error sending data to dashboard: {e}", flush=True)
         
@@ -948,7 +949,7 @@ def redirect_and_refresh(driver, wait):
 
                 # Refresh the page three times
                 print("Waiting for 10 seconds...",flush=True)
-                time.sleep(300)  # Static wait for refresh
+                time.sleep(10)  # Static wait for refresh
         else:
             print("ZERO_BALANCE_DETECTED", flush=True)
             return
