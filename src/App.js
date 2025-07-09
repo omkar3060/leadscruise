@@ -126,14 +126,14 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/team"
           element={
             <ProtectedRoute>
               <Team />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/settings"
           element={
@@ -150,8 +150,6 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
-
-
 
         {/* Admin Routes */}
         <Route

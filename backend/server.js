@@ -332,9 +332,8 @@ app.post("/api/execute-task", async (req, res) => {
           });
         }
 
-        // Update user record with mobile number and password
+        // Update user record with mobile number
         user.mobileNumber = mobileNumber;
-        user.savedPassword = password;
         
         // Add company name and mobile numbers to user if available
         if (companyName) {
@@ -1022,10 +1021,14 @@ app.post("/api/store-lead", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Fetch user lead counter
+    // Fetch or create user lead counter
     let userCounter = await UserLeadCounter.findOne({ user_mobile_number });
     if (!userCounter) {
-      userCounter = new UserLeadCounter({ user_mobile_number, leadCount: 0 });
+      userCounter = new UserLeadCounter({
+        user_mobile_number,
+        leadCount: 0,
+        maxCaptures: 10, // or set a default if needed
+      });
     }
 
     // Stop script if limit is reached
@@ -1036,7 +1039,7 @@ app.post("/api/store-lead", async (req, res) => {
       });
     }
 
-    // Check for duplicate leads
+    // Check for duplicate lead within last 4 days
     const existingLead = await Lead.findOne({
       name,
       mobile,
@@ -1045,10 +1048,9 @@ app.post("/api/store-lead", async (req, res) => {
       address,
     });
 
-    // If duplicate found within last X minutes
     if (existingLead) {
       const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
-      if (timeDiff < 345600) { // e.g. within 5 minutes
+      if (timeDiff < 345600) { // within 4 days
         console.log("Duplicate lead detected. Skipping.");
         return res.status(409).json({ error: "Duplicate lead detected" });
       }
@@ -1072,152 +1074,14 @@ app.post("/api/store-lead", async (req, res) => {
 
     console.log("Lead Data Stored:", newLead);
 
-    // Fetch WhatsApp settings
-    const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
+    return res.json({
+      message: "Lead data stored successfully",
+      lead: newLead,
+    });
 
-    if (!settings || !settings.whatsappNumber || !settings.messages) {
-      console.warn("No WhatsApp settings found for this user");
-      return res.json({ message: "Lead data stored successfully", lead: newLead });
-    } else {
-      const receiverNumber = mobile; // Use the mobile number from the lead
-      const messagesJSON = JSON.stringify(settings.messages);
-      const whatsappNumber = settings.whatsappNumber;
-
-      console.log("Launching WhatsApp script with parameters:");
-      console.log("WhatsApp Number:", whatsappNumber);
-      console.log("Receiver Number:", receiverNumber);
-
-      // Do NOT respond to the client yet - we'll wait for the full WhatsApp process
-      // to complete or timeout before responding
-
-      // Process the WhatsApp messaging and WAIT for completion
-      try {
-        // Create a promise to handle the Python process
-        const pythonProcessPromise = new Promise((resolve, reject) => {
-          let verificationCode = null;
-          let errorOutput = "";
-          let isCompleted = false;
-
-          // Start the Python process
-          const pythonProcess = spawn('python3', [
-            'whatsapp.py',
-            whatsappNumber,
-            messagesJSON,
-            receiverNumber,
-          ]);
-
-          const rl = readline.createInterface({ input: pythonProcess.stdout });
-
-          rl.on('line', async (line) => {
-            console.log(`Python output: ${line}`);
-
-            // Handle specific errors that should be ignored
-            if (line.includes("504 Gateway Time-out") ||
-              line.includes("Failed to send data") ||
-              line.includes("Send button not found or not clickable")) {
-              console.warn("Detected known error but continuing execution:", line);
-              // These are expected errors we want to ignore
-            }
-
-            const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
-            if (codeMatch && codeMatch[1]) {
-              verificationCode = codeMatch[1];
-              console.log(`Verification code captured: ${verificationCode}`);
-
-              try {
-                // Update the verificationCode immediately in DB
-                await WhatsAppSettings.findOneAndUpdate(
-                  { mobileNumber: user_mobile_number },
-                  { verificationCode },
-                  { new: true }
-                );
-                console.log("Verification code updated in DB");
-              } catch (dbError) {
-                console.error("Error updating verification code:", dbError);
-                // Continue execution even if DB update fails
-              }
-            }
-          });
-
-          pythonProcess.stderr.on('data', (data) => {
-            const errorMsg = data.toString();
-            errorOutput += errorMsg;
-            console.error(`Python error: ${errorMsg}`);
-
-            // Don't fail for specific errors that we want to tolerate
-            if (errorMsg.includes("Send button not found or not clickable")) {
-              console.warn("Send button issue detected, continuing with process");
-              // We don't want to fail the entire process for this error
-            }
-          });
-
-          pythonProcess.on('close', (code) => {
-            if (isCompleted) return; // Prevent double resolution
-            isCompleted = true;
-
-            console.log(`WhatsApp script exited with code ${code}`);
-
-            if (code === 0 || code === null) {
-              // Consider both 0 and null (killed by timeout) as successful completions
-              resolve({ success: true, verificationCode });
-            } else {
-              resolve({
-                success: false,
-                code,
-                error: errorOutput,
-                message: `WhatsApp script failed with code ${code}`
-              });
-            }
-          });
-
-          pythonProcess.on('error', (err) => {
-            if (isCompleted) return;
-            isCompleted = true;
-
-            console.error("Failed to start Python process:", err);
-            reject(err);
-          });
-
-          // Set a hard timeout to ensure we ALWAYS wait the full 10 minutes
-          // This guarantees we won't process another WhatsApp request until this one is done
-          const timeout = setTimeout(() => {
-            if (isCompleted) return;
-            isCompleted = true;
-
-            console.log("WhatsApp script reached the mandatory 10-minute timeout, completing process");
-            pythonProcess.kill();
-            resolve({
-              success: true,
-              timeout: true,
-              message: "WhatsApp script completed after full 10-minute wait",
-              verificationCode
-            });
-          }, 10 * 60 * 1000); // Full 10 minutes (600,000 ms)
-
-          // Clear the timeout if the process completes before timeout
-          pythonProcess.on('close', () => {
-            clearTimeout(timeout);
-          });
-        });
-
-        // Wait for the Python process to complete - this will block for up to 10 minutes
-        console.log("Waiting for WhatsApp script to complete (up to 10 minutes)...");
-        const result = await pythonProcessPromise;
-        console.log("WhatsApp script process completed:", result);
-
-        // NOW respond to the client after WhatsApp script has fully completed
-        return res.json({
-          message: "Lead data stored successfully and WhatsApp messaging completed",
-          lead: newLead,
-          whatsapp: result
-        });
-
-      } catch (pythonError) {
-        console.error("Error in WhatsApp script execution:", pythonError);
-      }
-    }
   } catch (error) {
     console.error("Error saving lead:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -1332,10 +1196,155 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     await newLead.save();
 
     console.log("Lead Data Stored:", newLead);
-    return res.status(200).json({
-      message: "Lead stored successfully",
-      leadId: newLead._id
-    });
+    
+    // Fetch WhatsApp settings
+    const settings = await WhatsAppSettings.findOne({ user_mobile_number: user_mobile_number });
+
+    if (!settings || !settings.whatsappNumber || !settings.messages) {
+      console.warn("No WhatsApp settings found for this user");
+      return res.json({ message: "Lead data stored successfully", lead: newLead });
+    }
+
+    const receiverNumber = mobile; // Use the mobile number from the lead
+    const messagesJSON = JSON.stringify(settings.messages);
+    const whatsappNumber = settings.whatsappNumber;
+
+    console.log("Launching WhatsApp script with parameters:");
+    console.log("WhatsApp Number:", whatsappNumber);
+    console.log("Receiver Number:", receiverNumber);
+
+    // Process the WhatsApp messaging and WAIT for completion
+    try {
+      // Create a promise to handle the Python process
+      const pythonProcessPromise = new Promise((resolve, reject) => {
+        let verificationCode = null;
+        let errorOutput = "";
+        let isCompleted = false;
+
+        // Start the Python process
+        const pythonProcess = spawn('python3', [
+          'whatsapp.py',
+          whatsappNumber,
+          messagesJSON,
+          receiverNumber,
+        ]);
+
+        const rl = readline.createInterface({ input: pythonProcess.stdout });
+
+        rl.on('line', async (line) => {
+          console.log(`Python output: ${line}`);
+
+          // Handle specific errors that should be ignored
+          if (line.includes("504 Gateway Time-out") ||
+            line.includes("Failed to send data") ||
+            line.includes("Send button not found or not clickable")) {
+            console.warn("Detected known error but continuing execution:", line);
+            // These are expected errors we want to ignore
+          }
+
+          const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
+          if (codeMatch && codeMatch[1]) {
+            verificationCode = codeMatch[1];
+            console.log(`Verification code captured: ${verificationCode}`);
+
+            try {
+              // Update the verificationCode immediately in DB
+              await WhatsAppSettings.findOneAndUpdate(
+                { user_mobile_number: user_mobile_number }, // Fixed: changed from mobileNumber to user_mobile_number
+                { verificationCode },
+                { new: true }
+              );
+              console.log("Verification code updated in DB");
+            } catch (dbError) {
+              console.error("Error updating verification code:", dbError);
+              // Continue execution even if DB update fails
+            }
+          }
+        });
+
+        pythonProcess.stderr.on('data', (data) => {
+          const errorMsg = data.toString();
+          errorOutput += errorMsg;
+          console.error(`Python error: ${errorMsg}`);
+
+          // Don't fail for specific errors that we want to tolerate
+          if (errorMsg.includes("Send button not found or not clickable")) {
+            console.warn("Send button issue detected, continuing with process");
+            // We don't want to fail the entire process for this error
+          }
+        });
+
+        pythonProcess.on('close', (code) => {
+          if (isCompleted) return; // Prevent double resolution
+          isCompleted = true;
+
+          console.log(`WhatsApp script exited with code ${code}`);
+
+          if (code === 0 || code === null) {
+            // Consider both 0 and null (killed by timeout) as successful completions
+            resolve({ success: true, verificationCode });
+          } else {
+            resolve({
+              success: false,
+              code,
+              error: errorOutput,
+              message: `WhatsApp script failed with code ${code}`
+            });
+          }
+        });
+
+        pythonProcess.on('error', (err) => {
+          if (isCompleted) return;
+          isCompleted = true;
+
+          console.error("Failed to start Python process:", err);
+          reject(err);
+        });
+
+        // Set a hard timeout to ensure we ALWAYS wait the full 10 minutes
+        // This guarantees we won't process another WhatsApp request until this one is done
+        const timeout = setTimeout(() => {
+          if (isCompleted) return;
+          isCompleted = true;
+
+          console.log("WhatsApp script reached the mandatory 10-minute timeout, completing process");
+          pythonProcess.kill();
+          resolve({
+            success: true,
+            timeout: true,
+            message: "WhatsApp script completed after full 10-minute wait",
+            verificationCode
+          });
+        }, 10 * 60 * 1000); // Full 10 minutes (600,000 ms)
+
+        // Clear the timeout if the process completes before timeout
+        pythonProcess.on('close', () => {
+          clearTimeout(timeout);
+        });
+      });
+
+      // Wait for the Python process to complete - this will block for up to 10 minutes
+      console.log("Waiting for WhatsApp script to complete (up to 10 minutes)...");
+      const result = await pythonProcessPromise;
+      console.log("WhatsApp script process completed:", result);
+
+      // NOW respond to the client after WhatsApp script has fully completed
+      return res.json({
+        message: "Lead data stored successfully and WhatsApp messaging completed",
+        lead: newLead,
+        whatsapp: result
+      });
+
+    } catch (pythonError) {
+      console.error("Error in WhatsApp script execution:", pythonError);
+      
+      // Return response even if WhatsApp script fails
+      return res.json({
+        message: "Lead data stored successfully but WhatsApp messaging failed",
+        lead: newLead,
+        whatsapp: { success: false, error: pythonError.message }
+      });
+    }
 
   } catch (error) {
     console.error("Error saving lead:", error);

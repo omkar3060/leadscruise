@@ -424,7 +424,10 @@ const Plans = () => {
                     selectedPlan === "six-mo" ? "6 Months" :
                       "12 Months"
               }</p>
-              <p><strong>Price:</strong> ₹{localStorage.getItem("selectedPrice")}</p>
+              <p><strong>Price:</strong> ₹{selectedPlan === "one-mo" ? 2999 :
+                selectedPlan === "three-mo" ? 7999 :
+                  selectedPlan === "six-mo" ? 14999 :
+                    29999}</p>
             </div>
 
             <div className="coupon-section">

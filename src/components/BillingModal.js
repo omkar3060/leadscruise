@@ -188,10 +188,10 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
             <p><strong>Billing Email ID:</strong> {billingDetails.email}</p>
 
             {/* Display API Key */}
-            <p><strong>API Key:</strong> {apiKey}</p>
+            {/* <p><strong>API Key:</strong> {apiKey}</p> */}
 
             {/* New Sheets ID Input Field */}
-            <div className={styles.inputGroup}>
+            {/* <div className={styles.inputGroup}>
               <strong>
                 <label htmlFor="sheetsId">Google Sheets ID:</label>
               </strong>
@@ -216,15 +216,15 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
                   "Update"
                 )}
               </button>
-            </div>
+            </div> */}
             {/* File Upload Section */}
-            <div className={styles.fileUploadSection}>
+            {/* <div className={styles.fileUploadSection}>
               <label htmlFor="fileUpload" className={styles.attachBillLabel}>
                 Attach Bill
               </label>
               <input id="fileUpload" type="file" accept="application/pdf" onChange={handleFileChange} />
               {selectedFile && <span className={styles.uploadedFileName}>📎 {selectedFile.name}</span>}
-            </div>
+            </div> */}
 
             {/* Buttons */}
             <div className={styles.buttonGroup}>
