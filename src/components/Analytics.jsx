@@ -3,6 +3,7 @@ import DashboardHeader from "./DashboardHeader";
 import Sidebar from "./Sidebar";
 import "./Analytics.css";
 import styles from "./Dashboard.module.css";
+import demoAnalytics from "../data/demoAnalytics";
 
 const LoadingScreen = () => (
     <div className="loading-overlay">
@@ -44,7 +45,19 @@ export default function Analytics() {
     useEffect(() => {
         const mobileNumber = localStorage.getItem("mobileNumber");
         const savedPassword = localStorage.getItem("savedPassword");
-
+        if (mobileNumber === "9353050644") {
+            console.log("Demo account detected, setting demo data.");
+            setChartData({
+                weekly: "data:image/png;base64," + demoAnalytics.charts.weekly,
+                monthly: "data:image/png;base64," + demoAnalytics.charts.monthly,
+            });
+            setTableData({
+                locations: demoAnalytics.tables.locations || [],
+                categories: demoAnalytics.tables.categories || []
+            });
+            setIsLoading(false);
+            return;
+        }
         if (!mobileNumber || !savedPassword) {
             setError("Missing credentials in local storage.");
             return;
@@ -54,6 +67,7 @@ export default function Analytics() {
             setIsLoading(true);
             try {
                 // Fetch charts and tables data from the API
+
                 const response = await fetch(
                     `https://api.leadscruise.com/api/analytics/charts?mobileNumber=${mobileNumber}&savedPassword=${savedPassword}`
                 );

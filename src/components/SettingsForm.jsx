@@ -5,7 +5,7 @@ import ProfileCredentials from "./ProfileCredentials";
 import Sidebar from "./Sidebar";
 import axios from "axios";
 import DashboardHeader from "./DashboardHeader";
-
+import demoSettings from "../data/demoSettings"; // Import demo settings for testing
 // Import styles for loading screen (adjust this if you're using a different approach)
 import styles from "./Dashboard.module.css"; // This should match what you use in Dashboard
 
@@ -75,6 +75,12 @@ const SettingsForm = () => {
       if (!userEmail) {
         alert("User email not found!");
         setIsLoading(false);
+        return;
+      }
+
+      if(userEmail === "omkargouda306@gmail.com"){
+        setSettings(demoSettings); // Use demo settings for testing
+        setIsLoading(false); // End loading
         return;
       }
 

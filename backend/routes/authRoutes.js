@@ -31,8 +31,8 @@ const router = express.Router();
 const transporter = nodemailer.createTransport({
   service: "gmail", // or your preferred email service
   auth: {
-    user: "noreply.leadscruise@gmail.com", // your email
-    pass: "weknalzoxkbuabvn", // your email password or app-specific password
+    user: "omkargouda306@gmail.com", // your email
+    pass: "czmf vboc nixs bgan", // your email password or app-specific password
   },
 });
 
@@ -175,7 +175,7 @@ router.post("/send-reset-email", async (req, res) => {
 
     // Email template
     const mailOptions = {
-      from: "noreply.leadscruise@gmail.com", // Your sender email
+      from: "omkargouda306@gmail.com", // Your sender email
       to: email,
       subject: "Password Reset Request",
       html: `

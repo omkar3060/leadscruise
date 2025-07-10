@@ -6,6 +6,8 @@ import axios from "axios";
 import DashboardHeader from "./DashboardHeader";
 import { useNavigate } from "react-router-dom";
 import styles from "./Dashboard.module.css";
+import demoLeads from "../data/demoLeads";
+import demoSettings from "../data/demoSettings";
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -295,45 +297,45 @@ const Sheets = () => {
     }
   };
 
-useEffect(() => {
-  const uniqueId = localStorage.getItem("unique_id");
-  if (!uniqueId) return;
-  
-  const failureInterval = setInterval(async () => {
-    const isCancelled = localStorage.getItem("cancelled") === "true";
-    const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
-    
-    // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
-    
-    try {
-      const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
-      // console.log("API Response:", response.data);
-      
-      if (response.data.otpFailed) {
-        // console.log("OTP Failed detected! About to show alert...");
-        
-        setCancelled(true);
-        localStorage.setItem("cancelled", "true");
-        localStorage.setItem("showOtpPopup", "true");
-        localStorage.setItem("showOtpWaitPopup", "false");
-        setShowOtpPopup(true);
-        setShowOtpWaitPopup(false);
-        
-        if (!isAlertShown) {
-          // console.log("Showing alert now...");
-          alert("The OTP you entered is incorrect. Please try again.");
-          localStorage.setItem("otp_alert_shown", "true");
-        } else {
-          // console.log("Alert already shown, skipping...");
+  useEffect(() => {
+    const uniqueId = localStorage.getItem("unique_id");
+    if (!uniqueId) return;
+
+    const failureInterval = setInterval(async () => {
+      const isCancelled = localStorage.getItem("cancelled") === "true";
+      const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
+
+      // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
+
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
+        // console.log("API Response:", response.data);
+
+        if (response.data.otpFailed) {
+          // console.log("OTP Failed detected! About to show alert...");
+
+          setCancelled(true);
+          localStorage.setItem("cancelled", "true");
+          localStorage.setItem("showOtpPopup", "true");
+          localStorage.setItem("showOtpWaitPopup", "false");
+          setShowOtpPopup(true);
+          setShowOtpWaitPopup(false);
+
+          if (!isAlertShown) {
+            // console.log("Showing alert now...");
+            alert("The OTP you entered is incorrect. Please try again.");
+            localStorage.setItem("otp_alert_shown", "true");
+          } else {
+            // console.log("Alert already shown, skipping...");
+          }
         }
+      } catch (err) {
+        console.error("API Error:", err);
       }
-    } catch (err) {
-      console.error("API Error:", err);
-    }
-  }, 2000);
-  
-  return () => clearInterval(failureInterval);
-}, [showOtpPopup, otpRequestId]);
+    }, 2000);
+
+    return () => clearInterval(failureInterval);
+  }, [showOtpPopup, otpRequestId]);
 
   useEffect(() => {
     const uniqueId = localStorage.getItem("unique_id");
@@ -776,6 +778,11 @@ useEffect(() => {
         return;
       }
 
+      if (userMobile === "9353050644") {
+        setLeads(demoLeads);
+        return;
+      }
+
       const response = await axios.get(
         `https://api.leadscruise.com/api/get-user-leads/${userMobile}`
       );
@@ -812,33 +819,33 @@ useEffect(() => {
   }, []);
 
   const calculateMetrics = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // Get the start of the current week (Monday)
-  const startOfWeek = new Date(today);
-  const day = today.getDay(); // Sunday: 0, Monday: 1, ..., Saturday: 6
-  const diff = day === 0 ? 6 : day - 1; // if Sunday, go back 6 days to get to Monday
-  startOfWeek.setDate(today.getDate() - diff);
-  startOfWeek.setHours(0, 0, 0, 0);
+    // Get the start of the current week (Monday)
+    const startOfWeek = new Date(today);
+    const day = today.getDay(); // Sunday: 0, Monday: 1, ..., Saturday: 6
+    const diff = day === 0 ? 6 : day - 1; // if Sunday, go back 6 days to get to Monday
+    startOfWeek.setDate(today.getDate() - diff);
+    startOfWeek.setHours(0, 0, 0, 0);
 
-  const leadsToday = leads.filter((lead) => {
-    const leadDate = new Date(lead.createdAt);
-    leadDate.setHours(0, 0, 0, 0);
-    return leadDate.getTime() === today.getTime();
-  });
+    const leadsToday = leads.filter((lead) => {
+      const leadDate = new Date(lead.createdAt);
+      leadDate.setHours(0, 0, 0, 0);
+      return leadDate.getTime() === today.getTime();
+    });
 
-  const leadsThisWeek = leads.filter((lead) => {
-    const leadDate = new Date(lead.createdAt);
-    return leadDate >= startOfWeek;
-  });
+    const leadsThisWeek = leads.filter((lead) => {
+      const leadDate = new Date(lead.createdAt);
+      return leadDate >= startOfWeek;
+    });
 
-  return {
-    totalLeadsToday: leadsToday.length,
-    totalLeadsThisWeek: leadsThisWeek.length,
-    totalLeadsCaptured: leads.length,
+    return {
+      totalLeadsToday: leadsToday.length,
+      totalLeadsThisWeek: leadsThisWeek.length,
+      totalLeadsCaptured: leads.length,
+    };
   };
-};
 
   const metrics = calculateMetrics();
 
@@ -1000,7 +1007,7 @@ useEffect(() => {
         </div>
         <div className={styles.metricBox} onClick={() => navigate("/totalLeadsCaptured")}>
           {metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}
-          <br/>
+          <br />
           <span>Total Emails Sent</span>
         </div>
         <div className={styles.metricBox} onClick={() => navigate("/totalLeadsCaptured")}>

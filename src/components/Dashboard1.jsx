@@ -5,6 +5,9 @@ import DashboardHeader from "./DashboardHeader";
 import styles from "./Dashboard.module.css"; // Import CSS module
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, AlertTriangle, TrendingUp, Target, BarChart3, Users, BookOpen, Video } from 'lucide-react';
+import demoLeads from "../data/demoLeads";
+import demoSettings from "../data/demoSettings";
+import demoAnalytics from "../data/demoAnalytics";
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -73,6 +76,12 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       // Fetch charts and tables data from the API
+      if(mobileNumber === "9353050644"){
+        setTableData({categories: demoAnalytics.tables.categories});
+        // console.log("Using demo table data:", demoAnalytics.tables.categories);
+        return;
+      }
+
       const response = await fetch(
         `https://api.leadscruise.com/api/analytics/charts?mobileNumber=${mobileNumber}&savedPassword=${savedPassword}`
       );
@@ -139,6 +148,11 @@ const Dashboard = () => {
 
       if (!userMobile) {
         alert("User mobile number not found!");
+        return;
+      }
+
+      if(userMobile === "9353050644"){
+        setUserLeads(demoLeads);
         return;
       }
 
@@ -282,6 +296,11 @@ const Dashboard = () => {
         return;
       }
 
+      if(mobileNumber === "9353050644"){
+        setLeads(demoLeads);
+        return;
+      }
+
       const response = await axios.get(
         `https://api.leadscruise.com/api/get-user-leads/${mobileNumber}`
       );
@@ -374,6 +393,12 @@ const Dashboard = () => {
         alert("User email not found!");
         return;
       }
+      if(userEmail === "omkargouda306@gmail.com"){
+              setSettings(demoSettings); // Use demo settings for testing
+              setIsLoading(false); // End loading
+              return;
+            }
+      
       try {
         const response = await axios.get(
           `https://api.leadscruise.com/api/get-settings/${userEmail}`
@@ -767,7 +792,7 @@ useEffect(() => {
   const generatePieChartData = () => {
     const green = metrics.totalLeadsCaptured || 0;
     const blue = green * 7;
-    const h2Length = settings.h2WordArray.length;
+    const h2Length = settings?.h2WordArray?.length || 0;
     const red = Math.round(blue / (2 * h2Length)) || 0; // Ensure red is at least 0
 
     const total = green + blue + red;

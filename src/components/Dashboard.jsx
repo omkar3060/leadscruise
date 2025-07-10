@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 import redFlag from "../images/red_flag.png";
 import greyFlag from "../images/grey_flag.png";
 import { minor } from "@mui/material";
+import demoLeads from "../data/demoLeads";
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -184,6 +185,11 @@ const Dashboard = () => {
       const mobileNumber = localStorage.getItem("mobileNumber");
       if (!mobileNumber) {
         console.error("Mobile number not found in localStorage.");
+        return;
+      }
+
+      if(mobileNumber === "9353050644"){
+        setLeads(demoLeads);
         return;
       }
 
@@ -936,7 +942,7 @@ useEffect(() => {
                 {sortedLeads.length > 0 ? (
                   sortedLeads.map((lead, index) => {
                     const keyword = lead.lead_bought;
-                    const isRejected = settings.h2WordArray.includes(keyword);
+                    const isRejected = Array.isArray(settings?.h2WordArray) && settings.h2WordArray.includes(keyword);
 
                     return (
                       <tr key={index}>
