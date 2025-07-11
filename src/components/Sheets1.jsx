@@ -384,6 +384,18 @@ const Sheets = () => {
       const password = localStorage.getItem("savedPassword");
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
+      if (mobileNumber === "9353050644") {
+        const result = window.confirm("Demo mode is enabled. Do you want to login?");
+        if (result === true) {
+          navigate("/signup");
+          return;
+        }
+        else {
+          alert("Demo mode is enabled. You can only view the dashboard.");
+          setIsStarting(false); // Reset starting state on error
+          return;
+        }
+      }
       try {
         const credCheckRes = await axios.get(
           `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`

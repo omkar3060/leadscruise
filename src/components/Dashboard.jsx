@@ -55,8 +55,8 @@ const Dashboard = () => {
   });
   const [messageCount, setMessageCount] = useState(null);
   const [showOtpPopup, setShowOtpPopup] = useState(() => {
-  return localStorage.getItem("showOtpPopup") === "true";
-});
+    return localStorage.getItem("showOtpPopup") === "true";
+  });
   const [otpValue, setOtpValue] = useState('');
   const [otpRequestId, setOtpRequestId] = useState(null);
   const [showOtpWaitPopup, setShowOtpWaitPopup] = useState(() => {
@@ -188,7 +188,7 @@ const Dashboard = () => {
         return;
       }
 
-      if(mobileNumber === "9353050644"){
+      if (mobileNumber === "9353050644") {
         setLeads(demoLeads);
         return;
       }
@@ -268,14 +268,14 @@ const Dashboard = () => {
   }, [timer, isDisabled]);
 
   useEffect(() => {
-  const status = localStorage.getItem("status");
+    const status = localStorage.getItem("status");
 
-  if (status === "Running") {
-    localStorage.setItem("cancelled", "true");
-  } else {
-    localStorage.setItem("cancelled", "false");
-  }
-}, []);  // Reacts to status changes in localStorage
+    if (status === "Running") {
+      localStorage.setItem("cancelled", "true");
+    } else {
+      localStorage.setItem("cancelled", "false");
+    }
+  }, []);  // Reacts to status changes in localStorage
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -339,7 +339,7 @@ const Dashboard = () => {
   const metrics = calculateMetrics();
 
   // Add OTP submission handler
-const handleOtpSubmit = async () => {
+  const handleOtpSubmit = async () => {
     if (!otpValue || otpValue.length !== 4) {
       alert("Please enter a valid 4-digit OTP");
       return;
@@ -372,79 +372,79 @@ const handleOtpSubmit = async () => {
     }
   };
 
-useEffect(() => {
-  const uniqueId = localStorage.getItem("unique_id");
-  if (!uniqueId) return;
-  
-  const failureInterval = setInterval(async () => {
-    const isCancelled = localStorage.getItem("cancelled") === "true";
-    const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
-    
-    // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
-    
-    try {
-      const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
-      // console.log("API Response:", response.data);
-      
-      if (response.data.otpFailed) {
-        // console.log("OTP Failed detected! About to show alert...");
-        
-        setCancelled(true);
-        localStorage.setItem("cancelled", "true");
-        localStorage.setItem("showOtpPopup", "true");
-        localStorage.setItem("showOtpWaitPopup", "false");
-        setShowOtpPopup(true);
-        setShowOtpWaitPopup(false);
-        
-        if (!isAlertShown) {
-          // console.log("Showing alert now...");
-          alert("The OTP you entered is incorrect. Please try again.");
-          localStorage.setItem("otp_alert_shown", "true");
-        } else {
-          // console.log("Alert already shown, skipping...");
+  useEffect(() => {
+    const uniqueId = localStorage.getItem("unique_id");
+    if (!uniqueId) return;
+
+    const failureInterval = setInterval(async () => {
+      const isCancelled = localStorage.getItem("cancelled") === "true";
+      const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
+
+      // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
+
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
+        // console.log("API Response:", response.data);
+
+        if (response.data.otpFailed) {
+          // console.log("OTP Failed detected! About to show alert...");
+
+          setCancelled(true);
+          localStorage.setItem("cancelled", "true");
+          localStorage.setItem("showOtpPopup", "true");
+          localStorage.setItem("showOtpWaitPopup", "false");
+          setShowOtpPopup(true);
+          setShowOtpWaitPopup(false);
+
+          if (!isAlertShown) {
+            // console.log("Showing alert now...");
+            alert("The OTP you entered is incorrect. Please try again.");
+            localStorage.setItem("otp_alert_shown", "true");
+          } else {
+            // console.log("Alert already shown, skipping...");
+          }
         }
+      } catch (err) {
+        console.error("API Error:", err);
       }
-    } catch (err) {
-      console.error("API Error:", err);
+    }, 2000);
+
+    return () => clearInterval(failureInterval);
+  }, [showOtpPopup, otpRequestId]);
+
+  useEffect(() => {
+    const uniqueId = localStorage.getItem("unique_id");
+
+    if (!uniqueId) return;
+
+    if (status === "Running" && timer > 210) {
+      setShowOtpWaitPopup(true);
+      localStorage.setItem("showOtpWaitPopup", "true");
+    } else {
+      setShowOtpWaitPopup(false);
+      localStorage.setItem("showOtpWaitPopup", "false");
     }
-  }, 2000);
-  
-  return () => clearInterval(failureInterval);
-}, [showOtpPopup, otpRequestId]);
 
-useEffect(() => {
-  const uniqueId = localStorage.getItem("unique_id");
+    const otpCheckInterval = setInterval(async () => {
+      const cancelled = localStorage.getItem("cancelled") === "true"; // ✅ moved inside
+      if (cancelled || status !== "Running") return;
 
-  if (!uniqueId) return;
-
-  if (status === "Running" && timer > 210) {
-    setShowOtpWaitPopup(true);
-    localStorage.setItem("showOtpWaitPopup", "true");
-  } else {
-    setShowOtpWaitPopup(false);
-    localStorage.setItem("showOtpWaitPopup", "false");
-  }
-
-  const otpCheckInterval = setInterval(async () => {
-    const cancelled = localStorage.getItem("cancelled") === "true"; // ✅ moved inside
-    if (cancelled || status !== "Running") return;
-
-    try {
-      const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
-      if (response.data.otpRequired) {
-        setOtpRequestId(response.data.requestId);
-        setShowOtpPopup(true);
-        localStorage.setItem("showOtpPopup", "true");
-        setShowOtpWaitPopup(false);
-        localStorage.setItem("showOtpWaitPopup", "false");
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
+        if (response.data.otpRequired) {
+          setOtpRequestId(response.data.requestId);
+          setShowOtpPopup(true);
+          localStorage.setItem("showOtpPopup", "true");
+          setShowOtpWaitPopup(false);
+          localStorage.setItem("showOtpWaitPopup", "false");
+        }
+      } catch (error) {
+        // Silently ignore
       }
-    } catch (error) {
-      // Silently ignore
-    }
-  }, 2000);
+    }, 2000);
 
-  return () => clearInterval(otpCheckInterval);
-}, [status]);
+    return () => clearInterval(otpCheckInterval);
+  }, [status]);
 
 
 
@@ -461,6 +461,19 @@ useEffect(() => {
       const password = localStorage.getItem("savedPassword");
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
+
+      if (mobileNumber === "9353050644") {
+        const result = window.confirm("Demo mode is enabled. Do you want to login?");
+        if (result === true) {
+          navigate("/signup");
+          return;
+        }
+        else {
+          alert("Demo mode is enabled. You can only view the dashboard.");
+          setIsStarting(false); // Reset starting state on error
+          return;
+        }
+      }
 
       try {
         const credCheckRes = await axios.get(
@@ -786,7 +799,7 @@ useEffect(() => {
         </div>
       )}
 
-      {showOtpPopup && !cancelled &&  (
+      {showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
             <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
