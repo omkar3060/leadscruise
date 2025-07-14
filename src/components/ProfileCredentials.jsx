@@ -573,10 +573,21 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   ) : (
                     <button
                       className="edit-button"
-                      style={getButtonStyle("#28a745")}
+
                       disabled={countdown > 0}
                       title={getButtonTitle("Edit")}
-                      onClick={() => setIsEditingWhatsapp(true)}
+                      style={{
+                        backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
+                        cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                        color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                      }}
+                      onClick={() => {
+                        if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                          alert("You cannot edit in demo account");
+                          return;
+                        }
+                        setIsEditingWhatsapp(true);
+                      }}
                     >
                       Edit {countdown > 0 && `(${countdown}s)`}
                     </button>

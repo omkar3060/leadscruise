@@ -25,6 +25,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const whatsappNumber = "+919579797269"; // Replace with actual number
   const [scriptStatus, setScriptStatus] = useState("");
   const [lastTime, setLastTime] = useState(null);
+  const isDemoAccount = localStorage.getItem("userEmail") === "omkargouda306@gmail.com";
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -348,11 +349,44 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         <div className={styles.startStopButtons}>
           {location.pathname === "/settings" ? (
             <>
-              <button className={styles.startButton} onClick={handleSubmit}>
-                <FaSave className={styles.iconOnly} /> <span className={styles.buttonText}>Save All</span>
+
+
+              <button
+                className={styles.startButton}
+                style={{
+                  backgroundColor: isDemoAccount ? "#ccc" : "",
+                  color: isDemoAccount ? "#666" : "",
+                  cursor: isDemoAccount ? "not-allowed" : "pointer"
+                }}
+                onClick={(e) => {
+                  if (isDemoAccount) {
+                    alert("You cannot save in demo account");
+                    return;
+                  }
+                  handleSubmit();
+                }}
+              >
+                <FaSave className={styles.iconOnly} />{" "}
+                <span className={styles.buttonText}>Save All</span>
               </button>
-              <button className={styles.stopButton} onClick={handleRevert}>
-                <FaUndo className={styles.iconOnly} /> <span className={styles.buttonText}>Revert All</span>
+
+              <button
+                className={styles.stopButton}
+                style={{
+                  backgroundColor: isDemoAccount ? "#ccc" : "",
+                  color: isDemoAccount ? "#666" : "",
+                  cursor: isDemoAccount ? "not-allowed" : "pointer"
+                }}
+                onClick={(e) => {
+                  if (isDemoAccount) {
+                    alert("You cannot revert in demo account");
+                    return;
+                  }
+                  handleRevert();
+                }}
+              >
+                <FaUndo className={styles.iconOnly} />{" "}
+                <span className={styles.buttonText}>Revert All</span>
               </button>
             </>
           ) : location.pathname !== "/profile" && location.pathname !== "/whatsapp" && location.pathname !== "/analytics" ? (

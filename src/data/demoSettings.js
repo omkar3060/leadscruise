@@ -1,7 +1,7 @@
 const demoSettings = {
   "sentences": [
     "Thank you for showing interest in our products.",
-    "For further queries, please contact our support team at +91-9876543210, +91-9123456780.",
+    "For further queries, please contact our support team at +91-9999999999.",
     "Your feedback matters. Kindly rate your experience after purchase."
   ],
   "wordArray": [
