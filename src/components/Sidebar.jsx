@@ -136,22 +136,6 @@ const Sidebar = ({ status }) => {
             </div> */}
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
-              onClick={() => window.open("https://www.tradeindia.com/join_now/upload_product.html", "_blank")}
-            >
-              <img
-                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAXVBMVEW+JCTZJif////0wRXYJye7IyPYJyfSJia7JibYJyfuxcTTJibcbWbegX21ChDZRTHUVFDll4/prKrMFiTRCgrAFhntsxnSMivdnJzqt7e1SD300M/jsbDgmCH46uk2uEDkAAAACnRSTlMC////0s4pJB4nEIHnagAAAPVJREFUKJGt09FygyAQBVDXmmpZFBpAMFj//zN7F6ZJG8lb7ws7eyYRd9auQ8bpnK7msjRzKRZ31cgeRUNqmVIpTN0Y0rWZFEbg/NnMXPEpb4icgk7rWWvV9/2GAiVsldMJWq21FdxR2YpSCbJF4gZM0RjUN0R6LGjQygfwyDnDvxAcpmCMZPuf+Gjkb9GMBZnYPJALOjQFiYhjvRAe5agiulSR2O9yoSXgFyckX27rpfx33Lz3TbzKe2R1+Abex9BEnx64rk/IIcwpzTdHLNvFf5DYhaUMAXPjYsCJ7pEp069gdwd6kUEW94UOdeWn949z5Hv4Bla0G+QJpP0tAAAAAElFTkSuQmCC"
-                className={styles.icon}
-                alt="Trade India"
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  objectFit: "contain",
-                }}
-              />
-              <span className={styles.tooltipText}>Trade India</span>
-            </div>
-            <div
-              className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => window.open("https://seller.indiamart.com/", "_blank")}
             >
               <img
@@ -165,6 +149,22 @@ const Sidebar = ({ status }) => {
                 }}
               />
               <span className={styles.tooltipText}>IndiaMART</span>
+            </div>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => window.open("https://www.tradeindia.com/join_now/upload_product.html", "_blank")}
+            >
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAXVBMVEW+JCTZJif////0wRXYJye7IyPYJyfSJia7JibYJyfuxcTTJibcbWbegX21ChDZRTHUVFDll4/prKrMFiTRCgrAFhntsxnSMivdnJzqt7e1SD300M/jsbDgmCH46uk2uEDkAAAACnRSTlMC////0s4pJB4nEIHnagAAAPVJREFUKJGt09FygyAQBVDXmmpZFBpAMFj//zN7F6ZJG8lb7ws7eyYRd9auQ8bpnK7msjRzKRZ31cgeRUNqmVIpTN0Y0rWZFEbg/NnMXPEpb4icgk7rWWvV9/2GAiVsldMJWq21FdxR2YpSCbJF4gZM0RjUN0R6LGjQygfwyDnDvxAcpmCMZPuf+Gjkb9GMBZnYPJALOjQFiYhjvRAe5agiulSR2O9yoSXgFyckX27rpfx33Lz3TbzKe2R1+Abex9BEnx64rk/IIcwpzTdHLNvFf5DYhaUMAXPjYsCJ7pEp069gdwd6kUEW94UOdeWn949z5Hv4Bla0G+QJpP0tAAAAAElFTkSuQmCC"
+                className={styles.icon}
+                alt="Trade India"
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  objectFit: "contain",
+                }}
+              />
+              <span className={styles.tooltipText}>Trade India</span>
             </div>
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}

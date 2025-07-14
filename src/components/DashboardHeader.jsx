@@ -312,7 +312,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   return (
     <div className={styles.dashboardHeader}>
       {/* Subscription Expiry Popup */}
-      {showPopup && localStorage.getItem("userEmail") !== "support@leadscruise.com" && (
+      {showPopup && localStorage.getItem("userEmail") !== "support@leadscruise.com" && localStorage.getItem("userEmail") !== "omkargouda306@gmail.com" && (
         <div className={styles.popupOverlay}>
           <div className={styles.popupContent}>
             <h2>Subscription Expiring Soon!</h2>
@@ -426,9 +426,21 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
               )}
               <button
                 className={styles.subscriptionButton}
-                onClick={() => navigate("/plans")}
+                onClick={() => {
+                  const userEmail = localStorage.getItem("userEmail");
+                  if (userEmail === "omkargouda306@gmail.com") {
+                    alert("You cannot pay in demo account");
+                    return;
+                  }
+                  navigate("/plans");
+                }}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
+                disabled={localStorage.getItem("userEmail") === "omkargouda306@gmail.com"}
+                style={{
+                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                  opacity: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? 0.6 : 1
+                }}
               >
                 <div className={styles.buttonContent}>
                   <div className={styles.daysInfo}>
@@ -438,6 +450,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                   </div>
                 </div>
               </button>
+
             </div>
           </>
         ) : (

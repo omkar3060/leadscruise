@@ -482,11 +482,11 @@ const Whatsapp = () => {
         style={
           windowWidth <= 768
             ? {
-                left: 0,
-                width: "100%",
-                marginLeft: 0,
-                padding: "15px",
-              }
+              left: 0,
+              width: "100%",
+              marginLeft: 0,
+              padding: "15px",
+            }
             : {}
         }
       />
@@ -508,7 +508,18 @@ const Whatsapp = () => {
               <button
                 type="button"
                 className="edit-button"
-                onClick={() => openModal("sentences")}
+                style={{
+                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
+                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                }}
+                onClick={() => {
+                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                    alert("You cannot edit in demo account");
+                    return;
+                  }
+                  openModal("sentences");
+                }}
               >
                 Edit
               </button>

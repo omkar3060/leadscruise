@@ -1,42 +1,42 @@
 const demoSettings = {
   "sentences": [
-    "Thank You for the enquiry",
-    "Please contact the sales team +91-9900333143, +91-9503213927 , +91-9284706164",
-    "Once the enquiry is being closed kindly review us with ratings."
+    "Thank you for showing interest in our products.",
+    "For further queries, please contact our support team at +91-9876543210, +91-9123456780.",
+    "Your feedback matters. Kindly rate your experience after purchase."
   ],
   "wordArray": [
-    "Spider Couplings",
-    "Servo Couplings",
-    "Gear Couplings",
-    "Flexible Shaft Couplings",
-    "Rigid Couplings",
-    "Flexible Couplings",
-    "Torque limiter",
-    "PU Spider Coupling",
-    "Disc Coupling",
-    "Encoder Coupling",
-    "Flange coupling",
-    "Aluminum Flexible Coupling",
-    "Full Gear Coupling",
-    "Jaw Couplings",
-    "Couplings"
+    "PCB Boards",
+    "Microcontrollers",
+    "Wireless Modules",
+    "Power Adapters",
+    "Stepper Motors",
+    "Servo Motors",
+    "Thermistors",
+    "Capacitors",
+    "Resistors",
+    "Transistors",
+    "Voltage Regulators",
+    "Arduino Boards",
+    "Raspberry Pi",
+    "Breadboards",
+    "DC Power Supply"
   ],
   "h2WordArray": [
-    "Hero Splendor Rubber Coupling",
-    "Capsule Couple",
-    "Ape Coupling Rubber",
-    "18mm Sujata Mixer Rubber Coupler",
-    "Quick Release Bolt",
-    "Quick Release Couplings",
-    "Aluminium Encoder Coupling, for Automation, Size: 1 Inch",
-    "Piaggio Ape Rubber Joint Coupling, 30 piece"
+    "ESP32 WiFi Bluetooth Module",
+    "5V 2A Power Supply Adapter",
+    "ATmega328 Microcontroller IC",
+    "L298N Motor Driver Module",
+    "Raspberry Pi 4 Model B (4GB RAM)",
+    "0.96 inch OLED Display Module",
+    "HC-05 Bluetooth Module",
+    "DHT11 Temperature Humidity Sensor"
   ],
-  "__v": 94,
-  "minOrder": 0,
+  "__v": 42,
+  "minOrder": 1,
   "leadTypes": [
-    "bulk",
-    "business",
-    "gst"
+    "wholesale",
+    "retail",
+    "b2b"
   ]
 };
 export default demoSettings;

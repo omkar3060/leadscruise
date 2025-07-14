@@ -78,7 +78,7 @@ const SettingsForm = () => {
         return;
       }
 
-      if(userEmail === "omkargouda306@gmail.com"){
+      if (userEmail === "omkargouda306@gmail.com") {
         setSettings(demoSettings); // Use demo settings for testing
         setIsLoading(false); // End loading
         return;
@@ -296,11 +296,11 @@ const SettingsForm = () => {
         style={
           windowWidth <= 768
             ? {
-                left: 0,
-                width: "100%",
-                marginLeft: 0,
-                padding: "15px",
-              }
+              left: 0,
+              width: "100%",
+              marginLeft: 0,
+              padding: "15px",
+            }
             : {}
         }
       />
@@ -324,7 +324,18 @@ const SettingsForm = () => {
               <button
                 type="button"
                 className="edit-button"
-                onClick={() => openModal("sentences")}
+                style={{
+                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "", // grey background
+                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                }}
+                onClick={() => {
+                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                    alert("You cannot edit in demo account");
+                    return;
+                  }
+                  openModal("sentences");
+                }}
               >
                 Edit
               </button>
@@ -347,7 +358,18 @@ const SettingsForm = () => {
               <button
                 type="button"
                 className="edit-button"
-                onClick={() => openModal("wordArray")}
+                style={{
+                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "", // grey background
+                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                }}
+                onClick={() => {
+                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                    alert("You cannot edit in demo account");
+                    return;
+                  }
+                  openModal("wordArray");
+                }}
               >
                 Edit
               </button>
@@ -370,7 +392,18 @@ const SettingsForm = () => {
               <button
                 type="button"
                 className="edit-button"
-                onClick={() => openModal("h2WordArray")}
+                style={{
+                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "", // grey background
+                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                }}
+                onClick={() => {
+                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                    alert("You cannot edit in demo account");
+                    return;
+                  }
+                  openModal("h2WordArray");
+                }}
               >
                 Edit
               </button>

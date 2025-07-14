@@ -397,11 +397,45 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   value={tempCaptures}
                   onChange={(e) => setTempCaptures(Number(e.target.value))}
                   min="1"
+                  disabled={localStorage.getItem("userEmail") === "omkargouda306@gmail.com"}
                 />
-                <button className="edit-max-captures" onClick={(e) => { e.preventDefault(); handleSaveMaxCaptures(); }}>Save</button>
+                <button
+                  className="edit-max-captures"
+                  style={{
+                    backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
+                    cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                    color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                      alert("You cannot edit in demo account");
+                      return;
+                    }
+                    handleSaveMaxCaptures();
+                  }}
+                >
+                  Save
+                </button>
               </>
             ) : (
-              <button className="edit-max-captures" onClick={() => setIsEditingMaxCaptures(true)}>Edit</button>
+              <button
+                className="edit-max-captures"
+                style={{
+                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
+                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                }}
+                onClick={() => {
+                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                    alert("You cannot edit in demo account");
+                    return;
+                  }
+                  setIsEditingMaxCaptures(true);
+                }}
+              >
+                Edit
+              </button>
             )}
           </div>
         </div>
@@ -426,7 +460,18 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                 <button className="edit-max-captures" onClick={(e) => { e.preventDefault(); handleSaveminOrder(); }}>Save</button>
               </>
             ) : (
-              <button className="edit-max-captures" onClick={() => setIsEditingminOrder(true)}>Edit</button>
+              <button className="edit-max-captures" style={{
+                backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
+                cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+              }}
+                onClick={() => {
+                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                    alert("You cannot edit in demo account");
+                    return;
+                  }
+                  setIsEditingminOrder(true);
+                }}>Edit</button>
             )}
           </div>
         </div>
@@ -477,7 +522,18 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                 </button>
               </>
             ) : (
-              <button className="edit-max-captures" onClick={() => setIsEditingLeadTypes(true)}>
+              <button className="edit-max-captures" style={{
+                backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
+                cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+              }}
+                onClick={() => {
+                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                    alert("You cannot edit in demo account");
+                    return;
+                  }
+                  setIsEditingLeadTypes(true);
+                }}>
                 Edit
               </button>
             )}
@@ -597,7 +653,18 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                     <button className="cancel-button" onClick={() => handleCancelEdit('saved')}>Cancel</button>
                   </div>
                 ) : (
-                  <button type="button" className="edit-button" onClick={() => setIsEditingSavedPassword(true)}>
+                  <button type="button" className="edit-button" style={{
+                    backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
+                    cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                    color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                  }}
+                    onClick={() => {
+                      if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                        alert("You cannot edit in demo account");
+                        return;
+                      }
+                      setIsEditingSavedPassword(true);
+                    }}>
                     Edit
                   </button>
                 )}
@@ -645,7 +712,18 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                     <button className="cancel-button" onClick={() => handleCancelEdit('leadscruise')}>Cancel</button>
                   </div>
                 ) : (
-                  <button className="edit-button" onClick={(e) => { e.preventDefault(); setIsEditing(true); }}>
+                  <button className="edit-button" style={{
+                    backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
+                    cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
+                    color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                  }}
+                    onClick={() => {
+                      if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                        alert("You cannot edit in demo account");
+                        return;
+                      }
+                      setIsEditing(true);
+                    }}>
                     Edit
                   </button>
                 )}
