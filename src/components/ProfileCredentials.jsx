@@ -397,18 +397,18 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   value={tempCaptures}
                   onChange={(e) => setTempCaptures(Number(e.target.value))}
                   min="1"
-                  disabled={localStorage.getItem("userEmail") === "omkargouda306@gmail.com"}
+                  disabled={localStorage.getItem("userEmail") === "demo@leadscruise.com"}
                 />
                 <button
                   className="edit-max-captures"
                   style={{
-                    backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
-                    cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                    color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                    backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                    cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                    color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                   }}
                   onClick={(e) => {
                     e.preventDefault();
-                    if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                    if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                       alert("You cannot edit in demo account");
                       return;
                     }
@@ -422,12 +422,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               <button
                 className="edit-max-captures"
                 style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
-                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                 }}
                 onClick={() => {
-                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                     alert("You cannot edit in demo account");
                     return;
                   }
@@ -461,12 +461,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               </>
             ) : (
               <button className="edit-max-captures" style={{
-                backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
-                cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
               }}
                 onClick={() => {
-                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                     alert("You cannot edit in demo account");
                     return;
                   }
@@ -523,12 +523,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               </>
             ) : (
               <button className="edit-max-captures" style={{
-                backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
-                cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
               }}
                 onClick={() => {
-                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                     alert("You cannot edit in demo account");
                     return;
                   }
@@ -577,12 +577,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                       disabled={countdown > 0}
                       title={getButtonTitle("Edit")}
                       style={{
-                        backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
-                        cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                        color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                        backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                        cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                        color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                       }}
                       onClick={() => {
-                        if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                        if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                           alert("You cannot edit in demo account");
                           return;
                         }
@@ -665,12 +665,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   </div>
                 ) : (
                   <button type="button" className="edit-button" style={{
-                    backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
-                    cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                    color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                    backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                    cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                    color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                   }}
                     onClick={() => {
-                      if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                      if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                         alert("You cannot edit in demo account");
                         return;
                       }
@@ -724,12 +724,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   </div>
                 ) : (
                   <button className="edit-button" style={{
-                    backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
-                    cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                    color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                    backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                    cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                    color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                   }}
                     onClick={() => {
-                      if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                      if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                         alert("You cannot edit in demo account");
                         return;
                       }

@@ -45,7 +45,7 @@ export default function Analytics() {
     useEffect(() => {
         const mobileNumber = localStorage.getItem("mobileNumber");
         const savedPassword = localStorage.getItem("savedPassword");
-        if (mobileNumber === "9353050644") {
+        if (mobileNumber === "9999999999") {
             console.log("Demo account detected, setting demo data.");
             setChartData({
                 weekly: "data:image/png;base64," + demoAnalytics.charts.weekly,

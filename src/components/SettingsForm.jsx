@@ -78,7 +78,7 @@ const SettingsForm = () => {
         return;
       }
 
-      if (userEmail === "omkargouda306@gmail.com") {
+      if (userEmail === "demo@leadscruise.com") {
         setSettings(demoSettings); // Use demo settings for testing
         setIsLoading(false); // End loading
         return;
@@ -325,12 +325,12 @@ const SettingsForm = () => {
                 type="button"
                 className="edit-button"
                 style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "", // grey background
-                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "", // grey background
+                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                 }}
                 onClick={() => {
-                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                     alert("You cannot edit in demo account");
                     return;
                   }
@@ -359,12 +359,12 @@ const SettingsForm = () => {
                 type="button"
                 className="edit-button"
                 style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "", // grey background
-                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "", // grey background
+                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                 }}
                 onClick={() => {
-                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                     alert("You cannot edit in demo account");
                     return;
                   }
@@ -393,12 +393,12 @@ const SettingsForm = () => {
                 type="button"
                 className="edit-button"
                 style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "", // grey background
-                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "", // grey background
+                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                 }}
                 onClick={() => {
-                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                     alert("You cannot edit in demo account");
                     return;
                   }
@@ -541,7 +541,7 @@ const SettingsForm = () => {
             </div>
             <div className="modal-buttons">
               <button
-                className="save-button"
+                className="save-button save-changes-button"
                 onClick={() => saveChanges(modalType, modalData)}
               >
                 Save Changes

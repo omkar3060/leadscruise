@@ -188,7 +188,7 @@ const Dashboard = () => {
         return;
       }
 
-      if (mobileNumber === "9353050644") {
+      if (mobileNumber === "9999999999") {
         setLeads(demoLeads);
         return;
       }
@@ -462,7 +462,7 @@ const Dashboard = () => {
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
 
-      if (mobileNumber === "9353050644") {
+      if (mobileNumber === "9999999999") {
         const result = window.confirm("Demo mode is enabled. Do you want to login?");
         if (result === true) {
           navigate("/signup");

@@ -25,7 +25,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const whatsappNumber = "+919579797269"; // Replace with actual number
   const [scriptStatus, setScriptStatus] = useState("");
   const [lastTime, setLastTime] = useState(null);
-  const isDemoAccount = localStorage.getItem("userEmail") === "omkargouda306@gmail.com";
+  const isDemoAccount = localStorage.getItem("userEmail") === "demo@leadscruise.com";
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -313,7 +313,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   return (
     <div className={styles.dashboardHeader}>
       {/* Subscription Expiry Popup */}
-      {showPopup && localStorage.getItem("userEmail") !== "support@leadscruise.com" && localStorage.getItem("userEmail") !== "omkargouda306@gmail.com" && (
+      {showPopup && localStorage.getItem("userEmail") !== "support@leadscruise.com" && localStorage.getItem("userEmail") !== "demo@leadscruise.com" && (
         <div className={styles.popupOverlay}>
           <div className={styles.popupContent}>
             <h2>Subscription Expiring Soon!</h2>
@@ -462,7 +462,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 className={styles.subscriptionButton}
                 onClick={() => {
                   const userEmail = localStorage.getItem("userEmail");
-                  if (userEmail === "omkargouda306@gmail.com") {
+                  if (userEmail === "demo@leadscruise.com") {
                     alert("You cannot pay in demo account");
                     return;
                   }
@@ -470,10 +470,10 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 }}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
-                disabled={localStorage.getItem("userEmail") === "omkargouda306@gmail.com"}
+                disabled={localStorage.getItem("userEmail") === "demo@leadscruise.com"}
                 style={{
-                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                  opacity: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? 0.6 : 1
+                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                  opacity: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? 0.6 : 1
                 }}
               >
                 <div className={styles.buttonContent}>

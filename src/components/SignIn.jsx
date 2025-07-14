@@ -319,7 +319,7 @@ const SignIn = () => {
       // Check if a payment exists for the user
       const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
 
-      if (email === "omkargouda306@gmail.com" && (password === "Omkar@123" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
+      if (email === "demo@leadscruise.com" && (password === "Demo@123" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
         localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
         localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
         navigate("/dashboard");

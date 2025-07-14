@@ -362,12 +362,12 @@ const Profile = () => {
                       </div>
                       <div className={styles["edit-button-container"]}>
                         <button className={styles["edit-button"]} style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#ccc" : "",
-                  cursor: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "omkargouda306@gmail.com" ? "#666" : ""
+                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                 }}
                 onClick={() => {
-                  if (localStorage.getItem("userEmail") === "omkargouda306@gmail.com") {
+                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                     alert("You cannot edit in demo account");
                     return;
                   }

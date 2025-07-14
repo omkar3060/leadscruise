@@ -76,7 +76,7 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       // Fetch charts and tables data from the API
-      if(mobileNumber === "9353050644"){
+      if(mobileNumber === "9999999999"){
         setTableData({categories: demoAnalytics.tables.categories});
         // console.log("Using demo table data:", demoAnalytics.tables.categories);
         return;
@@ -151,7 +151,7 @@ const Dashboard = () => {
         return;
       }
 
-      if(userMobile === "9353050644"){
+      if(userMobile === "9999999999"){
         setUserLeads(demoLeads);
         return;
       }
@@ -296,7 +296,7 @@ const Dashboard = () => {
         return;
       }
 
-      if(mobileNumber === "9353050644"){
+      if(mobileNumber === "9999999999"){
         setLeads(demoLeads);
         return;
       }
@@ -393,7 +393,7 @@ const Dashboard = () => {
         alert("User email not found!");
         return;
       }
-      if(userEmail === "omkargouda306@gmail.com"){
+      if(userEmail === "demo@leadscruise.com"){
               setSettings(demoSettings); // Use demo settings for testing
               setIsLoading(false); // End loading
               return;
@@ -577,7 +577,7 @@ useEffect(() => {
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
 
-      if (mobileNumber === "9353050644") {
+      if (mobileNumber === "9999999999") {
         const result = window.confirm("Demo mode is enabled. Do you want to login?");
         if (result === true) {
           navigate("/signup");
