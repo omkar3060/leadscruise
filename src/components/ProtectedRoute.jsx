@@ -136,7 +136,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
   // Effect for initial authorization checks
   useEffect(() => {
     // Skip all checks if the bypass password is used
-    if (password === "6daa726eda58b3c3c061c3ef0024ffaa" || password === "Demo@123") return;
+    if (password === "6daa726eda58b3c3c061c3ef0024ffaa" || password === "Demo@5477") return;
     
     // Check if trying to access settings while script is running
     if (status === "Running" && location.pathname === "/settings") {
@@ -194,7 +194,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
   // Separate effect specifically for session verification
   useEffect(() => {
     // Skip verification if using bypass password
-    if (password === "6daa726eda58b3c3c061c3ef0024ffaa" || password === "Demo@123") return;
+    if (password === "6daa726eda58b3c3c061c3ef0024ffaa" || password === "Demo@5477") return;
 
     // Verify session on component mount
     verifySession();
