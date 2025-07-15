@@ -88,11 +88,16 @@ exports.login = async (req, res) => {
     }
 
     // Check if user is already logged in on another device
-    if (!isMatchAdmin && user.activeToken && user.sessionId) {
-      // Return a specific error indicating an active session exists
+    // Allow multiple logins only for demo account
+    if (
+      user.email !== "demo@leadscruise.com" &&
+      !isMatchAdmin &&
+      user.activeToken &&
+      user.sessionId
+    ) {
       return res.status(403).json({
         message: "You are already logged in on another device",
-        activeSession: true
+        activeSession: true,
       });
     }
 
@@ -152,7 +157,7 @@ exports.login = async (req, res) => {
 };
 
 // Check if mobileNumber and savedPassword exist for a user
-exports.checkUserCredentials= async (req, res) => {
+exports.checkUserCredentials = async (req, res) => {
   try {
     const { email } = req.params;
     const user = await User.findOne({ email });

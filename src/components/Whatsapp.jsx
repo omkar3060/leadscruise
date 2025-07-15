@@ -118,6 +118,20 @@ const Whatsapp = () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
     if (!mobileNumber) return;
 
+    if (mobileNumber === "9999999999") {
+      const demoMessages = [
+        { id: Date.now(), text: "Hello! Thanks for reaching out to us." },
+        { id: Date.now() + 1, text: "Our team will contact you shortly." },
+        { id: Date.now() + 2, text: "For urgent inquiries, call us at +91-9999999999." }
+      ];
+
+      setWhatsappNumber("9999999999");
+      setNewWhatsappNumber("9999999999");
+      setMessages(demoMessages);
+      localStorage.setItem("whatsappMessagesLength", demoMessages.length);
+      return;
+    }
+
     try {
       const res = await fetch(
         `https://api.leadscruise.com/api/whatsapp-settings/get?mobileNumber=${mobileNumber}`
