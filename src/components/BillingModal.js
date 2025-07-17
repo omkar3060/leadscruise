@@ -218,13 +218,13 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
               </button>
             </div> */}
             {/* File Upload Section */}
-            {/* <div className={styles.fileUploadSection}>
+            <div className={styles.fileUploadSection}>
               <label htmlFor="fileUpload" className={styles.attachBillLabel}>
                 Attach Bill
               </label>
               <input id="fileUpload" type="file" accept="application/pdf" onChange={handleFileChange} />
               {selectedFile && <span className={styles.uploadedFileName}>📎 {selectedFile.name}</span>}
-            </div> */}
+            </div>
 
             {/* Buttons */}
             <div className={styles.buttonGroup}>

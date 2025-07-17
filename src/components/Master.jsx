@@ -351,6 +351,35 @@ const Master = () => {
     navigate("/master/support");
   };
 
+  const handleCheckScriptHealth = async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 900000); // 15 minute timeout
+
+      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/scripts/health", {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`✅ Script Status: ${data.status}`);
+      } else if (res.status === 429) {
+        alert(`⏳ Health check is already running. Time remaining: ${Math.ceil(data.timeRemaining / 1000)}s`);
+      } else {
+        alert(`⚠️ Failed to check script health: ${data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        alert("❌ Health check timed out. Please try again later.");
+      } else {
+        alert("❌ Error connecting to script health API.");
+      }
+      console.error("Script health check error:", error);
+    }
+  };
+
   return (
     <div className={masterstyles.dashboardContainer}>
       {isLoading && <LoadingScreen />}
@@ -437,6 +466,13 @@ const Master = () => {
             </div>
 
             <div className={masterstyles.tableActions}>
+              <button
+                className={masterstyles.downloadButton}
+                onClick={handleCheckScriptHealth}
+                title="Check Script Health"
+              >
+                <span className={masterstyles.icon}>🩺</span>
+              </button>
               <button
                 className={masterstyles.downloadButton}
                 onClick={handleSupportClick}

@@ -142,24 +142,24 @@ def open_whatsapp(whatsapp_number):
                 print(f"Phone number login completed. Verification code: {verification_code}", flush=True)
                 if verification_code:
                     print(f"Login successful! Verification code: {verification_code}", flush=True)
-                    
+                    return 0
                     # Wait a bit for WhatsApp to fully load
-                    time.sleep(10)
+                    # time.sleep(10)
                     
-                    # Create group and add contact
-                    group_created = create_group_and_add_contact(
-                        driver, 
-                        wait, 
-                        "9148016901", 
-                        "My New Group"
-                    )
+                    # # Create group and add contact
+                    # group_created = create_group_and_add_contact(
+                    #     driver, 
+                    #     wait, 
+                    #     "9148016901", 
+                    #     "My New Group"
+                    # )
                     
-                    if group_created:
-                        print("Group creation and contact addition completed successfully!", flush=True)
-                        return 0
-                    else:
-                        print("Failed to create group or add contact.", flush=True)
-                        exit(1)
+                    # if group_created:
+                    #     print("Group creation and contact addition completed successfully!", flush=True)
+                    #     return 0
+                    # else:
+                    #     print("Failed to create group or add contact.", flush=True)
+                    #     exit(1)
             except Exception as login_error:
                 print(f"Unable to detect login method: {login_error}", flush=True)
                 print(traceback.format_exc(), flush=True)
