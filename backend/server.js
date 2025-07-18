@@ -27,6 +27,7 @@ const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
 const teammateRoutes = require('./routes/teammates');
 const server = createServer(app); // ✅ Create HTTP server
+server.setTimeout(15 * 60 * 1000); 
 const io = new Server(server, {
   path: "/socket.io/",
   cors: {

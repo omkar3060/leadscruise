@@ -289,124 +289,88 @@ function cleanupDisplay(uniqueId) {
 }
 
 let isHealthCheckRunning = false;
-let lastHealthCheckResult = null;
-let lastHealthCheckTime = 0;
-const CACHE_DURATION_MS = 15 * 60 * 1000; // 5 minutes
-
-const performHealthCheck = async () => {
-  if (isHealthCheckRunning) return;
+router.get("/scripts/health", async (req, res) => {
+  // Set a custom timeout of 15 minutes (in milliseconds)
+  res.setTimeout(15 * 60 * 1000, () => {
+    console.log("Request timed out after 15 minutes.");
+    return res.status(504).json({ status: "❌ Timeout", message: "Scripts took too long to respond." });
+  });
 
   isHealthCheckRunning = true;
+
   try {
     const settings = await WhatsAppSettings.find({});
     if (!settings || settings.length === 0) {
-      lastHealthCheckResult = {
-        status: "❌ No WhatsApp settings found.",
-        code: 404,
-        time: Date.now()
-      };
-      return;
+      return res.status(404).json({ message: "No WhatsApp settings found" });
     }
 
     cleanupDisplay(999999);
+
     let whatsappCheckPassed = false;
 
-    for (const setting of settings) {
-      const number = setting.whatsappNumber || setting.mobileNumber;
-      const success = await runWithTimeout("python3", ["whatsapp_health_check.py", number]);
+    for (let i = 0; i < settings.length; i++) {
+      const number = settings[i].whatsappNumber || settings[i].mobileNumber;
+
+      const success = await new Promise((resolve) => {
+        const process = spawn("python3", ["whatsapp_health_check.py", number]);
+        let result = false;
+
+        process.stdout.on("data", (data) => {
+          const output = data.toString();
+          console.log(`Health check output for ${number}:`, output);
+          if (output.toLowerCase().includes("success") || output.toLowerCase().includes("ok")) {
+            result = true;
+          }
+        });
+
+        process.stderr.on("data", (data) => {
+          console.error(`Health check error for ${number}:`, data.toString());
+        });
+
+        process.on("close", () => resolve(result));
+      });
+
       if (success) {
         whatsappCheckPassed = true;
         break;
       }
     }
 
-    const mainScriptCheckPassed = await runWithTimeout("python3", ["main_script_health_check.py"]);
+    const mainScriptCheckPassed = await new Promise((resolve) => {
+      const process = spawn("python3", ["main_script_health_check.py"]);
+      let result = false;
 
-    let status = "", code = 200;
+      process.stdout.on("data", (data) => {
+        const output = data.toString();
+        console.log("Main script output:", output);
+        if (output.toLowerCase().includes("success") || output.toLowerCase().includes("ok")) {
+          result = true;
+        }
+      });
+
+      process.stderr.on("data", (data) => {
+        console.error("Main script error:", data.toString());
+      });
+
+      process.on("close", () => resolve(result));
+    });
+
+    // Return based on results
     if (whatsappCheckPassed && mainScriptCheckPassed) {
-      status = "✅ Both WhatsApp and Main scripts are healthy.";
+      return res.json({ status: "✅ Both WhatsApp and Main scripts are healthy." });
     } else if (whatsappCheckPassed) {
-      status = "⚠️ Only WhatsApp script passed. Check Main script.";
-      code = 206;
+      return res.status(206).json({ status: "⚠️ Only the WhatsApp script is running correctly. Please check the Main script." });
     } else if (mainScriptCheckPassed) {
-      status = "⚠️ Only Main script passed. Check WhatsApp script.";
-      code = 206;
+      return res.status(206).json({ status: "⚠️ Only the Main script is running correctly. Please check the WhatsApp script." });
     } else {
-      status = "❌ Both script checks failed.";
-      code = 500;
+      return res.status(500).json({ status: "❌ Both script checks failed. Please investigate." });
     }
-
-    lastHealthCheckResult = { status, code, time: Date.now() };
-  } catch (err) {
-    console.error("Health check error:", err);
-    lastHealthCheckResult = {
-      status: "❌ Internal server error during health check.",
-      code: 500,
-      time: Date.now()
-    };
+  } catch (error) {
+    console.error("Health check error:", error);
+    return res.status(500).json({ message: "Internal server error during health check." });
   } finally {
     isHealthCheckRunning = false;
   }
-};
-
-router.get("/scripts/health", async (req, res) => {
-  const now = Date.now();
-
-  // Use cached result if recent
-  if (now - lastHealthCheckTime < CACHE_DURATION_MS && lastHealthCheckResult) {
-    return res.status(lastHealthCheckResult.code).json({
-      status: lastHealthCheckResult.status,
-      cached: true,
-      time: new Date(lastHealthCheckResult.time).toISOString()
-    });
-  }
-
-  // Trigger fresh health check in background
-  lastHealthCheckTime = now;
-  performHealthCheck();
-
-  // Immediately respond with current status or in-progress message
-  if (lastHealthCheckResult) {
-    return res.status(lastHealthCheckResult.code).json({
-      status: lastHealthCheckResult.status + " (fresh check in progress)",
-      cached: true,
-      time: new Date(lastHealthCheckResult.time).toISOString()
-    });
-  } else {
-    return res.status(202).json({
-      status: "⏳ Health check is running for the first time. Please retry in a few seconds.",
-    });
-  }
 });
-
-function runWithTimeout(command, args = [], timeout = 300000) {
-  return new Promise((resolve) => {
-    const process = spawn(command, args);
-    let result = false;
-    let killed = false;
-
-    const timer = setTimeout(() => {
-      process.kill("SIGTERM");
-      killed = true;
-    }, timeout);
-
-    process.stdout.on("data", (data) => {
-      const output = data.toString();
-      console.log("Output:", output);
-      if (output.toLowerCase().includes("success") || output.toLowerCase().includes("ok")) {
-        result = true;
-      }
-    });
-
-    process.stderr.on("data", (data) => {
-      console.error("Error:", data.toString());
-    });
-
-    process.on("close", () => {
-      clearTimeout(timer);
-      resolve(killed ? false : result);
-    });
-  });
-}
 
 module.exports = router;
