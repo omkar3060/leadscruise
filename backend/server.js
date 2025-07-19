@@ -1199,7 +1199,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     console.log("Lead Data Stored:", newLead);
     
     // Fetch WhatsApp settings
-    const settings = await WhatsAppSettings.findOne({ user_mobile_number: user_mobile_number });
+    const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
 
     if (!settings || !settings.whatsappNumber || !settings.messages) {
       console.warn("No WhatsApp settings found for this user");
@@ -1251,7 +1251,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
             try {
               // Update the verificationCode immediately in DB
               await WhatsAppSettings.findOneAndUpdate(
-                { user_mobile_number: user_mobile_number }, // Fixed: changed from mobileNumber to user_mobile_number
+                { mobileNumber: user_mobile_number }, // Fixed: changed from mobileNumber to user_mobile_number
                 { verificationCode },
                 { new: true }
               );

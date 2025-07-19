@@ -487,9 +487,9 @@ const Sheets = () => {
         }
       );
       setIsStarting(false); // Reset starting state after process completes
-      alert(
-        "AI started successfully!Please navigate to the whatsapp page to login and send messages to the buyers if you already have not done so."
-      );
+      // alert(
+      //   "AI started successfully!Please navigate to the whatsapp page to login and send messages to the buyers if you already have not done so."
+      // );
       setStatus("Running");
       // Note: we don't reset isStarting here because the status is now "Running"
     } catch (error) {
