@@ -351,7 +351,9 @@ const Master = () => {
     navigate("/master/support");
   };
 
-  const [isCheckingHealth, setIsCheckingHealth] = localStorage.getItem("isCheckingHealth") === "true" || false;
+  const [isCheckingHealth, setIsCheckingHealth] = useState(() => {
+    return localStorage.getItem("isCheckingHealth") === "true";
+  });
 
   // Updated handleCheckScriptHealth function
   const handleCheckScriptHealth = async () => {
@@ -373,6 +375,19 @@ const Master = () => {
       localStorage.setItem("isCheckingHealth", "false");
     }
   };
+
+  useEffect(() => {
+    // If loading state is true on page load, set a maximum timeout to reset it
+    if (localStorage.getItem("isCheckingHealth") === "true") {
+      const timeoutId = setTimeout(() => {
+        setIsCheckingHealth(false);
+        localStorage.setItem("isCheckingHealth", "false");
+        console.log("Health check timeout - resetting loading state");
+      }, 16 * 60 * 1000); // 16 minutes (slightly longer than backend timeout)
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, []);
 
   return (
     <div className={masterstyles.dashboardContainer}>
