@@ -570,6 +570,92 @@ def go_to_message_center_and_click(driver, first_h2_text):
         print("Clicked the first element with the specified class parameters.", flush=True)
         time.sleep(2)
 
+        # Check if WhatsApp text is found
+        whatsapp_found = False
+        try:
+            # Look for WhatsApp-related elements in the footer
+            whatsapp_elements = driver.find_elements(By.XPATH, "//footer[contains(@class, 'msg_footer')]//div[contains(@class, 'reply-template')]//span[contains(text(), 'Introduction')]")
+            if whatsapp_elements:
+                print("WhatsApp text found - proceeding with WhatsApp flow", flush=True)
+                whatsapp_found = True
+                execute_whatsapp_flow(driver, first_h2_text)
+            else:
+                print("WhatsApp text not found - proceeding with regular flow", flush=True)
+                execute_regular_flow(driver, first_h2_text)
+        except Exception as detection_error:
+            print(f"Error detecting WhatsApp elements: {detection_error}", flush=True)
+            print("Proceeding with regular flow as fallback", flush=True)
+            execute_regular_flow(driver, first_h2_text)
+        
+    except Exception as e:
+        print(f"An error occurred while interacting with the message center: {e}", flush=True)
+
+
+def execute_whatsapp_flow(driver, first_h2_text):
+    """Execute the WhatsApp-specific flow: click introduction, view more, ask for review, then send messages"""
+    try:
+        print("Starting WhatsApp flow...", flush=True)
+        
+        # Click the Introduction button
+        introduction_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'reply-template')]//span[contains(text(), 'Introduction')]"))
+        )
+        introduction_button.click()
+        print("Clicked the Introduction button.", flush=True)
+        time.sleep(2)
+
+        # Click 'View More'
+        view_more_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
+        )
+        view_more_button.click()
+        print("Clicked the 'View More' button.", flush=True)
+        time.sleep(2)
+
+        # Click 'Ask For Review' button
+        ask_review_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//span[contains(@class, 'small_btn_filled_std')]//span[contains(text(), 'Ask For Review')]"))
+        )
+        ask_review_button.click()
+        print("Clicked the 'Ask For Review' button.", flush=True)
+        time.sleep(2)
+
+        # Now proceed with message sending
+        send_messages(driver, first_h2_text)
+        
+        # Extract contact details
+        extract_contact_details(driver)
+        
+    except Exception as e:
+        print(f"An error occurred in WhatsApp flow: {e}", flush=True)
+
+
+def execute_regular_flow(driver, first_h2_text):
+    """Execute the regular message sending flow"""
+    try:
+        print("Starting regular flow...", flush=True)
+        
+        # Send messages directly
+        send_messages(driver, first_h2_text)
+        
+        # Click 'View More'
+        view_more_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
+        )
+        view_more_button.click()
+        print("Clicked the 'View More' button.", flush=True)
+        time.sleep(2)
+
+        # Extract contact details
+        extract_contact_details(driver)
+        
+    except Exception as e:
+        print(f"An error occurred in regular flow: {e}", flush=True)
+
+
+def send_messages(driver, first_h2_text):
+    """Send all messages using the provided templates"""
+    try:
         message_input = WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.XPATH, "//div[@id='massage-text' and @contenteditable='true']")))
 
         sentences = input_data.get("sentences", [])
@@ -609,15 +695,14 @@ def go_to_message_center_and_click(driver, first_h2_text):
                 print("No popup appeared after message.", flush=True)
 
         print(f"Successfully sent all {len(sentences)} processed messages.", flush=True)
+        
+    except Exception as e:
+        print(f"An error occurred while sending messages: {e}", flush=True)
 
-        # Click 'View More'
-        view_more_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
-        )
-        view_more_button.click()
-        print("Clicked the 'View More' button.", flush=True)
-        time.sleep(2)
 
+def extract_contact_details(driver):
+    """Extract and send contact details to dashboard"""
+    try:
         # Extract and print contact details
         left_name = driver.find_element(By.XPATH, "//div[@id='left-name']")
         print(f"Left Name: {left_name.text}", flush=True)
@@ -641,8 +726,8 @@ def go_to_message_center_and_click(driver, first_h2_text):
         send_data_to_dashboard(left_name.text, mobile_number.text, email_id, user_mobile_number, address)
         
     except Exception as e:
-        print(f"An error occurred while interacting with the message center: {e}", flush=True)
-        
+        print(f"An error occurred while extracting contact details: {e}", flush=True)
+
 def click_contact_buyer_now_button(driver, wait):
     """
     Clicks the first 'Contact Buyer Now' button on the page.
@@ -1070,7 +1155,7 @@ def execute_task_one(driver, wait):
     except Exception as e:
         print(f"An error occurred during login: {e}",flush=True)
         return "Unsuccessful"
-    
+            
 def send_to_node_api(expert_details):
     url = "https://api.leadscruise.com/api/support/bulk"
 
@@ -1162,6 +1247,279 @@ def get_expert_details(driver):
         print(f"Error while fetching expert details: {e}")
         return []
 
+def fetch_analytics_data(driver, user_mobile_number, user_password):
+    """
+    Fetch analytics data (charts and tables) from IndiaMART and store in database
+    """
+    try:
+        print("Starting analytics data fetch...", flush=True)
+        
+        # Navigate to analytics page
+        analytics_url = "https://seller.indiamart.com/reportnew/home"
+        print(f"Navigating to analytics page: {analytics_url}", flush=True)
+        driver.get(analytics_url)
+        time.sleep(5)  # Increased wait time
+        
+        # Set viewport and zoom
+        driver.execute_script("document.body.style.zoom = '100%';")
+        driver.set_window_size(1920, 1080)
+        
+        # Wait for page to load completely
+        wait = WebDriverWait(driver, 60)
+        
+        # Wait for analytics page to load
+        try:
+            # Try multiple selectors for the analytics page
+            analytics_loaded = False
+            selectors_to_try = [
+                ".Enquiries_header__2_RoR button",
+                "#Week",
+                "canvas[role='img']",
+                ".Enquiries_header__2_RoR"
+            ]
+            
+            for selector in selectors_to_try:
+                try:
+                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+                    analytics_loaded = True
+                    print(f"Analytics page loaded, found selector: {selector}", flush=True)
+                    break
+                except:
+                    continue
+            
+            if not analytics_loaded:
+                print("Analytics page not loaded properly, aborting...", flush=True)
+                return False
+                
+        except Exception as e:
+            print(f"Error waiting for analytics page: {e}", flush=True)
+            return False
+        
+        # Initialize data
+        weekly_base64 = ""
+        monthly_base64 = ""
+        location_data = []
+        category_data = []
+        
+        # Get weekly chart (default)
+        try:
+            print("Fetching weekly chart...", flush=True)
+            week_button = wait.until(EC.element_to_be_clickable((By.ID, "Week")))
+            week_button.click()
+            time.sleep(3)  # Increased wait time for chart to render
+            
+            # Find and capture weekly chart
+            weekly_canvas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[role='img']")))
+            weekly_base64 = driver.execute_script("""
+                const canvas = arguments[0];
+                return canvas.toDataURL('image/png').split(',')[1];
+            """, weekly_canvas)
+            print("Weekly chart captured successfully", flush=True)
+            
+        except Exception as e:
+            print(f"Error capturing weekly chart: {e}", flush=True)
+        
+        # Get monthly chart
+        try:
+            print("Fetching monthly chart...", flush=True)
+            month_button = wait.until(EC.element_to_be_clickable((By.ID, "Month")))
+            month_button.click()
+            time.sleep(3)  # Increased wait time for chart to render
+            
+            # Find and capture monthly chart
+            monthly_canvas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[role='img']")))
+            monthly_base64 = driver.execute_script("""
+                const canvas = arguments[0];
+                return canvas.toDataURL('image/png').split(',')[1];
+            """, monthly_canvas)
+            print("Monthly chart captured successfully", flush=True)
+            
+        except Exception as e:
+            print(f"Error capturing monthly chart: {e}", flush=True)
+        
+        # Scrape table data
+        print("Fetching table data...", flush=True)
+        try:
+            # Check if table exists with the correct selector
+            table_selector = '#Enquiries_reportTableCSS__34_qU'
+            
+            tables_exist = driver.execute_script(f"""
+                return document.querySelector('{table_selector}') !== null;
+            """)
+            
+            if tables_exist:
+                print(f"Found table with selector: {table_selector}", flush=True)
+                
+                # Extract category data (default view based on your HTML)
+                category_data = driver.execute_script("""
+                    const table = document.querySelector('#Enquiries_reportTableCSS__34_qU');
+                    const rows = Array.from(table.querySelectorAll('tbody tr'));
+                    return rows.map(row => {
+                        const cells = Array.from(row.querySelectorAll('td'));
+                        return {
+                            category: cells[0]?.textContent?.trim() || '',
+                            leadsConsumed: parseInt(cells[1]?.textContent?.trim() || '0'),
+                            enquiries: parseInt(cells[2]?.textContent?.trim() || '0'),
+                            calls: parseInt(cells[3]?.textContent?.trim() || '0')
+                        };
+                    });
+                """)
+                print(f"Extracted {len(category_data)} category records", flush=True)
+                
+                # Check if there are location/category tabs to switch between
+                try:
+                    # Look for the specific location tab using the correct selector
+                    location_tab = driver.find_element(By.CSS_SELECTOR, "#locations")
+                    if location_tab:
+                        print("Found location tab, switching to extract location data...", flush=True)
+                        location_tab.click()
+                        time.sleep(3)  # Wait for table to update
+                        
+                        # Extract location data
+                        location_data = driver.execute_script("""
+                            const table = document.querySelector('#Enquiries_reportTableCSS__34_qU');
+                            const rows = Array.from(table.querySelectorAll('tbody tr'));
+                            return rows.map(row => {
+                                const cells = Array.from(row.querySelectorAll('td'));
+                                return {
+                                    location: cells[0]?.textContent?.trim() || '',
+                                    leadsConsumed: parseInt(cells[1]?.textContent?.trim() || '0'),
+                                    enquiries: parseInt(cells[2]?.textContent?.trim() || '0'),
+                                    calls: parseInt(cells[3]?.textContent?.trim() || '0')
+                                };
+                            });
+                        """)
+                        print(f"Extracted {len(location_data)} location records", flush=True)
+                    else:
+                        print("Location tab not found", flush=True)
+                        location_data = []
+                            
+                except Exception as tab_error:
+                    print(f"Error switching tabs: {tab_error}", flush=True)
+                    location_data = []
+                    
+            else:
+                print("No tables found on analytics page", flush=True)
+                category_data = []
+                location_data = []
+                
+        except Exception as e:
+            print(f"Error in table scraping: {e}", flush=True)
+            category_data = []
+            location_data = []
+        
+        # Only proceed if we have at least some data
+        if not weekly_base64 and not monthly_base64:
+            print("No charts captured, aborting analytics storage", flush=True)
+            return False
+        
+        # Prepare analytics data
+        analytics_data = {
+            "charts": {
+                "weekly": weekly_base64,
+                "monthly": monthly_base64
+            },
+            "tables": {
+                "locations": location_data,
+                "categories": category_data
+            },
+            "userMobileNumber": user_mobile_number
+        }
+        
+        # Store analytics data in database
+        store_analytics_data(analytics_data)
+        
+        print("Analytics data fetched and stored successfully!", flush=True)
+        return True
+        
+    except Exception as e:
+        print(f"Error fetching analytics data: {e}", flush=True)
+        return False
+
+
+def store_analytics_data(analytics_data):
+    """
+    Store analytics data in the database via API call
+    """
+    try:
+        # API endpoint to store analytics data
+        api_url = "https://api.leadscruise.com/api/analytics/store"  # Use localhost for development
+        
+        payload = {
+            "charts": analytics_data["charts"],
+            "tables": analytics_data["tables"],
+            "userMobileNumber": analytics_data["userMobileNumber"],
+            "fetchedAt": time.time()
+        }
+        
+        print(f"Sending analytics data to API: {api_url}", flush=True)
+        print(f"Payload keys: {list(payload.keys())}", flush=True)
+        print(f"Charts keys: {list(payload['charts'].keys()) if payload['charts'] else 'None'}", flush=True)
+        print(f"Tables keys: {list(payload['tables'].keys()) if payload['tables'] else 'None'}", flush=True)
+        
+        try:
+            response = requests.post(api_url, json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                print("Analytics data stored successfully in database", flush=True)
+                return True
+            else:
+                print(f"Failed to store analytics data. Status: {response.status_code}, Response: {response.text}", flush=True)
+                return False
+                
+        except requests.exceptions.ConnectionError as e:
+            print(f"Connection error - API server may not be running: {e}", flush=True)
+            print("Attempting to save analytics data locally...", flush=True)
+            return save_analytics_data_locally(analytics_data)
+        except requests.exceptions.Timeout as e:
+            print(f"Timeout error: {e}", flush=True)
+            print("Attempting to save analytics data locally...", flush=True)
+            return save_analytics_data_locally(analytics_data)
+            
+    except requests.exceptions.ConnectionError as e:
+        print(f"Connection error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+    except requests.exceptions.Timeout as e:
+        print(f"Timeout error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+    except Exception as e:
+        print(f"Error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+
+
+def save_analytics_data_locally(analytics_data):
+    """
+    Save analytics data locally as a fallback when API is not available
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        # Create analytics directory if it doesn't exist
+        analytics_dir = "analytics_data"
+        if not os.path.exists(analytics_dir):
+            os.makedirs(analytics_dir)
+        
+        # Create filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{analytics_dir}/analytics_{analytics_data['userMobileNumber']}_{timestamp}.json"
+        
+        # Save data to file
+        with open(filename, 'w') as f:
+            json.dump(analytics_data, f, indent=2)
+        
+        print(f"Analytics data saved locally to: {filename}", flush=True)
+        return True
+        
+    except Exception as e:
+        print(f"Error saving analytics data locally: {e}", flush=True)
+        return False
+
+
 def main():
     global redirect_count
     """
@@ -1231,6 +1589,22 @@ def main():
                 expert_details = get_expert_details(driver)
                 print(expert_details)
                 send_to_node_api(expert_details)
+                
+                # Fetch analytics data after successful login and expert details
+                user_mobile_number = input_data.get("mobileNumber", "")
+                user_password = input_data.get("password", "")
+                
+                if user_mobile_number and user_password:
+                    print("Fetching analytics data after successful login...", flush=True)
+                    analytics_success = fetch_analytics_data(driver, user_mobile_number, user_password)
+                    if analytics_success:
+                        print("Analytics data fetched and stored successfully!", flush=True)
+                    else:
+                        print("Failed to fetch analytics data, continuing with main process...", flush=True)
+                else:
+                    print("Mobile number or password not available, skipping analytics fetch...", flush=True)
+                    
+                
             else:
                 print("Login failed, skipping expert data extraction.")
             # Exit if the login process is unsuccessful

@@ -186,12 +186,6 @@ async function fetchAndStoreIndiaMARTData() {
   }
 }
 
-// Schedule the task: '0 0 * * *' = At 00:00 (12 AM) every day
-cron.schedule('0 0 * * *', async () => {
-  console.log('Running scheduled IndiaMART data fetch at', new Date().toISOString());
-  await fetchAndStoreIndiaMARTData();
-});
-
 router.get("/charts", async (req, res) => {
   try {
     const { mobileNumber, savedPassword } = req.query;
@@ -239,6 +233,62 @@ router.get("/charts", async (req, res) => {
   } catch (err) {
     console.error("Analytics error:", err);
     res.status(500).json({ success: false, error: `Error: ${err.message}` });
+  }
+});
+
+// New endpoint to store analytics data from Python script
+router.post("/store", async (req, res) => {
+  try {
+    const { charts, tables, userMobileNumber, fetchedAt } = req.body;
+
+    if (!charts || !tables || !userMobileNumber) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Missing required fields: charts, tables, or userMobileNumber" 
+      });
+    }
+
+    // Find user by mobile number
+    const User = mongoose.model('User');
+    const user = await User.findOne({ mobileNumber: userMobileNumber });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        error: "User not found with the provided mobile number" 
+      });
+    }
+
+    // Store analytics data
+    const analyticsData = new IndiaMARTAnalytics({
+      userId: user._id,
+      charts: {
+        weekly: charts.weekly,
+        monthly: charts.monthly
+      },
+      tables: {
+        locations: tables.locations || [],
+        categories: tables.categories || []
+      },
+      fetchedAt: new Date(fetchedAt * 1000) // Convert timestamp to Date
+    });
+
+    await analyticsData.save();
+
+    console.log(`Analytics data stored successfully for user ${user._id}`);
+
+    res.json({
+      success: true,
+      message: "Analytics data stored successfully",
+      analyticsId: analyticsData._id
+    });
+
+  } catch (error) {
+    console.error("Error storing analytics data:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Error storing analytics data: ${error.message}` 
+    });
   }
 });
 
