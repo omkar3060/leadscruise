@@ -232,7 +232,7 @@ const Plans = () => {
             <div
               className={`one-mo common first-one ${selectedPlan === "one-mo" ? "selected" : ""
                 }`}
-              onClick={() => handlePlanSelect("3-days", 299)}
+              onClick={() => handlePlanSelect("one-mo", 2999)}
             >
               <div className="part-1">
                 <div className="heading-row">

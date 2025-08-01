@@ -186,6 +186,9 @@ const Profile = () => {
     const start = new Date(startDate);
 
     switch (subscriptionType.toLowerCase()) {
+      case "3-days":
+        start.setDate(start.getDate() + 3);
+        break;
       case "one month":
         start.setDate(start.getDate() + 30); // Approximate month duration
         break;
@@ -259,6 +262,7 @@ const Profile = () => {
                     billingHistory.map((item, index) => {
                       // Mapping subscription types to readable formats
                       const subscriptionMapping = {
+                        "3-days": "3 Days",
                         "one-mo": "One Month",
                         "three-mo": "Three Months",
                         "six-mo": "Six Months",
@@ -362,17 +366,17 @@ const Profile = () => {
                       </div>
                       <div className={styles["edit-button-container"]}>
                         <button className={styles["edit-button"]} style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
-                }}
-                onClick={() => {
-                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                    alert("You cannot edit in demo account");
-                    return;
-                  }
-                  setIsEditing(true);
-                }}>Edit my Details</button>
+                          backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                          cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                          color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
+                        }}
+                          onClick={() => {
+                            if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
+                              alert("You cannot edit in demo account");
+                              return;
+                            }
+                            setIsEditing(true);
+                          }}>Edit my Details</button>
                       </div>
                     </>
                   )}

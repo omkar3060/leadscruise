@@ -38,6 +38,7 @@ const SubscriptionsThisWeek = () => {
     const expiryDate = new Date(createdDate);
 
     const SUBSCRIPTION_DURATIONS = {
+      "3-days": "3 Days",
       "One Month": 30,
       "6 Months": 180,
       "Yearly": 365,

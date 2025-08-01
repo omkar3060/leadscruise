@@ -38,6 +38,7 @@ const TodaySubscriptions = () => {
     const expiryDate = new Date(createdDate);
 
     const SUBSCRIPTION_DURATIONS = {
+      "3-days": 3,
       "One Month": 30,
       "6 Months": 180,
       "Yearly": 365,
@@ -66,7 +67,7 @@ const TodaySubscriptions = () => {
       today.setHours(0, 0, 0, 0);
     //   console.log(response.data);
       const todaysSubscriptions = response.data.filter(sub => {
-        const subDate = new Date(sub.createdAt);
+        const subDate = new Date(sub.created_at);
         subDate.setHours(0, 0, 0, 0);
         return subDate.getTime() === today.getTime();
       });

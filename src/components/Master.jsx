@@ -31,6 +31,7 @@ const Master = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const subscriptionMapping = {
+    "3-days": "3 Days",
     "one-mo": "One Month",
     "three-mo": "Three Months",
     "six-mo": "Six Months",
@@ -283,6 +284,7 @@ const Master = () => {
     const expiryDate = new Date(createdDate);
 
     const SUBSCRIPTION_DURATIONS = {
+      "3-days": 3,
       "one-mo": 30,
       "six-mo": 180,
       "year-mo": 365,
