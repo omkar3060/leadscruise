@@ -105,6 +105,7 @@ router.post("/upload-invoice/:order_id", upload.single("invoice"), async (req, r
       // Calculate Subscription Renewal Date
       const createdDate = new Date(subscription.created_at);
       const durationMapping = {
+        "3-days": 3,
         "one-mo": 30,
         "three-mo": 90,
         "six-mo": 180,

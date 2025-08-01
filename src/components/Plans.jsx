@@ -206,9 +206,33 @@ const Plans = () => {
         <div className="signin-left">
           <div className="plans">
             <div
+              className={`one-mo common first-one ${selectedPlan === "3-days" ? "selected" : ""
+                }`}
+              onClick={() => handlePlanSelect("3-days", 299)}
+            >
+              <div className="part-1">
+                <div className="heading-row">
+                  <h2>Three Days Subscription</h2>
+                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                </div>
+
+                <p className="first-p">Unlimited AI Leads Capture</p>
+                <p>AI Business monitoring</p>
+                <p>AI Encryption & Authentication system</p>
+              </div>
+              <div className="part-2">
+                <div className="tag-1"></div>
+                <div className="prices">
+                  <p className="overline prices-p">₹ 999</p>
+                  <p className="prices-p">70% OFF</p>
+                  <h3 className="prices-h3">₹ 299</h3>
+                </div>
+              </div>
+            </div>
+            <div
               className={`one-mo common first-one ${selectedPlan === "one-mo" ? "selected" : ""
                 }`}
-              onClick={() => handlePlanSelect("one-mo", 2999)}
+              onClick={() => handlePlanSelect("3-days", 299)}
             >
               <div className="part-1">
                 <div className="heading-row">
@@ -419,12 +443,14 @@ const Plans = () => {
 
             <div className="plan-summary">
               <p><strong>Plan:</strong> {
+                selectedPlan === "3-days" ? "3 Days" :
                 selectedPlan === "one-mo" ? "1 Month" :
                   selectedPlan === "three-mo" ? "3 Months" :
                     selectedPlan === "six-mo" ? "6 Months" :
                       "12 Months"
               }</p>
-              <p><strong>Price:</strong> ₹{selectedPlan === "one-mo" ? 2999 :
+              <p><strong>Price:</strong> ₹{selectedPlan === "3-days" ? 299 :
+                selectedPlan === "one-mo" ? 2999 :
                 selectedPlan === "three-mo" ? 7999 :
                   selectedPlan === "six-mo" ? 14999 :
                     29999}</p>

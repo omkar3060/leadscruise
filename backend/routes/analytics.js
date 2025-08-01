@@ -203,7 +203,7 @@ router.get("/charts", async (req, res) => {
     const latestAnalytics = await IndiaMARTAnalytics.findOne({ userId: user._id });
 
     if (latestAnalytics) {
-
+      // Return existing analytics data
       return res.json({
         success: true,
         charts: latestAnalytics.charts,
@@ -211,23 +211,11 @@ router.get("/charts", async (req, res) => {
         fetchedAt: latestAnalytics.fetchedAt
       });
     } else {
-      // First-time fetch for this user
-      const data = await fetchIndiaMartData(mobileNumber, savedPassword);
-
-      const newAnalytics = new IndiaMARTAnalytics({
-        userId: user._id,
-        charts: data.charts,
-        tables: data.tables,
-        fetchedAt: new Date()
-      });
-
-      await newAnalytics.save();
-
+      // First-time fetch for this user - return response indicating no data available
       return res.json({
-        success: true,
-        charts: data.charts,
-        tables: data.tables,
-        fetchedAt: newAnalytics.fetchedAt
+        success: false,
+        message: "No analytics data available. Please fetch analytics data first.",
+        status: "no_data"
       });
     }
   } catch (err) {
@@ -259,29 +247,53 @@ router.post("/store", async (req, res) => {
       });
     }
 
-    // Store analytics data
-    const analyticsData = new IndiaMARTAnalytics({
-      userId: user._id,
-      charts: {
+    // Check if analytics data already exists for this user
+    let existingAnalytics = await IndiaMARTAnalytics.findOne({ userId: user._id });
+
+    if (existingAnalytics) {
+      // Update existing analytics data
+      existingAnalytics.charts = {
         weekly: charts.weekly,
         monthly: charts.monthly
-      },
-      tables: {
+      };
+      existingAnalytics.tables = {
         locations: tables.locations || [],
         categories: tables.categories || []
-      },
-      fetchedAt: new Date(fetchedAt * 1000) // Convert timestamp to Date
-    });
+      };
+      existingAnalytics.fetchedAt = new Date(fetchedAt * 1000); // Convert timestamp to Date
 
-    await analyticsData.save();
+      await existingAnalytics.save();
+      console.log(`Analytics data updated successfully for user ${user._id}`);
 
-    console.log(`Analytics data stored successfully for user ${user._id}`);
+      res.json({
+        success: true,
+        message: "Analytics data updated successfully",
+        analyticsId: existingAnalytics._id
+      });
+    } else {
+      // Create new analytics data
+      const analyticsData = new IndiaMARTAnalytics({
+        userId: user._id,
+        charts: {
+          weekly: charts.weekly,
+          monthly: charts.monthly
+        },
+        tables: {
+          locations: tables.locations || [],
+          categories: tables.categories || []
+        },
+        fetchedAt: new Date(fetchedAt * 1000) // Convert timestamp to Date
+      });
 
-    res.json({
-      success: true,
-      message: "Analytics data stored successfully",
-      analyticsId: analyticsData._id
-    });
+      await analyticsData.save();
+      console.log(`Analytics data stored successfully for user ${user._id}`);
+
+      res.json({
+        success: true,
+        message: "Analytics data stored successfully",
+        analyticsId: analyticsData._id
+      });
+    }
 
   } catch (error) {
     console.error("Error storing analytics data:", error);

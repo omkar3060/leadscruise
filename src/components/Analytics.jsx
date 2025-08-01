@@ -87,7 +87,7 @@ export default function Analytics() {
                         categories: data.tables.categories || []
                     });
                 } else {
-                    throw new Error(data.error || "Unknown error");
+                    throw new Error(data.message || data.error || "Unknown error");
                 }
             } catch (err) {
                 setError(err.message);

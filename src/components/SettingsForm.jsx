@@ -378,7 +378,7 @@ const SettingsForm = () => {
 
           {/* H2 Word Array Section */}
           <div className="table-container">
-            <h2>Lea to be rejected</h2>
+            <h2>Leads to be rejected</h2>
             {settings.h2WordArray.length > 0 ? (
               <ul>
                 {settings.h2WordArray.map((lead, index) => (

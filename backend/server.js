@@ -170,6 +170,8 @@ app.post("/api/save-payment", async (req, res) => {
 // Helper function to get subscription duration in days based on type
 function getSubscriptionDuration(subscription_type) {
   switch (subscription_type) {
+    case "3-days":
+      return 3;
     case "One Month":
       return 30;
     case "6 Months":
