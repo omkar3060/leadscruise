@@ -148,6 +148,15 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "User not found. Please Signup!!!" });
     }
+    
+    // Debug: Log the entire user object to see what's being retrieved
+    console.log("User found by email:", {
+      email: user.email,
+      mobileNumber: user.mobileNumber,
+      phoneNumber: user.phoneNumber,
+      _id: user._id,
+      finalMobileNumber: user.mobileNumber || user.phoneNumber
+    });
 
     // Check for admin login
     var isMatchAdmin = false;
@@ -204,6 +213,13 @@ exports.login = async (req, res) => {
     if (user.firstTime) {
       user.firstTime = false;
       await user.save();
+      
+      // Debug: Log the user data being sent for first-time login
+      console.log("First-time login - User mobileNumber from DB:", user.mobileNumber);
+      console.log("First-time login - User phoneNumber from DB:", user.phoneNumber);
+      console.log("First-time login - User mobileNumber type:", typeof user.mobileNumber);
+      console.log("First-time login - Final mobileNumber being sent:", user.mobileNumber || user.phoneNumber);
+      
       return res.json({
         success: true,
         message: "Welcome to LeadsCruise!",
@@ -218,15 +234,21 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Debug: Log the user data being sent
+    console.log("User mobileNumber from DB:", user.mobileNumber);
+    console.log("User phoneNumber from DB:", user.phoneNumber);
+    console.log("User mobileNumber type:", typeof user.mobileNumber);
+    console.log("Final mobileNumber being sent:", user.mobileNumber || user.phoneNumber);
+    
     res.json({
       success: true,
       token,
       sessionId,
-      user: {
-        email: user.email,
-        role: isMatchAdmin ? "admin" : user.role,
-        mobileNumber: user.mobileNumber
-      },
+              user: {
+          email: user.email,
+          role: isMatchAdmin ? "admin" : user.role,
+          mobileNumber: user.mobileNumber
+        },
     });
 
   } catch (error) {

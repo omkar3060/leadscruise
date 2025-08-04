@@ -316,12 +316,24 @@ const SignIn = () => {
       localStorage.setItem("sessionId", res.data.sessionId);
       localStorage.setItem("role", res.data.user.role);
 
-      // Check if a payment exists for the user
-      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      // Debug: Log the user data to see what's being returned
+      console.warn("Login response user data:", res.data.user);
+      console.warn("User mobileNumber:", res.data.user.mobileNumber);
+      console.warn("User mobileNumber type:", typeof res.data.user.mobileNumber);
+      console.warn("User mobileNumber truthy check:", !!res.data.user.mobileNumber);
+      console.warn("User mobileNumber length:", res.data.user.mobileNumber ? res.data.user.mobileNumber.length : 0);
 
       if (email === "demo@leadscruise.com" && (password === "Demo@5477" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
-        localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
-        localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
+        // Check if a payment exists for the demo user
+        try {
+          const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+          if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
+            localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+            localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
+          }
+        } catch (paymentError) {
+          console.warn("Demo user payment API error:", paymentError.message);
+        }
         navigate("/dashboard");
         return;
       }
@@ -331,23 +343,52 @@ const SignIn = () => {
         return;
       }
 
-      if (paymentRes.status === 200 && paymentRes.data.length > 0) {
-        // If payment exists but mobileNumber is missing, redirect to execute-task
-        if (!res.data.user.mobileNumber) {
-          localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
-          localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
-          navigate("/execute-task");
-          return;
-        }
-      }
-
-      // If mobileNumber exist, proceed to dashboard
-      if (res.data.user.mobileNumber ) {
+      // Check if user has mobileNumber in their profile first
+      console.warn("Checking mobileNumber condition:", res.data.user.mobileNumber);
+      alert("DEBUG: User mobileNumber = " + res.data.user.mobileNumber);
+      if (res.data.user.mobileNumber) {
+        console.warn("User has mobileNumber, going to dashboard");
+        alert("DEBUG: Going to dashboard");
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
         navigate("/dashboard");
+        return;
       } else {
-        navigate("/check-number");
+        console.warn("User does not have mobileNumber, checking payments");
+        alert("DEBUG: No mobileNumber, checking payments");
       }
+
+      // Check if a payment exists for the user (only if they don't have mobileNumber)
+              try {
+          console.warn("Calling payment API for email:", email);
+          const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+          console.warn("Payment API response status:", paymentRes.status);
+          console.warn("Payment API response data:", paymentRes.data);
+          console.warn("Payment data length:", paymentRes.data.length);
+
+          // If user doesn't have mobileNumber, check if they have payments
+          if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
+            console.warn("User has payments, going to execute-task");
+            alert("DEBUG: Has payments, going to execute-task");
+            // User has payments but no mobileNumber in profile, use payment contact
+            localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+            localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
+            navigate("/execute-task");
+            return;
+          } else {
+            console.warn("No payments found or payment data is empty");
+            console.warn("Payment data type:", typeof paymentRes.data);
+            console.warn("Payment data:", paymentRes.data);
+            alert("DEBUG: No payments found, data type: " + typeof paymentRes.data);
+          }
+        } catch (paymentError) {
+          // If payment API fails (e.g., user has no mobileNumber), continue to check-number
+          console.warn("Payment API error:", paymentError.message);
+          console.warn("Payment API error response:", paymentError.response?.data);
+        }
+
+      // User has no mobileNumber and no payments, redirect to check-number
+      console.warn("No mobileNumber in profile and no payments found, going to check-number");
+      navigate("/check-number");
     } catch (error) {
       setIsLoading(false);
       if (error.response) {
