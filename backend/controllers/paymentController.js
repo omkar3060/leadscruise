@@ -16,7 +16,7 @@ exports.latestId = async (req, res) => {
 
 // Fetch payment records based on the user's email
 exports.getPaymentsByEmail = async (req, res) => {
-  console.log("Received email:", req.query.email);
+  // console.log("Received email:", req.query.email);
   try {
     const { email } = req.query; // Get email from query params
     if (!email) {
@@ -39,7 +39,7 @@ exports.getPaymentsByEmail = async (req, res) => {
 
     // Find payments using the contact/phone number
     const payments = await Payment.find({ contact: phoneNumber }).sort({ unique_id: -1 });
-    console.log(payments);
+    // console.log(payments);
     if (payments.length === 0) {
       return res.status(200).json({ message: "No payment records found" });
     }
