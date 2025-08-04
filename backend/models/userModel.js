@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     firstTime: { type: Boolean, default: true },
-    mobileNumber: { type: String, unique: true, sparse: true },
+    mobileNumber: { type: String, sparse: true },
     savedPassword: { type: String }, // Store encrypted password
     status: { type: String, default: "Stopped" },
     role: { type: String, enum: ["admin", "user"], default: "user" },

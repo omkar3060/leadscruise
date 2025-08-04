@@ -20,6 +20,7 @@ const PendingBilling = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
   const subscriptionMapping = {
+    "1-day": "1 Day",
     "3-days": "3 Days",
     "one-mo": "One Month",
     "three-mo": "Three Months",
@@ -162,6 +163,7 @@ const PendingBilling = () => {
     const expiryDate = new Date(createdDate);
 
     const SUBSCRIPTION_DURATIONS = {
+      "1-day": 1,
       "3-days": 3,
       "one-mo": 30,
       "six-mo": 180,

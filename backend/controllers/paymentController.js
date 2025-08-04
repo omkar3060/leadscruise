@@ -23,9 +23,23 @@ exports.getPaymentsByEmail = async (req, res) => {
       return res.status(400).json({ error: "Email is required" });
     }
 
-    // Sort payments in descending order of unique_id
-    const payments = await Payment.find({ email }).sort({ unique_id: -1 });
+    // First, find the user by email to get their phone number
+    const User = require('../models/userModel');
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
+    const phoneNumber = user.mobileNumber || user.phoneNumber;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({ error: "User phone number not found" });
+    }
+
+    // Find payments using the contact/phone number
+    const payments = await Payment.find({ contact: phoneNumber }).sort({ unique_id: -1 });
+    console.log(payments);
     if (payments.length === 0) {
       return res.status(200).json({ message: "No payment records found" });
     }

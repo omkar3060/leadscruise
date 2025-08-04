@@ -186,6 +186,9 @@ const Profile = () => {
     const start = new Date(startDate);
 
     switch (subscriptionType.toLowerCase()) {
+      case "1-day":
+        start.setDate(start.getDate() + 1);
+        break;
       case "3-days":
         start.setDate(start.getDate() + 3);
         break;
@@ -262,6 +265,7 @@ const Profile = () => {
                     billingHistory.map((item, index) => {
                       // Mapping subscription types to readable formats
                       const subscriptionMapping = {
+                        "1-day": "1 Day",
                         "3-days": "3 Days",
                         "one-mo": "One Month",
                         "three-mo": "Three Months",

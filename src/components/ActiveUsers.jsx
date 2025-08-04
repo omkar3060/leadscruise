@@ -20,6 +20,7 @@ const ActiveUsers = () => {
       const expiryDate = new Date(createdDate);
 
       const SUBSCRIPTION_DURATIONS = {
+        "1-day": 1,
         "3-days": 3,
         "One Month": 30,
         "6 Months": 180,

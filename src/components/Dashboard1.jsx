@@ -609,7 +609,7 @@ useEffect(() => {
         return;
       }
 
-      if (!mobileNumber || !password) {
+      if (!mobileNumber) {
         alert("Please login to you leads provider account first.");
         navigate("/execute-task");
         setIsStarting(false); // Reset starting state on error

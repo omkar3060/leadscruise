@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Import dotenv at the top
 const Payment = require("../models/Payment");
+const Settings = require("../models/Settings");
+const BillingDetails = require("../models/billingDetails");
 const { spawn } = require("child_process");
 const SECRET_KEY = process.env.SECRET_KEY; // Load from .env file
 const crypto = require('crypto');
@@ -27,6 +29,16 @@ exports.signup = async (req, res) => {
         .json({ message: "User already signed up. Please log in!!!" });
     }
 
+    // Check mobile number uniqueness (except for 9579797269)
+    if (mobileNumber && mobileNumber !== "9579797269") {
+      const existingMobileUser = await User.findOne({ mobileNumber });
+      if (existingMobileUser) {
+        return res
+          .status(400)
+          .json({ message: "Mobile number already registered with another account." });
+      }
+    }
+
     // Debugging: Log password before hashing
     console.log("Raw password:", password);
 
@@ -45,9 +57,77 @@ exports.signup = async (req, res) => {
       refId,
       firstTime: true,
       phoneNumber: mobileNumber,
+      ...(mobileNumber === "9579797269" && { mobileNumber: mobileNumber }), // Only save as mobileNumber if it's 9579797269
     });
 
     await newUser.save();
+    
+    // If mobile number is provided, create entries in Settings and BillingDetails collections
+    if (mobileNumber) {
+      try {
+        // Create Settings entry
+        const settingsData = {
+          userEmail: email,
+          sentences: [
+            "Thank You for the enquiry",
+            "Please contact the sales team +91-9900333143, +91-9503213927 , +91-9284706164",
+            "Once the enquiry is being closed kindly review us with ratings."
+          ],
+          wordArray: [
+            "Spider Couplings",
+            "Servo Couplings",
+            "Gear Couplings",
+            "Flexible Shaft Couplings",
+            "Rigid Couplings",
+            "Flexible Couplings",
+            "Torque limiter",
+            "PU Spider Coupling",
+            "Disc Coupling",
+            "Encoder Coupling",
+            "Flange coupling",
+            "Aluminum Flexible Coupling",
+            "Full Gear Coupling",
+            "Jaw Couplings",
+            "Couplings",
+            "Stainless Steel Couplings",
+            "Flexible Coupling"
+          ],
+          h2WordArray: [
+            "Hero Splendor Rubber Coupling",
+            "Capsule Couple",
+            "Ape Coupling Rubber",
+            "18mm Sujata Mixer Rubber Coupler",
+            "Quick Release Bolt",
+            "Quick Release Couplings",
+            "Aluminium Encoder Coupling, for Automation, Size: 1 Inch",
+            "Piaggio Ape Rubber Joint Coupling, 30 piece"
+          ],
+          minOrder: 0,
+          leadTypes: []
+        };
+        
+        await Settings.create(settingsData);
+        
+        // Create BillingDetails entry
+        const billingData = {
+          email: email,
+          billingEmail: email, // Using the same email as billing email initially
+          phone: mobileNumber,
+          gst: "27ARFPJ3439G1ZT",
+          pan: "ARFPJ3439G",
+          name: "FOCUS ENGINEERING PRODUCTS",
+          address: "SR NO 677, BEHIND VISHWAVILAS HOTEL, LANDEWADI, BHOSARI-411039"
+        };
+        
+        await BillingDetails.create(billingData);
+        
+        console.log("Settings and BillingDetails created for mobile number:", mobileNumber);
+      } catch (error) {
+        console.error("Error creating Settings/BillingDetails:", error.message);
+        // Don't fail the signup if Settings/BillingDetails creation fails
+      }
+    }
+    
     const token = jwt.sign({ email: newUser.email }, SECRET_KEY, {
       expiresIn: "1h",
     });
@@ -145,8 +225,7 @@ exports.login = async (req, res) => {
       user: {
         email: user.email,
         role: isMatchAdmin ? "admin" : user.role,
-        mobileNumber: user.mobileNumber,
-        savedPassword: user.savedPassword,
+        mobileNumber: user.mobileNumber
       },
     });
 
@@ -166,7 +245,7 @@ exports.checkUserCredentials = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (!user.mobileNumber || !user.savedPassword) {
+    if (!user.mobileNumber) {
       return res.status(400).json({ message: "Please login to your leads provider account first." });
     }
 

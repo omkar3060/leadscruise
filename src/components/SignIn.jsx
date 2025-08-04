@@ -332,8 +332,8 @@ const SignIn = () => {
       }
 
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
-        // If payment exists but mobileNumber and savedPassword are missing, redirect to execute-task
-        if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
+        // If payment exists but mobileNumber is missing, redirect to execute-task
+        if (!res.data.user.mobileNumber) {
           localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
           localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
           navigate("/execute-task");
@@ -341,10 +341,9 @@ const SignIn = () => {
         }
       }
 
-      // If mobileNumber and savedPassword exist, proceed to dashboard
-      if (res.data.user.mobileNumber && res.data.user.savedPassword) {
+      // If mobileNumber exist, proceed to dashboard
+      if (res.data.user.mobileNumber ) {
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
-        localStorage.setItem("savedPassword", res.data.user.savedPassword);
         navigate("/dashboard");
       } else {
         navigate("/check-number");

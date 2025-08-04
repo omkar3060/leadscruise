@@ -205,7 +205,7 @@ const Plans = () => {
       <div className="center-div">
         <div className="signin-left">
           <div className="plans">
-            <div
+            {/* <div
               className={`one-mo common first-one ${selectedPlan === "3-days" ? "selected" : ""
                 }`}
               onClick={() => handlePlanSelect("3-days", 299)}
@@ -228,7 +228,7 @@ const Plans = () => {
                   <h3 className="prices-h3">₹ 299</h3>
                 </div>
               </div>
-            </div>
+            </div> */}
             <div
               className={`one-mo common first-one ${selectedPlan === "one-mo" ? "selected" : ""
                 }`}
@@ -327,6 +327,22 @@ const Plans = () => {
               </div>
             </div>
           </div>
+
+            {/* Demo Plan Section */}
+           <div className="demo-section">
+             <p className="demo-text">
+               <span 
+                 className="demo-link"
+                 onClick={() => {
+                   handlePlanSelect("1-day", 99);
+                   setShowModal(true);
+                 }}
+               >
+                 Want a demo?
+               </span> 
+               Try our service for just 1 day at ₹ 99
+             </p>
+           </div>
 
           <button className="next-button" onClick={handleNextClick}>
             Next
@@ -444,16 +460,18 @@ const Plans = () => {
             <div className="plan-summary">
               <p><strong>Plan:</strong> {
                 selectedPlan === "3-days" ? "3 Days" :
-                selectedPlan === "one-mo" ? "1 Month" :
-                  selectedPlan === "three-mo" ? "3 Months" :
-                    selectedPlan === "six-mo" ? "6 Months" :
-                      "12 Months"
+                  selectedPlan === "one-mo" ? "1 Month" :
+                    selectedPlan === "three-mo" ? "3 Months" :
+                      selectedPlan === "six-mo" ? "6 Months" :
+                        selectedPlan === "1-day" ? "1 Day" :
+                          "12 Months"
               }</p>
               <p><strong>Price:</strong> ₹{selectedPlan === "3-days" ? 299 :
                 selectedPlan === "one-mo" ? 2999 :
-                selectedPlan === "three-mo" ? 7999 :
-                  selectedPlan === "six-mo" ? 14999 :
-                    29999}</p>
+                  selectedPlan === "three-mo" ? 7999 :
+                    selectedPlan === "six-mo" ? 14999 :
+                      selectedPlan === "1-day" ? 99 :
+                        29999}</p>
             </div>
 
             <div className="coupon-section">
