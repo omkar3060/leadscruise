@@ -317,11 +317,11 @@ const SignIn = () => {
       localStorage.setItem("role", res.data.user.role);
 
       // Debug: Log the user data to see what's being returned
-      console.warn("Login response user data:", res.data.user);
-      console.warn("User mobileNumber:", res.data.user.mobileNumber);
-      console.warn("User mobileNumber type:", typeof res.data.user.mobileNumber);
-      console.warn("User mobileNumber truthy check:", !!res.data.user.mobileNumber);
-      console.warn("User mobileNumber length:", res.data.user.mobileNumber ? res.data.user.mobileNumber.length : 0);
+      // console.warn("Login response user data:", res.data.user);
+      // console.warn("User mobileNumber:", res.data.user.mobileNumber);
+      // console.warn("User mobileNumber type:", typeof res.data.user.mobileNumber);
+      // console.warn("User mobileNumber truthy check:", !!res.data.user.mobileNumber);
+      // console.warn("User mobileNumber length:", res.data.user.mobileNumber ? res.data.user.mobileNumber.length : 0);
 
       if (email === "demo@leadscruise.com" && (password === "Demo@5477" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
         // Check if a payment exists for the demo user
@@ -344,17 +344,17 @@ const SignIn = () => {
       }
 
       // Check if user has mobileNumber in their profile first
-      console.warn("Checking mobileNumber condition:", res.data.user.mobileNumber);
-      alert("DEBUG: User mobileNumber = " + res.data.user.mobileNumber);
+      // console.warn("Checking mobileNumber condition:", res.data.user.mobileNumber);
+      // alert("DEBUG: User mobileNumber = " + res.data.user.mobileNumber);
       if (res.data.user.mobileNumber) {
-        console.warn("User has mobileNumber, going to dashboard");
-        alert("DEBUG: Going to dashboard");
+        // console.warn("User has mobileNumber, going to dashboard");
+        // alert("DEBUG: Going to dashboard");
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
         navigate("/dashboard");
         return;
       } else {
         console.warn("User does not have mobileNumber, checking payments");
-        alert("DEBUG: No mobileNumber, checking payments");
+        // alert("DEBUG: No mobileNumber, checking payments");
       }
 
       // Check if a payment exists for the user (only if they don't have mobileNumber)
@@ -387,7 +387,7 @@ const SignIn = () => {
         }
 
       // User has no mobileNumber and no payments, redirect to check-number
-      console.warn("No mobileNumber in profile and no payments found, going to check-number");
+      // console.warn("No mobileNumber in profile and no payments found, going to check-number");
       navigate("/check-number");
     } catch (error) {
       setIsLoading(false);
@@ -635,7 +635,7 @@ const SignIn = () => {
             <p className="priv-p">
               By creating this account, you agree to our{" "}
               <a href="https://leadscruise.com/#faq" className="priv-link">
-                Privacy Policy
+                Privacy 
               </a>{" "}
               &{" "}
               <a href="https://leadscruise.com/#faq" className="priv-link">
