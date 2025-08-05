@@ -1190,6 +1190,27 @@ def redirect_and_refresh(driver, wait):
                 # Refresh the page three times
                 print("Waiting for 10 seconds...",flush=True)
                 time.sleep(10)  # Static wait for refresh
+            # If both span_result and h2_result are false, click the hide button
+            elif not span_result or not h2_result:
+                try:
+                    # First try to remove the overlay if it exists (same logic as for India label)
+                    try:
+                        overlay = driver.find_element(By.CLASS_NAME, "overlay_fltr")
+                        if overlay.is_displayed():
+                            # Remove the overlay using JavaScript
+                            driver.execute_script("arguments[0].style.display = 'none';", overlay)
+                            print("Removed overlay element blocking the hide button.")
+                            time.sleep(2)
+                    except Exception as e:
+                        print(f"No overlay found or couldn't remove it: {e}")
+                    
+                    # Find and click the hide button using the provided HTML structure
+                    hide_button = driver.find_element(By.ID, "hidebl1")
+                    hide_button.click()
+                    print("Clicked the hide button to hide the card.",flush=True)
+                    time.sleep(3)  # Wait for the hide action to complete
+                except Exception as e:
+                    print(f"Failed to click the hide button: {e}",flush=True)
         else:
             print("ZERO_BALANCE_DETECTED", flush=True)
             return
@@ -1226,72 +1247,24 @@ def execute_task_one(driver, wait):
         print("Clicked 'Start Selling' button.",flush=True)
 
         try:
-            # Click 'Request OTP on Mobile' button
-            received_otp = None
-            otp_event.clear()
-            otp_request_button = wait.until(
-                EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+            enter_password_button = wait.until(
+                EC.element_to_be_clickable((By.ID, "passwordbtn1"))
             )
-            otp_request_button.click()
-            print("Clicked 'Request OTP on Mobile' button.",flush=True)
-            
-            # Signal to backend that OTP request has been initiated
-            print("OTP_REQUEST_INITIATED",flush=True)
-            sys.stdout.flush()
-            
-            # Start OTP listener thread
-            otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
-            otp_thread.start()
-            start_time = time.time()
-            print("Waiting for OTP input...", flush=True)
+            enter_password_button.click()
+            print("Clicked 'Enter Password' button.")
 
-            while time.time() - start_time < 90:
-                if otp_event.wait(timeout=5):  # Wait for OTP signal in small chunks
-                    otp_event.clear()  # Reset event for next attempt
+            user_password = input_data.get("password", "")
+            password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
+            password_input.clear()
+            password_input.send_keys(user_password)
+            print("Entered the password.")
 
-                    if received_otp and len(received_otp) == 4 and received_otp.isdigit():
-                        otp_fields = ["first", "second", "third", "fourth_num"]
-                        for i, field_id in enumerate(otp_fields):
-                            try:
-                                otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
-                                otp_input.clear()
-                                otp_input.send_keys(received_otp[i])
-                            except (TimeoutException, NoSuchElementException):
-                                print(f"Could not find OTP field: {field_id}", flush=True)
-                                return "Unsuccessful"
+            sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
+            sign_in_button.click()
+            print("Clicked 'Sign In' button.")
 
-                        print("Entered OTP successfully.", flush=True)
-
-                        try:
-                            otp_submit_button = wait.until(EC.element_to_be_clickable((By.ID, "sbmtbtnOtp")))
-                            otp_submit_button.click()
-                            print("Clicked 'Submit OTP' button.", flush=True)
-                            time.sleep(2)
-
-                            # Check if OTP was correct
-                            try:
-                                error_elem = driver.find_element(By.ID, "otp_verify_err")
-                                if error_elem.is_displayed() and "Incorrect OTP" in error_elem.text:
-                                    print("OTP_FAILED_INCORRECT", flush=True)
-                                    continue  # Allow another attempt if time allows
-                            except NoSuchElementException:
-                                pass  # No error means success, break out of loop
-                            break
-                        except Exception as e:
-                            print(f"Failed to click OTP submit button: {e}", flush=True)
-                            continue
-                    else:
-                        print("Invalid OTP format received.", flush=True)
-                else:
-                    print("Still waiting for OTP...", flush=True)
-
-            # Final check after loop ends
-            if time.time() - start_time >= 90:
-                print("Timeout waiting for correct OTP.", flush=True)
-                return "Unsuccessful"
-                    
-        except (TimeoutException, NoSuchElementException) as e:
-            print(f"OTP flow failed: {e}",flush=True)
+        except (TimeoutException, NoSuchElementException):
+            print("Sign in failed. No such element found.",flush=True)
             return "Unsuccessful"
         
         # Final check for dashboard

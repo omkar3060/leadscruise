@@ -230,6 +230,7 @@ exports.login = async (req, res) => {
           email: user.email,
           role: isMatchAdmin ? "admin" : user.role,
           mobileNumber: user.mobileNumber,
+          savedPassword: user.savedPassword,
         },
       });
     }
@@ -247,7 +248,8 @@ exports.login = async (req, res) => {
               user: {
           email: user.email,
           role: isMatchAdmin ? "admin" : user.role,
-          mobileNumber: user.mobileNumber
+          mobileNumber: user.mobileNumber,
+          savedPassword: user.savedPassword,
         },
     });
 

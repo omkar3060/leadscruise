@@ -112,7 +112,7 @@ def parse_timestamp(timestamp_text):
         dt = datetime.strptime(f"{timestamp_text} {now.year}", "%d %b %Y")
         return dt.isoformat()
 
-def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, timestamp_text=None, uniqueId=None):
+def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, timestamp_text=None, address=None, uniqueId=None):
     global lead_bought  # Access the global variable
     global skip_lead, redirect_count
     try:
@@ -132,7 +132,8 @@ def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, times
     }
     if email:
         data["email"] = email
-
+    if address:
+        data["address"] = address
     print(f"Sending data to dashboard: {data}", flush=True)
 
     try:
@@ -197,7 +198,7 @@ def process_messages_incrementally(driver):
         return
     
     scroll_position = 0
-    max_scroll_attempts = 600  # Prevent infinite loops
+    max_scroll_attempts = 1000  # Prevent infinite loops
     scroll_attempts = 0
     no_new_messages_count = 0
     
@@ -341,17 +342,24 @@ def process_single_message(driver, message_element, timestamp, company, return_u
             email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 wbba']").text
         except:
             email_id = None
-        
+
+        try:
+            address_element = driver.find_element(By.XPATH, "//span[contains(text(),'Address')]/following::span[1]/span")
+            address = address_element.text
+        except:
+            address = "Address not found"
+
         # Get user mobile number from input_data
         user_mobile_number = input_data.get("mobileNumber", "")
         
         # Send data to dashboard
         try:
-            send_data_to_sheets(left_name, mobile_number, email_id, user_mobile_number, timestamp)
+            send_data_to_sheets(left_name, mobile_number, email_id, user_mobile_number, timestamp, address)
             if skip_lead:
                 print("Skipping this lead due to duplication...", flush=True)
                 return
             print(f"Successfully sent data to dashboard", flush=True)
+            time.sleep(300)
         except Exception as e:
             print(f"Error sending data to dashboard: {e}", flush=True)
         
@@ -480,7 +488,7 @@ def is_within_30_days(timestamp_text, thirty_days_ago):
         return True
  
 lead_bought=""
-def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
+def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, address=None):
     global lead_bought  # Access the global variable
 
     url = "https://api.leadscruise.com/api/store-lead"
@@ -488,7 +496,8 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None):
         "name": name,
         "mobile": mobile,
         "user_mobile_number": user_mobile_number,
-        "lead_bought": lead_bought if lead_bought else "Not Available"  # Provide default value
+        "lead_bought": lead_bought if lead_bought else "Not Available",  # Provide default value
+        "address": address if address else "Not Available"  # Provide default value
     }
     
     if email:
@@ -530,7 +539,7 @@ def set_browser_zoom(driver, zoom_level=0.75):
     })
     #print(f"Browser zoom set to {zoom_level * 100}% using Chrome DevTools Protocol.")
 
-def go_to_message_center_and_click(driver):
+def go_to_message_center_and_click(driver, first_h2_text):
 
     print("Waiting for 3 seconds before going to the message center...", flush=True)
     time.sleep(3)
@@ -561,17 +570,180 @@ def go_to_message_center_and_click(driver):
         print("Clicked the first element with the specified class parameters.", flush=True)
         time.sleep(2)
 
+        # Check if WhatsApp text is found
+        whatsapp_found = False
+        try:
+            # Look for WhatsApp-related elements in the footer
+            whatsapp_elements = driver.find_elements(By.XPATH, "//footer[contains(@class, 'msg_footer')]//div[contains(@class, 'reply-template')]//span[contains(text(), 'Introduction')]")
+            if whatsapp_elements:
+                print("WhatsApp text found - proceeding with WhatsApp flow", flush=True)
+                whatsapp_found = True
+                execute_whatsapp_flow(driver, first_h2_text)
+            else:
+                print("WhatsApp text not found - proceeding with regular flow", flush=True)
+                execute_regular_flow(driver, first_h2_text)
+        except Exception as detection_error:
+            print(f"Error detecting WhatsApp elements: {detection_error}", flush=True)
+            print("Proceeding with regular flow as fallback", flush=True)
+            execute_regular_flow(driver, first_h2_text)
+        
+    except Exception as e:
+        print(f"An error occurred while interacting with the message center: {e}", flush=True)
+
+
+def execute_whatsapp_flow(driver, first_h2_text):
+    """Execute the WhatsApp-specific flow: click introduction, view more, ask for review, then send messages"""
+    try:
+        print("Starting WhatsApp flow...", flush=True)
+        
+        # Click the Introduction button
+        try:
+            introduction_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'reply-template')]//span[contains(text(), 'Introduction')]"))
+            )
+            introduction_button.click()
+            print("Clicked the Introduction button.", flush=True)
+            time.sleep(2)
+        except Exception as e:
+            print(f"Error clicking Introduction button: {e}", flush=True)
+            print("Continuing with View More...", flush=True)
+
+        # Click 'View More'
+        try:
+            view_more_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
+            )
+            view_more_button.click()
+            print("Clicked the 'View More' button.", flush=True)
+            time.sleep(2)
+        except Exception as e:
+            print(f"Error clicking View More button: {e}", flush=True)
+            print("Continuing with Ask For Review...", flush=True)
+
+        # Click 'Ask For Review' button
+        try:
+            # Try multiple selectors for the Ask For Review button
+            ask_review_selectors = [
+                "//span[contains(@class, 'small_btn_filled_std')]//span[contains(text(), 'Ask For Review')]",
+                "//span[contains(text(), 'Ask For Review')]",
+                "//div[contains(@class, 'afrVd')]//span[contains(text(), 'Ask For Review')]",
+                "//span[@class='fs12 clrgold por mlminus5']//following-sibling::span[contains(text(), 'Ask For Review')]",
+                "//span[contains(@class, 'small_btn_filled_std')]",
+                "//div[contains(@class, 'afrVd')]//span[contains(@class, 'small_btn_filled_std')]",
+                "//span[contains(@class, 'clrgold')]//following-sibling::span[contains(text(), 'Ask For Review')]",
+                "//div[contains(@class, 'por mb5')]//span[contains(text(), 'Ask For Review')]"
+            ]
+            
+            ask_review_clicked = False
+            for selector in ask_review_selectors:
+                try:
+                    ask_review_button = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, selector))
+                    )
+                    ask_review_button.click()
+                    print(f"Clicked the 'Ask For Review' button using selector: {selector}", flush=True)
+                    ask_review_clicked = True
+                    break
+                except Exception as e:
+                    print(f"Failed to click with selector '{selector}': {e}", flush=True)
+                    continue
+            
+            if not ask_review_clicked:
+                # Fallback: try to find by text content
+                try:
+                    buttons = driver.find_elements(By.XPATH, "//*[contains(text(), 'Ask For Review')]")
+                    for button in buttons:
+                        if button.is_displayed() and button.is_enabled():
+                            button.click()
+                            print("Clicked the 'Ask For Review' button using text search", flush=True)
+                            ask_review_clicked = True
+                            break
+                except Exception as e:
+                    print(f"Fallback click failed: {e}", flush=True)
+            
+            if not ask_review_clicked:
+                # Final fallback: try JavaScript click
+                try:
+                    ask_review_elements = driver.find_elements(By.XPATH, "//*[contains(text(), 'Ask For Review')]")
+                    for element in ask_review_elements:
+                        if element.is_displayed():
+                            driver.execute_script("arguments[0].click();", element)
+                            print("Clicked the 'Ask For Review' button using JavaScript", flush=True)
+                            ask_review_clicked = True
+                            break
+                except Exception as e:
+                    print(f"JavaScript click failed: {e}", flush=True)
+            
+            if not ask_review_clicked:
+                print("Could not find or click 'Ask For Review' button, continuing...", flush=True)
+            
+            time.sleep(2)
+            
+        except Exception as e:
+            print(f"Error clicking 'Ask For Review' button: {e}", flush=True)
+            print("Continuing with message sending...", flush=True)
+
+        # Now proceed with message sending
+        send_messages(driver, first_h2_text)
+        
+        # Extract contact details
+        extract_contact_details(driver)
+        
+    except Exception as e:
+        print(f"An error occurred in WhatsApp flow: {e}", flush=True)
+
+
+def execute_regular_flow(driver, first_h2_text):
+    """Execute the regular message sending flow"""
+    try:
+        print("Starting regular flow...", flush=True)
+        
+        # Send messages directly
+        send_messages(driver, first_h2_text)
+        
+        # Click 'View More'
+        view_more_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
+        )
+        view_more_button.click()
+        print("Clicked the 'View More' button.", flush=True)
+        time.sleep(2)
+
+        # Extract contact details
+        extract_contact_details(driver)
+        
+    except Exception as e:
+        print(f"An error occurred in regular flow: {e}", flush=True)
+
+
+def send_messages(driver, first_h2_text):
+    """Send all messages using the provided templates"""
+    try:
         message_input = WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.XPATH, "//div[@id='massage-text' and @contenteditable='true']")))
 
         sentences = input_data.get("sentences", [])
+        
+        print(f"Processing {len(sentences)} message templates...", flush=True)
+        print(f"Product name to replace: '{first_h2_text}'", flush=True)
 
-        for sentence in sentences:
+        for i, sentence in enumerate(sentences):
+            # Replace {Requested_product_name} with first_h2_text if present
+            processed_sentence = sentence
+            if "{Requested_product_name}" in sentence:
+                processed_sentence = sentence.replace("{Requested_product_name}", first_h2_text)
+                print(f"Template {i+1} - Original: '{sentence}'", flush=True)
+                print(f"Template {i+1} - Processed: '{processed_sentence}'", flush=True)
+            else:
+                print(f"Template {i+1} - No replacement needed: '{sentence}'", flush=True)
+            
+            # Clear the input field and enter the processed message
             message_input.click()
             message_input.send_keys(Keys.CONTROL + "a")
             message_input.send_keys(Keys.DELETE)
-            message_input.send_keys(sentence)
-            print(f"Entered message: '{sentence}'", flush=True)
+            message_input.send_keys(processed_sentence)
+            print(f"Entered processed message: '{processed_sentence}'", flush=True)
 
+            # Send the message
             send_div = driver.find_element(By.ID, "send-reply-span")
             send_div.click()
             print("Clicked the send button.", flush=True)
@@ -585,31 +757,131 @@ def go_to_message_center_and_click(driver):
             except:
                 print("No popup appeared after message.", flush=True)
 
-        # Click 'View More'
-        view_more_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
-        )
-        view_more_button.click()
-        print("Clicked the 'View More' button.", flush=True)
-        time.sleep(2)
-
-        # Extract and print contact details
-        left_name = driver.find_element(By.XPATH, "//div[@id='left-name']")
-        print(f"Left Name: {left_name.text}", flush=True)
-
-        mobile_number = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 mt2 wbba']")
-        print(f"Mobile Number: {mobile_number.text}", flush=True)
-
-        try:
-            email_id = driver.find_element(By.XPATH, "//span[@class='fl mxwdt75 ml5 wbba']").text
-            print(f"Email ID: {email_id}", flush=True)
-        except:
-            email_id = None
-            print("Email ID not found.", flush=True)
-        user_mobile_number = input_data.get("mobileNumber", "")  # Get the logged-in user's mobile number
-        send_data_to_dashboard(left_name.text, mobile_number.text, email_id, user_mobile_number)
+        print(f"Successfully sent all {len(sentences)} processed messages.", flush=True)
+        
     except Exception as e:
-        print(f"An error occurred while interacting with the message center: {e}", flush=True)
+        print(f"An error occurred while sending messages: {e}", flush=True)
+
+
+def extract_contact_details(driver):
+    """Extract and send contact details to dashboard"""
+    try:
+        # Extract and print contact details with multiple fallback selectors
+        left_name = None
+        mobile_number = None
+        email_id = None
+        address = "Address not found"
+        
+        # Try to find left name with multiple selectors
+        name_selectors = [
+            "//div[@id='left-name']",
+            "//div[contains(@class, 'left-name')]",
+            "//span[contains(@class, 'left-name')]",
+            "//div[contains(text(), 'Name')]/following-sibling::*",
+            "//span[contains(text(), 'Name')]/following-sibling::*"
+        ]
+        
+        for selector in name_selectors:
+            try:
+                left_name = driver.find_element(By.XPATH, selector)
+                print(f"Left Name: {left_name.text}", flush=True)
+                break
+            except:
+                continue
+        
+        if not left_name:
+            print("Left Name not found", flush=True)
+            left_name_text = "Name not found"
+        else:
+            left_name_text = left_name.text
+        
+        # Try to find mobile number with multiple selectors based on the HTML structure
+        mobile_selectors = [
+            "//div[@id='headerMobile']//span[last()]",  # Based on your HTML structure
+            "//div[contains(@class, 'headerMobile')]//span[last()]",
+            "//span[@class='fl mxwdt75 ml5 mt2 wbba']",  # Original selector
+            "//span[contains(@class, 'mxwdt75')]",
+            "//div[contains(@class, 'por cp')]//span[last()]",
+            "//span[contains(text(), '09') or contains(text(), '08') or contains(text(), '07')]",  # Look for phone number patterns
+            "//div[contains(@class, 'headerMobile')]//span[not(contains(@class, 'mlminus5'))]"  # Exclude the icon span
+        ]
+        
+        for selector in mobile_selectors:
+            try:
+                mobile_number = driver.find_element(By.XPATH, selector)
+                mobile_text = mobile_number.text.strip()
+                # Validate that it looks like a phone number
+                if mobile_text and (mobile_text.isdigit() or len(mobile_text) >= 10):
+                    print(f"Mobile Number: {mobile_text}", flush=True)
+                    break
+            except:
+                continue
+        
+        if not mobile_number:
+            print("Mobile Number not found", flush=True)
+            mobile_text = "Mobile not found"
+        else:
+            mobile_text = mobile_number.text.strip()
+        
+        # Try to find email with multiple selectors based on the HTML structure
+        email_selectors = [
+            "//span[@class='fl mxwdt75 ml5 wbba']",  # Exact class from HTML
+            "//span[contains(@class, 'wbba') and contains(text(), '@')]",  # Class with email validation
+            "//span[contains(text(), '@')]",  # Any span with @ symbol
+            "//a[contains(@href, 'mailto:')]",  # Mailto links
+            "//div[contains(text(), '@')]",  # Any div with @ symbol
+            "//span[contains(@class, 'mxwdt75') and contains(@class, 'wbba')]"  # Alternative class combination
+        ]
+        
+        for selector in email_selectors:
+            try:
+                email_element = driver.find_element(By.XPATH, selector)
+                email_text = email_element.text.strip()
+                if '@' in email_text and '.' in email_text:  # Basic email validation
+                    email_id = email_text
+                    print(f"Email ID: {email_id}", flush=True)
+                    break
+            except:
+                continue
+        
+        if not email_id:
+            print("Email ID not found.", flush=True)
+            email_id = None
+        
+        # Try to find address based on the HTML structure
+        address_selectors = [
+            "//span[contains(text(),'Address')]/following-sibling::span[contains(@class, 'clr68')]",  # Based on your HTML structure
+            "//span[contains(text(),'Address')]/following::span[contains(@class, 'clr68')]",  # Alternative path
+            "//span[contains(@class, 'clr68') and contains(@class, 'fs12')]",  # Class-based selector
+            "//div[contains(@class, 'wcalc160')]//span[contains(@class, 'clr68')]",  # Container-based selector
+            "//span[contains(text(),'Address')]/following::span[1]/span",  # Original selector
+            "//div[contains(text(),'Address')]/following-sibling::*",  # Fallback
+            "//span[contains(text(),'Address')]/following-sibling::*",  # Fallback
+            "//div[contains(@class, 'address')]",  # Generic address class
+            "//span[contains(@class, 'address')]"  # Generic address class
+        ]
+        
+        for selector in address_selectors:
+            try:
+                address_element = driver.find_element(By.XPATH, selector)
+                address = address_element.text.strip()
+                if address and address != "Address not found" and len(address) > 5:  # Basic validation
+                    print(f"Address: {address}", flush=True)
+                    break
+            except:
+                continue
+        
+        user_mobile_number = input_data.get("mobileNumber", "")  # Get the logged-in user's mobile number
+        send_data_to_dashboard(left_name_text, mobile_text, email_id, user_mobile_number, address)
+        
+    except Exception as e:
+        print(f"An error occurred while extracting contact details: {e}", flush=True)
+        # Try to send whatever data we have
+        try:
+            user_mobile_number = input_data.get("mobileNumber", "")
+            send_data_to_dashboard("Name not found", "Mobile not found", None, user_mobile_number, "Address not found")
+        except Exception as send_error:
+            print(f"Error sending fallback data: {send_error}", flush=True)
 
 def click_contact_buyer_now_button(driver, wait):
     """
@@ -911,13 +1183,13 @@ def redirect_and_refresh(driver, wait):
             if span_result and h2_result and time_result:
                 if click_contact_buyer_now_button(driver, wait):
                     # Call the function to go to message center and click the 'Reply Now' button
-                    go_to_message_center_and_click(driver)
+                    go_to_message_center_and_click(driver, first_h2_text)
                 else:
                     print("Failed to click the 'Contact Buyer Now' button.",flush=True)
 
                 # Refresh the page three times
                 print("Waiting for 10 seconds...",flush=True)
-                time.sleep(300)  # Static wait for refresh
+                time.sleep(10)  # Static wait for refresh
         else:
             print("ZERO_BALANCE_DETECTED", flush=True)
             return
@@ -1057,7 +1329,7 @@ def execute_task_one(driver, wait):
     except Exception as e:
         print(f"An error occurred during login: {e}",flush=True)
         return "Unsuccessful"
-    
+                  
 def send_to_node_api(expert_details):
     url = "https://api.leadscruise.com/api/support/bulk"
 
@@ -1149,6 +1421,278 @@ def get_expert_details(driver):
         print(f"Error while fetching expert details: {e}")
         return []
 
+def fetch_analytics_data(driver, user_mobile_number, user_password):
+    """
+    Fetch analytics data (charts and tables) from IndiaMART and store in database
+    """
+    try:
+        print("Starting analytics data fetch...", flush=True)
+        
+        # Navigate to analytics page
+        analytics_url = "https://seller.indiamart.com/reportnew/home"
+        print(f"Navigating to analytics page: {analytics_url}", flush=True)
+        driver.get(analytics_url)
+        time.sleep(5)  # Increased wait time
+        
+        # Set viewport and zoom
+        driver.execute_script("document.body.style.zoom = '100%';")
+        driver.set_window_size(1920, 1080)
+        
+        # Wait for page to load completely
+        wait = WebDriverWait(driver, 60)
+        
+        # Wait for analytics page to load
+        try:
+            # Try multiple selectors for the analytics page
+            analytics_loaded = False
+            selectors_to_try = [
+                ".Enquiries_header__2_RoR button",
+                "#Week",
+                "canvas[role='img']",
+                ".Enquiries_header__2_RoR"
+            ]
+            
+            for selector in selectors_to_try:
+                try:
+                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+                    analytics_loaded = True
+                    print(f"Analytics page loaded, found selector: {selector}", flush=True)
+                    break
+                except:
+                    continue
+            
+            if not analytics_loaded:
+                print("Analytics page not loaded properly, aborting...", flush=True)
+                return False
+                
+        except Exception as e:
+            print(f"Error waiting for analytics page: {e}", flush=True)
+            return False
+        
+        # Initialize data
+        weekly_base64 = ""
+        monthly_base64 = ""
+        location_data = []
+        category_data = []
+        
+        # Get weekly chart (default)
+        try:
+            print("Fetching weekly chart...", flush=True)
+            week_button = wait.until(EC.element_to_be_clickable((By.ID, "Week")))
+            week_button.click()
+            time.sleep(3)  # Increased wait time for chart to render
+            
+            # Find and capture weekly chart
+            weekly_canvas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[role='img']")))
+            weekly_base64 = driver.execute_script("""
+                const canvas = arguments[0];
+                return canvas.toDataURL('image/png').split(',')[1];
+            """, weekly_canvas)
+            print("Weekly chart captured successfully", flush=True)
+            
+        except Exception as e:
+            print(f"Error capturing weekly chart: {e}", flush=True)
+        
+        # Get monthly chart
+        try:
+            print("Fetching monthly chart...", flush=True)
+            month_button = wait.until(EC.element_to_be_clickable((By.ID, "Month")))
+            month_button.click()
+            time.sleep(3)  # Increased wait time for chart to render
+            
+            # Find and capture monthly chart
+            monthly_canvas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[role='img']")))
+            monthly_base64 = driver.execute_script("""
+                const canvas = arguments[0];
+                return canvas.toDataURL('image/png').split(',')[1];
+            """, monthly_canvas)
+            print("Monthly chart captured successfully", flush=True)
+            
+        except Exception as e:
+            print(f"Error capturing monthly chart: {e}", flush=True)
+        
+        # Scrape table data
+        print("Fetching table data...", flush=True)
+        try:
+            # Check if table exists with the correct selector based on the HTML structure
+            table_selector = '#Enquiries_reportTableCSS__38-9b'
+            
+            tables_exist = driver.execute_script(f"""
+                return document.querySelector('{table_selector}') !== null;
+            """)
+            
+            if tables_exist:
+                print(f"Found table with selector: {table_selector}", flush=True)
+                
+                # Extract category data (default view - Top Categories tab is active)
+                category_data = driver.execute_script("""
+                    const table = document.querySelector('#Enquiries_reportTableCSS__38-9b');
+                    const rows = Array.from(table.querySelectorAll('tbody tr'));
+                    return rows.map(row => {
+                        const cells = Array.from(row.querySelectorAll('td'));
+                        return {
+                            category: cells[0]?.textContent?.trim() || '',
+                            leadsConsumed: parseInt(cells[1]?.textContent?.trim() || '0'),
+                            enquiries: parseInt(cells[2]?.textContent?.trim() || '0'),
+                            calls: parseInt(cells[3]?.textContent?.trim() || '0')
+                        };
+                    });
+                """)
+                print(f"Extracted {len(category_data)} category records", flush=True)
+                
+                # Check if there are location/category tabs to switch between
+                try:
+                    # Look for the specific location tab using the correct selector
+                    location_tab = driver.find_element(By.CSS_SELECTOR, "#locations")
+                    if location_tab:
+                        print("Found location tab, switching to extract location data...", flush=True)
+                        location_tab.click()
+                        time.sleep(3)  # Wait for table to update
+                        
+                        # Extract location data
+                        location_data = driver.execute_script("""
+                            const table = document.querySelector('#Enquiries_reportTableCSS__38-9b');
+                            const rows = Array.from(table.querySelectorAll('tbody tr'));
+                            return rows.map(row => {
+                                const cells = Array.from(row.querySelectorAll('td'));
+                                return {
+                                    location: cells[0]?.textContent?.trim() || '',
+                                    leadsConsumed: parseInt(cells[1]?.textContent?.trim() || '0'),
+                                    enquiries: parseInt(cells[2]?.textContent?.trim() || '0'),
+                                    calls: parseInt(cells[3]?.textContent?.trim() || '0')
+                                };
+                            });
+                        """)
+                        print(f"Extracted {len(location_data)} location records", flush=True)
+                    else:
+                        print("Location tab not found", flush=True)
+                        location_data = []
+                            
+                except Exception as tab_error:
+                    print(f"Error switching tabs: {tab_error}", flush=True)
+                    location_data = []
+                    
+            else:
+                print("No tables found on analytics page", flush=True)
+                category_data = []
+                location_data = []
+                
+        except Exception as e:
+            print(f"Error in table scraping: {e}", flush=True)
+            category_data = []
+            location_data = []
+        
+        # Only proceed if we have at least some data
+        if not weekly_base64 and not monthly_base64:
+            print("No charts captured, aborting analytics storage", flush=True)
+            return False
+        
+        # Prepare analytics data
+        analytics_data = {
+            "charts": {
+                "weekly": weekly_base64,
+                "monthly": monthly_base64
+            },
+            "tables": {
+                "locations": location_data,
+                "categories": category_data
+            },
+            "userMobileNumber": user_mobile_number
+        }
+        
+        # Store analytics data in database
+        store_analytics_data(analytics_data)
+        
+        print("Analytics data fetched and stored successfully!", flush=True)
+        return True
+        
+    except Exception as e:
+        print(f"Error fetching analytics data: {e}", flush=True)
+        return False
+
+def store_analytics_data(analytics_data):
+    """
+    Store analytics data in the database via API call
+    """
+    try:
+        # API endpoint to store analytics data
+        api_url = "https://api.leadscruise.com/api/analytics/store"  # Use localhost for development
+        
+        payload = {
+            "charts": analytics_data["charts"],
+            "tables": analytics_data["tables"],
+            "userMobileNumber": analytics_data["userMobileNumber"],
+            "fetchedAt": time.time()
+        }
+        
+        print(f"Sending analytics data to API: {api_url}", flush=True)
+        print(f"Payload keys: {list(payload.keys())}", flush=True)
+        print(f"Charts keys: {list(payload['charts'].keys()) if payload['charts'] else 'None'}", flush=True)
+        print(f"Tables keys: {list(payload['tables'].keys()) if payload['tables'] else 'None'}", flush=True)
+        
+        try:
+            response = requests.post(api_url, json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                print("Analytics data stored successfully in database", flush=True)
+                return True
+            else:
+                print(f"Failed to store analytics data. Status: {response.status_code}, Response: {response.text}", flush=True)
+                return False
+                
+        except requests.exceptions.ConnectionError as e:
+            print(f"Connection error - API server may not be running: {e}", flush=True)
+            print("Attempting to save analytics data locally...", flush=True)
+            return save_analytics_data_locally(analytics_data)
+        except requests.exceptions.Timeout as e:
+            print(f"Timeout error: {e}", flush=True)
+            print("Attempting to save analytics data locally...", flush=True)
+            return save_analytics_data_locally(analytics_data)
+            
+    except requests.exceptions.ConnectionError as e:
+        print(f"Connection error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+    except requests.exceptions.Timeout as e:
+        print(f"Timeout error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+    except Exception as e:
+        print(f"Error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+
+
+def save_analytics_data_locally(analytics_data):
+    """
+    Save analytics data locally as a fallback when API is not available
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        # Create analytics directory if it doesn't exist
+        analytics_dir = "analytics_data"
+        if not os.path.exists(analytics_dir):
+            os.makedirs(analytics_dir)
+        
+        # Create filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{analytics_dir}/analytics_{analytics_data['userMobileNumber']}_{timestamp}.json"
+        
+        # Save data to file
+        with open(filename, 'w') as f:
+            json.dump(analytics_data, f, indent=2)
+        
+        print(f"Analytics data saved locally to: {filename}", flush=True)
+        return True
+        
+    except Exception as e:
+        print(f"Error saving analytics data locally: {e}", flush=True)
+        return False
+
+
 def main():
     global redirect_count
     """
@@ -1218,6 +1762,22 @@ def main():
                 expert_details = get_expert_details(driver)
                 print(expert_details)
                 send_to_node_api(expert_details)
+                
+                # Fetch analytics data after successful login and expert details
+                user_mobile_number = input_data.get("mobileNumber", "")
+                user_password = input_data.get("password", "")
+                
+                if user_mobile_number and user_password:
+                    print("Fetching analytics data after successful login...", flush=True)
+                    analytics_success = fetch_analytics_data(driver, user_mobile_number, user_password)
+                    if analytics_success:
+                        print("Analytics data fetched and stored successfully!", flush=True)
+                    else:
+                        print("Failed to fetch analytics data, continuing with main process...", flush=True)
+                else:
+                    print("Mobile number or password not available, skipping analytics fetch...", flush=True)
+                    
+                
             else:
                 print("Login failed, skipping expert data extraction.")
             # Exit if the login process is unsuccessful
@@ -1229,11 +1789,10 @@ def main():
         while True:
             try:
                 # If we haven't completed redirect_and_refresh yet
-                if redirect_count < 2:
+                if redirect_count < 10:
                     print(f"Running redirect_and_refresh (count: {redirect_count + 1}/10)...", flush=True)
                     redirect_count += 1
                     redirect_and_refresh(driver, wait)
-                    
                 else:
                     # Continue with message processing in each loop iteration
                     print("Starting message center processing...", flush=True)

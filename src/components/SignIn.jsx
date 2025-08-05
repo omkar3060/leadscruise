@@ -349,10 +349,11 @@ const SignIn = () => {
       // Check if user has mobileNumber in their profile first
       // console.warn("Checking mobileNumber condition:", res.data.user.mobileNumber);
       // alert("DEBUG: User mobileNumber = " + res.data.user.mobileNumber);
-      if (res.data.user.mobileNumber) {
+      if (res.data.user.mobileNumber && res.data.user.savedPassword) {
         // console.warn("User has mobileNumber, going to dashboard");
         // alert("DEBUG: Going to dashboard");
         localStorage.setItem("mobileNumber", res.data.user.mobileNumber);
+        localStorage.setItem("savedPassword", res.data.user.savedPassword);
         navigate("/dashboard");
         return;
       } else {
@@ -361,7 +362,7 @@ const SignIn = () => {
       }
 
       // Check if a payment exists for the user (only if they don't have mobileNumber)
-              try {
+          try {
           console.warn("Calling payment API for email:", email);
           const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
           console.warn("Payment API response status:", paymentRes.status);
