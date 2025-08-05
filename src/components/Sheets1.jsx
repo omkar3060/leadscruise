@@ -782,14 +782,14 @@ const Sheets = () => {
 
   const fetchLeads = async () => {
     try {
-      setIsLoadingLeads(true);
+      
       const userMobile = localStorage.getItem("mobileNumber");
-
       if (!userMobile) {
-        alert("User mobile number not found!");
+        alert("Kindly login to your account first!");
+        navigate(-1);
         return;
       }
-
+      setIsLoadingLeads(true);
       if (userMobile === "9999999999") {
         setLeads(demoLeads);
         return;

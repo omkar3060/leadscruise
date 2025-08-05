@@ -96,6 +96,7 @@ const EnterEmail = () => {
       });
 
       localStorage.clear();
+      sessionStorage.clear(); // Clear session storage as well
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
           ? "https://app.leadscruise.com/"

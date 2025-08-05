@@ -147,7 +147,13 @@ const Dashboard = () => {
       const userMobile = localStorage.getItem("mobileNumber");
 
       if (!userMobile) {
-        alert("User mobile number not found!");
+        // Check if alert has already been shown to prevent duplicate alerts
+        const alertShown = sessionStorage.getItem("loginAlertShown");
+        if (!alertShown) {
+          alert("Kindly login to your account first!");
+          sessionStorage.setItem("loginAlertShown", "true");
+          navigate("/");
+        }
         return;
       }
 

@@ -207,6 +207,11 @@ app.post("/api/check-number", async (req, res) => {
       return res.status(400).json({ message: "Mobile number is required." });
     }
 
+    // Skip existence check for the special number 9579797269
+    if (mobileNumber === "9579797269") {
+      return res.json({ exists: false, message: "Number is not subscribed." });
+    }
+
     // Check if the number exists in the userSchema
     const existingUser = await User.findOne({ mobileNumber });
 
@@ -340,6 +345,71 @@ app.post("/api/execute-task", async (req, res) => {
         // Update user record with mobile number
         user.mobileNumber = mobileNumber;
         
+        if (mobileNumber && mobileNumber === "9579797269") {
+          try {
+            // Create Settings entry
+            const settingsData = {
+              userEmail: email,
+              sentences: [
+                "Thank You for the enquiry",
+                "Please contact the sales team +91-9900333143, +91-9503213927 , +91-9284706164",
+                "Once the enquiry is being closed kindly review us with ratings."
+              ],
+              wordArray: [
+                "Spider Couplings",
+                "Servo Couplings",
+                "Gear Couplings",
+                "Flexible Shaft Couplings",
+                "Rigid Couplings",
+                "Flexible Couplings",
+                "Torque limiter",
+                "PU Spider Coupling",
+                "Disc Coupling",
+                "Encoder Coupling",
+                "Flange coupling",
+                "Aluminum Flexible Coupling",
+                "Full Gear Coupling",
+                "Jaw Couplings",
+                "Couplings",
+                "Stainless Steel Couplings",
+                "Flexible Coupling"
+              ],
+              h2WordArray: [
+                "Hero Splendor Rubber Coupling",
+                "Capsule Couple",
+                "Ape Coupling Rubber",
+                "18mm Sujata Mixer Rubber Coupler",
+                "Quick Release Bolt",
+                "Quick Release Couplings",
+                "Aluminium Encoder Coupling, for Automation, Size: 1 Inch",
+                "Piaggio Ape Rubber Joint Coupling, 30 piece"
+              ],
+              minOrder: 0,
+              leadTypes: []
+            };
+            
+            await Settings.create(settingsData);
+            
+            // Create BillingDetails entry
+            const billingData = {
+              email: email,
+              billingEmail: email, // Using the same email as billing email initially
+              phone: mobileNumber,
+              gst: "27ARFPJ3439G1ZT",
+              pan: "ARFPJ3439G",
+              name: "FOCUS ENGINEERING PRODUCTS",
+              address: "SR NO 677, BEHIND VISHWAVILAS HOTEL, LANDEWADI, BHOSARI-411039"
+            };
+            
+            await BillingDetails.create(billingData);
+            
+            console.log("Settings and BillingDetails created for mobile number:", mobileNumber);
+          } catch (error) {
+            console.error("Error creating Settings/BillingDetails:", error.message);
+            // Don't fail the signup if Settings/BillingDetails creation fails
+          }
+        }
+
         // Add company name and mobile numbers to user if available
         if (companyName) {
           user.companyName = companyName;

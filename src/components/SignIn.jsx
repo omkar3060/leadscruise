@@ -315,6 +315,9 @@ const SignIn = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("sessionId", res.data.sessionId);
       localStorage.setItem("role", res.data.user.role);
+      
+      // Clear the login alert flag when user successfully logs in
+      sessionStorage.removeItem("loginAlertShown");
 
       // Debug: Log the user data to see what's being returned
       // console.warn("Login response user data:", res.data.user);
@@ -368,7 +371,7 @@ const SignIn = () => {
           // If user doesn't have mobileNumber, check if they have payments
           if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
             console.warn("User has payments, going to execute-task");
-            alert("DEBUG: Has payments, going to execute-task");
+            // alert("DEBUG: Has payments, going to execute-task");
             // User has payments but no mobileNumber in profile, use payment contact
             localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
             localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
@@ -378,7 +381,7 @@ const SignIn = () => {
             console.warn("No payments found or payment data is empty");
             console.warn("Payment data type:", typeof paymentRes.data);
             console.warn("Payment data:", paymentRes.data);
-            alert("DEBUG: No payments found, data type: " + typeof paymentRes.data);
+            // alert("DEBUG: No payments found, data type: " + typeof paymentRes.data);
           }
         } catch (paymentError) {
           // If payment API fails (e.g., user has no mobileNumber), continue to check-number

@@ -817,13 +817,13 @@ const Team = () => {
 
     const fetchLeads = async () => {
         try {
-            setIsLoadingLeads(true);
             const userMobile = localStorage.getItem("mobileNumber");
-
             if (!userMobile) {
-                alert("User mobile number not found!");
+                alert("Kindly login to your account first!");
+                navigate(-1);
                 return;
             }
+            setIsLoadingLeads(true);
 
             const response = await axios.get(
                 `https://api.leadscruise.com/api/get-user-leads/${userMobile}`

@@ -51,6 +51,7 @@ const CheckNumber = () => {
       await axios.post("https://api.leadscruise.com/api/logout", { email: userEmail });
   
       localStorage.clear();
+      sessionStorage.clear(); // Clear session storage as well
       if (window.location.hostname === "app.leadscruise.com") {
         window.location.href = "https://app.leadscruise.com/"; // Replace with actual landing page URL
       } else {

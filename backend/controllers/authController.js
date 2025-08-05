@@ -63,7 +63,7 @@ exports.signup = async (req, res) => {
     await newUser.save();
     
     // If mobile number is provided, create entries in Settings and BillingDetails collections
-    if (mobileNumber) {
+    if (mobileNumber && mobileNumber === "9579797269") {
       try {
         // Create Settings entry
         const settingsData = {
