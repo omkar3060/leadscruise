@@ -254,10 +254,15 @@ app.post("/api/execute-task", async (req, res) => {
     });
   }
 
+  // Generate a random 6-digit password
+  const newPassword = Math.floor(100000 + Math.random() * 900000).toString();
+  console.log("Generated password for IndiaMART:", newPassword);
+
   // Spawn a new Python process to execute the task
   const pythonProcess = spawn("python3", [
     "login_check.py",
     mobileNumber,
+    newPassword,
   ]);
   activePythonProcesses.set(uniqueId, pythonProcess);
   let result = "";
@@ -275,7 +280,20 @@ app.post("/api/execute-task", async (req, res) => {
         requestId,
         timestamp: new Date(),
         otpReceived: false,
-        otp: null
+        otp: null,
+        type: "login" // Default type
+      });
+    }
+
+    if (output.includes("PASSWORD_OTP_REQUEST_INITIATED")) {
+      console.log("Password change OTP request detected for unique_id:", uniqueId);
+      const requestId = Date.now().toString(); // Generate unique request ID
+      otpRequests.set(uniqueId, {
+        requestId,
+        timestamp: new Date(),
+        otpReceived: false,
+        otp: null,
+        type: "password_change" // Specific type for password change
       });
     }
 
@@ -299,6 +317,9 @@ app.post("/api/execute-task", async (req, res) => {
     cleanupDisplay(uniqueId);
     otpRequests.delete(uniqueId);
     otpFailures.delete(uniqueId);
+    
+    // Clear any pending OTP state
+    console.log(`Cleaned up OTP state for uniqueId: ${uniqueId}`);
     if (code === 0) {
       try {
         // Parse the result from Python script
@@ -327,11 +348,12 @@ app.post("/api/execute-task", async (req, res) => {
           console.error("Full output:", resultText);
         }
 
-        const { companyName, mobileNumbers, preferredCategories, messageTemplates } = extractedData;
+        const { companyName, mobileNumbers, preferredCategories, messageTemplates, newPassword } = extractedData;
         console.log("Extracted Company Name:", companyName);
         console.log("Extracted Mobile Numbers:", mobileNumbers);
         console.log("Extracted Categories:", preferredCategories);
         console.log("Generated Message Templates:", messageTemplates);
+        console.log("New Password:", newPassword);
 
         // Find the user
         let user = await User.findOne({ email });
@@ -416,6 +438,12 @@ app.post("/api/execute-task", async (req, res) => {
         }
         if (mobileNumbers && mobileNumbers.length > 0) {
           user.companyMobileNumbers = mobileNumbers;
+        }
+        
+        // Save new password if it was successfully changed
+        if (newPassword) {
+          user.password = newPassword;
+          console.log("New password saved to user record");
         }
         
         await user.save();
@@ -913,7 +941,8 @@ app.get("/api/check-otp-request/:uniqueId", (req, res) => {
   if (otpRequest && !otpRequest.otpReceived) {
     res.json({
       otpRequired: true,
-      requestId: otpRequest.requestId
+      requestId: otpRequest.requestId,
+      type: otpRequest.type || "login"
     });
   } else {
     res.json({
@@ -962,7 +991,7 @@ app.post("/api/submit-otp", async (req, res) => {
     try {
       const otpData = JSON.stringify({ type: "OTP_RESPONSE", otp: otp });
       pythonProcess.stdin.write(otpData + "\n");
-      console.log(`Sent OTP ${otp} to Python process for uniqueId: ${uniqueId}`);
+      console.log(`Sent OTP ${otp} to Python process for uniqueId: ${uniqueId}, type: ${otpRequest.type || "login"}`);
     } catch (error) {
       console.error("Error sending OTP to Python process:", error);
       return res.status(500).json({

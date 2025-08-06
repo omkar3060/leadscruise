@@ -283,6 +283,11 @@ exports.checkMobileNumber = async (req, res) => {
   const { mobileNumber, email } = req.body;
 
   try {
+    // Skip existence check for the special number 9579797269
+    if (mobileNumber === "9579797269") {
+      return res.status(200).json({ message: "Mobile number is available." });
+    }
+
     const user = await User.findOne({ mobileNumber });
 
     // If mobile is found and belongs to *another* user

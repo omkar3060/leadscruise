@@ -27,6 +27,7 @@ const TaskExecutor = () => {
   });
   const [otpValue, setOtpValue] = useState('');
   const [otpRequestId, setOtpRequestId] = useState(null);
+  const [otpType, setOtpType] = useState("login"); // Track OTP type
   const [showOtpWaitPopup, setShowOtpWaitPopup] = useState(() => {
     return localStorage.getItem("showOtpWaitPopup") === "true";
   });
@@ -48,7 +49,8 @@ const TaskExecutor = () => {
       return;
     }
 
-    const confirmSubmit = window.confirm(`Are you sure you want to submit OTP: ${otpValue}?`);
+    const otpTypeText = otpType === "password_change" ? "password change" : "login";
+    const confirmSubmit = window.confirm(`Are you sure you want to submit OTP: ${otpValue} for ${otpTypeText}?`);
     if (!confirmSubmit) return;
 
     try {
@@ -101,7 +103,8 @@ const TaskExecutor = () => {
 
           if (!isAlertShown) {
             // console.log("Showing alert now...");
-            alert("The OTP you entered is incorrect. Please try again.");
+            const otpTypeText = otpType === "password_change" ? "password change" : "login";
+            alert(`The ${otpTypeText} OTP you entered is incorrect. Please try again.`);
             localStorage.setItem("otp_alert_shown", "true");
           } else {
             // console.log("Alert already shown, skipping...");
@@ -128,6 +131,7 @@ const TaskExecutor = () => {
         const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
         if (response.data.otpRequired) {
           setOtpRequestId(response.data.requestId);
+          setOtpType(response.data.type || "login");
           setShowOtpPopup(true);
           localStorage.setItem("showOtpPopup", "true");
           setShowOtpWaitPopup(false);
@@ -144,6 +148,7 @@ const TaskExecutor = () => {
   const handleTaskExecution = async () => {
     setCancelled(false);
     setShowOtpPopup(false);
+    setOtpType("login"); // Reset to login type
     localStorage.setItem("cancelled", "false");
     localStorage.setItem("otp_alert_shown", "false");
     localStorage.setItem("showOtpPopup", "false");
@@ -357,9 +362,14 @@ const TaskExecutor = () => {
           {status === "loading" && showOtpPopup && !cancelled && (
             <div className={styles['otp-popup-overlay']}>
               <div className={styles['otp-popup-container']}>
-                <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
+                <h3 className={styles['otp-popup-title']}>
+                  {otpType === "password_change" ? "Enter Password Change OTP" : "Enter Login OTP"}
+                </h3>
                 <p className={styles['otp-popup-description']}>
-                  Please enter the 4-digit OTP sent to your mobile number.
+                  {otpType === "password_change" 
+                    ? "Please enter the 4-digit OTP sent to your mobile number for password change."
+                    : "Please enter the 4-digit OTP sent to your mobile number for login."
+                  }
                 </p>
                 <input
                   type="text"
@@ -383,6 +393,7 @@ const TaskExecutor = () => {
                       localStorage.setItem("showOtpWaitPopup", "false");
                       setOtpValue('');
                       setOtpRequestId(null);
+                      setOtpType("login"); // Reset OTP type
                       setCancelled(true);
                       localStorage.setItem("cancelled", "true");
                     }}

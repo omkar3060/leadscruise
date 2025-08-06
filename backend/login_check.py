@@ -49,7 +49,7 @@ def listen_for_otp():
                         
                         if data.get("type") == "OTP_RESPONSE":
                             received_otp = data.get("otp")
-                            print(f"OTP captured: {received_otp}",flush=True)
+                            print(f"OTP captured from frontend: {received_otp}",flush=True)
                             sys.stdout.flush()
                             otp_event.set()  # Signal that OTP is received
                             return
@@ -77,7 +77,7 @@ def stop_execution(signum, frame):
 # Bind signal handler
 signal.signal(signal.SIGINT, stop_execution)
 
-def execute_task_one(mobile_number):
+def execute_task_one(mobile_number, new_password):
     global received_otp
     """
     Automates the sign-in process on the IndiaMART seller platform using the provided mobile number and password.
@@ -85,6 +85,7 @@ def execute_task_one(mobile_number):
     Then navigates to privacy settings to extract preferred categories.
     """
     print(f"Starting automation for mobile number: {mobile_number}", flush=True)
+    print(f"Using provided password: {new_password}", flush=True)
     
     # Set up the browser in headless mode
     chrome_options = Options()
@@ -137,6 +138,7 @@ def execute_task_one(mobile_number):
             
             # Signal to backend that OTP request has been initiated
             print("OTP_REQUEST_INITIATED",flush=True)
+            print("Login OTP request initiated", flush=True)
             sys.stdout.flush()
             
             # Start OTP listener thread
@@ -209,28 +211,6 @@ def execute_task_one(mobile_number):
                 EC.presence_of_element_located((By.ID, "leftnav_dash_link"))
             )
             print("Login successful! Dashboard element found", flush=True)
-            
-            # Navigate to the CRM API page
-            # print("Navigating to CRM API page", flush=True)
-            # driver.get("https://seller.indiamart.com/leadmanager/crmapi?")
-            
-            # # Wait for the page to load completely
-            # time.sleep(5)
-            
-            # # Extract the API key
-            # api_key = None
-            # print("Extracting API key", flush=True)
-            # try:
-            #     api_key_element = wait.until(
-            #         EC.presence_of_element_located((By.ID, "api_key2_v2"))
-            #     )
-            #     api_key = api_key_element.text.strip()
-            #     print(f"API key extracted successfully: {api_key}", flush=True)
-            # except (TimeoutException, NoSuchElementException):
-            #     print("Error: API key element not found", flush=True)
-            #     return 1
-            
-            # Navigate to privacy settings page to extract preferred categories
 
             print("Navigating to company profile page", flush=True)
             driver.get("https://seller.indiamart.com/companyprofile/manageprofile")
@@ -346,11 +326,254 @@ def execute_task_one(mobile_number):
                 message_templates.append(message4)
                 message_templates.append(message5)
             # Create result object with all extracted data
+            
+            # Navigate to account settings page for password change
+            print("Navigating to account settings page", flush=True)
+            driver.get("https://seller.indiamart.com/misc/privacysettings/#tab=accountsettings")
+            
+            # Wait for the page to load
+            time.sleep(5)
+            
+            # Check if password change form is present
+            try:
+                password_form = wait.until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "ch-pwd"))
+                )
+                print("Password change form found", flush=True)
+                
+                # Use the password provided from Node.js backend
+                print(f"Using provided password: {new_password}", flush=True)
+                
+                # Find and fill the new password field
+                new_pass_input = wait.until(
+                    EC.presence_of_element_located((By.ID, "new_pass"))
+                )
+                new_pass_input.clear()
+                new_pass_input.send_keys(new_password)
+                print("Entered new password", flush=True)
+                
+                # Find and fill the confirm password field
+                conf_pass_input = wait.until(
+                    EC.presence_of_element_located((By.ID, "conf_pass"))
+                )
+                conf_pass_input.clear()
+                conf_pass_input.send_keys(new_password)
+                print("Entered confirm password", flush=True)
+                
+                # Click on "Request OTP on Mobile" button
+                request_otp_button = wait.until(
+                    EC.element_to_be_clickable((By.ID, "CPRequestOTPmobile"))
+                )
+                request_otp_button.click()
+                print("Clicked 'Request OTP on Mobile' button", flush=True)
+                
+                # Signal to backend that password change OTP request has been initiated
+                print("PASSWORD_OTP_REQUEST_INITIATED", flush=True)
+                print("Password change OTP request initiated", flush=True)
+                sys.stdout.flush()
+                
+                # Wait for OTP input fields to appear
+                time.sleep(3)
+                
+                # Check if OTP input section is visible
+                try:
+                    otp_section = wait.until(
+                        EC.presence_of_element_located((By.ID, "otpDtl_new"))
+                    )
+                    
+                    if otp_section.is_displayed():
+                        print("OTP input section is visible", flush=True)
+                        
+                        # Reset OTP variables for password change
+                        received_otp = None
+                        otp_event.clear()
+                        
+                        # Start OTP listener thread for password change
+                        otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
+                        otp_thread.start()
+                        start_time = time.time()
+                        print("Waiting for OTP input for password change...", flush=True)
+                        
+                        while time.time() - start_time < 60:
+                            if otp_event.wait(timeout=5):
+                                otp_event.clear()
+                                
+                                if received_otp and len(received_otp) == 4 and received_otp.isdigit():
+                                    # Enter OTP in the password change form
+                                    otp_fields = ["firstt", "secondd", "thirdd", "fourth_numm"]
+                                    for i, field_id in enumerate(otp_fields):
+                                        try:
+                                            otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+                                            otp_input.clear()
+                                            otp_input.send_keys(received_otp[i])
+                                        except (TimeoutException, NoSuchElementException):
+                                            print(f"Could not find OTP field: {field_id}", flush=True)
+                                            break
+                                    
+                                    print("Entered OTP for password change", flush=True)
+                                    
+                                    # Click submit button
+                                    try:
+                                        submit_button = wait.until(EC.element_to_be_clickable((By.ID, "start")))
+                                        submit_button.click()
+                                        print("Clicked submit button for password change", flush=True)
+                                        time.sleep(3)
+                                        
+                                        # Check for success message
+                                        try:
+                                            success_div = driver.find_element(By.ID, "div_succ")
+                                            if success_div.is_displayed():
+                                                print("Password changed successfully!", flush=True)
+                                                # Add password to result
+                                                result["newPassword"] = new_password
+                                            else:
+                                                print("Password change may have failed", flush=True)
+                                        except NoSuchElementException:
+                                            print("Could not verify password change success", flush=True)
+                                        
+                                        break
+                                    except Exception as e:
+                                        print(f"Failed to submit password change: {e}", flush=True)
+                                        continue
+                                else:
+                                    print("Invalid OTP format received for password change", flush=True)
+                            else:
+                                print("Still waiting for OTP for password change...", flush=True)
+                        
+                        if time.time() - start_time >= 60:
+                            print("Timeout waiting for OTP for password change", flush=True)
+                    else:
+                        print("OTP input section is not visible", flush=True)
+                        
+                except (TimeoutException, NoSuchElementException) as e:
+                    print(f"OTP section not found for password change: {e}", flush=True)
+                    
+            except (TimeoutException, NoSuchElementException) as e:
+                print(f"Password change form not found: {e}", flush=True)
+                print("Trying alternative approach with toggle button", flush=True)
+                
+                # Try the alternative approach with toggle button
+                try:
+                    # Look for the "Allow login through Password" toggle button
+                    toggle_button = wait.until(
+                        EC.element_to_be_clickable((By.XPATH, "//h3[contains(text(), 'Allow login through Password')]//span[@class='togleBtn']//input[@id='153']"))
+                    )
+                    print("Found toggle button, clicking it", flush=True)
+                    toggle_button.click()
+                    time.sleep(2)  # Wait for popup to open
+                    
+                    # Now look for the password input fields in the popup
+                    new_pass_input = wait.until(
+                        EC.presence_of_element_located((By.ID, "new_pass"))
+                    )
+                    new_pass_input.clear()
+                    new_pass_input.send_keys(new_password)
+                    print("Entered new password in popup", flush=True)
+                    
+                    conf_pass_input = wait.until(
+                        EC.presence_of_element_located((By.ID, "conf_pass"))
+                    )
+                    conf_pass_input.clear()
+                    conf_pass_input.send_keys(new_password)
+                    print("Entered confirm password in popup", flush=True)
+                    
+                    # Click on "Request OTP On Mobile" button in the popup
+                    request_otp_button = wait.until(
+                        EC.element_to_be_clickable((By.ID, "CPRequestOTPmobile"))
+                    )
+                    request_otp_button.click()
+                    print("Clicked 'Request OTP On Mobile' button in popup", flush=True)
+                    
+                    # Signal to backend that password change OTP request has been initiated
+                    print("PASSWORD_OTP_REQUEST_INITIATED", flush=True)
+                    print("Password change OTP request initiated (popup)", flush=True)
+                    sys.stdout.flush()
+                    
+                    # Wait for OTP input fields to appear
+                    time.sleep(3)
+                    
+                    # Check if OTP input section is visible
+                    try:
+                        otp_section = wait.until(
+                            EC.presence_of_element_located((By.ID, "otpDtl_new"))
+                        )
+                        
+                        if otp_section.is_displayed():
+                            print("OTP input section is visible in popup", flush=True)
+                            
+                            # Reset OTP variables for password change
+                            received_otp = None
+                            otp_event.clear()
+                            
+                            # Start OTP listener thread for password change
+                            otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
+                            otp_thread.start()
+                            start_time = time.time()
+                            print("Waiting for OTP input for password change in popup...", flush=True)
+                            
+                            while time.time() - start_time < 60:
+                                if otp_event.wait(timeout=5):
+                                    otp_event.clear()
+                                    
+                                    if received_otp and len(received_otp) == 4 and received_otp.isdigit():
+                                        # Enter OTP in the password change form
+                                        otp_fields = ["firstt", "secondd", "thirdd", "fourth_numm"]
+                                        for i, field_id in enumerate(otp_fields):
+                                            try:
+                                                otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+                                                otp_input.clear()
+                                                otp_input.send_keys(received_otp[i])
+                                            except (TimeoutException, NoSuchElementException):
+                                                print(f"Could not find OTP field: {field_id}", flush=True)
+                                                break
+                                        
+                                        print("Entered OTP for password change in popup", flush=True)
+                                        
+                                        # Click submit button
+                                        try:
+                                            submit_button = wait.until(EC.element_to_be_clickable((By.ID, "start")))
+                                            submit_button.click()
+                                            print("Clicked submit button for password change in popup", flush=True)
+                                            time.sleep(3)
+                                            
+                                            # Check for success message
+                                            try:
+                                                success_div = driver.find_element(By.ID, "div_succ")
+                                                if success_div.is_displayed():
+                                                    print("Password changed successfully in popup!", flush=True)
+                                                    # Add password to result
+                                                    result["newPassword"] = new_password
+                                                else:
+                                                    print("Password change may have failed in popup", flush=True)
+                                            except NoSuchElementException:
+                                                print("Could not verify password change success in popup", flush=True)
+                                            
+                                            break
+                                        except Exception as e:
+                                            print(f"Failed to submit password change in popup: {e}", flush=True)
+                                            continue
+                                    else:
+                                        print("Invalid OTP format received for password change in popup", flush=True)
+                                else:
+                                    print("Still waiting for OTP for password change in popup...", flush=True)
+                            
+                            if time.time() - start_time >= 60:
+                                print("Timeout waiting for OTP for password change in popup", flush=True)
+                        else:
+                            print("OTP input section is not visible in popup", flush=True)
+                            
+                    except (TimeoutException, NoSuchElementException) as e:
+                        print(f"OTP section not found for password change in popup: {e}", flush=True)
+                        
+                except (TimeoutException, NoSuchElementException) as e:
+                    print(f"Alternative password change approach also failed: {e}", flush=True)
+            
             result = {
                 "companyName": company_name,
                 "mobileNumbers": mobile_numbers,
                 "preferredCategories": preferred_categories,
-                "messageTemplates": message_templates
+                "messageTemplates": message_templates,
+                "newPassword": new_password
             }
             
             # Print a separator and then the result as JSON for Node.js to parse
@@ -376,13 +599,14 @@ def execute_task_one(mobile_number):
 
 # Main block to handle command-line arguments
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python selenium_script.py <mobileNumber>", flush=True)
+    if len(sys.argv) != 3:
+        print("Usage: python selenium_script.py <mobileNumber> <newPassword>", flush=True)
         sys.exit(3)
 
     mobile_number = sys.argv[1]
-    print(f"Arguments received - Mobile: {mobile_number}", flush=True)
+    new_password = sys.argv[2]
+    print(f"Arguments received - Mobile: {mobile_number}, Password: {new_password}", flush=True)
 
-    exit_code = execute_task_one(mobile_number)
+    exit_code = execute_task_one(mobile_number, new_password)
     print(f"Script completed with exit code: {exit_code}", flush=True)
     sys.exit(exit_code)
