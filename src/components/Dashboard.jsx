@@ -574,9 +574,13 @@ const Dashboard = () => {
     } catch (error) {
       if (error.response?.status === 403) {
         alert("Lead limit reached. Cannot capture more leads today.");
+      } else if (error.response?.status === 400 && error.response?.data?.route === "/execute-task") {
+        alert(error.response.data.message);
+        navigate("/execute-task");
+      } else {
+        console.error("Error:", error.response?.data?.message || error.message);
+        //alert(error.response?.data?.message || error.message);
       }
-      console.error("Error:", error.response?.data?.message || error.message);
-      //alert(error.response?.data?.message || error.message);
       setIsStarting(false); // Reset starting state on error
     } finally {
       setIsLoading(false); // Hide loading after process completes or fails

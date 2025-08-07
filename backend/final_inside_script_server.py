@@ -3,11 +3,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 from pyvirtualdisplay import Display
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -573,65 +569,116 @@ def go_to_message_center_and_click(driver, first_h2_text):
         # Check if WhatsApp text is found
         whatsapp_found = False
         try:
-            # Look for WhatsApp-related elements in the footer
-            whatsapp_elements = driver.find_elements(By.XPATH, "//footer[contains(@class, 'msg_footer')]//div[contains(@class, 'reply-template')]//span[contains(text(), 'Introduction')]")
+            print("Looking for WhatsApp-related elements...", flush=True)
+            whatsapp_elements = driver.find_elements(
+                By.XPATH,
+                "//div[contains(@class, 'reply-template')]//span[normalize-space(text())='Introduction' or normalize-space(text())='Share more details' or normalize-space(text())='Catalog Link']"
+            )
+
             if whatsapp_elements:
-                print("WhatsApp text found - proceeding with WhatsApp flow", flush=True)
+                print("WhatsApp message template found - proceeding with WhatsApp flow", flush=True)
                 whatsapp_found = True
                 execute_whatsapp_flow(driver, first_h2_text)
             else:
-                print("WhatsApp text not found - proceeding with regular flow", flush=True)
+                print("WhatsApp message not found - proceeding with regular flow", flush=True)
                 execute_regular_flow(driver, first_h2_text)
+
         except Exception as detection_error:
             print(f"Error detecting WhatsApp elements: {detection_error}", flush=True)
-            print("Proceeding with regular flow as fallback", flush=True)
+            print("Fallback: proceeding with regular flow", flush=True)
             execute_regular_flow(driver, first_h2_text)
+
         
     except Exception as e:
         print(f"An error occurred while interacting with the message center: {e}", flush=True)
 
 
 def execute_whatsapp_flow(driver, first_h2_text):
-    """Execute the WhatsApp-specific flow: click introduction, view more, ask for review, then send messages"""
+    """Execute the WhatsApp-specific flow: click introduction/catalog, view more, ask for review, then send messages"""
     try:
         print("Starting WhatsApp flow...", flush=True)
         
-        # Click the Introduction button
+        # Step 1: Click either Introduction or Catalog Link button
+        template_clicked = False
+        send_messages(driver, first_h2_text)
+        
+        # Try to click Introduction first
         try:
             introduction_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'reply-template')]//span[contains(text(), 'Introduction')]"))
             )
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", introduction_button)
+            time.sleep(1)
             introduction_button.click()
             print("Clicked the Introduction button.", flush=True)
+            template_clicked = True
             time.sleep(2)
         except Exception as e:
-            print(f"Error clicking Introduction button: {e}", flush=True)
-            print("Continuing with View More...", flush=True)
+            print(f"Introduction button not found: {e}", flush=True)
+        
+        # If Introduction not found, try Catalog Link
+        if not template_clicked:
+            try:
+                catalog_button = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'reply-template')]//span[contains(text(), 'Catalog Link')]"))
+                )
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", catalog_button)
+                time.sleep(1)
+                catalog_button.click()
+                print("Clicked the Catalog Link button.", flush=True)
+                template_clicked = True
+                time.sleep(2)
+            except Exception as e:
+                print(f"Catalog Link button not found: {e}", flush=True)
+        
+        # Fallback: try any available template
+        if not template_clicked:
+            try:
+                any_template = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'reply-template')]"))
+                )
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", any_template)
+                time.sleep(1)
+                any_template.click()
+                print("Clicked an available template button.", flush=True)
+                template_clicked = True
+                time.sleep(2)
+            except Exception as e:
+                print(f"No template buttons found: {e}", flush=True)
 
-        # Click 'View More'
+        # Step 2: Click 'View More' button
         try:
+            # Wait for view more button to be available
             view_more_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
             )
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", view_more_button)
+            time.sleep(1)
             view_more_button.click()
             print("Clicked the 'View More' button.", flush=True)
-            time.sleep(2)
+            time.sleep(3)  # Give more time for the page to load
         except Exception as e:
             print(f"Error clicking View More button: {e}", flush=True)
-            print("Continuing with Ask For Review...", flush=True)
+            # Try alternative selector
+            try:
+                view_more_alt = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.ID, "viewDetails"))
+                )
+                driver.execute_script("arguments[0].click();", view_more_alt)
+                print("Clicked 'View More' using alternative method.", flush=True)
+                time.sleep(3)
+            except Exception as e2:
+                print(f"Alternative View More click also failed: {e2}", flush=True)
 
-        # Click 'Ask For Review' button
+        # Step 3: Click 'Ask For Review' button
         try:
-            # Try multiple selectors for the Ask For Review button
+            # Enhanced selectors for Ask For Review button
             ask_review_selectors = [
+                "//div[contains(@class, 'afrVd')]//span[contains(text(), 'Ask For Review')]",
                 "//span[contains(@class, 'small_btn_filled_std')]//span[contains(text(), 'Ask For Review')]",
                 "//span[contains(text(), 'Ask For Review')]",
-                "//div[contains(@class, 'afrVd')]//span[contains(text(), 'Ask For Review')]",
-                "//span[@class='fs12 clrgold por mlminus5']//following-sibling::span[contains(text(), 'Ask For Review')]",
-                "//span[contains(@class, 'small_btn_filled_std')]",
-                "//div[contains(@class, 'afrVd')]//span[contains(@class, 'small_btn_filled_std')]",
-                "//span[contains(@class, 'clrgold')]//following-sibling::span[contains(text(), 'Ask For Review')]",
-                "//div[contains(@class, 'por mb5')]//span[contains(text(), 'Ask For Review')]"
+                "//div[contains(@class, 'por mb5')]//span[contains(text(), 'Ask For Review')]",
+                "//div[contains(@class, 'afrVd')]//span[contains(@class, 'small_btn_filled_std')]"
             ]
             
             ask_review_clicked = False
@@ -640,7 +687,17 @@ def execute_whatsapp_flow(driver, first_h2_text):
                     ask_review_button = WebDriverWait(driver, 5).until(
                         EC.element_to_be_clickable((By.XPATH, selector))
                     )
-                    ask_review_button.click()
+                    # Scroll to element and ensure it's visible
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", ask_review_button)
+                    time.sleep(1)
+                    
+                    # Try regular click first
+                    try:
+                        ask_review_button.click()
+                    except:
+                        # Fallback to JavaScript click
+                        driver.execute_script("arguments[0].click();", ask_review_button)
+                    
                     print(f"Clicked the 'Ask For Review' button using selector: {selector}", flush=True)
                     ask_review_clicked = True
                     break
@@ -649,49 +706,175 @@ def execute_whatsapp_flow(driver, first_h2_text):
                     continue
             
             if not ask_review_clicked:
-                # Fallback: try to find by text content
+                # Final fallback: search by text content
                 try:
                     buttons = driver.find_elements(By.XPATH, "//*[contains(text(), 'Ask For Review')]")
                     for button in buttons:
-                        if button.is_displayed() and button.is_enabled():
-                            button.click()
-                            print("Clicked the 'Ask For Review' button using text search", flush=True)
-                            ask_review_clicked = True
-                            break
+                        try:
+                            if button.is_displayed() and button.is_enabled():
+                                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+                                time.sleep(1)
+                                driver.execute_script("arguments[0].click();", button)
+                                print("Clicked the 'Ask For Review' button using text search", flush=True)
+                                ask_review_clicked = True
+                                break
+                        except Exception as e:
+                            continue
                 except Exception as e:
-                    print(f"Fallback click failed: {e}", flush=True)
+                    print(f"Text search fallback failed: {e}", flush=True)
             
-            if not ask_review_clicked:
-                # Final fallback: try JavaScript click
-                try:
-                    ask_review_elements = driver.find_elements(By.XPATH, "//*[contains(text(), 'Ask For Review')]")
-                    for element in ask_review_elements:
-                        if element.is_displayed():
-                            driver.execute_script("arguments[0].click();", element)
-                            print("Clicked the 'Ask For Review' button using JavaScript", flush=True)
-                            ask_review_clicked = True
-                            break
-                except Exception as e:
-                    print(f"JavaScript click failed: {e}", flush=True)
-            
-            if not ask_review_clicked:
+            if ask_review_clicked:
+                time.sleep(3)  # Wait for any modal or page changes
+            else:
                 print("Could not find or click 'Ask For Review' button, continuing...", flush=True)
             
-            time.sleep(2)
-            
         except Exception as e:
-            print(f"Error clicking 'Ask For Review' button: {e}", flush=True)
-            print("Continuing with message sending...", flush=True)
+            print(f"Error in Ask For Review section: {e}", flush=True)
 
-        # Now proceed with message sending
-        send_messages(driver, first_h2_text)
+        # Step 4: Now proceed with message sending
+        # send_messages(driver, first_h2_text)
         
-        # Extract contact details
+        # Step 5: Extract contact details
         extract_contact_details(driver)
         
     except Exception as e:
         print(f"An error occurred in WhatsApp flow: {e}", flush=True)
 
+
+def send_messages_improved(driver, first_h2_text):
+    """Improved message sending function with better element handling"""
+    try:
+        print("Starting to send messages...", flush=True)
+        
+        # Wait for the page to stabilize
+        time.sleep(2)
+        
+        # Try to dismiss any overlays or footers that might be blocking
+        try:
+            # Check if there are any modal overlays or blocking elements
+            blocking_elements = driver.find_elements(By.XPATH, "//footer[@id='convFooter']")
+            for element in blocking_elements:
+                if element.is_displayed():
+                    driver.execute_script("arguments[0].style.display = 'none';", element)
+                    print("Temporarily hid blocking footer element.", flush=True)
+        except Exception as e:
+            print(f"No blocking elements found or couldn't hide them: {e}", flush=True)
+        
+        # Enhanced selectors for message input
+        message_input_selectors = [
+            "//div[@id='massage-text']",
+            "//div[@contenteditable='true' and contains(@data-placeholder, 'WhatsApp')]",
+            "//div[contains(@class, 'edit_div_new')][@contenteditable='true']",
+            "//div[@contenteditable='true' and contains(@class, 'edt_div')]",
+            "//textarea[contains(@placeholder, 'message') or contains(@placeholder, 'Message')]",
+            "//input[contains(@placeholder, 'message') or contains(@placeholder, 'Message')]"
+        ]
+        
+        message_input = None
+        for selector in message_input_selectors:
+            try:
+                message_input = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, selector))
+                )
+                print(f"Found message input using selector: {selector}", flush=True)
+                break
+            except Exception as e:
+                print(f"Selector '{selector}' failed: {e}", flush=True)
+                continue
+        
+        if not message_input:
+            print("Could not find message input element!", flush=True)
+            return
+        
+        # Scroll to the message input and ensure it's in view
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", message_input)
+        time.sleep(1)
+        
+        # Clear any existing text
+        try:
+            message_input.clear()
+        except:
+            # For contenteditable divs, use JavaScript to clear
+            driver.execute_script("arguments[0].innerHTML = '';", message_input)
+        
+        # Define messages to send
+        messages = [
+            "Hello! I hope you're having a great day.",
+            f"I noticed you're interested in {first_h2_text}. I'd love to help you with that!",
+            "Could you please share more details about your specific requirements?",
+            "What quantity are you looking for and what's your expected timeline?",
+            "I'm here to provide you with the best solution. Feel free to ask any questions!"
+        ]
+        
+        # Send each message
+        for i, message in enumerate(messages, 1):
+            try:
+                print(f"Sending message {i}/{len(messages)}: {message[:50]}...", flush=True)
+                
+                # Focus on the input element
+                try:
+                    message_input.click()
+                except:
+                    # Use JavaScript to focus if regular click fails
+                    driver.execute_script("arguments[0].focus();", message_input)
+                
+                time.sleep(1)
+                
+                # Type the message
+                if message_input.tag_name.lower() in ['input', 'textarea']:
+                    message_input.send_keys(message)
+                else:
+                    # For contenteditable div, use JavaScript
+                    driver.execute_script("arguments[0].innerText = arguments[1];", message_input, message)
+                
+                time.sleep(1)
+                
+                # Try to find and click send button
+                send_button_selectors = [
+                    "//button[contains(@class, 'send') or contains(text(), 'Send')]",
+                    "//div[contains(@class, 'send') or contains(@title, 'Send')]",
+                    "//span[contains(@class, 'send')]",
+                    "//*[@data-testid='send' or contains(@aria-label, 'Send')]"
+                ]
+                
+                send_button_found = False
+                for send_selector in send_button_selectors:
+                    try:
+                        send_button = WebDriverWait(driver, 3).until(
+                            EC.element_to_be_clickable((By.XPATH, send_selector))
+                        )
+                        send_button.click()
+                        print(f"Message {i} sent successfully using send button.", flush=True)
+                        send_button_found = True
+                        break
+                    except Exception as e:
+                        continue
+                
+                if not send_button_found:
+                    # Try pressing Enter key as fallback
+                    try:
+                        message_input.send_keys(Keys.RETURN)
+                        print(f"Message {i} sent using Enter key.", flush=True)
+                    except Exception as e:
+                        print(f"Failed to send message {i}: {e}", flush=True)
+                
+                # Wait between messages
+                time.sleep(2)
+                
+                # Clear the input for next message
+                try:
+                    message_input.clear()
+                except:
+                    driver.execute_script("arguments[0].innerHTML = '';", message_input)
+                
+            except Exception as e:
+                print(f"Error sending message {i}: {e}", flush=True)
+                continue
+        
+        print("Finished sending messages.", flush=True)
+        
+    except Exception as e:
+        print(f"An error occurred while sending messages: {e}", flush=True)
 
 def execute_regular_flow(driver, first_h2_text):
     """Execute the regular message sending flow"""
@@ -765,6 +948,18 @@ def send_messages(driver, first_h2_text):
 
 def extract_contact_details(driver):
     """Extract and send contact details to dashboard"""
+    try:
+        # Wait for view more button to be available
+        view_more_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", view_more_button)
+        time.sleep(1)
+        view_more_button.click()
+        print("Clicked the 'View More' button.", flush=True)
+        time.sleep(3)  # Give more time for the page to load
+    except Exception as e:
+        print(f"Error clicking View More button: {e}", flush=True)
     try:
         # Extract and print contact details with multiple fallback selectors
         left_name = None
@@ -1054,35 +1249,34 @@ def redirect_and_refresh(driver, wait):
             time.sleep(10)  # Static wait
 
             # Click the 'India' label after redirecting back to the first URL
+            
+            driver.refresh()
+            time.sleep(3)  # Static wait
+
+            # First try to remove the overlay if it exists
             try:
-                driver.refresh()
-                time.sleep(3)  # Static wait
-
-                # First try to remove the overlay if it exists
-                try:
-                    overlay = driver.find_element(By.CLASS_NAME, "overlay_fltr")
-                    if overlay.is_displayed():
-                        # Remove the overlay using JavaScript
-                        driver.execute_script("arguments[0].style.display = 'none';", overlay)
-                        print("Removed overlay element blocking the India label.")
-                        time.sleep(2)
-                except Exception as e:
-                    print(f"No overlay found or couldn't remove it: {e}")
-                
-                india_label = driver.find_element(By.XPATH, "//label[contains(text(), 'India')]")
-                india_label.click()
-                print("Clicked the 'India' label.",flush=True)
-                
-                time.sleep(5)
-                
+                overlay = driver.find_element(By.CLASS_NAME, "overlay_fltr")
+                if overlay.is_displayed():
+                    # Remove the overlay using JavaScript
+                    driver.execute_script("arguments[0].style.display = 'none';", overlay)
+                    print("Removed overlay element blocking the India label.")
+                    time.sleep(2)
             except Exception as e:
-                print(f"Failed to click the 'India' label: {e}",flush=True)
-                driver.save_screenshot("screenshot_after_login.png")
-                print("Screenshot saved as screenshot_after_login.png",flush=True)
+                print(f"No overlay found or couldn't remove it: {e}")
+            
+            try:
+                all_india_label = driver.find_element(By.ID, "location_2")
+                all_india_label.click()
+                print("Clicked the 'All India' label.", flush=True)
+            except Exception as e:
+                print(f"Failed to click the 'All India' label: {e}", flush=True)
+                driver.save_screenshot("screenshot_after_all_india_click.png")
+                print("Screenshot saved as screenshot_after_all_india_click.png", flush=True)
+                
 
-            enter_custom_order_value(driver)
+            # enter_custom_order_value(driver)
             time.sleep(3)
-            select_lead_type(driver)
+            # select_lead_type(driver)
 
             # Read the data from the span element with color: rgb(42, 166, 153)
             span_result = False
@@ -1264,7 +1458,8 @@ def execute_task_one(driver, wait):
             print("Clicked 'Sign In' button.")
 
         except (TimeoutException, NoSuchElementException):
-            print("Sign in failed. No such element found.",flush=True)
+            print("Enter password button not found. Please login to your leads provider account first.",flush=True)
+            print("ROUTE_TO:/execute-task",flush=True)
             return "Unsuccessful"
         
         # Final check for dashboard
@@ -1469,7 +1664,7 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
         print("Fetching table data...", flush=True)
         try:
             # Check if table exists with the correct selector based on the HTML structure
-            table_selector = '#Enquiries_reportTableCSS__38-9b'
+            table_selector = '#Enquiries_reportTableCSS__34_qU'
             
             tables_exist = driver.execute_script(f"""
                 return document.querySelector('{table_selector}') !== null;
@@ -1480,7 +1675,7 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
                 
                 # Extract category data (default view - Top Categories tab is active)
                 category_data = driver.execute_script("""
-                    const table = document.querySelector('#Enquiries_reportTableCSS__38-9b');
+                    const table = document.querySelector('#Enquiries_reportTableCSS__34_qU');
                     const rows = Array.from(table.querySelectorAll('tbody tr'));
                     return rows.map(row => {
                         const cells = Array.from(row.querySelectorAll('td'));
@@ -1505,7 +1700,7 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
                         
                         # Extract location data
                         location_data = driver.execute_script("""
-                            const table = document.querySelector('#Enquiries_reportTableCSS__38-9b');
+                            const table = document.querySelector('#Enquiries_reportTableCSS__34_qU');
                             const rows = Array.from(table.querySelectorAll('tbody tr'));
                             return rows.map(row => {
                                 const cells = Array.from(row.querySelectorAll('td'));

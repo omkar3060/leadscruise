@@ -69,8 +69,8 @@ const TaskExecutor = () => {
       setOtpValue('');
       // setOtpRequestId(null);
       alert("OTP submitted successfully!");
-      localStorage.setItem("cancelled", "true");
-      setCancelled(true);
+      // localStorage.setItem("cancelled", "true");
+      // setCancelled(true);
     } catch (error) {
       console.error("Error submitting OTP:", error);
       alert("Failed to submit OTP. Please try again.");
@@ -130,6 +130,8 @@ const TaskExecutor = () => {
       try {
         const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
         if (response.data.otpRequired) {
+          setCancelled(false);
+          localStorage.setItem("cancelled", "false");
           setOtpRequestId(response.data.requestId);
           setOtpType(response.data.type || "login");
           setShowOtpPopup(true);
@@ -204,11 +206,11 @@ const TaskExecutor = () => {
         setStatus("success");
         setMessage("Task executed successfully! Details saved.");
       } else {
-        setStatus("error");
+        // setStatus("error");
         setMessage("Task execution failed.");
       }
     } catch (error) {
-      setStatus("error");
+      // setStatus("error");
       setMessage("An error occurred while executing the task.");
     }
   };
@@ -394,8 +396,8 @@ const TaskExecutor = () => {
                       setOtpValue('');
                       setOtpRequestId(null);
                       setOtpType("login"); // Reset OTP type
-                      setCancelled(true);
-                      localStorage.setItem("cancelled", "true");
+                      // setCancelled(true);
+                      // localStorage.setItem("cancelled", "true");
                     }}
                     className={`${styles['otp-button']} ${styles['otp-button-cancel']}`}
                   >
@@ -524,7 +526,7 @@ const TaskExecutor = () => {
                   }}
                 ></div>
                 <div className="banner1_heading">
-                  Intergrate AI to your Business
+                  Integrate AI to your Business
                 </div>
                 <div className="banner1_content">
                   Let our AI do all the work even while you sleep. With

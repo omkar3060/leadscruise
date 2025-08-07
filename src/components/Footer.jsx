@@ -3,7 +3,7 @@ import './Footer.css';
 
 const Footer = () => {
   const supportEmail = "support@leadscruise.com";
-  const whatsappNumber = "+919148016901"; // Replace with actual support number
+  const whatsappNumber = "+919028662937"; // Replace with actual support number
   
   // Check if current page is dashboard and not mobile
   const isDashboard = window.location.pathname.includes('/dashboard') || 

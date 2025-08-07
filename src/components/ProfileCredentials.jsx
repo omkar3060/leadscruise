@@ -226,6 +226,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       alert(response.data.message);
       setIsEditingSavedPassword(false);
       setSavedNewPassword("");
+      localStorage.setItem("savedPassword", savedNewPassword);
       setShowIndiaMartValidation(false);
     } catch (error) {
       alert("Failed to update password. Try again.");

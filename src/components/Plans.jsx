@@ -100,6 +100,26 @@ const Plans = () => {
 
   const paymentHandler = async (e) => {
     e.preventDefault();
+    const email = localStorage.getItem("userEmail");
+    const contact = localStorage.getItem("mobileNumber");
+    const selectedPlan = localStorage.getItem("selectedPlan");
+
+    // ✅ Block if user already used demo
+    if (selectedPlan === "1-day") {
+      try {
+        const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
+        if (res.data.used) {
+          alert("You have already used the demo subscription. Please choose another plan.");
+          setShowModal(false)
+          return;
+        }
+      } catch (err) {
+        console.error("Error checking demo usage:", err);
+        alert("Unable to validate demo subscription. Please try again.");
+        setShowModal(false);
+        return;
+      }
+    }
 
     try {
       const response = await fetch("https://api.leadscruise.com/order", {
@@ -119,7 +139,7 @@ const Plans = () => {
         image: "https://example.com/your_logo",
         order_id: order.id,
         prefill: {
-          email: localStorage.getItem("userEmail"),
+          email,
           contact: localStorage.getItem("mobileNumber"),
         },
         handler: async function (response) {
@@ -148,6 +168,7 @@ const Plans = () => {
       setTimeout(() => navigate("/check-number"), 2000);
     }
   };
+
 
   const validateRes = async (response) => {
     try {
@@ -329,21 +350,21 @@ const Plans = () => {
             </div>
           </div>
 
-            {/* Demo Plan Section */}
-           <div className="demo-section">
-             <p className="demo-text">
-               <span 
-                 className="demo-link"
-                 onClick={() => {
-                   handlePlanSelect("1-day", 99);
-                   setShowModal(true);
-                 }}
-               >
-                 Want a demo?
-               </span> 
-               Try our service for just 1 day at ₹ 99
-             </p>
-           </div>
+          {/* Demo Plan Section */}
+          <div className="demo-section">
+            <p className="demo-text">
+              <span
+                className="demo-link"
+                onClick={() => {
+                  handlePlanSelect("1-day", 99);
+                  setShowModal(true);
+                }}
+              >
+                Want a demo?
+              </span>
+              Try our service for just 1 day at ₹ 99
+            </p>
+          </div>
 
           <button className="next-button" onClick={handleNextClick}>
             Next

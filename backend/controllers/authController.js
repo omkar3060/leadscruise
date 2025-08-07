@@ -423,12 +423,8 @@ exports.updateSavedPassword = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found." });
 
-    const hashedPassword = await bcrypt.hash(newPassword.toString(), 10);
-
-    console.log("Hashed password:", hashedPassword);
-
     // Update savedPassword in DB
-    user.savedPassword = hashedPassword;
+    user.savedPassword = newPassword;
     await user.save();
 
     res.json({ message: "Saved password updated successfully!" });

@@ -167,6 +167,30 @@ app.post("/api/save-payment", async (req, res) => {
   }
 });
 
+app.get("/api/has-used-demo", async (req, res) => {
+  try {
+    const { contact } = req.query;
+
+    if (!contact) {
+      return res.status(400).json({ error: "Missing contact number" });
+    }
+
+    const existingDemo = await Payment.findOne({
+      contact,
+      subscription_type: "1-day",
+    });
+
+    if (existingDemo) {
+      return res.json({ used: true });
+    } else {
+      return res.json({ used: false });
+    }
+  } catch (error) {
+    console.error("Error checking demo usage:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Helper function to get subscription duration in days based on type
 function getSubscriptionDuration(subscription_type) {
   switch (subscription_type) {
@@ -263,6 +287,7 @@ app.post("/api/execute-task", async (req, res) => {
     "login_check.py",
     mobileNumber,
     newPassword,
+    uniqueId,
   ]);
   activePythonProcesses.set(uniqueId, pythonProcess);
   let result = "";
@@ -442,7 +467,7 @@ app.post("/api/execute-task", async (req, res) => {
         
         // Save new password if it was successfully changed
         if (newPassword) {
-          user.password = newPassword;
+          user.savedPassword = newPassword;
           console.log("New password saved to user record");
         }
         
@@ -869,6 +894,41 @@ app.post("/api/cycle", async (req, res) => {
     if (dataString.includes("OTP_FAILED_INCORRECT")) {
       console.log("Incorrect OTP detected for", uniqueId);
       otpFailures.set(uniqueId, true);
+    }
+
+    // Check for routing instructions from Python script
+    if (dataString.includes("ROUTE_TO:")) {
+      const routeMatch = dataString.match(/ROUTE_TO:(.+)/);
+      if (routeMatch && routeMatch[1]) {
+        const route = routeMatch[1].trim();
+        console.log(`Python script requests routing to: ${route}`);
+        
+        // Store the route information for the frontend to handle
+        if (route === "/execute-task") {
+          // Update user status to indicate login issue
+          (async () => {
+            await User.findOneAndUpdate(
+              { email: userEmail },
+              { status: "Stopped", autoStartEnabled: false },
+              { new: true }
+            );
+            
+            // Send specific response for login issue
+            res.status(400).json({
+              status: "error",
+              message: "Enter password button not found. Please login to your leads provider account first.",
+              route: "/execute-task"
+            });
+            
+            // Kill the Python process since we're handling the response
+            pythonProcess.kill("SIGINT");
+            activePythonProcesses.delete(uniqueId);
+            clearInterval(leadCheckInterval);
+            cleanupDisplay(uniqueId);
+          })();
+          return;
+        }
+      }
     }
 
   });
