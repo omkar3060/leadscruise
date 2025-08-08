@@ -914,11 +914,14 @@ app.post("/api/cycle", async (req, res) => {
             );
             
             // Send specific response for login issue
-            res.status(400).json({
-              status: "error",
-              message: "Enter password button not found. Please login to your leads provider account first.",
-              route: "/execute-task"
-            });
+            if (!responseSent) {
+              res.status(400).json({
+                status: "error",
+                message: "Enter password button not found. Please login to your leads provider account first.",
+                route: "/execute-task"
+              });
+              responseSent = true;
+            }
             
             // Kill the Python process since we're handling the response
             pythonProcess.kill("SIGINT");
@@ -956,12 +959,19 @@ app.post("/api/cycle", async (req, res) => {
       activePythonProcesses.delete(uniqueId);
       clearInterval(leadCheckInterval);
       cleanupDisplay(uniqueId); // Cleanup display lock file
-      res.status(403).json({
-        status: "error",
-        message: "Lead limit reached. Cannot capture more leads today.",
-      });
+      
+      // Only send response if one hasn't been sent already
+      if (!responseSent) {
+        res.status(403).json({
+          status: "error",
+          message: "Lead limit reached. Cannot capture more leads today.",
+        });
+        responseSent = true;
+      }
     }
   }, 3000); // Check every 3 seconds
+
+  let responseSent = false; // Flag to track if response has been sent
 
   pythonProcess.on("close", async (code) => {
     pythonProcess.stdin.end();
@@ -983,13 +993,17 @@ app.post("/api/cycle", async (req, res) => {
       );
     }
 
-    if (code === 0) {
-      res.json({ status: "success", message: "Successfully executed!!" });
-    } else {
-      res.status(500).json({
-        status: "error",
-        message: `AI failed`,
-      });
+    // Only send response if one hasn't been sent already
+    if (!responseSent) {
+      if (code === 0) {
+        res.json({ status: "success", message: "Successfully executed!!" });
+      } else {
+        res.status(500).json({
+          status: "error",
+          message: `AI failed`,
+        });
+      }
+      responseSent = true;
     }
   });
 });

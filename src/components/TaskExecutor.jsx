@@ -104,8 +104,9 @@ const TaskExecutor = () => {
           if (!isAlertShown) {
             // console.log("Showing alert now...");
             const otpTypeText = otpType === "password_change" ? "password change" : "login";
-            alert(`The ${otpTypeText} OTP you entered is incorrect. Please try again.`);
+            alert(`The ${otpTypeText} OTP you entered is incorrect or Something went wrong. Please try again.`);
             localStorage.setItem("otp_alert_shown", "true");
+            setStatus("error");
           } else {
             // console.log("Alert already shown, skipping...");
           }
@@ -164,6 +165,17 @@ const TaskExecutor = () => {
     setStatus("loading");
     setMessage("");
 
+    // Set up timeout to change status to error after 5 minutes
+    const timeoutId = setTimeout(() => {
+      setStatus((currentStatus) => {
+        if (currentStatus === "loading") {
+          setMessage("Task execution timed out after 5 minutes.");
+          return "error";
+        }
+        return currentStatus;
+      });
+    }, 5 * 60 * 1000); // 5 minutes in milliseconds
+
     try {
       // First check if the mobile number is already used by another user
       const checkResponse = await axios.post("https://api.leadscruise.com/api/check-mobile", {
@@ -173,12 +185,14 @@ const TaskExecutor = () => {
 
       // If 409 status, someone else is using it
       if (checkResponse.status === 409) {
+        clearTimeout(timeoutId); // Clear timeout since we're returning early
         setStatus("idle");
         alert("This mobile number is already used by another account.");
         return;
       }
     }
     catch (error) {
+      clearTimeout(timeoutId); // Clear timeout since we're returning early
       if (error.response?.status === 409) {
         setStatus("idle");
         alert("This mobile number is already used by another account.");
@@ -203,6 +217,7 @@ const TaskExecutor = () => {
       );
 
       if (response.data.status === "success") {
+        clearTimeout(timeoutId); // Clear timeout since task completed successfully
         setStatus("success");
         setMessage("Task executed successfully! Details saved.");
       } else {
@@ -240,6 +255,44 @@ const TaskExecutor = () => {
 
   const [tryAgainDisabled, setTryAgainDisabled] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+
+  // Check for existing cooldown on component mount
+  useEffect(() => {
+    const checkExistingCooldown = () => {
+      const cooldownStartTime = localStorage.getItem("tryAgainCooldownStart");
+      if (cooldownStartTime) {
+        const elapsed = Math.floor((Date.now() - parseInt(cooldownStartTime)) / 1000);
+        const remaining = 90 - elapsed;
+
+        if (remaining > 0) {
+          // If there's still cooldown time remaining, set status to error
+          setStatus("error");
+          setTryAgainDisabled(true);
+          setCooldownRemaining(remaining);
+
+          const interval = setInterval(() => {
+            const newRemaining = 90 - Math.floor((Date.now() - parseInt(cooldownStartTime)) / 1000);
+            if (newRemaining <= 0) {
+              setStatus("idle");
+              setTryAgainDisabled(false);
+              setCooldownRemaining(0);
+              localStorage.removeItem("tryAgainCooldownStart");
+              clearInterval(interval);
+            } else {
+              setCooldownRemaining(newRemaining);
+            }
+          }, 1000);
+
+          return () => clearInterval(interval);
+        } else {
+          // Cooldown has expired, clean up
+          localStorage.removeItem("tryAgainCooldownStart");
+        }
+      }
+    };
+
+    checkExistingCooldown();
+  }, []); // Run only on component mount
 
   useEffect(() => {
     if (status === "error") {
