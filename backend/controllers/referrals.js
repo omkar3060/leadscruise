@@ -117,7 +117,7 @@ exports.getReferralById = async (req, res) => {
   try {
     const { id } = req.params;
     const referral = await Referral.findOne({ referralId: id });
-
+    console.log("Fetching referral with ID:", id);
     if (!referral) {
       return res.status(404).json({
         message: "Referral not found",

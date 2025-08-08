@@ -939,7 +939,7 @@ const Team = () => {
     return (
         <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
             {/* {isLoading && <LoadingScreen />} */}
-            {showOtpWaitPopup && !showOtpPopup && !cancelled && (
+            {/* {showOtpWaitPopup && !showOtpPopup && !cancelled && (
                 <div className={styles['otp-popup-overlay']}>
                     <div className={styles['otp-popup-container']}>
                         <h3 className={styles['otp-popup-title']}>Please Wait...</h3>
@@ -948,7 +948,7 @@ const Team = () => {
                         </p>
                     </div>
                 </div>
-            )}
+            )} */}
 
             {showOtpPopup && (
                 <div className={styles['otp-popup-overlay']}>

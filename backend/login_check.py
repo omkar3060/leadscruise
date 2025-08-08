@@ -170,11 +170,11 @@ def execute_task_one(mobile_number, new_password,unique_id):
         try:
             received_otp = None
             otp_event.clear()
-            # otp_request_button = wait.until(
-            #     EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
-            # )
-            # otp_request_button.click()
-            # print("Clicked 'Request OTP on Mobile' button.",flush=True)
+            otp_request_button = wait.until(
+                 EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+             )
+            otp_request_button.click()
+            print("Clicked 'Request OTP on Mobile' button.",flush=True)
             
             # Signal to backend that OTP request has been initiated
             print("OTP_REQUEST_INITIATED",flush=True)

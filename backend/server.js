@@ -13,7 +13,8 @@ const crypto = require("crypto");
 const fs = require("fs");
 const readline = require('readline');
 const Payment = require("./models/Payment");
-const Settings = require('./models/Settings'); // adjust the path if needed
+const Settings = require('./models/Settings'); 
+const BillingDetails = require('./models/billingDetails'); 
 const paymentRoutes = require("./routes/paymentRoutes");
 const emailRoutes = require("./routes/emailRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
@@ -269,6 +270,9 @@ const otpFailures = new Map();
 const activePythonProcesses = new Map(); 
 
 app.post("/api/execute-task", async (req, res) => {
+  // Set a higher timeout for this specific response
+  res.setTimeout(900000); // 15 minutes
+
   const { mobileNumber, email, uniqueId } = req.body;
 
   if (!mobileNumber || !email || !uniqueId) {
@@ -288,7 +292,9 @@ app.post("/api/execute-task", async (req, res) => {
     mobileNumber,
     newPassword,
     uniqueId,
-  ]);
+  ], {
+    timeout: 900000 // 15 minutes timeout
+  });
   activePythonProcesses.set(uniqueId, pythonProcess);
   let result = "";
   let error = "";

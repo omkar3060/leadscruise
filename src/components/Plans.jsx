@@ -52,7 +52,10 @@ const Plans = () => {
   };
 
   // Razorpay Payment Integration
-  const amount = localStorage.getItem("selectedPrice") * 100;
+  const baseAmount = parseInt(localStorage.getItem("selectedPrice"), 10);
+  const amountInPaisa = baseAmount * 100;  // Convert to paisa
+  const gstAmount = Math.round(amountInPaisa * 0.18);  // 18% GST
+  const amount = amountInPaisa + gstAmount;  // Total amount in paisa
   const currency = "INR";
   const receiptId = "qwsaq1";
 
@@ -493,7 +496,7 @@ const Plans = () => {
                   selectedPlan === "three-mo" ? 7999 :
                     selectedPlan === "six-mo" ? 14999 :
                       selectedPlan === "1-day" ? 99 :
-                        29999}</p>
+                        29999} + GST</p>
             </div>
 
             <div className="coupon-section">
