@@ -797,6 +797,26 @@ app.post("/api/cycle", async (req, res) => {
     });
   }
 
+  if (!password) {
+    try {
+      const userFromDb = await User.findOne({ email: userEmail });
+      if (!userFromDb) {
+        return res.status(404).json({
+          status: "error",
+          message: "User not found in database.",
+        });
+      }
+      password = userFromDb.savedPassword; // use saved plain password
+      console.log(`Password taken from DB for ${userEmail}`);
+    } catch (err) {
+      console.error("Error fetching password from DB:", err);
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to fetch password from database.",
+      });
+    }
+  }
+
   // Get current time
   const startTime = new Date();
 

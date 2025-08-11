@@ -355,7 +355,7 @@ def process_single_message(driver, message_element, timestamp, company, return_u
                 print("Skipping this lead due to duplication...", flush=True)
                 return
             print(f"Successfully sent data to dashboard", flush=True)
-            time.sleep(300)
+            time.sleep(10)
         except Exception as e:
             print(f"Error sending data to dashboard: {e}", flush=True)
         
@@ -1331,7 +1331,6 @@ def redirect_and_refresh(driver, wait):
                 else:
                     time_value = 11  # Default to a value greater than 10 mins if parsing fails
 
-                # Check if time is less than 10 minutes
                 time_result = time_value < 1000000
                 print(time_result, flush=True)
 

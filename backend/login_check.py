@@ -458,11 +458,11 @@ def execute_task_one(mobile_number, new_password,unique_id):
                 )
                 request_otp_button.click()
                 print("Clicked 'Request OTP on Mobile' button", flush=True)
-                driver.save_screenshot("otp_request_button.png")
+                # driver.save_screenshot("otp_request_button.png")
                 # Signal to backend that password change OTP request has been initiated
                 print("PASSWORD_OTP_REQUEST_INITIATED", flush=True)
                 print("Password change OTP request initiated", flush=True)
-                driver.save_screenshot("otp_request_button_after.png")
+                # driver.save_screenshot("otp_request_button_after.png")
                 # sys.stdout.flush()
                 
                 # Wait for OTP input fields to appear
@@ -511,7 +511,8 @@ def execute_task_one(mobile_number, new_password,unique_id):
                                         submit_button.click()
                                         print("Clicked submit button for password change", flush=True)
                                         time.sleep(3)
-                                        
+                                        password_changed_successfully = True
+                                        driver.save_screenshot("otp_request_button_after.png")
                                         # Check for success message
                                         try:
                                             success_div = wait.until(EC.visibility_of_element_located((By.ID, "div_succ")))
@@ -640,7 +641,7 @@ def execute_task_one(mobile_number, new_password,unique_id):
                                             print("Clicked submit button for password change in popup", flush=True)
                                             time.sleep(3)
                                             password_changed_successfully = True
-                                            
+                                            driver.save_screenshot("otp_request_button_after.png")
                                             break
                                         except Exception as e:
                                             print(f"Failed to submit password change in popup: {e}", flush=True)
