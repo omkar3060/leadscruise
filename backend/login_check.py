@@ -170,11 +170,27 @@ def execute_task_one(mobile_number, new_password,unique_id):
         try:
             received_otp = None
             otp_event.clear()
-            otp_request_button = wait.until(
-                 EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
-             )
-            otp_request_button.click()
-            print("Clicked 'Request OTP on Mobile' button.",flush=True)
+            
+            # First check if OTP input fields are already present
+            try:
+                otp_fields_visible = driver.find_elements(By.CSS_SELECTOR, "input.mobbox1.f1.border_black1")
+                visible_otp_fields = [el for el in otp_fields_visible if el.is_displayed()]
+                if len(visible_otp_fields) >= 4:
+                    print("OTP input fields already present, skipping OTP request", flush=True)
+                else:
+                    # If OTP fields aren't present, click the request button
+                    otp_request_button = wait.until(
+                        EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+                    )
+                    otp_request_button.click()
+                    print("Clicked 'Request OTP on Mobile' button.", flush=True)
+            except TimeoutException:
+                # If OTP fields aren't found, click the request button
+                otp_request_button = wait.until(
+                    EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+                )
+                otp_request_button.click()
+                print("Clicked 'Request OTP on Mobile' button.", flush=True)
             
             # Signal to backend that OTP request has been initiated
             print("OTP_REQUEST_INITIATED",flush=True)

@@ -639,7 +639,7 @@ const SignIn = () => {
             <p className="priv-p">
               By creating this account, you agree to our{" "}
               <a href="https://leadscruise.com/#faq" className="priv-link">
-                Privacy 
+                Privacy Policy
               </a>{" "}
               &{" "}
               <a href="https://leadscruise.com/#faq" className="priv-link">
