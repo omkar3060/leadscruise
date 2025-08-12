@@ -14,9 +14,8 @@ const Plans = () => {
   const [selectedPlan, setSelectedPlan] = useState(localStorage.getItem("selectedPlan") || "three-mo");
   const navigate = useNavigate();
   const [paymentError, setPaymentError] = useState("");
-
+  const [referralId, setReferralId] = useState("");
   const [showModal, setShowModal] = useState(false);
-
 
   useEffect(() => {
     localStorage.setItem("selectedPlan", selectedPlan);
@@ -42,8 +41,6 @@ const Plans = () => {
     };
     document.body.appendChild(script);
   }, []);
-
-
 
   const handlePlanSelect = (plan, price) => {
     setSelectedPlan(plan);
@@ -106,6 +103,22 @@ const Plans = () => {
     const email = localStorage.getItem("userEmail");
     const contact = localStorage.getItem("mobileNumber");
     const selectedPlan = localStorage.getItem("selectedPlan");
+    if (!referralId.trim()) {
+      alert("Please enter a Referral ID.");
+      return;
+    }
+
+    try {
+      const res = await axios.get(`https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`);
+      if (!res.data.success) {
+        alert("Invalid Referral ID.");
+        return;
+      }
+    } catch (err) {
+      console.error("Error validating referral:", err);
+      alert("Unable to verify Referral ID. Please try again.");
+      return;
+    }
 
     // ✅ Block if user already used demo
     if (selectedPlan === "1-day") {
@@ -113,7 +126,7 @@ const Plans = () => {
         const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
         if (res.data.used) {
           alert("You have already used the demo subscription. Please choose another plan.");
-          setShowModal(false)
+          setShowModal(false);
           return;
         }
       } catch (err) {
@@ -122,8 +135,32 @@ const Plans = () => {
         setShowModal(false);
         return;
       }
+
+      // ✅ Directly create a free demo subscription without payment
+      try {
+        const timestamp = Date.now();
+        await axios.post("https://api.leadscruise.com/api/save-payment", {
+          unique_id: await getNextPaymentId(),
+          email,
+          contact,
+          order_id: `FREE-DEMO-${timestamp}`,
+          payment_id: `FREE-DEMO-${timestamp}`,
+          signature: "FREE",
+          order_amount: 0,
+          subscription_type: "1-day",
+        });
+
+        alert("Demo subscription activated successfully!");
+        navigate("/execute-task");
+        return;
+      } catch (error) {
+        console.error("Error activating demo subscription:", error);
+        setPaymentError("Unable to activate demo. Please try again.");
+        return;
+      }
     }
 
+    // 🛒 For paid plans, proceed with Razorpay flow
     try {
       const response = await fetch("https://api.leadscruise.com/order", {
         method: "POST",
@@ -132,7 +169,6 @@ const Plans = () => {
       });
 
       const order = await response.json();
-
       var options = {
         key: "rzp_live_febmpQBBFIuphK",
         amount,
@@ -141,10 +177,7 @@ const Plans = () => {
         description: "Test Transaction",
         image: "https://example.com/your_logo",
         order_id: order.id,
-        prefill: {
-          email,
-          contact: localStorage.getItem("mobileNumber"),
-        },
+        prefill: { email, contact },
         handler: async function (response) {
           const validationResult = await validateRes(response);
           if (validationResult && validationResult.success) {
@@ -158,12 +191,10 @@ const Plans = () => {
       };
 
       var rzp1 = new window.Razorpay(options);
-
       rzp1.on("payment.failed", function () {
         setPaymentError("Payment unsuccessful. Please try again.");
         setTimeout(() => navigate("/check-number"), 2000);
       });
-
       rzp1.open();
     } catch (error) {
       console.error("Error during payment process:", error);
@@ -171,7 +202,6 @@ const Plans = () => {
       setTimeout(() => navigate("/check-number"), 2000);
     }
   };
-
 
   const validateRes = async (response) => {
     try {
@@ -262,7 +292,7 @@ const Plans = () => {
               <div className="part-1">
                 <div className="heading-row">
                   <h2>One Month Subscription</h2>
-                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                  <div className="coupon-text"></div>
                 </div>
 
                 <p className="first-p">Unlimited AI Leads Capture</p>
@@ -288,7 +318,7 @@ const Plans = () => {
 
                 <div className="heading-row">
                   <h2>3 Months Subscription</h2>
-                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                  <div className="coupon-text"></div>
                 </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
@@ -312,7 +342,7 @@ const Plans = () => {
               <div className="part-1">
                 <div className="heading-row">
                   <h2>6 Months Subscription</h2>
-                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                  <div className="coupon-text"></div>
                 </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
@@ -336,7 +366,7 @@ const Plans = () => {
               <div className="part-1">
                 <div className="heading-row">
                   <h2>One Year Subscription</h2>
-                  <div className="coupon-text">(COUPON : EARLY62)</div>
+                  <div className="coupon-text"></div>
                 </div>
                 <p className="first-p">Unlimited AI Leads Capture</p>
                 <p>AI Business monitoring</p>
@@ -365,7 +395,7 @@ const Plans = () => {
               >
                 Want a demo?
               </span>
-              Try our service for just 1 day at ₹ 99
+              Try our service for 1 day at FREE OF COST!
             </p>
           </div>
 
@@ -495,17 +525,17 @@ const Plans = () => {
                 selectedPlan === "one-mo" ? 2999 :
                   selectedPlan === "three-mo" ? 7999 :
                     selectedPlan === "six-mo" ? 14999 :
-                      selectedPlan === "1-day" ? 99 :
+                      selectedPlan === "1-day" ? 0 :
                         29999} + GST</p>
             </div>
 
             <div className="coupon-section">
-              <label htmlFor="couponInput"><strong>Coupon Code:</strong></label>
+              <label htmlFor="couponInput"><strong>Referral ID:</strong></label>
               <input
                 id="couponInput"
                 type="text"
-                value="EARLY62"
-                readOnly
+                value={referralId}
+                onChange={(e) => setReferralId(e.target.value)}
                 className="coupon-input"
               />
               <p className="coupon-note">(Auto-applied at checkout)</p>

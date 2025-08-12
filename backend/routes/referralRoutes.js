@@ -22,5 +22,6 @@ router.patch("/bulk", referralController.bulkUpdateReferrals);
 
 // Search referrals (Protected Route)
 router.get("/search", referralController.searchReferrals);
+router.get("/check-referral/:id", referralController.checkReferral);
 
 module.exports = router;

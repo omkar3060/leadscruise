@@ -241,3 +241,21 @@ exports.searchReferrals = async (req, res) => {
     });
   }
 };
+
+// routes.js or server.js
+exports.checkReferral = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const referral = await Referral.findOne({ referralId: id, isActive: true });
+    if (!referral) {
+      return res.status(404).json({ success: false, message: "Invalid referral ID" });
+    }
+
+    res.json({ success: true, message: "Referral ID valid" });
+  } catch (error) {
+    console.error("Error checking referral:", error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+

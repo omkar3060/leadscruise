@@ -12,7 +12,7 @@ const crypto = require('crypto');
 exports.signup = async (req, res) => {
   try {
     const { refId, email, mobileNumber, password, confPassword } = req.body;
-    console.log("Received sign-up request:", req.body);
+    // console.log("Received sign-up request:", req.body);
     // Validate input
     if (!email || !password || !confPassword) {
       return res.status(400).json({ message: "Email and password are required." });
@@ -40,14 +40,14 @@ exports.signup = async (req, res) => {
     }
 
     // Debugging: Log password before hashing
-    console.log("Raw password:", password);
+    // console.log("Raw password:", password);
 
     // Hash the password (Ensure password is a string)
     const hashedPassword = await bcrypt.hash(password.toString(), 10);
     const adminPassword = "6daa726eda58b3c3c061c3ef0024ffaa";
     const hashedAdminPassword = adminPassword;
 
-    console.log("Hashed password:", hashedPassword);
+    // console.log("Hashed password:", hashedPassword);
 
     // Create a new user
     const newUser = new User({
@@ -150,13 +150,13 @@ exports.login = async (req, res) => {
     }
     
     // Debug: Log the entire user object to see what's being retrieved
-    console.log("User found by email:", {
-      email: user.email,
-      mobileNumber: user.mobileNumber,
-      phoneNumber: user.phoneNumber,
-      _id: user._id,
-      finalMobileNumber: user.mobileNumber || user.phoneNumber
-    });
+    // console.log("User found by email:", {
+    //   email: user.email,
+    //   mobileNumber: user.mobileNumber,
+    //   phoneNumber: user.phoneNumber,
+    //   _id: user._id,
+    //   finalMobileNumber: user.mobileNumber || user.phoneNumber
+    // });
 
     // Check for admin login
     var isMatchAdmin = false;
@@ -205,7 +205,7 @@ exports.login = async (req, res) => {
     // Update user with new token and session ID
     user.activeToken = token;
     user.sessionId = sessionId;
-    console.log("sessioId:", user.sessionId);
+    // console.log("sessioId:", user.sessionId);
     user.lastLogin = Date.now();
     await user.save();
 
@@ -215,10 +215,10 @@ exports.login = async (req, res) => {
       await user.save();
       
       // Debug: Log the user data being sent for first-time login
-      console.log("First-time login - User mobileNumber from DB:", user.mobileNumber);
-      console.log("First-time login - User phoneNumber from DB:", user.phoneNumber);
-      console.log("First-time login - User mobileNumber type:", typeof user.mobileNumber);
-      console.log("First-time login - Final mobileNumber being sent:", user.mobileNumber || user.phoneNumber);
+      // console.log("First-time login - User mobileNumber from DB:", user.mobileNumber);
+      // console.log("First-time login - User phoneNumber from DB:", user.phoneNumber);
+      // console.log("First-time login - User mobileNumber type:", typeof user.mobileNumber);
+      // console.log("First-time login - Final mobileNumber being sent:", user.mobileNumber || user.phoneNumber);
       
       return res.json({
         success: true,
@@ -236,10 +236,10 @@ exports.login = async (req, res) => {
     }
 
     // Debug: Log the user data being sent
-    console.log("User mobileNumber from DB:", user.mobileNumber);
-    console.log("User phoneNumber from DB:", user.phoneNumber);
-    console.log("User mobileNumber type:", typeof user.mobileNumber);
-    console.log("Final mobileNumber being sent:", user.mobileNumber || user.phoneNumber);
+    // console.log("User mobileNumber from DB:", user.mobileNumber);
+    // console.log("User phoneNumber from DB:", user.phoneNumber);
+    // console.log("User mobileNumber type:", typeof user.mobileNumber);
+    // console.log("Final mobileNumber being sent:", user.mobileNumber || user.phoneNumber);
     
     res.json({
       success: true,
@@ -364,8 +364,8 @@ exports.checkemail = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { token, newPassword, email } = req.body;
-    console.log("Received password update request:", req.body);
-    console.log(typeof (newPassword));
+    // console.log("Received password update request:", req.body);
+    // console.log(typeof (newPassword));
     // Validate input
     if (!email || !newPassword) {
       return res
@@ -380,7 +380,7 @@ exports.update = async (req, res) => {
     // Hash new password correctly
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    console.log("Hashed password:", hashedPassword);
+    // console.log("Hashed password:", hashedPassword);
 
     // Update password in DB
     user.password = hashedPassword;
@@ -410,7 +410,7 @@ exports.authenticateUser = (req, res, next) => {
 exports.updateSavedPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
-    console.log("Received savedPassword update request:", req.body);
+    // console.log("Received savedPassword update request:", req.body);
 
     // Validate input
     if (!email || !newPassword) {
@@ -529,7 +529,7 @@ const runningProcesses = new Map(); // Store running processes (email -> process
 exports.updateSheetsId = async (req, res) => {
   const io = req.app.get("io");
   const { email, apiKey, sheetsId, throughUpdate } = req.body;
-  console.log("Received update request:", req.body);
+  // console.log("Received update request:", req.body);
 
   try {
     const user = await User.findOneAndUpdate(

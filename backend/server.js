@@ -13,8 +13,8 @@ const crypto = require("crypto");
 const fs = require("fs");
 const readline = require('readline');
 const Payment = require("./models/Payment");
-const Settings = require('./models/Settings'); 
-const BillingDetails = require('./models/billingDetails'); 
+const Settings = require('./models/Settings');
+const BillingDetails = require('./models/billingDetails');
 const paymentRoutes = require("./routes/paymentRoutes");
 const emailRoutes = require("./routes/emailRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
@@ -28,7 +28,7 @@ const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
 const teammateRoutes = require('./routes/teammates');
 const server = createServer(app); // ✅ Create HTTP server
-server.setTimeout(15 * 60 * 1000); 
+server.setTimeout(15 * 60 * 1000);
 const io = new Server(server, {
   path: "/socket.io/",
   cors: {
@@ -265,9 +265,9 @@ app.post("/api/check-number", async (req, res) => {
 });
 
 const otpRequests = new Map();
-const otpFailures = new Map(); 
+const otpFailures = new Map();
 
-const activePythonProcesses = new Map(); 
+const activePythonProcesses = new Map();
 
 app.post("/api/execute-task", async (req, res) => {
   // Set a higher timeout for this specific response
@@ -348,20 +348,20 @@ app.post("/api/execute-task", async (req, res) => {
     cleanupDisplay(uniqueId);
     otpRequests.delete(uniqueId);
     otpFailures.delete(uniqueId);
-    
+
     // Clear any pending OTP state
     console.log(`Cleaned up OTP state for uniqueId: ${uniqueId}`);
     if (code === 0) {
       try {
         // Parse the result from Python script
         const resultText = result.trim();
-        
+
         // Extract JSON between separators
         const startMarker = "===RESULT_START===";
         const endMarker = "===RESULT_END===";
         const startIndex = resultText.indexOf(startMarker);
         const endIndex = resultText.indexOf(endMarker);
-        
+
         let extractedData;
         if (startIndex !== -1 && endIndex !== -1) {
           // Extract JSON between markers
@@ -389,15 +389,15 @@ app.post("/api/execute-task", async (req, res) => {
         // Find the user
         let user = await User.findOne({ email });
         if (!user) {
-          return res.status(404).json({ 
-            status: "error", 
-            message: "User not found" 
+          return res.status(404).json({
+            status: "error",
+            message: "User not found"
           });
         }
 
         // Update user record with mobile number
         user.mobileNumber = mobileNumber;
-        
+
         if (mobileNumber && mobileNumber === "9579797269") {
           try {
             // Create Settings entry
@@ -440,9 +440,9 @@ app.post("/api/execute-task", async (req, res) => {
               minOrder: 0,
               leadTypes: []
             };
-            
+
             await Settings.create(settingsData);
-            
+
             // Create BillingDetails entry
             const billingData = {
               email: email,
@@ -453,9 +453,9 @@ app.post("/api/execute-task", async (req, res) => {
               name: "FOCUS ENGINEERING PRODUCTS",
               address: "SR NO 677, BEHIND VISHWAVILAS HOTEL, LANDEWADI, BHOSARI-411039"
             };
-            
+
             await BillingDetails.create(billingData);
-            
+
             console.log("Settings and BillingDetails created for mobile number:", mobileNumber);
           } catch (error) {
             console.error("Error creating Settings/BillingDetails:", error.message);
@@ -470,13 +470,13 @@ app.post("/api/execute-task", async (req, res) => {
         if (mobileNumbers && mobileNumbers.length > 0) {
           user.companyMobileNumbers = mobileNumbers;
         }
-        
+
         // Save new password if it was successfully changed
         if (newPassword) {
           user.savedPassword = newPassword;
           console.log("New password saved to user record");
         }
-        
+
         await user.save();
         console.log("User record updated successfully");
 
@@ -485,7 +485,7 @@ app.post("/api/execute-task", async (req, res) => {
           try {
             // Find existing settings or create new one
             let settings = await Settings.findOne({ userEmail: email });
-            
+
             if (!settings) {
               // Create new settings record
               settings = new Settings({
@@ -503,18 +503,18 @@ app.post("/api/execute-task", async (req, res) => {
                 settings.wordArray = preferredCategories;
                 console.log("Updated wordArray with preferred categories");
               }
-              
+
               if (messageTemplates && messageTemplates.length > 0) {
                 settings.sentences = messageTemplates;
                 console.log("Updated sentences with message templates");
               }
-              
+
               console.log("Updating existing settings record for user:", email);
             }
-            
+
             await settings.save();
             console.log(`Successfully saved settings - Categories: ${preferredCategories ? preferredCategories.length : 0}, Templates: ${messageTemplates ? messageTemplates.length : 0}`);
-            
+
           } catch (settingsError) {
             console.error("Error saving settings:", settingsError);
             // Don't fail the whole request if settings save fails
@@ -528,9 +528,9 @@ app.post("/api/execute-task", async (req, res) => {
 
       } catch (dbError) {
         console.error("Database error:", dbError);
-        return res.status(500).json({ 
-          status: "error", 
-          message: "Database error" 
+        return res.status(500).json({
+          status: "error",
+          message: "Database error"
         });
       }
     } else {
@@ -928,7 +928,7 @@ app.post("/api/cycle", async (req, res) => {
       if (routeMatch && routeMatch[1]) {
         const route = routeMatch[1].trim();
         console.log(`Python script requests routing to: ${route}`);
-        
+
         // Store the route information for the frontend to handle
         if (route === "/execute-task") {
           // Update user status to indicate login issue
@@ -938,7 +938,7 @@ app.post("/api/cycle", async (req, res) => {
               { status: "Stopped", autoStartEnabled: false },
               { new: true }
             );
-            
+
             // Send specific response for login issue
             if (!responseSent) {
               res.status(400).json({
@@ -948,7 +948,7 @@ app.post("/api/cycle", async (req, res) => {
               });
               responseSent = true;
             }
-            
+
             // Kill the Python process since we're handling the response
             pythonProcess.kill("SIGINT");
             activePythonProcesses.delete(uniqueId);
@@ -985,7 +985,7 @@ app.post("/api/cycle", async (req, res) => {
       activePythonProcesses.delete(uniqueId);
       clearInterval(leadCheckInterval);
       cleanupDisplay(uniqueId); // Cleanup display lock file
-      
+
       // Only send response if one hasn't been sent already
       if (!responseSent) {
         res.status(403).json({
@@ -1400,7 +1400,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     await newLead.save();
 
     console.log("Lead Data Stored:", newLead);
-    
+
     // Fetch WhatsApp settings
     const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
 
@@ -1541,7 +1541,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 
     } catch (pythonError) {
       console.error("Error in WhatsApp script execution:", pythonError);
-      
+
       // Return response even if WhatsApp script fails
       return res.json({
         message: "Lead data stored successfully but WhatsApp messaging failed",
