@@ -15,6 +15,7 @@ const readline = require('readline');
 const Payment = require("./models/Payment");
 const Settings = require('./models/Settings');
 const BillingDetails = require('./models/billingDetails');
+const WhatsappSettings = require('./models/WhatsAppSettings');
 const paymentRoutes = require("./routes/paymentRoutes");
 const emailRoutes = require("./routes/emailRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
@@ -273,7 +274,7 @@ app.post("/api/execute-task", async (req, res) => {
   // Set a higher timeout for this specific response
   res.setTimeout(900000); // 15 minutes
 
-  const { mobileNumber, email, uniqueId } = req.body;
+  const { mobileNumber, email, uniqueId, password } = req.body;
 
   if (!mobileNumber || !email || !uniqueId) {
     return res.status(400).json({
@@ -292,6 +293,7 @@ app.post("/api/execute-task", async (req, res) => {
     mobileNumber,
     newPassword,
     uniqueId,
+    password,
   ], {
     timeout: 900000 // 15 minutes timeout
   });
@@ -520,6 +522,39 @@ app.post("/api/execute-task", async (req, res) => {
             // Don't fail the whole request if settings save fails
           }
         }
+        // After successfully saving settings
+        try {
+          const leadNamePlaceholder = "{lead_name}";
+          const productPlaceholder = "{lead_product_requested}";
+
+          const whatsappMessage = `Hi ${leadNamePlaceholder},
+Thank you for contacting ${companyName}. 📬
+ 
+✅ You can post your requirements details for this number 
+else 
+✅ You can contact ${mobileNumbers && mobileNumbers.length > 0 ? mobileNumbers.join(", ") : mobileNumber} or send a mail at support@leadscruise.com for more details on your enquiry of ${productPlaceholder}
+
+We typically respond within some minutes!`;
+
+          // Upsert WhatsApp settings for the user's mobile number
+          await WhatsappSettings.findOneAndUpdate(
+            { mobileNumber }, // match by main mobileNumber
+            {
+              $set: {
+                whatsappNumber: mobileNumber,
+              },
+              $addToSet: {
+                messages: whatsappMessage // avoid duplicates
+              }
+            },
+            { upsert: true, new: true }
+          );
+
+          console.log(`WhatsApp message saved for ${mobileNumber}`);
+        } catch (whatsAppError) {
+          console.error("Error saving WhatsApp settings:", whatsAppError);
+        }
+
 
         return res.json({
           status: "success",
@@ -1856,6 +1891,69 @@ app.get("/api/export-leads/:userMobile", async (req, res) => {
     res.status(500).json({
       error: "Internal server error",
       message: error.message
+    });
+  }
+});
+
+app.post('/api/reset-user-data', async (req, res) => {
+  try {
+    const { userEmail, userMobile } = req.body;
+
+    // Validate input
+    if (!userEmail || !userMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "User email and mobile are required"
+      });
+    }
+
+    // Prevent demo account from deleting data
+    if (userEmail === "demo@leadscruise.com") {
+      return res.status(403).json({
+        success: false,
+        message: "Demo account cannot delete data"
+      });
+    }
+
+    // Optional: Add authentication middleware check here
+    // if (!req.user || req.user.email !== userEmail) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     message: "Unauthorized"
+    //   });
+    // }
+
+    console.log(`Resetting data for user: ${userEmail}, mobile: ${userMobile}`);
+
+    // Delete from Lead collection
+    const deletedLeadsResult = await Lead.deleteMany({
+      user_mobile_number: userMobile
+    });
+
+    // Delete from FetchedLead collection
+    const deletedFetchedLeadsResult = await FetchedLead.deleteMany({
+      user_mobile_number: userMobile
+    });
+
+    console.log(`Deleted ${deletedLeadsResult.deletedCount} leads and ${deletedFetchedLeadsResult.deletedCount} fetched leads`);
+
+    // You might want to save this log to a separate collection
+    // await DeletionLog.create(deletionLog);
+
+    res.status(200).json({
+      success: true,
+      message: "User data reset successfully",
+      deletedLeads: deletedLeadsResult.deletedCount,
+      deletedFetchedLeads: deletedFetchedLeadsResult.deletedCount,
+      totalDeleted: deletedLeadsResult.deletedCount + deletedFetchedLeadsResult.deletedCount
+    });
+
+  } catch (error) {
+    console.error('Reset user data error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

@@ -13,7 +13,7 @@ import "./TaskExecutor.css";
 import "./Plans.css";
 import styles from "./Dashboard.module.css";
 
-const TaskExecutor = () => {
+const TaskExecutor2 = () => {
   const [mobileNumber, setMobileNumber] = useState(localStorage.getItem("mobileNumber") || "");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("idle"); // 'idle', 'loading', 'success', or 'error'
@@ -157,7 +157,7 @@ const TaskExecutor = () => {
     localStorage.setItem("showOtpPopup", "false");
     const email = localStorage.getItem("userEmail");
     const uniqueId = localStorage.getItem("unique_id");
-    if (!mobileNumber || !email) {
+    if (!mobileNumber || !email || !password) {
       setMessage("All fields are required.");
       return;
     }
@@ -180,7 +180,7 @@ const TaskExecutor = () => {
       }
     }
     catch (error) {
-
+      
       if (error.response?.status === 409) {
         setStatus("idle");
         alert("This mobile number is already used by another account.");
@@ -194,14 +194,13 @@ const TaskExecutor = () => {
 
     try {
       localStorage.setItem("savedpassword", password || "");
-
       const response = await axios.post(
         "https://api.leadscruise.com/api/execute-task",
         {
           mobileNumber,
           email,
           uniqueId,
-          password: password || null,
+          password: password || null, 
         }
       );
 
@@ -365,7 +364,7 @@ const TaskExecutor = () => {
                 }}
                 className="input-field"
               />
-              {/* { <div className="password-container">
+              { <div className="password-container">
                 <input
                   type={showPassword ? "text" : "password"} // Toggle type
                   placeholder="Leads Provider Password (Optional)"
@@ -380,28 +379,13 @@ const TaskExecutor = () => {
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
-              </div> } */}
+              </div> }
               <p className="confirm">
                 By Clicking next you confirm to connect to LeadsCruise
               </p>
 
               <button onClick={handleTaskExecution} className="execute-button">
-                Link Using AI
-              </button>
-
-              <div style={{ textAlign: "center", margin: "0px", fontWeight: "500" }}>
-                or
-              </div>
-
-              <button
-                onClick={() => navigate("/link-using-password")}
-                className="execute-button"
-                style={{
-                  backgroundColor: "#555",
-                  color: "white",
-                }}
-              >
-                Link Using Password
+                Next
               </button>
 
               <div className="end-block">
@@ -424,7 +408,7 @@ const TaskExecutor = () => {
                   {otpType === "password_change" ? "Enter Password Change OTP" : "Enter Login OTP"}
                 </h3>
                 <p className={styles['otp-popup-description']}>
-                  {otpType === "password_change"
+                  {otpType === "password_change" 
                     ? "Please enter the 4-digit OTP sent to your mobile number for password change."
                     : "Please enter the 4-digit OTP sent to your mobile number for login."
                   }
@@ -665,4 +649,4 @@ const TaskExecutor = () => {
   );
 };
 
-export default TaskExecutor;
+export default TaskExecutor2;

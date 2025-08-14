@@ -26,6 +26,56 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const [scriptStatus, setScriptStatus] = useState("");
   const [lastTime, setLastTime] = useState(null);
   const isDemoAccount = localStorage.getItem("userEmail") === "demo@leadscruise.com";
+  const [isResetHovering, setIsResetHovering] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleResetUserData = async () => {
+  const userEmail = localStorage.getItem("userEmail");
+  const userMobile = localStorage.getItem("mobileNumber");
+  if (!userEmail || !userMobile) {
+    alert("Something went wrong. Please login again.");
+    return;
+  }
+
+  // Double confirmation
+  const firstConfirm = window.confirm(
+    "⚠️ WARNING: This will permanently delete ALL your leads data!\n\nThis action cannot be undone. Are you sure you want to continue?"
+  );
+  
+  if (!firstConfirm) return;
+
+  setIsResetting(true);
+
+  try {
+    const response = await fetch("https://api.leadscruise.com/api/reset-user-data", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}` // If you use JWT
+      },
+      body: JSON.stringify({
+        userEmail,
+        userMobile
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alert(`✅ Data reset successful!`);
+      
+      // Optionally refresh the page or redirect
+      window.location.reload();
+    } else {
+      alert(`❌ "Failed to reset data"}`);
+    }
+  } catch (error) {
+    console.error("Reset data error:", error);
+    alert("❌ Network error. Please try again.");
+  } finally {
+    setIsResetting(false);
+  }
+};
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -452,13 +502,14 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         {location.pathname === "/profile" ? (
           <>
             {/* Show both Profile & Renew buttons in mobile view */}
-            <div className={styles.profileButtonGroup}>
+            <div className={styles.profileButtonGroup} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
 
               {isMobile && (
                 <button className={styles.profileButton} onClick={toggleProfileDropdown}>
                   <FaUser className={styles.iconOnly} /> <span className={styles.buttonText}>Profile</span>
                 </button>
               )}
+              
               <button
                 className={styles.subscriptionButton}
                 onClick={() => {
@@ -484,6 +535,36 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                     </span>
                   </div>
                 </div>
+              </button>
+
+              {/* Reset User Data Button */}
+              
+              <button
+                className={styles.resetDataButton}
+                onClick={handleResetUserData}
+                onMouseEnter={() => setIsResetHovering(true)}
+                onMouseLeave={() => setIsResetHovering(false)}
+                disabled={localStorage.getItem("userEmail") === "demo@leadscruise.com" || isResetting}
+                style={{
+                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" || isResetting ? "not-allowed" : "pointer",
+                  opacity: localStorage.getItem("userEmail") === "demo@leadscruise.com" || isResetting ? 0.6 : 1,
+                  backgroundColor: isResetHovering ? '#dc3545' : '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  padding: '24px 20px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  whiteSpace: 'nowrap',
+                  margin: '0px'
+                }}
+              >
+                <span>
+                  {isResetting ? "🔄 Resetting..." : isResetHovering ? "⚠️ Reset Data" : "🗑️ Reset"}
+                </span>
               </button>
 
             </div>

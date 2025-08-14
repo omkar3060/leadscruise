@@ -49,6 +49,7 @@ import ExpertsDashboard from "./components/ExpertsDashboard";
 import AITotalLeadsToday from "./components/AITotalLeadsToday";
 import AITotalLeadsThisWeek from "./components/AITotalLeadsThisWeek";
 import AITotalLeadsCaptured from "./components/AITotalLeadsCaptured";
+import TaskExecutor2 from "./components/TaskExecutor2"; 
 
 const Layout = () => {
   const location = useLocation();
@@ -107,6 +108,14 @@ const Layout = () => {
           element={
             <ProtectedRoute>
               <TaskExecutor />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/link-using-password"
+          element={
+            <ProtectedRoute>
+              <TaskExecutor2 />
             </ProtectedRoute>
           }
         />

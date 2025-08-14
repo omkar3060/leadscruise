@@ -528,11 +528,8 @@ const Whatsapp = () => {
                   color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                 }}
                 onClick={() => {
-                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                    alert("You cannot edit in demo account");
-                    return;
-                  }
-                  openModal("sentences");
+                  alert("You cannot edit the messages. They are preset by AI.");
+                  return;
                 }}
               >
                 Edit

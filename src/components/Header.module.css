@@ -1171,3 +1171,91 @@
     margin-right: 0px;
   }
 }
+
+/* Add these styles to your CSS file */
+
+.resetDataButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+  min-width: 80px;
+}
+
+.resetDataButton:hover:not(:disabled) {
+  background-color: #dc3545;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.resetDataButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(220, 53, 69, 0.3);
+}
+
+.resetDataButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.resetDataButton .buttonContent {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.resetDataButton .buttonText {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .profileButtonGroup {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .resetDataButton {
+    margin-left: 0;
+    margin-top: 8px;
+    min-width: 120px;
+  }
+  
+  .resetDataButton .buttonText {
+    font-size: 13px;
+  }
+}
+
+/* Loading state for reset button */
+.resetDataButton.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.resetDataButton.loading::after {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
