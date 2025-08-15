@@ -1439,26 +1439,95 @@ def execute_task_one(driver, wait):
         start_selling_button.click()
         print("Clicked 'Start Selling' button.",flush=True)
 
+        # try:
+        #     enter_password_button = wait.until(
+        #         EC.element_to_be_clickable((By.ID, "passwordbtn1"))
+        #     )
+        #     enter_password_button.click()
+        #     print("Clicked 'Enter Password' button.")
+
+        #     user_password = input_data.get("password", "")
+        #     password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
+        #     password_input.clear()
+        #     password_input.send_keys(user_password)
+        #     print("Entered the password.")
+
+        #     sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
+        #     sign_in_button.click()
+        #     print("Clicked 'Sign In' button.")
+
+        # except (TimeoutException, NoSuchElementException):
+        #     print("Enter password button not found. Please login to your leads provider account first.",flush=True)
+        #     print("ROUTE_TO:/execute-task",flush=True)
+        #     return "Unsuccessful"
+
         try:
-            enter_password_button = wait.until(
-                EC.element_to_be_clickable((By.ID, "passwordbtn1"))
-            )
-            enter_password_button.click()
-            print("Clicked 'Enter Password' button.")
+                # Click 'Request OTP on Mobile' button
+                received_otp = None
+                otp_event.clear()
+                otp_request_button = wait.until(
+                    EC.element_to_be_clickable((By.ID, "reqOtpMobBtn"))
+                )
+                otp_request_button.click()
+                print("Clicked 'Request OTP on Mobile' button.",flush=True)
+                
+                # Signal to backend that OTP request has been initiated
+                print("OTP_REQUEST_INITIATED",flush=True)
+                sys.stdout.flush()
+                
+                # Start OTP listener thread
+                otp_thread = threading.Thread(target=listen_for_otp, daemon=True)
+                otp_thread.start()
+                start_time = time.time()
+                print("Waiting for OTP input...", flush=True)
 
-            user_password = input_data.get("password", "")
-            password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
-            password_input.clear()
-            password_input.send_keys(user_password)
-            print("Entered the password.")
+                while time.time() - start_time < 90:
+                    if otp_event.wait(timeout=5):  # Wait for OTP signal in small chunks
+                        otp_event.clear()  # Reset event for next attempt
 
-            sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
-            sign_in_button.click()
-            print("Clicked 'Sign In' button.")
+                        if received_otp and len(received_otp) == 4 and received_otp.isdigit():
+                            otp_fields = ["first", "second", "third", "fourth_num"]
+                            for i, field_id in enumerate(otp_fields):
+                                try:
+                                    otp_input = wait.until(EC.presence_of_element_located((By.ID, field_id)))
+                                    otp_input.clear()
+                                    otp_input.send_keys(received_otp[i])
+                                except (TimeoutException, NoSuchElementException):
+                                    print(f"Could not find OTP field: {field_id}", flush=True)
+                                    return "Unsuccessful"
 
-        except (TimeoutException, NoSuchElementException):
-            print("Enter password button not found. Please login to your leads provider account first.",flush=True)
-            print("ROUTE_TO:/execute-task",flush=True)
+                            print("Entered OTP successfully.", flush=True)
+
+                            try:
+                                otp_submit_button = wait.until(EC.element_to_be_clickable((By.ID, "sbmtbtnOtp")))
+                                otp_submit_button.click()
+                                print("Clicked 'Submit OTP' button.", flush=True)
+                                time.sleep(2)
+
+                                # Check if OTP was correct
+                                try:
+                                    error_elem = driver.find_element(By.ID, "otp_verify_err")
+                                    if error_elem.is_displayed() and "Incorrect OTP" in error_elem.text:
+                                        print("OTP_FAILED_INCORRECT", flush=True)
+                                        continue  # Allow another attempt if time allows
+                                except NoSuchElementException:
+                                    pass  # No error means success, break out of loop
+                                break
+                            except Exception as e:
+                                print(f"Failed to click OTP submit button: {e}", flush=True)
+                                continue
+                        else:
+                            print("Invalid OTP format received.", flush=True)
+                    else:
+                        print("Still waiting for OTP...", flush=True)
+
+                # Final check after loop ends
+                if time.time() - start_time >= 90:
+                    print("Timeout waiting for correct OTP.", flush=True)
+                    return "Unsuccessful"
+                        
+        except (TimeoutException, NoSuchElementException) as e:
+            print(f"OTP flow failed: {e}",flush=True)
             return "Unsuccessful"
         
         # Final check for dashboard

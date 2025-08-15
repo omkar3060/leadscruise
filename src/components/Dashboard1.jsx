@@ -833,7 +833,7 @@ useEffect(() => {
   return (
     <div className={`${styles.dashboardContainer} ${styles.dashboardHeight}`}>
 
-      {/* {showOtpWaitPopup && !showOtpPopup && !cancelled && (
+      {showOtpWaitPopup && !showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
             <h3 className={styles['otp-popup-title']}>Please Wait...</h3>
@@ -842,9 +842,9 @@ useEffect(() => {
             </p>
           </div>
         </div>
-      )} */}
+      )}
 
-      {/* {showOtpPopup && !cancelled && (
+      {showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
             <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
@@ -890,7 +890,7 @@ useEffect(() => {
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
       {zeroBalanceAlertMemo}
       {/* <ZeroBalanceAlert/> */}

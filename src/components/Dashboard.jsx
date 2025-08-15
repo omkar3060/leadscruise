@@ -792,7 +792,7 @@ const Dashboard = () => {
   return (
     <div className={styles.dashboardContainer}>
 
-      {/* {showOtpWaitPopup && !showOtpPopup && !cancelled && (
+      {showOtpWaitPopup && !showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
             <h3 className={styles['otp-popup-title']}>Please Wait...</h3>
@@ -801,9 +801,9 @@ const Dashboard = () => {
             </p>
           </div>
         </div>
-      )} */}
+      )}
 
-      {/* {showOtpPopup && !cancelled && (
+      {showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
             <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
@@ -848,7 +848,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
       {zeroBalanceAlertMemo}
       {/* <ZeroBalanceAlert/> */}

@@ -389,7 +389,7 @@ const TaskExecutor = () => {
                 Link Using AI
               </button>
 
-              <div style={{ textAlign: "center", margin: "0px", fontWeight: "500" }}>
+              {/* <div style={{ textAlign: "center", margin: "0px", fontWeight: "500" }}>
                 or
               </div>
 
@@ -402,7 +402,7 @@ const TaskExecutor = () => {
                 }}
               >
                 Link Using Password
-              </button>
+              </button> */}
 
               <div className="end-block">
                 <p className="gback" onClick={() => window.location.reload()}>
