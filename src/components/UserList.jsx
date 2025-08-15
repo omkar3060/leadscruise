@@ -77,14 +77,31 @@ const UsersList = () => {
         'Last Login': user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'N/A'
       }))
     );
-    
+
     // Create workbook and add the worksheet
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
-    
+
     // Generate Excel file and download
     XLSX.writeFile(workbook, 'users_list.xlsx');
   };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user and all related data?")) return;
+
+    try {
+      const res = await fetch(`https://api.leadscruise.com/api/delete-user/${userId}`, { method: "DELETE" });
+      const data = await res.json();
+      alert(data.message);
+
+      // Refresh UI
+      setUsers(prev => prev.filter(user => user._id !== userId));
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting user");
+    }
+  };
+
 
   if (error) return <div className={styles.errorMessage}>Error: {error}</div>;
 
@@ -113,8 +130,8 @@ const UsersList = () => {
       <div className={styles.header}>
         <h1>All Users</h1>
         <div className={styles.headerButtons}>
-          <button 
-            className={styles.downloadButton} 
+          <button
+            className={styles.downloadButton}
             onClick={downloadExcel}
             disabled={loading || filteredUsers.length === 0}
           >
@@ -158,6 +175,7 @@ const UsersList = () => {
               <th onClick={() => handleSort('lastLogin')}>
                 Last Login {getSortIndicator('lastLogin')}
               </th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -174,6 +192,22 @@ const UsersList = () => {
                     </span>
                   </td>
                   <td>{new Date(user.lastLogin).toLocaleString() || 'N/A'}</td>
+                  <td>
+                    <button
+                      onClick={() => handleDeleteUser(user._id)}
+                      style={{
+                        backgroundColor: "red",
+                        color: "white",
+                        border: "none",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                        borderRadius: "4px",
+                        margin: "0",
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (

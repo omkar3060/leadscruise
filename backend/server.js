@@ -13,6 +13,9 @@ const crypto = require("crypto");
 const fs = require("fs");
 const readline = require('readline');
 const Payment = require("./models/Payment");
+const IndiaMartAnalytics = require("./models/IndiaMARTAnalytics");
+const Referral = require("./models/Referral");
+const Support = require("./models/Support");
 const Settings = require('./models/Settings');
 const BillingDetails = require('./models/billingDetails');
 const WhatsappSettings = require('./models/WhatsAppSettings');
@@ -532,7 +535,7 @@ Thank you for contacting ${companyName}. 📬
  
 ✅ You can post your requirements details for this number 
 else 
-✅ You can contact ${mobileNumbers && mobileNumbers.length > 0 ? mobileNumbers.join(", ") : mobileNumber} or send a mail at support@leadscruise.com for more details on your enquiry of ${productPlaceholder}
+✅ You can contact ${mobileNumbers && mobileNumbers.length > 0 ? mobileNumbers.join(", ") : mobileNumber} or send a mail at {leadscruise_email} for more details on your enquiry of ${productPlaceholder}
 
 We typically respond within some minutes!`;
 
@@ -1438,6 +1441,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 
     // Fetch WhatsApp settings
     const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
+    const user = await User.findOne({ mobileNumber: user_mobile_number });
 
     if (!settings || !settings.whatsappNumber || !settings.messages) {
       console.warn("No WhatsApp settings found for this user");
@@ -1445,7 +1449,14 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     }
 
     const receiverNumber = mobile; // Use the mobile number from the lead
-    const messagesJSON = JSON.stringify(settings.messages);
+    let templateMessage = settings.messages[0];
+    templateMessage = templateMessage
+      .replace("{lead_name}", name)
+      .replace("{lead_product_requested}", lead_bought)
+      .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
+
+    // Update WhatsApp settings messages to send the updated one
+    const messagesJSON = JSON.stringify([templateMessage]);
     const whatsappNumber = settings.whatsappNumber;
 
     console.log("Launching WhatsApp script with parameters:");
@@ -1955,6 +1966,33 @@ app.post('/api/reset-user-data', async (req, res) => {
       message: "Internal server error",
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+});
+
+app.delete("/api/delete-user/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Delete from all collections
+    await Promise.all([
+      User.deleteOne({ _id: user._id }),
+      BillingDetails.deleteOne({ email: user.email }),
+      IndiaMartAnalytics.deleteMany({ userId: user._id }),
+      Payment.deleteMany({ email: user.email }),
+      Referral.deleteOne({ email: user.email }),
+      Settings.deleteOne({ userEmail: user.email }),
+      Support.deleteMany({ email: user.email }),
+      WhatsappSettings.deleteOne({ mobileNumber: user.mobileNumber }),
+      Lead.deleteMany({ user_mobile_number: user.mobileNumber }),
+      FetchedLead.deleteMany({ user_mobile_number: user.mobileNumber }),
+    ]);
+
+    res.json({ message: "User and all related data deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
