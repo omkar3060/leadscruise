@@ -25,24 +25,36 @@ const CheckNumber = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCheckNumber = async () => {
-    setStatus("loading");
-    try {
-      localStorage.setItem("mobileNumber", mobileNumber);
-      const response = await axios.post(
-        "https://api.leadscruise.com/api/check-number",
-        { mobileNumber }
-      );
-      if (response.data.exists) {
-        setStatus("error");
-      } else {
+const handleCheckNumber = async () => {
+  setStatus("loading");
+  try {
+    localStorage.setItem("mobileNumber", mobileNumber);
+    const response = await axios.post(
+      "https://api.leadscruise.com/api/check-number",
+      { mobileNumber }
+    );
+
+    const data = response.data;
+
+    if (data.exists) {
+      // Number already subscribed
+      setStatus("error");
+      setMessage("Oops, you have already subscribed from this number. Contact Support for more details.");
+    } else {
+      // Handle OTP scenarios
+      if (data.code === 0) {
         setStatus("success");
+        setMessage("Great! You are now eligible to subscribe to Leads Cruise.")
+      } else {
+        setStatus("error");
+        setMessage("Oops, something went wrong. Please try again later.");
       }
-    } catch (error) {
-      setMessage("Error occurred while checking the number.");
-      setStatus("idle");
     }
-  };
+  } catch (error) {
+    setMessage("Error occurred while checking the number.");
+    setStatus("idle");
+  }
+};
 
   const handleLogout = async () => {
     const userEmail = localStorage.getItem("userEmail");
@@ -132,8 +144,7 @@ const CheckNumber = () => {
                 />
               </div>
               <p>
-                Oops, you have already subscribed from this number. Contact
-                Support for more details.
+                {message || "Oops, something went wrong. Please try again later."}
               </p>
               <button
                 onClick={() => setStatus("idle")}

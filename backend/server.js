@@ -226,24 +226,21 @@ app.use("/api/whatsapp-settings", whatsappSettingsRoutes);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/support", supportRoutes);
 app.use('/api/teammates', teammateRoutes);
-// API Endpoint to check if a number exists in the database
+
 app.post("/api/check-number", async (req, res) => {
   try {
     const { mobileNumber } = req.body;
 
-    // Validate input
     if (!mobileNumber) {
       return res.status(400).json({ message: "Mobile number is required." });
     }
 
-    // Skip existence check for the special number 9579797269
     if (mobileNumber === "9579797269") {
       return res.json({ exists: false, message: "Number is not subscribed." });
     }
 
-    // Check if the number exists in the userSchema
+    // Step 1: DB check
     const existingUser = await User.findOne({ mobileNumber });
-
     if (existingUser) {
       return res.json({
         exists: true,
@@ -256,9 +253,36 @@ app.post("/api/check-number", async (req, res) => {
           role: existingUser.role,
         },
       });
-    } else {
-      return res.json({ exists: false, message: "Number is not subscribed." });
     }
+
+    // Step 2: Run Python script
+    const python = spawn("python3", ["indiamart_link_check.py", mobileNumber]);
+
+    // Capture Python stdout (your print statements)
+    python.stdout.on("data", (data) => {
+      console.log(`Python stdout: ${data.toString()}`);
+    });
+
+    // Capture Python errors
+    python.stderr.on("data", (data) => {
+      console.error(`Python stderr: ${data.toString()}`);
+    });
+
+    // Handle exit
+    python.on("exit", (code) => {
+      console.log(`Python script exited with code ${code}`);
+
+      // Cleanup Xvfb display after script execution
+      cleanupDisplay("100000");
+
+      if (code === 0) {
+        return res.json({ exists: false, otp: "request_button", code: 0 });
+      } else if (code === 1) {
+        return res.json({ exists: false, otp: "fields_visible", code: 1 });
+      } else {
+        return res.json({ exists: false, otp: "unknown_state", code: 2 });
+      }
+    });
   } catch (error) {
     console.error("Error checking number:", error.message);
     res.status(500).json({
