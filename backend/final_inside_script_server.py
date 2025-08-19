@@ -1248,7 +1248,7 @@ def redirect_and_refresh(driver, wait):
             driver.get(first_url)
             time.sleep(10)  # Static wait
 
-            # Click the 'India' label after redirecting back to the first URL
+            # Optional: Click the 'India' label after redirecting back to the first URL
             
             driver.refresh()
             time.sleep(3)  # Static wait
@@ -1264,15 +1264,14 @@ def redirect_and_refresh(driver, wait):
             except Exception as e:
                 print(f"No overlay found or couldn't remove it: {e}")
             
+            # Attempt to click 'All India' label - but don't fail if it doesn't work
             try:
                 all_india_label = driver.find_element(By.ID, "location_2")
                 all_india_label.click()
-                print("Clicked the 'All India' label.", flush=True)
+                print("Successfully clicked the 'All India' label.", flush=True)
             except Exception as e:
-                print(f"Failed to click the 'All India' label: {e}", flush=True)
-                driver.save_screenshot("screenshot_after_all_india_click.png")
-                print("Screenshot saved as screenshot_after_all_india_click.png", flush=True)
-                
+                print(f"Could not click the 'All India' label, but continuing anyway: {e}", flush=True)
+                # Continuing execution regardless of success/failure
 
             # enter_custom_order_value(driver)
             time.sleep(3)
@@ -1409,8 +1408,7 @@ def redirect_and_refresh(driver, wait):
             return
     except Exception as e:
         print(f"Error while checking buyer balance: {e}",flush=True)
-        return
-    
+        return 
 def execute_task_one(driver, wait):
     """
     Executes the login process, supporting both password and OTP flows.
