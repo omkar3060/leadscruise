@@ -165,6 +165,12 @@ app.post("/api/save-payment", async (req, res) => {
 
     await payment.save();
 
+    await User.findOneAndUpdate(
+      { email },                          // find user by email
+      { $set: { mobileNumber: contact } }, // update mobileNumber
+      { new: true, upsert: false }        // don't create a new user if not exists
+    );
+
     res.json({ success: true, message: "Payment details saved successfully" });
   } catch (error) {
     console.error("Error saving payment details:", error);

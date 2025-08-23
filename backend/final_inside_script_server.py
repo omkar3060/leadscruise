@@ -1383,26 +1383,26 @@ def redirect_and_refresh(driver, wait):
                 print("Waiting for 10 seconds...",flush=True)
                 time.sleep(10)  # Static wait for refresh
             # If both span_result and h2_result are false, click the hide button
-            elif not span_result or not h2_result:
-                try:
-                    # First try to remove the overlay if it exists (same logic as for India label)
-                    try:
-                        overlay = driver.find_element(By.CLASS_NAME, "overlay_fltr")
-                        if overlay.is_displayed():
-                            # Remove the overlay using JavaScript
-                            driver.execute_script("arguments[0].style.display = 'none';", overlay)
-                            print("Removed overlay element blocking the hide button.")
-                            time.sleep(2)
-                    except Exception as e:
-                        print(f"No overlay found or couldn't remove it: {e}")
+            # elif not span_result or not h2_result:
+            #     try:
+            #         # First try to remove the overlay if it exists (same logic as for India label)
+            #         try:
+            #             overlay = driver.find_element(By.CLASS_NAME, "overlay_fltr")
+            #             if overlay.is_displayed():
+            #                 # Remove the overlay using JavaScript
+            #                 driver.execute_script("arguments[0].style.display = 'none';", overlay)
+            #                 print("Removed overlay element blocking the hide button.")
+            #                 time.sleep(2)
+            #         except Exception as e:
+            #             print(f"No overlay found or couldn't remove it: {e}")
                     
-                    # Find and click the hide button using the provided HTML structure
-                    hide_button = driver.find_element(By.ID, "hidebl1")
-                    hide_button.click()
-                    print("Clicked the hide button to hide the card.",flush=True)
-                    time.sleep(3)  # Wait for the hide action to complete
-                except Exception as e:
-                    print(f"Failed to click the hide button: {e}",flush=True)
+            #         # Find and click the hide button using the provided HTML structure
+            #         hide_button = driver.find_element(By.ID, "hidebl1")
+            #         hide_button.click()
+            #         print("Clicked the hide button to hide the card.",flush=True)
+            #         time.sleep(3)  # Wait for the hide action to complete
+            #     except Exception as e:
+            #         print(f"Failed to click the hide button: {e}",flush=True)
         else:
             print("ZERO_BALANCE_DETECTED", flush=True)
             return
