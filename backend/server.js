@@ -52,6 +52,7 @@ app.use(
   })
 );
 const User = require("./models/userModel");
+console.log("Attempting to connect to MongoDB with URI:", process.env.MONGODB_URI);
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGODB_URI, {
@@ -677,7 +678,45 @@ app.post("/api/update-max-captures", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+// GET endpoint to fetch the user's selected states
+app.get("/api/get-states", async (req, res) => {
+  try {
+    const { userEmail } = req.query;
+    if (!userEmail) {
+      return res.status(400).json({ message: "User email is required" });
+    }
+    const settings = await Settings.findOne({ userEmail });
+    if (!settings) {
+      return res.json({ states: [] });
+    }
+    res.json({ states: settings.selectedStates || [] });
+  } catch (error) {
+    console.error("Error fetching states:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
+// POST endpoint to update the user's selected states
+app.post("/api/update-states", async (req, res) => {
+  try {
+    const { userEmail, states } = req.body;
+    if (!userEmail || !Array.isArray(states)) {
+      return res.status(400).json({ message: "Invalid request data" });
+    }
+    const updatedSettings = await Settings.findOneAndUpdate(
+      { userEmail: userEmail },
+      { $set: { selectedStates: states } },
+      { new: true, upsert: true }
+    );
+    res.json({
+      message: "States updated successfully",
+      settings: updatedSettings,
+    });
+  } catch (error) {
+    console.error("Error updating states:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 app.get("/api/get-max-captures", async (req, res) => {
   try {
     const { user_mobile_number } = req.query;
@@ -798,7 +837,7 @@ const SUBSCRIPTION_DURATIONS = {
 //       }
 
 //       try {
-//         await axios.post("https://api.leadscruise.com/api/cycle", {
+//         await axios.post("http://localhost:5000/api/cycle", {
 //           sentences: settings.sentences,
 //           wordArray: settings.wordArray,
 //           h2WordArray: settings.h2WordArray,

@@ -1,8 +1,127 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ProfileCredentials.css";
+import { FaChevronDown } from "react-icons/fa";
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];//734961
+// --- A NEW, SELF-CONTAINED DROPDOWN COMPONENT --- 734961 start
+const StatesDropdown = ({ userEmail }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedStates, setSelectedStates] = useState([]);
+  const [tempStates, setTempStates] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const fetchStates = useCallback(async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/get-states?userEmail=${userEmail}`);
+      if (response.data && response.data.states) {
+        setSelectedStates(response.data.states);
+        setTempStates(response.data.states);
+      }
+    } catch (error) {
+      console.error("Failed to fetch selected states:", error);
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (userEmail) {
+      fetchStates();
+    }
+  }, [userEmail, fetchStates]);
+
+  const handleSave = async () => {
+    try {
+      await axios.post("http://localhost:5000/api/update-states", {
+        userEmail,
+        states: tempStates,
+      });
+      setSelectedStates(tempStates);
+      setIsOpen(false);
+      alert("States updated successfully!");
+    } catch (error) {
+      console.error("Error updating states:", error);
+      alert("Failed to update states.");
+    }
+  };
+  
+  const handleStateChange = (state, isChecked) => {
+    if (isChecked) {
+      setTempStates(prev => [...prev, state]);
+    } else {
+      setTempStates(prev => prev.filter(s => s !== state));
+    }
+  };
+
+  const handleAllIndiaChange = (isChecked) => {
+    setTempStates(isChecked ? [...indianStates] : []);
+  };
+
+  const filteredStates = indianStates.filter(state =>
+    state.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="credentials-section">
+      <div className="credentials-header">States</div>
+      <div className="max-captures-content">
+        <div className="dropdown-container">
+          <div className="dropdown-header">
+            <span className="credential-value">
+              {
+                selectedStates.length === 0 ? "None selected" :
+                selectedStates.length === indianStates.length ? "ALL INDIA" :
+                `${selectedStates.length} states selected`
+              }
+            </span>
+            <button className="edit-max-captures" onClick={() => setIsOpen(!isOpen)}>
+              <FaChevronDown style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+            </button>
+          </div>
+          {isOpen && (
+            <div className="dropdown-menu">
+              <input
+                type="text"
+                placeholder="Search for a state..."
+                className="dropdown-search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className="dropdown-list">
+                <label className="checkbox-label styled-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={tempStates.length === indianStates.length}
+                    onChange={(e) => handleAllIndiaChange(e.target.checked)}
+                  />
+                  <span className="checkmark" />
+                  <strong>ALL INDIA</strong>
+                </label>
+                {filteredStates.map(state => (
+                  <label key={state} className="checkbox-label styled-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={tempStates.includes(state)}
+                      onChange={(e) => handleStateChange(state, e.target.checked)}
+                    />
+                    <span className="checkmark" />
+                    {state}
+                  </label>
+                ))}
+              </div>
+              <div className="dropdown-actions">
+                <button className="edit-max-captures save-btn" onClick={handleSave}>
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};//734961 stop
 const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   setNewWhatsappNumber,
   isEditingWhatsapp,
@@ -29,8 +148,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const [savedNewPassword, setSavedNewPassword] = useState("");
   const [leadTypes, setLeadTypes] = useState([]); // Final selected types
   const [tempLeadTypes, setTempLeadTypes] = useState([]); // Temp for editing
-  const [isEditingLeadTypes, setIsEditingLeadTypes] = useState(false);
-
+  const [isEditingLeadTypes, setIsEditingLeadTypes] = useState(false);//734961(end)
   // Separate validation states for each password field
   const [showLeadsCruiseValidation, setShowLeadsCruiseValidation] = useState(false);
   const [showIndiaMartValidation, setShowIndiaMartValidation] = useState(false);
@@ -40,7 +158,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const [isIndiaMartPasswordFocused, setIsIndiaMartPasswordFocused] = useState(false);
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-  const [now, setNow] = useState(Date.now());
+ // const [now, setNow] = useState(Date.now());
   const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
@@ -123,7 +241,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-max-captures", {
+      const response = await axios.post("http://localhost:5000/api/update-max-captures", {
         user_mobile_number: userMobileNumber,
         maxCaptures: tempCaptures,
       });
@@ -145,7 +263,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     const fetchMaxCaptures = async () => {
       try {
         const userMobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`https://api.leadscruise.com/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
+        const response = await axios.get(`http://localhost:5000/api/get-max-captures?user_mobile_number=${userMobileNumber}`);
 
         if (response.data) {
           setMaxCaptures(response.data.maxCaptures);
@@ -171,7 +289,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     const fetchMinOrder = async () => {
       try {
         const userEmail = localStorage.getItem("userEmail"); // adjust key if needed
-        const response = await axios.get(`https://api.leadscruise.com/api/get-min-order?userEmail=${userEmail}`);
+        const response = await axios.get(`http://localhost:5000/api/get-min-order?userEmail=${userEmail}`);
 
         if (response.data) {
           setminOrder(response.data.minOrder);
@@ -183,6 +301,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
 
     fetchMinOrder();
   }, []);
+// --- Handler Functions for States ---734961(start) to line 248 maybe
 
   // Function to handle password update for LeadsCruise
   const handlePasswordUpdate = async () => {
@@ -194,7 +313,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-password", {
+      const response = await axios.post("http://localhost:5000/api/update-password", {
         email: localStorage.getItem("userEmail"),
         newPassword,
       });
@@ -218,7 +337,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-saved-password", {
+      const response = await axios.post("http://localhost:5000/api/update-saved-password", {
         email: localStorage.getItem("userEmail"),
         newPassword: savedNewPassword,
       });
@@ -251,7 +370,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     if (!confirmed) return;
 
     try {
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/whatsapp-logout", {
+      const res = await fetch("http://localhost:5000/api/whatsapp-settings/whatsapp-logout", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
@@ -319,7 +438,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-min-order", {
+      const response = await axios.post("http://localhost:5000/api/update-min-order", {
         userEmail,
         minOrder: tempMin,
       });
@@ -347,7 +466,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         return;
       }
 
-      const response = await axios.post("https://api.leadscruise.com/api/update-lead-types", {
+      const response = await axios.post("http://localhost:5000/api/update-lead-types", {
         userEmail,
         leadTypes: tempLeadTypes,
       });
@@ -366,7 +485,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       try {
         const userEmail = localStorage.getItem("userEmail");
         const response = await axios.get(
-          `https://api.leadscruise.com/api/get-lead-types?userEmail=${userEmail}`
+          `http://localhost:5000/api/get-lead-types?userEmail=${userEmail}`
         );
 
         if (response.data.leadTypes) {
@@ -441,8 +560,11 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
           </div>
         </div>
       )}
-
+{/* --- Use the new self-contained dropdown component --- */}
       {isSettingsPage && !isWhatsAppPage && (
+        <StatesDropdown userEmail={email} />
+      )}
+      {/*isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">
           <div className="credentials-header">Minimum order value</div>
           <div className="max-captures-content">
@@ -476,9 +598,9 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
             )}
           </div>
         </div>
-      )}
+      )*/}
 
-      {isSettingsPage && !isWhatsAppPage && (
+      {/*isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section enhanced-lead-types">
           <div className="credentials-header">Lead Types</div>
 
@@ -540,7 +662,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
             )}
           </div>
         </div>
-      )}
+      )*/}
 
       {isWhatsAppPage && (
         <div className="credentials-section">

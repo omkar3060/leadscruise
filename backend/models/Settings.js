@@ -7,6 +7,7 @@ const SettingsSchema = new mongoose.Schema({
   h2WordArray: { type: [String], default: [] },
   minOrder: { type: Number, default: 0 },
   leadTypes: { type: [String], default: [] },
+  selectedStates: { type: [String], default: [] }, // <-- ADD THIS LINE
 });
 
 module.exports = mongoose.model("Settings", SettingsSchema);

@@ -98,7 +98,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
     if (!token || !sessionId || password === "6daa726eda58b3c3c061c3ef0024ffaa") return;
     
     try {
-      const response = await fetch('https://api.leadscruise.com/api/verify-session', {
+      const response = await fetch('http://localhost:5000/api/verify-session', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

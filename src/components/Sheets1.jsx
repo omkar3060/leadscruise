@@ -79,7 +79,7 @@ const Sheets = () => {
       }
 
       const response = await fetch(
-        `https://api.leadscruise.com/api/user/balance?email=${userEmail}`
+        `http://localhost:5000/api/user/balance?email=${userEmail}`
       );
       const data = await response.json();
 
@@ -175,7 +175,7 @@ const Sheets = () => {
         }
 
         const response = await axios.get(
-          `https://api.leadscruise.com/api/get-status/${userEmail}`
+          `http://localhost:5000/api/get-status/${userEmail}`
         );
         setStatus(response.data.status || "Stopped");
         localStorage.setItem("status", response.data.status || "Stopped");
@@ -241,7 +241,7 @@ const Sheets = () => {
       }
       try {
         const response = await axios.get(
-          `https://api.leadscruise.com/api/get-settings/${userEmail}`
+          `http://localhost:5000/api/get-settings/${userEmail}`
         );
         const userSettings = response.data; // Extracting 'settings' from response
 
@@ -277,7 +277,7 @@ const Sheets = () => {
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
 
-      await axios.post("https://api.leadscruise.com/api/submit-otp", {
+      await axios.post("http://localhost:5000/api/submit-otp", {
         otp: otpValue,
         userEmail,
         uniqueId,
@@ -308,7 +308,7 @@ const Sheets = () => {
       // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
 
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
+        const response = await axios.get(`http://localhost:5000/api/check-otp-failure/${uniqueId}`);
         // console.log("API Response:", response.data);
 
         if (response.data.otpFailed) {
@@ -355,7 +355,7 @@ const Sheets = () => {
       if (cancelled || status !== "Running") return;
 
       try {
-        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
+        const response = await axios.get(`http://localhost:5000/api/check-otp-request/${uniqueId}`);
         if (response.data.otpRequired) {
           setOtpRequestId(response.data.requestId);
           setShowOtpPopup(true);
@@ -398,7 +398,7 @@ const Sheets = () => {
       }
       try {
         const credCheckRes = await axios.get(
-          `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
+          `http://localhost:5000/api/check-user-credentials/${userEmail}`
         );
         if (credCheckRes.status !== 200) {
           alert("Please login to your leads provider account first.");
@@ -429,7 +429,7 @@ const Sheets = () => {
       }
 
       const detailsResponse = await fetch(
-        `https://api.leadscruise.com/api/billing/${userEmail}`
+        `http://localhost:5000/api/billing/${userEmail}`
       );
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
@@ -439,7 +439,7 @@ const Sheets = () => {
 
       // Fetch settings
       const response = await axios.get(
-        `https://api.leadscruise.com/api/get-settings/${userEmail}`
+        `http://localhost:5000/api/get-settings/${userEmail}`
       );
       const userSettings = response.data;
       console.log("Fetched settings:", userSettings);
@@ -468,7 +468,7 @@ const Sheets = () => {
 
       // Send the fetched settings instead of using the state
       const cycleResponse = await axios.post(
-        "https://api.leadscruise.com/api/cycle",
+        "http://localhost:5000/api/cycle",
         {
           sentences: userSettings.sentences,
           wordArray: userSettings.wordArray,
@@ -566,7 +566,7 @@ const Sheets = () => {
 
       try {
         const response = await axios.post(
-          "https://api.leadscruise.com/api/stop",
+          "http://localhost:5000/api/stop",
           { userEmail, uniqueId }
         );
         alert(response.data.message);
@@ -617,7 +617,7 @@ const Sheets = () => {
 
       try {
         const credCheckRes = await axios.get(
-          `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
+          `http://localhost:5000/api/check-user-credentials/${userEmail}`
         );
         if (credCheckRes.status !== 200) {
           alert("Please login to your leads provider account first.");
@@ -644,7 +644,7 @@ const Sheets = () => {
       }
 
       const cycleResponse = await axios.post(
-        "https://api.leadscruise.com/api/start-fetching-leads",
+        "http://localhost:5000/api/start-fetching-leads",
         {
           mobileNumber,
           password,
@@ -743,7 +743,7 @@ const Sheets = () => {
       updateSettingsInStorage(updatedSettings);
 
       // Make API call to update database
-      const response = await fetch('https://api.leadscruise.com/api/settings/toggle-rejected-lead', {
+      const response = await fetch('http://localhost:5000/api/settings/toggle-rejected-lead', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -796,7 +796,7 @@ const Sheets = () => {
       }
 
       const response = await axios.get(
-        `https://api.leadscruise.com/api/get-user-leads/${userMobile}`
+        `http://localhost:5000/api/get-user-leads/${userMobile}`
       );
 
       if (response.status === 200) {
@@ -819,7 +819,7 @@ const Sheets = () => {
     const fetchMessageCount = async () => {
       try {
         const mobileNumber = localStorage.getItem("mobileNumber");
-        const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
+        const response = await axios.get(`http://localhost:5000/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
 
         setMessageCount(response.data.messageCount);
       } catch (error) {

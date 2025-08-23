@@ -39,13 +39,13 @@ const UserStatus = () => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("https://api.leadscruise.com/api/users", {
+        const response = await axios.get("http://localhost:5000/api/users", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
 
-        const paymentResponse = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
+        const paymentResponse = await axios.get("http://localhost:5000/api/get-all-subscriptions", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }

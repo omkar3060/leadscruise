@@ -11,7 +11,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const socket = io("https://api.leadscruise.com", {
+  const socket = io("http://localhost:5000", {
     path: "/socket.io/", // ✅ Ensure correct path
     transports: ["websocket"], // ✅ Force WebSocket
     secure: true,
@@ -34,7 +34,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     if (userEmail) {
       const interval = setInterval(() => {
         axios
-          .post("https://api.leadscruise.com/api/check-script-status", { email: userEmail })
+          .post("http://localhost:5000/api/check-script-status", { email: userEmail })
           .then((response) => {
             if (response.data.success) {
               setIsRunning(response.data.isRunning);
@@ -49,7 +49,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
 
   useEffect(() => {
     if (isOpen && userEmail) {
-      axios.get(`https://api.leadscruise.com/api/billing/${userEmail}`)
+      axios.get(`http://localhost:5000/api/billing/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setBillingDetails(response.data.data);
@@ -59,7 +59,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
         })
         .catch((error) => console.error("Error fetching billing details:", error));
 
-      axios.get(`https://api.leadscruise.com/api/get-api-key/${userEmail}`)
+      axios.get(`http://localhost:5000/api/get-api-key/${userEmail}`)
         .then((response) => {
           if (response.data.success) {
             setApiKey(response.data.user.apiKey || "Not Available");
@@ -90,7 +90,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     formData.append("invoice", selectedFile);
 
     try {
-      await axios.post(`https://api.leadscruise.com/api/upload-invoice/${unique_id}`, formData, {
+      await axios.post(`http://localhost:5000/api/upload-invoice/${unique_id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       alert("Invoice uploaded successfully!");
@@ -110,7 +110,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     setLoading(true); // Start spinner until update completes
     const throughUpdate = 1;
     try {
-      const response = await axios.post("https://api.leadscruise.com/api/update-sheets-id", {
+      const response = await axios.post("http://localhost:5000/api/update-sheets-id", {
         email: userEmail,
         apiKey,
         sheetsId,
@@ -141,7 +141,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
 
   const handleStop = async () => {
     try {
-      const response = await axios.post("https://api.leadscruise.com/api/stop-api-script", {
+      const response = await axios.post("http://localhost:5000/api/stop-api-script", {
         email: userEmail,
       });
 

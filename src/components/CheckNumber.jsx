@@ -30,7 +30,7 @@ const handleCheckNumber = async () => {
   try {
     localStorage.setItem("mobileNumber", mobileNumber);
     const response = await axios.post(
-      "https://api.leadscruise.com/api/check-number",
+      "http://localhost:5000/api/check-number",
       { mobileNumber }
     );
 
@@ -60,7 +60,7 @@ const handleCheckNumber = async () => {
     const userEmail = localStorage.getItem("userEmail");
   
     try {
-      await axios.post("https://api.leadscruise.com/api/logout", { email: userEmail });
+      await axios.post("http://localhost:5000/api/logout", { email: userEmail });
   
       localStorage.clear();
       sessionStorage.clear(); // Clear session storage as well

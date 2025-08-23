@@ -557,7 +557,7 @@ def execute_task_one(driver, wait):
         return "Unsuccessful"
     
 def send_to_node_api(expert_details):
-    url = "https://api.leadscruise.com/api/support/bulk"
+    url = "http://localhost:5000/api/support/bulk"
 
     payload = []
     for expert in expert_details:

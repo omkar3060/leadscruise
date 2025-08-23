@@ -102,7 +102,7 @@ const SignIn = () => {
       console.log("Google Sign-In Email:", email);
 
       // Send request to backend for login/signup processing
-      const res = await axios.post("https://api.leadscruise.com/api/login", { email, password, emailVerified });
+      const res = await axios.post("http://localhost:5000/api/login", { email, password, emailVerified });
 
       // Store user info and token
       localStorage.setItem("userEmail", email);
@@ -110,7 +110,7 @@ const SignIn = () => {
       localStorage.setItem("role", res.data.user.role);
       localStorage.setItem("sessionId", res.data.sessionId);
       // Check if a payment exists for the user
-      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
 
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
@@ -173,7 +173,7 @@ const SignIn = () => {
           try {
             // Request to force logout from other devices
             console.log("email", email);
-            await axios.post("https://api.leadscruise.com/api/force-logout", { email });
+            await axios.post("http://localhost:5000/api/force-logout", { email });
 
             // Retry Google login
             handleGoogleSignIn();
@@ -202,7 +202,7 @@ const SignIn = () => {
       console.log("GitHub Sign-In Email:", email);
 
       // Send request to backend for login/signup processing
-      const res = await axios.post("https://api.leadscruise.com/api/login", { email, password, emailVerified });
+      const res = await axios.post("http://localhost:5000/api/login", { email, password, emailVerified });
 
       // Store user info and token
       localStorage.setItem("userEmail", email);
@@ -210,7 +210,7 @@ const SignIn = () => {
       localStorage.setItem("role", res.data.user.role);
 
       // Check if a payment exists for the user
-      const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+      const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
 
       if (paymentRes.status === 200 && paymentRes.data.length > 0) {
         if (!res.data.user.mobileNumber || !res.data.user.savedPassword) {
@@ -272,7 +272,7 @@ const SignIn = () => {
           try {
             // Request to force logout from other devices
             console.log("email", email);
-            await axios.post("https://api.leadscruise.com/api/force-logout", { email });
+            await axios.post("http://localhost:5000/api/force-logout", { email });
 
             // Retry Google login
             handleGoogleSignIn();
@@ -298,7 +298,7 @@ const SignIn = () => {
   const handleSignIn = async () => {
     try {
       setIsLoading(true);
-      const res = await axios.post("https://api.leadscruise.com/api/login", {
+      const res = await axios.post("http://localhost:5000/api/login", {
         email,
         password,
       });
@@ -329,7 +329,7 @@ const SignIn = () => {
       if (email === "demo@leadscruise.com" && (password === "Demo@5477" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
         // Check if a payment exists for the demo user
         try {
-          const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+          const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
           if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
             localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
             localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
@@ -364,7 +364,7 @@ const SignIn = () => {
       // Check if a payment exists for the user (only if they don't have mobileNumber)
           try {
           console.warn("Calling payment API for email:", email);
-          const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+          const paymentRes = await axios.get(`http://localhost:5000/api/payments?email=${email}`);
           console.warn("Payment API response status:", paymentRes.status);
           console.warn("Payment API response data:", paymentRes.data);
           console.warn("Payment data length:", paymentRes.data.length);
@@ -409,7 +409,7 @@ const SignIn = () => {
           if (confirmLogout) {
             // Make a request to force logout from other devices
             try {
-              await axios.post("https://api.leadscruise.com/api/force-logout", { email });
+              await axios.post("http://localhost:5000/api/force-logout", { email });
               // Retry login
               handleSignIn();
             } catch (logoutError) {
@@ -433,7 +433,7 @@ const SignIn = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch("https://api.leadscruise.com/api/check-email", {
+      const response = await fetch("http://localhost:5000/api/check-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -449,7 +449,7 @@ const SignIn = () => {
       }
 
       const resetResponse = await fetch(
-        "https://api.leadscruise.com/api/send-reset-email",
+        "http://localhost:5000/api/send-reset-email",
         {
           method: "POST",
           headers: {
