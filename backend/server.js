@@ -243,7 +243,7 @@ app.post("/api/check-number", async (req, res) => {
     }
 
     if (mobileNumber === "9579797269") {
-      return res.json({ exists: false, message: "Number is not subscribed." });
+      return res.json({ code:0, message: "Number is not subscribed." });
     }
 
     // Step 1: DB check
