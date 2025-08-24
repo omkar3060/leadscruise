@@ -72,50 +72,61 @@ const StatesDropdown = ({ userEmail }) => {
               {
                 selectedStates.length === 0 ? "None selected" :
                 selectedStates.length === indianStates.length ? "ALL INDIA" :
-                `${selectedStates.length} states selected`
+                selectedStates.length <= 3 ? selectedStates.join(", ") : // <-- Show names if 3 or less
+                `${selectedStates.length} states selected` // <-- Show count if more than 3
               }
             </span>
-            <button className="edit-max-captures" onClick={() => setIsOpen(!isOpen)}>
-              <FaChevronDown style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-            </button>
+            <button
+  type="button"
+  className="edit-max-captures"
+  onClick={() => setIsOpen(!isOpen)}
+>
+  <FaChevronDown
+    style={{
+      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+      transition: "transform 0.2s"
+    }}
+  />
+</button>
+
           </div>
           {isOpen && (
-            <div className="dropdown-menu">
-              <input
-                type="text"
-                placeholder="Search for a state..."
-                className="dropdown-search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <div className="dropdown-list">
-                <label className="checkbox-label styled-checkbox">
+           <div className="dropdown-menu">
                   <input
-                    type="checkbox"
-                    checked={tempStates.length === indianStates.length}
-                    onChange={(e) => handleAllIndiaChange(e.target.checked)}
+                    type="text"
+                    placeholder="Search for a state..."
+                    className="dropdown-search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                  <span className="checkmark" />
-                  <strong>ALL INDIA</strong>
-                </label>
-                {filteredStates.map(state => (
-                  <label key={state} className="checkbox-label styled-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={tempStates.includes(state)}
-                      onChange={(e) => handleStateChange(state, e.target.checked)}
-                    />
-                    <span className="checkmark" />
-                    {state}
-                  </label>
-                ))}
-              </div>
-              <div className="dropdown-actions">
-                <button className="edit-max-captures save-btn" onClick={handleSave}>
-                  Save
-                </button>
-              </div>
-            </div>
+                  <div className="dropdown-list">
+                    <label className="checkbox-label styled-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={tempStates.length === indianStates.length}
+                        onChange={(e) => handleAllIndiaChange(e.target.checked)}
+                      />
+                      <span className="checkmark" />
+                      <strong>ALL INDIA</strong>
+                    </label>
+                    {filteredStates.map(state => (
+                      <label key={state} className="checkbox-label styled-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={tempStates.includes(state)}
+                          onChange={(e) => handleStateChange(state, e.target.checked)}
+                        />
+                        <span className="checkmark" />
+                        {state}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="dropdown-actions">
+                    <button className="edit-max-captures save-btn" onClick={handleSave}>
+                      Save
+                    </button>
+                  </div>
+                </div>
           )}
         </div>
       </div>
@@ -302,7 +313,8 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     fetchMinOrder();
   }, []);
 // --- Handler Functions for States ---734961(start) to line 248 maybe
-
+  // Fetch saved states when the component loads
+//734961(end)
   // Function to handle password update for LeadsCruise
   const handlePasswordUpdate = async () => {
     try {
