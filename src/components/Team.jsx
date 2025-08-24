@@ -89,7 +89,7 @@ const Team = () => {
 
     const fetchTeammates = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/teammates', {
+            const res = await axios.get('https://api.leadscruise.com/api/teammates', {
                 params: { userEmail }
             });
             setTeammates(res.data);
@@ -105,7 +105,7 @@ const Team = () => {
         }
 
         try {
-            await axios.post('http://localhost:5000/api/teammates', {
+            await axios.post('https://api.leadscruise.com/api/teammates', {
                 name: newName,
                 phone: newPhone,
                 userEmail,
@@ -124,7 +124,7 @@ const Team = () => {
 
     const handleDeleteTeammate = async (index) => {
         try {
-            await axios.delete('http://localhost:5000/api/teammates', {
+            await axios.delete('https://api.leadscruise.com/api/teammates', {
                 data: { userEmail, index },
             });
 
@@ -146,7 +146,7 @@ const Team = () => {
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/user/balance?email=${userEmail}`
+                `https://api.leadscruise.com/api/user/balance?email=${userEmail}`
             );
             const data = await response.json();
 
@@ -242,7 +242,7 @@ const Team = () => {
                 }
 
                 const response = await axios.get(
-                    `http://localhost:5000/api/get-status/${userEmail}`
+                    `https://api.leadscruise.com/api/get-status/${userEmail}`
                 );
                 setStatus(response.data.status || "Stopped");
                 localStorage.setItem("status", response.data.status || "Stopped");
@@ -308,7 +308,7 @@ const Team = () => {
             }
             try {
                 const response = await axios.get(
-                    `http://localhost:5000/api/get-settings/${userEmail}`
+                    `https://api.leadscruise.com/api/get-settings/${userEmail}`
                 );
                 const userSettings = response.data; // Extracting 'settings' from response
 
@@ -344,7 +344,7 @@ const Team = () => {
             const userEmail = localStorage.getItem("userEmail");
             const uniqueId = localStorage.getItem("unique_id");
 
-            await axios.post("http://localhost:5000/api/submit-otp", {
+            await axios.post("https://api.leadscruise.com/api/submit-otp", {
                 otp: otpValue,
                 userEmail,
                 uniqueId,
@@ -371,7 +371,7 @@ const Team = () => {
             const cancelled = localStorage.getItem("cancelled") === "true";
             if (cancelled) return; // 🚫 Skip if cancelled
             try {
-                const response = await axios.get(`http://localhost:5000/api/check-otp-failure/${uniqueId}`);
+                const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
                 if (response.data.otpFailed && !cancelled) { // ✅ Ensure popup doesn't reappear
                     setOtpError("Incorrect OTP. Please try again.");
                     setShowOtpPopup(true);
@@ -405,7 +405,7 @@ const Team = () => {
             if (cancelled || status !== "Running") return;
 
             try {
-                const response = await axios.get(`http://localhost:5000/api/check-otp-request/${uniqueId}`);
+                const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
                 if (response.data.otpRequired) {
                     setOtpRequestId(response.data.requestId);
                     setShowOtpPopup(true);
@@ -433,7 +433,7 @@ const Team = () => {
 
             try {
                 const credCheckRes = await axios.get(
-                    `http://localhost:5000/api/check-user-credentials/${userEmail}`
+                    `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
                 );
                 if (credCheckRes.status !== 200) {
                     alert("Please login to your leads provider account first.");
@@ -464,7 +464,7 @@ const Team = () => {
             }
 
             const detailsResponse = await fetch(
-                `http://localhost:5000/api/billing/${userEmail}`
+                `https://api.leadscruise.com/api/billing/${userEmail}`
             );
             if (!detailsResponse.ok) {
                 alert("Please add your billing details first to start.");
@@ -474,7 +474,7 @@ const Team = () => {
 
             // Fetch settings
             const response = await axios.get(
-                `http://localhost:5000/api/get-settings/${userEmail}`
+                `https://api.leadscruise.com/api/get-settings/${userEmail}`
             );
             const userSettings = response.data;
             console.log("Fetched settings:", userSettings);
@@ -503,7 +503,7 @@ const Team = () => {
 
             // Send the fetched settings instead of using the state
             const cycleResponse = await axios.post(
-                "http://localhost:5000/api/cycle",
+                "https://api.leadscruise.com/api/cycle",
                 {
                     sentences: userSettings.sentences,
                     wordArray: userSettings.wordArray,
@@ -601,7 +601,7 @@ const Team = () => {
 
             try {
                 const response = await axios.post(
-                    "http://localhost:5000/api/stop",
+                    "https://api.leadscruise.com/api/stop",
                     { userEmail, uniqueId }
                 );
                 alert(response.data.message);
@@ -652,7 +652,7 @@ const Team = () => {
 
             try {
                 const credCheckRes = await axios.get(
-                    `http://localhost:5000/api/check-user-credentials/${userEmail}`
+                    `https://api.leadscruise.com/api/check-user-credentials/${userEmail}`
                 );
                 if (credCheckRes.status !== 200) {
                     alert("Please login to your leads provider account first.");
@@ -679,7 +679,7 @@ const Team = () => {
             }
 
             const cycleResponse = await axios.post(
-                "http://localhost:5000/api/start-fetching-leads",
+                "https://api.leadscruise.com/api/start-fetching-leads",
                 {
                     mobileNumber,
                     password,
@@ -778,7 +778,7 @@ const Team = () => {
             updateSettingsInStorage(updatedSettings);
 
             // Make API call to update database
-            const response = await fetch('http://localhost:5000/api/settings/toggle-rejected-lead', {
+            const response = await fetch('https://api.leadscruise.com/api/settings/toggle-rejected-lead', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -826,7 +826,7 @@ const Team = () => {
             setIsLoadingLeads(true);
 
             const response = await axios.get(
-                `http://localhost:5000/api/get-user-leads/${userMobile}`
+                `https://api.leadscruise.com/api/get-user-leads/${userMobile}`
             );
 
             if (response.status === 200) {
@@ -849,7 +849,7 @@ const Team = () => {
         const fetchMessageCount = async () => {
             try {
                 const mobileNumber = localStorage.getItem("mobileNumber");
-                const response = await axios.get(`http://localhost:5000/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
+                const response = await axios.get(`https://api.leadscruise.com/api/whatsapp-settings/get-message-count?mobileNumber=${mobileNumber}`);
 
                 setMessageCount(response.data.messageCount);
             } catch (error) {

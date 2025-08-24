@@ -57,7 +57,7 @@ const TaskExecutor = () => {
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
 
-      await axios.post("http://localhost:5000/api/submit-otp", {
+      await axios.post("https://api.leadscruise.com/api/submit-otp", {
         otp: otpValue,
         userEmail,
         uniqueId,
@@ -88,7 +88,7 @@ const TaskExecutor = () => {
       // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/check-otp-failure/${uniqueId}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
         // console.log("API Response:", response.data);
 
         if (response.data.otpFailed) {
@@ -129,7 +129,7 @@ const TaskExecutor = () => {
       if (cancelled) return;
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/check-otp-request/${uniqueId}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-request/${uniqueId}`);
         if (response.data.otpRequired) {
           setCancelled(false);
           localStorage.setItem("cancelled", "false");
@@ -167,7 +167,7 @@ const TaskExecutor = () => {
 
     try {
       // First check if the mobile number is already used by another user
-      const checkResponse = await axios.post("http://localhost:5000/api/check-mobile", {
+      const checkResponse = await axios.post("https://api.leadscruise.com/api/check-mobile", {
         mobileNumber,
         email,
       });
@@ -196,7 +196,7 @@ const TaskExecutor = () => {
       localStorage.setItem("savedpassword", password || "");
 
       const response = await axios.post(
-        "http://localhost:5000/api/execute-task",
+        "https://api.leadscruise.com/api/execute-task",
         {
           mobileNumber,
           email,
@@ -226,7 +226,7 @@ const TaskExecutor = () => {
     const userEmail = localStorage.getItem("userEmail");
 
     try {
-      await axios.post("http://localhost:5000/api/logout", {
+      await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
 

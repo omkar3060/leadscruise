@@ -18,7 +18,7 @@ const UsersList = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:5000/api/users', {
+        const response = await axios.get('https://api.leadscruise.com/api/users', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -90,7 +90,7 @@ const UsersList = () => {
     if (!window.confirm("Are you sure you want to delete this user and all related data?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/delete-user/${userId}`, { method: "DELETE" });
+      const res = await fetch(`https://api.leadscruise.com/api/delete-user/${userId}`, { method: "DELETE" });
       const data = await res.json();
       alert(data.message);
 

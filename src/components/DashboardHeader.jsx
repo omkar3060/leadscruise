@@ -47,7 +47,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   setIsResetting(true);
 
   try {
-    const response = await fetch("http://localhost:5000/api/reset-user-data", {
+    const response = await fetch("https://api.leadscruise.com/api/reset-user-data", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -86,7 +86,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         return;
       }
       try {
-        const res = await axios.get(`http://localhost:5000/api/user-status?email=${userEmail}`);
+        const res = await axios.get(`https://api.leadscruise.com/api/user-status?email=${userEmail}`);
         setScriptStatus(res.data.status);
         setLastTime(res.data.startTime); // unified field
       } catch (err) {
@@ -122,7 +122,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   // const fetchUserBalance = async () => {
   //   const userEmail = localStorage.getItem("userEmail");
   //   try {
-  //     const response = await fetch(`http://localhost:5000/api/user/balance?email=${(userEmail)}`);
+  //     const response = await fetch(`https://api.leadscruise.com/api/user/balance?email=${(userEmail)}`);
   //     if (!response.ok) {
   //       throw new Error('Failed to fetch balance');
   //     }
@@ -242,7 +242,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           return;
         }
 
-        const response = await axios.get(`http://localhost:5000/api/get-subscription/${userEmail}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/get-subscription/${userEmail}`);
         const { renewal_date, status, unique_id } = response.data;
 
         if (!unique_id) {
@@ -346,7 +346,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     const userEmail = localStorage.getItem("userEmail");
 
     try {
-      await axios.post("http://localhost:5000/api/logout", {
+      await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
 

@@ -843,7 +843,7 @@ const SUBSCRIPTION_DURATIONS = {
 //       }
 
 //       try {
-//         await axios.post("http://localhost:5000/api/cycle", {
+//         await axios.post("https://api.leadscruise.com/api/cycle", {
 //           sentences: settings.sentences,
 //           wordArray: settings.wordArray,
 //           h2WordArray: settings.h2WordArray,
@@ -876,6 +876,7 @@ app.post("/api/cycle", async (req, res) => {
     userEmail,
     minOrder,
     leadTypes,
+    selectedStates,
   } = req.body;
 
   if (!req.body || Object.keys(req.body).length === 0) {

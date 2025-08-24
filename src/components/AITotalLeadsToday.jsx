@@ -15,7 +15,7 @@ const AITotalLeadsToday = () => {
           return;
         }
 
-        const response = await axios.get(`http://localhost:5000/api/get-leads/${mobileNumber}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/get-leads/${mobileNumber}`);
         const data = response.data;
 
         const today = new Date().toISOString().split("T")[0];

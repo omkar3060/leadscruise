@@ -15,7 +15,7 @@ const TotalLeadsAllTime = () => {
           return;
         }
 
-        const response = await axios.get(`http://localhost:5000/api/get-user-leads/${mobileNumber}`);
+        const response = await axios.get(`https://api.leadscruise.com/api/get-user-leads/${mobileNumber}`);
         const data = response.data.leads;
 
         setAllLeads(data);

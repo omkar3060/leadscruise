@@ -69,7 +69,7 @@ export default function Analytics() {
                 // Fetch charts and tables data from the API
 
                 const response = await fetch(
-                    `http://localhost:5000/api/analytics/charts?mobileNumber=${mobileNumber}&savedPassword=${savedPassword}`
+                    `https://api.leadscruise.com/api/analytics/charts?mobileNumber=${mobileNumber}&savedPassword=${savedPassword}`
                 );
 
                 const data = await response.json();

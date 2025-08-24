@@ -57,7 +57,7 @@ const ExpiryThree = () => {
   const fetchSubscriptions = async () => {
     setIsLoading(true);
     try {
-        const response = await axios.get("http://localhost:5000/api/get-all-subscriptions", {
+        const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`
             }
@@ -84,7 +84,7 @@ const ExpiryThree = () => {
       await Promise.all(
         subs.map(async (sub) => {
           try {
-            const response = await axios.get(`http://localhost:5000/api/get-invoice/${sub.unique_id}`, {
+            const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${sub.unique_id}`, {
               responseType: "blob",
               headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`

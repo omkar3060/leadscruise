@@ -36,7 +36,7 @@ const Sidebar = ({ status }) => {
     const userEmail = localStorage.getItem("userEmail");
 
     try {
-      await axios.post("http://localhost:5000/api/logout", {
+      await axios.post("https://api.leadscruise.com/api/logout", {
         email: userEmail,
       });
 
