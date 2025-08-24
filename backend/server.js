@@ -969,6 +969,7 @@ app.post("/api/cycle", async (req, res) => {
     uniqueId,
     minOrder,
     leadTypes,
+    selectedStates,
   });
 
   console.log("Spawning Python process for 'final_inside_script_server.py'...");

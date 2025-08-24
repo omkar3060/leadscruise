@@ -1352,8 +1352,8 @@ def redirect_and_refresh(driver, wait):
             wait_for_overlay_to_disappear(driver, timeout=10)
 
             # Select specific states instead of 'All India'
-            selected_states = ["Maharashtra", "Karnataka", "Delhi"]
-            
+            selected_states = input_data.get("selectedStates", [])
+
             # Map of alternative state names or spellings in case exact match fails
             state_alternatives = {
                 "Karnataka": ["Karnataka", "Bangalore", "Bengaluru"],
