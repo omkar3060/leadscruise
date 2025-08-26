@@ -639,7 +639,7 @@ app.post("/api/update-max-captures", async (req, res) => {
 
     const { user_mobile_number, maxCaptures } = req.body;
 
-    if (!user_mobile_number || maxCaptures < 1) {
+    if (!user_mobile_number || maxCaptures < 0) {
       return res.status(400).json({ message: "Invalid request data" });
     }
 
@@ -946,19 +946,7 @@ app.post("/api/cycle", async (req, res) => {
     });
     await userCounter.save();
   }
-
-  if (userCounter.leadCount >= userCounter.maxCaptures) {
-    console.log("Lead limit reached. Cannot capture more leads today.");
-    await User.findOneAndUpdate(
-      { email: userEmail },
-      { autoStartEnabled: true },
-      { new: true }
-    );
-    return res.status(403).json({
-      status: "error",
-      message: "Lead limit reached. Cannot capture more leads today.",
-    });
-  }
+  let leadCount = userCounter.leadCount, maxCaptures = userCounter.maxCaptures;
 
   const inputData = JSON.stringify({
     sentences,
@@ -970,6 +958,8 @@ app.post("/api/cycle", async (req, res) => {
     minOrder,
     leadTypes,
     selectedStates,
+    leadCount,
+    maxCaptures,
   });
 
   console.log("Spawning Python process for 'final_inside_script_server.py'...");
@@ -1061,7 +1051,6 @@ app.post("/api/cycle", async (req, res) => {
             // Kill the Python process since we're handling the response
             pythonProcess.kill("SIGINT");
             activePythonProcesses.delete(uniqueId);
-            clearInterval(leadCheckInterval);
             cleanupDisplay(uniqueId);
           })();
           return;
@@ -1077,40 +1066,11 @@ app.post("/api/cycle", async (req, res) => {
   });
   let killedDueToLimit = false;
   // Periodically check if lead limit is exceeded
-  const leadCheckInterval = setInterval(async () => {
-    let updatedUserCounter = await UserLeadCounter.findOne({
-      user_mobile_number: mobileNumber,
-    });
-
-    if (updatedUserCounter.leadCount >= updatedUserCounter.maxCaptures) {
-      console.log("Lead limit exceeded! Killing Python script...");
-      await User.findOneAndUpdate(
-        { email: userEmail },
-        { autoStartEnabled: true },
-        { new: true }
-      );
-      killedDueToLimit = true;
-      pythonProcess.kill("SIGINT"); // Kill the script
-      activePythonProcesses.delete(uniqueId);
-      clearInterval(leadCheckInterval);
-      cleanupDisplay(uniqueId); // Cleanup display lock file
-
-      // Only send response if one hasn't been sent already
-      if (!responseSent) {
-        res.status(403).json({
-          status: "error",
-          message: "Lead limit reached. Cannot capture more leads today.",
-        });
-        responseSent = true;
-      }
-    }
-  }, 3000); // Check every 3 seconds
 
   let responseSent = false; // Flag to track if response has been sent
 
   pythonProcess.on("close", async (code) => {
     pythonProcess.stdin.end();
-    clearInterval(leadCheckInterval); // Stop checking when script completes
     activePythonProcesses.delete(uniqueId); // Remove from tracking
     otpRequests.delete(uniqueId);
     otpFailures.delete(uniqueId);
@@ -1341,14 +1301,6 @@ app.post("/api/store-lead", async (req, res) => {
         user_mobile_number,
         leadCount: 0,
         maxCaptures: 10, // or set a default if needed
-      });
-    }
-
-    // Stop script if limit is reached
-    if (userCounter.leadCount >= userCounter.maxCaptures) {
-      console.log("Lead limit reached for user:", user_mobile_number);
-      return res.status(403).json({
-        error: "Lead limit reached. Cannot capture more leads today.",
       });
     }
 

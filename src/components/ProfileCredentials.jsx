@@ -122,7 +122,11 @@ const StatesDropdown = ({ userEmail }) => {
                     ))}
                   </div>
                   <div className="dropdown-actions">
-                    <button className="edit-max-captures save-btn" onClick={handleSave}>
+                    <button className="edit-max-captures save-btn" onClick={(e) => {
+                      e.preventDefault();
+                      handleSave();
+                      // Save changes
+                    }}>
                       Save
                     </button>
                   </div>
@@ -574,7 +578,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       )}
 {/* --- Use the new self-contained dropdown component --- */}
       {isSettingsPage && !isWhatsAppPage && (
-        <StatesDropdown userEmail={email} />
+        <StatesDropdown userEmail={localStorage.getItem("userEmail")} />
       )}
       {/*isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">

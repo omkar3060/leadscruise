@@ -80,6 +80,132 @@ def stop_execution(signum, frame):
 # Bind signal handler
 signal.signal(signal.SIGINT, stop_execution)
 
+def scroll_and_load_products(driver, max_scrolls=10):
+    """Scroll down to load all products dynamically"""
+    print("Starting to scroll and load products...", flush=True)
+    
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    scroll_count = 0
+    
+    while scroll_count < max_scrolls:
+        # Scroll down to bottom
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        
+        # Wait for new content to load
+        time.sleep(3)
+        
+        # Calculate new scroll height and compare with last scroll height
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        
+        print(f"Scroll {scroll_count + 1}: Height changed from {last_height} to {new_height}", flush=True)
+        
+        # Check if we've reached the bottom (no new content loaded)
+        if new_height == last_height:
+            print("No more content to load, stopping scroll", flush=True)
+            break
+            
+        last_height = new_height
+        scroll_count += 1
+    
+    print(f"Completed scrolling after {scroll_count + 1} attempts", flush=True)
+
+def count_products(driver):
+    """Count the number of product listings"""
+    try:
+        products = driver.find_elements(By.CLASS_NAME, "listElement")
+        return len(products)
+    except:
+        return 0
+
+def extract_all_products(driver):
+    """Extract all product listings HTML content"""
+    print("Extracting all product listings...", flush=True)
+    
+    html_content = ""
+    try:
+        # Wait for the product list to load
+        wait = WebDriverWait(driver, 20)
+        product_list = wait.until(
+            EC.presence_of_element_located((By.ID, "product_lists"))
+        )
+        print("Found product list container", flush=True)
+        
+        # Count products before and after scrolling
+        initial_count = count_products(driver)
+        print(f"Initial product count: {initial_count}", flush=True)
+        
+        # Scroll to load all products
+        scroll_and_load_products(driver, max_scrolls=20)
+        
+        # Count products after scrolling
+        final_count = count_products(driver)
+        print(f"Final product count: {final_count}", flush=True)
+        
+        # Get the entire HTML content of the ul element
+        html_content = product_list.get_attribute("outerHTML")
+        print(f"Extracted HTML content ({len(html_content)} characters)", flush=True)
+        
+        return html_content, final_count
+        
+    except (TimeoutException, NoSuchElementException) as e:
+        print(f"Error finding product list: {str(e)}", flush=True)
+        return "", 0
+
+def save_html_content(html_content, filename="json_lister.txt"):
+    """Save HTML content to file"""
+    try:
+        
+        file_path = os.path.join("", filename)
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        print(f"HTML content saved to {file_path}", flush=True)
+        print(f"File size: {len(html_content)} characters", flush=True)
+        
+        return file_path
+    except Exception as e:
+        print(f"Error saving HTML file: {str(e)}", flush=True)
+        return None
+
+def extract_product_summary(html_content):
+    """Extract a summary of products for verification"""
+    from bs4 import BeautifulSoup
+    
+    try:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        products = soup.find_all('li', class_='listElement')
+        
+        summary = []
+        for i, product in enumerate(products, 1):
+            product_info = {}
+            
+            # Extract product name
+            name_elem = product.find('a', id=lambda x: x and x.startswith('itemName'))
+            if name_elem:
+                product_info['name'] = name_elem.get_text(strip=True)
+            
+            # Extract price
+            price_elem = product.find('span', class_='productPriceCheck')
+            if price_elem:
+                product_info['price'] = price_elem.get_text(strip=True)
+            
+            # Extract unit
+            unit_elem = product.find('span', id=lambda x: x and x.startswith('unitOfProductSpan_'))
+            if unit_elem:
+                product_info['unit'] = unit_elem.get_text(strip=True)
+            
+            # Extract product ID
+            product_id = product.get('id', '').replace('productList', '') if product.get('id') else 'Unknown'
+            product_info['id'] = product_id
+            
+            summary.append(f"Product {i}: {product_info}")
+        
+        return summary
+    except Exception as e:
+        print(f"Error creating summary: {str(e)}", flush=True)
+        return []
+
 def execute_task_one(mobile_number, new_password,unique_id,password):
     global received_otp
     """
@@ -370,7 +496,7 @@ def execute_task_one(mobile_number, new_password,unique_id,password):
             
             # Wait for the page to load
             time.sleep(5)
-            
+
             # Extract preferred categories
             preferred_categories = []
             print("Extracting preferred categories", flush=True)
@@ -380,7 +506,7 @@ def execute_task_one(mobile_number, new_password,unique_id,password):
                     EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Preferred Categories')]"))
                 )
                 print("Found category preferences section", flush=True)
-                
+
                 # Find and click the accordion arrow to expand the section
                 try:
                     accordion_arrow = wait.until(
@@ -400,7 +526,7 @@ def execute_task_one(mobile_number, new_password,unique_id,password):
                         time.sleep(2)
                     except (TimeoutException, NoSuchElementException):
                         print("Could not find accordion to expand categories", flush=True)
-                
+
                 # Find all list items in the "Based on your products" section
                 category_items = driver.find_elements(By.XPATH, "//p[contains(text(), 'Based on your products')]/following-sibling::div//ul//li")
                 
@@ -435,7 +561,8 @@ def execute_task_one(mobile_number, new_password,unique_id,password):
                 message_templates.append(message3)
                 message_templates.append(message4)
                 message_templates.append(message5)
-            
+
+            # Prepare the result dictionary
             result = {
                 "companyName": company_name,
                 "mobileNumbers": mobile_numbers,
@@ -452,55 +579,34 @@ def execute_task_one(mobile_number, new_password,unique_id,password):
             # Extract the entire HTML content of the product list
             print("Extracting product list HTML content", flush=True)
 
-            html_content = ""
-            try:
-                # Wait for the product list to load
-                product_list = wait.until(
-                    EC.presence_of_element_located((By.ID, "product_lists"))
-                )
-                print("Found product list", flush=True)
+                    # Extract all products with scrolling
+            html_content, product_count = extract_all_products(driver)
+            
+            if html_content:
+                # Save the complete HTML content
+                file_path = save_html_content(html_content)
                 
-                # Get the entire HTML content of the ul element
-                html_content = product_list.get_attribute("outerHTML")
-                print(f"Extracted HTML content ({len(html_content)} characters)", flush=True)
-                
-            except (TimeoutException, NoSuchElementException) as e:
-                print(f"Error finding product list: {str(e)}", flush=True)
-
-            # Save HTML content to text file
-            import os
-
-            # Create script directory if it doesn't exist
-            os.makedirs("script", exist_ok=True)
-
-            # Save to text file
-            html_file_path = "json_script/json_lister.txt"
-            try:
-                with open(html_file_path, 'w', encoding='utf-8') as f:
-                    f.write(html_content)
-                print(f"HTML content saved to {html_file_path}", flush=True)
-            except Exception as e:
-                print(f"Error saving HTML file: {str(e)}", flush=True)
-
+                # Create a summary file
+                print(f"Successfully scraped {product_count} products", flush=True)
+            else:
+                print("Failed to extract product data", flush=True)
             # Execute the JSON creator script
             print("Executing JSON creator script", flush=True)
             try:
-                import subprocess
-                import sys
                 
                 # Execute the json_creator.py script
-                json_creator_path = "json_script/json_creator.py"
+                json_creator_path = "json_creator.py"
 
                 if os.path.exists(json_creator_path):
-                    result = subprocess.run([sys.executable, json_creator_path], 
+                    res = subprocess.run([sys.executable, json_creator_path], 
                                         capture_output=True, text=True, cwd=os.getcwd())
                     
-                    if result.returncode == 0:
+                    if res.returncode == 0:
                         print("JSON creator script executed successfully", flush=True)
-                        print("Output:", result.stdout, flush=True)
+                        print("Output:", res.stdout, flush=True)
                     else:
-                        print(f"JSON creator script failed with return code {result.returncode}", flush=True)
-                        print("Error:", result.stderr, flush=True)
+                        print(f"JSON creator script failed with return code {res.returncode}", flush=True)
+                        print("Error:", res.stderr, flush=True)
                 else:
                     print(f"JSON creator script not found at {json_creator_path}", flush=True)
                     print("Please create the JSON creator script to process the HTML content", flush=True)

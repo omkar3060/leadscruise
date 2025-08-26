@@ -65,6 +65,7 @@ def convert_products_to_json(input_file, output_file):
         json.dump(products, f, indent=2, ensure_ascii=False)
 
     print(f"✅ Conversion complete! JSON saved to {output_file}")
+    return 0
 
 
 # Example usage:

@@ -88,6 +88,8 @@ signal.signal(signal.SIGINT, stop_execution)
 
 input_line = sys.stdin.readline()
 input_data = json.loads(input_line.strip())
+lead_count = int(input_data.get("leadCount", 0))
+max_captures = int(input_data.get("maxCaptures", 0))
 import requests
 
 def parse_timestamp(timestamp_text):
@@ -487,6 +489,7 @@ def is_within_30_days(timestamp_text, thirty_days_ago):
 lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, address=None):
     global lead_bought  # Access the global variable
+    global lead_count
 
     url = "https://api.leadscruise.com/api/store-lead"
     data = {
@@ -507,6 +510,7 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, ad
         response = requests.post(url, json=data)
         if response.status_code == 200:
             print("Lead data sent successfully!", flush=True)
+            lead_count += 1
         else:
             print(f"Failed to send data: {response.text}", flush=True)
     except Exception as e:
@@ -2367,6 +2371,8 @@ def save_analytics_data_locally(analytics_data):
 
 def main():
     global redirect_count
+    global lead_count
+    global max_captures
     """
     Main function to run the program.
     If the login process is successful, it enters an infinite loop to refresh or check the dashboard.
@@ -2406,7 +2412,7 @@ def main():
     wait = WebDriverWait(driver, 10)
 
     # Start Xvfb in the background
-    unique_id = "123456"
+    unique_id = input_data.get("uniqueId", "123456")
     # Start Xvfb with dynamic unique_id
     subprocess.Popen(['Xvfb', f':{unique_id}', '-screen', '0', '1920x1080x24'])
 
@@ -2459,7 +2465,7 @@ def main():
         while True:
             try:
                 # If we haven't completed redirect_and_refresh yet
-                if redirect_count < 10:
+                if redirect_count < 10 and lead_count < max_captures:
                     print(f"Running redirect_and_refresh (count: {redirect_count + 1}/10)...", flush=True)
                     redirect_count += 1
                     redirect_and_refresh(driver, wait)
