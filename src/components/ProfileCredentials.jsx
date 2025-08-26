@@ -578,7 +578,8 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       )}
 {/* --- Use the new self-contained dropdown component --- */}
       {isSettingsPage && !isWhatsAppPage && (
-        <StatesDropdown userEmail={localStorage.getItem("userEmail")} />
+        //<StatesDropdown userEmail={email} />
+        <StatesDropdown userEmail={localStorage.getItem("userEmail")} />
       )}
       {/*isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">

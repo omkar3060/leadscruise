@@ -1929,68 +1929,54 @@ app.get("/api/export-leads/:userMobile", async (req, res) => {
   }
 });
 
-app.post('/api/reset-user-data', async (req, res) => {
+app.post('/api/reset-user-data', async (req, res) => {//start 26-8(7)
   try {
     const { userEmail, userMobile } = req.body;
 
-    // Validate input
     if (!userEmail || !userMobile) {
-      return res.status(400).json({
-        success: false,
-        message: "User email and mobile are required"
-      });
+      return res.status(400).json({ success: false, message: "User email and mobile are required" });
     }
-
-    // Prevent demo account from deleting data
     if (userEmail === "demo@leadscruise.com") {
-      return res.status(403).json({
-        success: false,
-        message: "Demo account cannot delete data"
-      });
+        return res.status(403).json({ success: false, message: "Demo account cannot be modified" });
     }
 
-    // Optional: Add authentication middleware check here
-    // if (!req.user || req.user.email !== userEmail) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: "Unauthorized"
-    //   });
-    // }
+    const user = await User.findOne({ email: userEmail });
 
-    console.log(`Resetting data for user: ${userEmail}, mobile: ${userMobile}`);
+    if (!user) {
+        await Lead.deleteMany({ user_mobile_number: userMobile });
+        await FetchedLead.deleteMany({ user_mobile_number: userMobile });
+        await Settings.deleteOne({ userEmail: userEmail });
+        return res.status(200).json({ success: true, message: "User not found, but associated data cleared." });
+    }
 
-    // Delete from Lead collection
-    const deletedLeadsResult = await Lead.deleteMany({
-      user_mobile_number: userMobile
-    });
+    // Delete all related data
+    await Promise.all([
+      BillingDetails.deleteOne({ email: user.email }),
+      IndiaMartAnalytics.deleteMany({ userId: user._id }),
+      Payment.deleteMany({ email: user.email }),
+      Referral.deleteOne({ email: user.email }),
+      Settings.deleteOne({ userEmail: user.email }),
+      Support.deleteMany({ email: user.email }),
+      WhatsappSettings.deleteOne({ mobileNumber: user.mobileNumber }),
+      Lead.deleteMany({ user_mobile_number: user.mobileNumber }),
+      FetchedLead.deleteMany({ user_mobile_number: user.mobileNumber }),
+    ]);
 
-    // Delete from FetchedLead collection
-    const deletedFetchedLeadsResult = await FetchedLead.deleteMany({
-      user_mobile_number: userMobile
-    });
+    // --- THIS IS THE FIX ---
+    // Instead of user.save(), we issue a direct update to unset the password.
+    // This bypasses the validation that was causing the error.
+    await User.updateOne(
+      { _id: user._id },
+      { $unset: { savedPassword: "" } } // Removes the savedPassword field
+    );
 
-    console.log(`Deleted ${deletedLeadsResult.deletedCount} leads and ${deletedFetchedLeadsResult.deletedCount} fetched leads`);
+    res.status(200).json({ success: true, message: "User data, settings, and password have been reset successfully" });
 
-    // You might want to save this log to a separate collection
-    // await DeletionLog.create(deletionLog);
-
-    res.status(200).json({
-      success: true,
-      message: "User data reset successfully",
-      deletedLeads: deletedLeadsResult.deletedCount,
-      deletedFetchedLeads: deletedFetchedLeadsResult.deletedCount,
-      totalDeleted: deletedLeadsResult.deletedCount + deletedFetchedLeadsResult.deletedCount
-    });
-
-  } catch (error) {
-    console.error('Reset user data error:', error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+  } catch (err) {
+    console.error('Reset user data error:', err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
-});
+});// end 26-8(7)
 
 app.delete("/api/delete-user/:id", async (req, res) => {
   try {

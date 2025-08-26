@@ -65,7 +65,8 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
       alert(`✅ Data reset successful!`);
       
       // Optionally refresh the page or redirect
-      window.location.reload();
+      //window.location.reload();
+       navigate("/execute-task");
     } else {
       alert(`❌ "Failed to reset data"}`);
     }
