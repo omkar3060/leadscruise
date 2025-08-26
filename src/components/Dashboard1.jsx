@@ -1068,9 +1068,11 @@ useEffect(() => {
                             {lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile}
                           </span>
                           <span className={styles.leadDate}>
-                            {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() :
-                              lead.timestamp ? new Date(lead.timestamp).toLocaleDateString() :
-                                'No date'}
+                            {lead.createdAt
+                            ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                              timeZone: "Asia/Kolkata"
+                            })
+                            : "N/A"}
                           </span>
                         </div>
                         {lead.source && (

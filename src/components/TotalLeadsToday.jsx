@@ -41,7 +41,7 @@ const TotalLeadsToday = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "TodayLeads");
     XLSX.writeFile(workbook, "TotalLeadsToday.xlsx");
   };
-  
+
 
   return (
     <div className="leads-container">
@@ -49,7 +49,7 @@ const TotalLeadsToday = () => {
       <div className="download-and-back-div">
         <button className="excel-btn" onClick={exportToExcel}>Download</button>
         <button className="back-btn" onClick={() => window.history.back()}>
-            Back
+          Back
         </button>
       </div>
 
@@ -74,7 +74,11 @@ const TotalLeadsToday = () => {
                   <td>{lead.name || "N/A"}</td>
                   <td>{lead.mobile || "N/A"}</td>
                   <td>{lead.email || "N/A"}</td>
-                  <td>{new Date(lead.createdAt).toLocaleDateString()}</td>
+                  <td>{lead.createdAt
+                    ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata"
+                    })
+                    : "N/A"}</td>
                 </tr>
               ))}
             </tbody>

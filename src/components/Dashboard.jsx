@@ -971,7 +971,9 @@ const Dashboard = () => {
                         <td>{lead.email || "N/A"}</td>
                         <td>
                           {lead.createdAt
-                            ? new Date(lead.createdAt).toLocaleDateString()
+                            ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                              timeZone: "Asia/Kolkata"
+                            })
                             : "N/A"}
                         </td>
                         <td>

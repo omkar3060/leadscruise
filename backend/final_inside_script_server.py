@@ -2538,6 +2538,6 @@ def main():
             print("Error stopping display.", flush=True)
 
 if __name__ == "__main__":
-    print("hi")
+    # print("hi")
     main()
     

@@ -66,7 +66,11 @@ const AITotalLeadsAllTime = () => {
                   <td>{lead.name || "N/A"}</td>
                   <td>{lead.mobile || "N/A"}</td>
                   <td>{lead.email || "N/A"}</td>
-                  <td>{new Date(lead.createdAt).toLocaleDateString()}</td>
+                  <td>{lead.createdAt
+                    ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata"
+                    })
+                    : "N/A"}</td>
                 </tr>
               ))}
             </tbody>
