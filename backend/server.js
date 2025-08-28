@@ -2005,6 +2005,20 @@ app.delete("/api/delete-user/:id", async (req, res) => {
   }
 });
 
+app.post('/api/notify-maintenance', (req, res) => {
+  const { title, message } = req.body || {};
+  // broadcast to everyone; you can target rooms/users if needed
+  io.emit('maintenance-notice', { title, message, timestamp: Date.now() });
+  res.json({ success: true });
+});
+
+io.on('connection', (socket) => {
+  // console.log('Client connected', socket.id);
+
+  // Optional: join rooms, auth, etc.
+  socket.on('disconnect', () => console.log('Client disconnected', socket.id));
+});
+
 const PORT = 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -3,6 +3,7 @@ import axios from "axios";
 import styles from "./Header.module.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaCheck, FaUser, FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaCog, FaWhatsapp, FaFileExcel, FaSignOutAlt, FaArrowLeft, FaSave, FaUndo, FaHeadset, FaWallet } from "react-icons/fa";
+import { io } from 'socket.io-client'; 
 
 const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSubmit, handleRevert, timer, isStarting, cooldownActive, cooldownTime }) => {
   const navigate = useNavigate();
@@ -28,7 +29,8 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const isDemoAccount = localStorage.getItem("userEmail") === "demo@leadscruise.com";
   const [isResetHovering, setIsResetHovering] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-
+  const [showMaintenancePopup, setShowMaintenancePopup] = useState(false);
+  const [notice, setNotice] = useState(null);
   const handleResetUserData = async () => {
   const userEmail = localStorage.getItem("userEmail");
   const userMobile = localStorage.getItem("mobileNumber");
@@ -362,6 +364,35 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     }
   };
 
+    useEffect(() => {
+    // connect (use your backend origin)
+    const socket = io("https://api.leadscruise.com", {
+      transports: ['websocket'],
+      // auth: { token: '...' } // authenticate if needed
+    });
+
+    socket.on('connect', () => console.log('socket connected', socket.id));
+
+    socket.on('maintenance-notice', (payload) => {
+      // ignore for support/demo users client-side if needed
+      const email = localStorage.getItem("userEmail");
+      if (email === 'support@leadscruise.com' || email === 'demo@leadscruise.com') return;
+
+      setNotice(payload);
+      setShowMaintenancePopup(true);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+
+  const handleClose = () => {
+    setShowMaintenancePopup(false);
+    setNotice(null);
+  };
+
   return (
     <div className={styles.dashboardHeader}>
       {/* Subscription Expiry Popup */}
@@ -372,6 +403,16 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
             <p>Your subscription will expire in {daysLeft} day(s). Please renew it to continue using the service.</p>
             <button onClick={() => navigate("/plans")} className={styles.renewButton}>Renew Now</button>
             <button onClick={handleClosePopup} className={styles.closeButton}>Close</button>
+          </div>
+        </div>
+      )}
+
+{showMaintenancePopup && notice && (
+        <div className={styles.popupOverlay}>
+          <div className={styles.popupContent}>
+            <h2>{notice.title || 'Maintenance Notice'}</h2>
+            <p>{notice.message || 'The AI has stopped due to maintenance and updates. Please restart your AI.'}</p>
+            <button onClick={handleClose}>Close</button>
           </div>
         </div>
       )}

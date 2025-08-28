@@ -380,6 +380,29 @@ const Master = () => {
     }
   };
 
+  const notifyMaintenance = async () => {
+    try {
+      const response = await fetch("https://api.leadscruise.com/api/notify-maintenance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: "The AI has stopped due to maintenance and updates. Please restart your AI." }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Notification response:", data);
+      alert("Maintenance notification sent!");
+    } catch (err) {
+      console.error("Failed to notify:", err);
+      alert("Failed to send notification.");
+    }
+  };
+
   useEffect(() => {
     // If loading state is true on page load, set a maximum timeout to reset it
     if (localStorage.getItem("isCheckingHealth") === "true") {
@@ -479,6 +502,13 @@ const Master = () => {
             </div>
 
             <div className={masterstyles.tableActions}>
+              <button
+                className={masterstyles.downloadButton}
+                onClick={notifyMaintenance}
+                title="Notify Users About Maintenance"
+              >
+                <span className={masterstyles.icon}>⚠️</span>
+              </button>
               <button
                 className={masterstyles.downloadButton}
                 onClick={handleCheckScriptHealth}
