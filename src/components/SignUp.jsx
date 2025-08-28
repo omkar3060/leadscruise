@@ -223,8 +223,15 @@ const SignUp = () => {
               onChange={(e) => setIsChecked(e.target.checked)}
             />
             <p className="agree">
-              I agree to <span>Terms & Conditions</span>.
-            </p>
+               I agree to{" "}
+                  <a 
+                    href="/terms-and-conditions.pdf" // This path points to the file in your public folder
+                    download="LeadsCruise-Terms-and-Conditions.pdf" // This is the name the file will have when downloaded
+                    className="priv-link" // Using an existing class for styling
+                    >
+                  Terms & Conditions
+                  </a>.
+              </p>
           </div>
           <button
             onClick={handleSignUp}
