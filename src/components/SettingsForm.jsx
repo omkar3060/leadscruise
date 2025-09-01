@@ -45,6 +45,7 @@ const SettingsForm = () => {
   });
 
   const [isDisabled, setIsDisabled] = useState(false);
+  const [originalSettings, setOriginalSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -90,8 +91,10 @@ const SettingsForm = () => {
         );
         if (response.data && response.data.sentences) {
           setSettings(response.data);
+          setOriginalSettings(response.data);
         } else {
           setSettings({ sentences: [], wordArray: [], h2WordArray: [] });
+          setOriginalSettings({ sentences: [], wordArray: [], h2WordArray: [] }); 
         }
       } catch (error) {
         console.error("Error fetching settings:", error);
@@ -227,26 +230,29 @@ const SettingsForm = () => {
     }
   };
 
-  const handleRevert = async () => {
+const handleRevert = async () => {
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
-      alert("User email not found!");
-      return;
+      return alert("User email not found!");
     }
 
-    if (window.confirm("Are you sure you want to revert all settings?")) {
-      setIsLoading(true); // Start loading
+    if (window.confirm("Are you sure you want to revert? This will permanently restore your settings to the state they were in when your account was first created.")) {
+      setIsLoading(true);
       try {
-        await axios.delete(
-          `https://api.leadscruise.com/api/delete-settings/${userEmail}`
-        );
-        setSettings({ sentences: [], wordArray: [], h2WordArray: [] });
-        alert("Settings reverted successfully!");
+        const response = await axios.post("http://localhost:5000/api/restore-initial-settings", {
+          userEmail,
+        });
+
+        // Update the local state with the restored settings from the server
+        setSettings(response.data.settings);
+        setOriginalSettings(response.data.settings); // Also update the temporary backup
+
+        alert(response.data.message);
       } catch (error) {
         console.error("Error reverting settings:", error);
-        alert("Failed to revert settings.");
+        alert(error.response?.data?.message || "Failed to revert settings.");
       } finally {
-        setIsLoading(false); // End loading
+        setIsLoading(false);
       }
     }
   };

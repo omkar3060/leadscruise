@@ -530,7 +530,9 @@ app.post("/api/execute-task", async (req, res) => {
                 sentences: messageTemplates || [],
                 h2WordArray: [],
                 minOrder: 0,
-                leadTypes: []
+                leadTypes: [],
+                initialWordArray: preferredCategories || [],
+                initialSentences: messageTemplates || [],
               });
               console.log("Creating new settings record for user:", email);
             } else {
@@ -721,6 +723,40 @@ app.post("/api/update-states", async (req, res) => {
   } catch (error) {
     console.error("Error updating states:", error);
     res.status(500).json({ message: "Server error" });
+  }
+});
+app.post("/api/restore-initial-settings", async (req, res) => {
+  try {
+    const { userEmail } = req.body;
+    if (!userEmail) {
+      return res.status(400).json({ message: "User email is required" });
+    }
+
+    const settings = await Settings.findOne({ userEmail });
+    if (!settings) {
+      return res.status(404).json({ message: "No settings found to restore." });
+    }
+
+    // --- THIS IS THE FIX ---
+    // Check if the initial data fields actually exist before trying to use them.
+    if (!settings.initialSentences || !settings.initialWordArray) {
+      return res.status(400).json({ message: "No initial settings backup found for this user." });
+    }
+
+    // Copy the initial data back to the main fields
+    settings.sentences = settings.initialSentences;
+    settings.wordArray = settings.initialWordArray;
+    
+    await settings.save(); // Save the changes
+
+    res.json({
+      message: "Settings have been successfully reverted to their initial state.",
+      settings: settings,
+    });
+
+  } catch (error) {
+    console.error("Error restoring initial settings:", error);
+    res.status(500).json({ message: "Server error while restoring settings." });
   }
 });
 app.get("/api/get-max-captures", async (req, res) => {
