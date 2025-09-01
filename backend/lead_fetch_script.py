@@ -3,11 +3,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 from pyvirtualdisplay import Display
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -22,6 +18,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import threading
 import select
 from datetime import datetime, timedelta
+from selenium.common.exceptions import ElementClickInterceptedException, StaleElementReferenceException
 # Global variable to store OTP when received
 received_otp = None
 otp_event = threading.Event()
@@ -91,6 +88,8 @@ signal.signal(signal.SIGINT, stop_execution)
 
 input_line = sys.stdin.readline()
 input_data = json.loads(input_line.strip())
+lead_count = int(input_data.get("leadCount", 0))
+max_captures = int(input_data.get("maxCaptures", 0))
 import requests
 
 def parse_timestamp(timestamp_text):
@@ -359,7 +358,7 @@ def process_single_message(driver, message_element, timestamp, company, return_u
                 print("Skipping this lead due to duplication...", flush=True)
                 return
             print(f"Successfully sent data to dashboard", flush=True)
-            time.sleep(300)
+            time.sleep(10)
         except Exception as e:
             print(f"Error sending data to dashboard: {e}", flush=True)
         
@@ -490,6 +489,7 @@ def is_within_30_days(timestamp_text, thirty_days_ago):
 lead_bought=""
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, address=None):
     global lead_bought  # Access the global variable
+    global lead_count
 
     url = "https://api.leadscruise.com/api/store-lead"
     data = {
@@ -510,6 +510,7 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, ad
         response = requests.post(url, json=data)
         if response.status_code == 200:
             print("Lead data sent successfully!", flush=True)
+            lead_count += 1
         else:
             print(f"Failed to send data: {response.text}", flush=True)
     except Exception as e:
@@ -573,65 +574,116 @@ def go_to_message_center_and_click(driver, first_h2_text):
         # Check if WhatsApp text is found
         whatsapp_found = False
         try:
-            # Look for WhatsApp-related elements in the footer
-            whatsapp_elements = driver.find_elements(By.XPATH, "//footer[contains(@class, 'msg_footer')]//div[contains(@class, 'reply-template')]//span[contains(text(), 'Introduction')]")
+            print("Looking for WhatsApp-related elements...", flush=True)
+            whatsapp_elements = driver.find_elements(
+                By.XPATH,
+                "//div[contains(@class, 'reply-template')]//span[normalize-space(text())='Introduction' or normalize-space(text())='Share more details' or normalize-space(text())='Catalog Link']"
+            )
+
             if whatsapp_elements:
-                print("WhatsApp text found - proceeding with WhatsApp flow", flush=True)
+                print("WhatsApp message template found - proceeding with WhatsApp flow", flush=True)
                 whatsapp_found = True
                 execute_whatsapp_flow(driver, first_h2_text)
             else:
-                print("WhatsApp text not found - proceeding with regular flow", flush=True)
+                print("WhatsApp message not found - proceeding with regular flow", flush=True)
                 execute_regular_flow(driver, first_h2_text)
+
         except Exception as detection_error:
             print(f"Error detecting WhatsApp elements: {detection_error}", flush=True)
-            print("Proceeding with regular flow as fallback", flush=True)
+            print("Fallback: proceeding with regular flow", flush=True)
             execute_regular_flow(driver, first_h2_text)
+
         
     except Exception as e:
         print(f"An error occurred while interacting with the message center: {e}", flush=True)
 
 
 def execute_whatsapp_flow(driver, first_h2_text):
-    """Execute the WhatsApp-specific flow: click introduction, view more, ask for review, then send messages"""
+    """Execute the WhatsApp-specific flow: click introduction/catalog, view more, ask for review, then send messages"""
     try:
         print("Starting WhatsApp flow...", flush=True)
         
-        # Click the Introduction button
+        # Step 1: Click either Introduction or Catalog Link button
+        template_clicked = False
+        send_messages(driver, first_h2_text)
+        
+        # Try to click Introduction first
         try:
             introduction_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'reply-template')]//span[contains(text(), 'Introduction')]"))
             )
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", introduction_button)
+            time.sleep(1)
             introduction_button.click()
             print("Clicked the Introduction button.", flush=True)
+            template_clicked = True
             time.sleep(2)
         except Exception as e:
-            print(f"Error clicking Introduction button: {e}", flush=True)
-            print("Continuing with View More...", flush=True)
+            print(f"Introduction button not found: {e}", flush=True)
+        
+        # If Introduction not found, try Catalog Link
+        if not template_clicked:
+            try:
+                catalog_button = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'reply-template')]//span[contains(text(), 'Catalog Link')]"))
+                )
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", catalog_button)
+                time.sleep(1)
+                catalog_button.click()
+                print("Clicked the Catalog Link button.", flush=True)
+                template_clicked = True
+                time.sleep(2)
+            except Exception as e:
+                print(f"Catalog Link button not found: {e}", flush=True)
+        
+        # Fallback: try any available template
+        if not template_clicked:
+            try:
+                any_template = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'reply-template')]"))
+                )
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", any_template)
+                time.sleep(1)
+                any_template.click()
+                print("Clicked an available template button.", flush=True)
+                template_clicked = True
+                time.sleep(2)
+            except Exception as e:
+                print(f"No template buttons found: {e}", flush=True)
 
-        # Click 'View More'
+        # Step 2: Click 'View More' button
         try:
+            # Wait for view more button to be available
             view_more_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
             )
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", view_more_button)
+            time.sleep(1)
             view_more_button.click()
             print("Clicked the 'View More' button.", flush=True)
-            time.sleep(2)
+            time.sleep(3)  # Give more time for the page to load
         except Exception as e:
             print(f"Error clicking View More button: {e}", flush=True)
-            print("Continuing with Ask For Review...", flush=True)
+            # Try alternative selector
+            try:
+                view_more_alt = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.ID, "viewDetails"))
+                )
+                driver.execute_script("arguments[0].click();", view_more_alt)
+                print("Clicked 'View More' using alternative method.", flush=True)
+                time.sleep(3)
+            except Exception as e2:
+                print(f"Alternative View More click also failed: {e2}", flush=True)
 
-        # Click 'Ask For Review' button
+        # Step 3: Click 'Ask For Review' button
         try:
-            # Try multiple selectors for the Ask For Review button
+            # Enhanced selectors for Ask For Review button
             ask_review_selectors = [
+                "//div[contains(@class, 'afrVd')]//span[contains(text(), 'Ask For Review')]",
                 "//span[contains(@class, 'small_btn_filled_std')]//span[contains(text(), 'Ask For Review')]",
                 "//span[contains(text(), 'Ask For Review')]",
-                "//div[contains(@class, 'afrVd')]//span[contains(text(), 'Ask For Review')]",
-                "//span[@class='fs12 clrgold por mlminus5']//following-sibling::span[contains(text(), 'Ask For Review')]",
-                "//span[contains(@class, 'small_btn_filled_std')]",
-                "//div[contains(@class, 'afrVd')]//span[contains(@class, 'small_btn_filled_std')]",
-                "//span[contains(@class, 'clrgold')]//following-sibling::span[contains(text(), 'Ask For Review')]",
-                "//div[contains(@class, 'por mb5')]//span[contains(text(), 'Ask For Review')]"
+                "//div[contains(@class, 'por mb5')]//span[contains(text(), 'Ask For Review')]",
+                "//div[contains(@class, 'afrVd')]//span[contains(@class, 'small_btn_filled_std')]"
             ]
             
             ask_review_clicked = False
@@ -640,7 +692,17 @@ def execute_whatsapp_flow(driver, first_h2_text):
                     ask_review_button = WebDriverWait(driver, 5).until(
                         EC.element_to_be_clickable((By.XPATH, selector))
                     )
-                    ask_review_button.click()
+                    # Scroll to element and ensure it's visible
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", ask_review_button)
+                    time.sleep(1)
+                    
+                    # Try regular click first
+                    try:
+                        ask_review_button.click()
+                    except:
+                        # Fallback to JavaScript click
+                        driver.execute_script("arguments[0].click();", ask_review_button)
+                    
                     print(f"Clicked the 'Ask For Review' button using selector: {selector}", flush=True)
                     ask_review_clicked = True
                     break
@@ -649,49 +711,175 @@ def execute_whatsapp_flow(driver, first_h2_text):
                     continue
             
             if not ask_review_clicked:
-                # Fallback: try to find by text content
+                # Final fallback: search by text content
                 try:
                     buttons = driver.find_elements(By.XPATH, "//*[contains(text(), 'Ask For Review')]")
                     for button in buttons:
-                        if button.is_displayed() and button.is_enabled():
-                            button.click()
-                            print("Clicked the 'Ask For Review' button using text search", flush=True)
-                            ask_review_clicked = True
-                            break
+                        try:
+                            if button.is_displayed() and button.is_enabled():
+                                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+                                time.sleep(1)
+                                driver.execute_script("arguments[0].click();", button)
+                                print("Clicked the 'Ask For Review' button using text search", flush=True)
+                                ask_review_clicked = True
+                                break
+                        except Exception as e:
+                            continue
                 except Exception as e:
-                    print(f"Fallback click failed: {e}", flush=True)
+                    print(f"Text search fallback failed: {e}", flush=True)
             
-            if not ask_review_clicked:
-                # Final fallback: try JavaScript click
-                try:
-                    ask_review_elements = driver.find_elements(By.XPATH, "//*[contains(text(), 'Ask For Review')]")
-                    for element in ask_review_elements:
-                        if element.is_displayed():
-                            driver.execute_script("arguments[0].click();", element)
-                            print("Clicked the 'Ask For Review' button using JavaScript", flush=True)
-                            ask_review_clicked = True
-                            break
-                except Exception as e:
-                    print(f"JavaScript click failed: {e}", flush=True)
-            
-            if not ask_review_clicked:
+            if ask_review_clicked:
+                time.sleep(3)  # Wait for any modal or page changes
+            else:
                 print("Could not find or click 'Ask For Review' button, continuing...", flush=True)
             
-            time.sleep(2)
-            
         except Exception as e:
-            print(f"Error clicking 'Ask For Review' button: {e}", flush=True)
-            print("Continuing with message sending...", flush=True)
+            print(f"Error in Ask For Review section: {e}", flush=True)
 
-        # Now proceed with message sending
-        send_messages(driver, first_h2_text)
+        # Step 4: Now proceed with message sending
+        # send_messages(driver, first_h2_text)
         
-        # Extract contact details
+        # Step 5: Extract contact details
         extract_contact_details(driver)
         
     except Exception as e:
         print(f"An error occurred in WhatsApp flow: {e}", flush=True)
 
+
+def send_messages_improved(driver, first_h2_text):
+    """Improved message sending function with better element handling"""
+    try:
+        print("Starting to send messages...", flush=True)
+        
+        # Wait for the page to stabilize
+        time.sleep(2)
+        
+        # Try to dismiss any overlays or footers that might be blocking
+        try:
+            # Check if there are any modal overlays or blocking elements
+            blocking_elements = driver.find_elements(By.XPATH, "//footer[@id='convFooter']")
+            for element in blocking_elements:
+                if element.is_displayed():
+                    driver.execute_script("arguments[0].style.display = 'none';", element)
+                    print("Temporarily hid blocking footer element.", flush=True)
+        except Exception as e:
+            print(f"No blocking elements found or couldn't hide them: {e}", flush=True)
+        
+        # Enhanced selectors for message input
+        message_input_selectors = [
+            "//div[@id='massage-text']",
+            "//div[@contenteditable='true' and contains(@data-placeholder, 'WhatsApp')]",
+            "//div[contains(@class, 'edit_div_new')][@contenteditable='true']",
+            "//div[@contenteditable='true' and contains(@class, 'edt_div')]",
+            "//textarea[contains(@placeholder, 'message') or contains(@placeholder, 'Message')]",
+            "//input[contains(@placeholder, 'message') or contains(@placeholder, 'Message')]"
+        ]
+        
+        message_input = None
+        for selector in message_input_selectors:
+            try:
+                message_input = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, selector))
+                )
+                print(f"Found message input using selector: {selector}", flush=True)
+                break
+            except Exception as e:
+                print(f"Selector '{selector}' failed: {e}", flush=True)
+                continue
+        
+        if not message_input:
+            print("Could not find message input element!", flush=True)
+            return
+        
+        # Scroll to the message input and ensure it's in view
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", message_input)
+        time.sleep(1)
+        
+        # Clear any existing text
+        try:
+            message_input.clear()
+        except:
+            # For contenteditable divs, use JavaScript to clear
+            driver.execute_script("arguments[0].innerHTML = '';", message_input)
+        
+        # Define messages to send
+        messages = [
+            "Hello! I hope you're having a great day.",
+            f"I noticed you're interested in {first_h2_text}. I'd love to help you with that!",
+            "Could you please share more details about your specific requirements?",
+            "What quantity are you looking for and what's your expected timeline?",
+            "I'm here to provide you with the best solution. Feel free to ask any questions!"
+        ]
+        
+        # Send each message
+        for i, message in enumerate(messages, 1):
+            try:
+                print(f"Sending message {i}/{len(messages)}: {message[:50]}...", flush=True)
+                
+                # Focus on the input element
+                try:
+                    message_input.click()
+                except:
+                    # Use JavaScript to focus if regular click fails
+                    driver.execute_script("arguments[0].focus();", message_input)
+                
+                time.sleep(1)
+                
+                # Type the message
+                if message_input.tag_name.lower() in ['input', 'textarea']:
+                    message_input.send_keys(message)
+                else:
+                    # For contenteditable div, use JavaScript
+                    driver.execute_script("arguments[0].innerText = arguments[1];", message_input, message)
+                
+                time.sleep(1)
+                
+                # Try to find and click send button
+                send_button_selectors = [
+                    "//button[contains(@class, 'send') or contains(text(), 'Send')]",
+                    "//div[contains(@class, 'send') or contains(@title, 'Send')]",
+                    "//span[contains(@class, 'send')]",
+                    "//*[@data-testid='send' or contains(@aria-label, 'Send')]"
+                ]
+                
+                send_button_found = False
+                for send_selector in send_button_selectors:
+                    try:
+                        send_button = WebDriverWait(driver, 3).until(
+                            EC.element_to_be_clickable((By.XPATH, send_selector))
+                        )
+                        send_button.click()
+                        print(f"Message {i} sent successfully using send button.", flush=True)
+                        send_button_found = True
+                        break
+                    except Exception as e:
+                        continue
+                
+                if not send_button_found:
+                    # Try pressing Enter key as fallback
+                    try:
+                        message_input.send_keys(Keys.RETURN)
+                        print(f"Message {i} sent using Enter key.", flush=True)
+                    except Exception as e:
+                        print(f"Failed to send message {i}: {e}", flush=True)
+                
+                # Wait between messages
+                time.sleep(2)
+                
+                # Clear the input for next message
+                try:
+                    message_input.clear()
+                except:
+                    driver.execute_script("arguments[0].innerHTML = '';", message_input)
+                
+            except Exception as e:
+                print(f"Error sending message {i}: {e}", flush=True)
+                continue
+        
+        print("Finished sending messages.", flush=True)
+        
+    except Exception as e:
+        print(f"An error occurred while sending messages: {e}", flush=True)
 
 def execute_regular_flow(driver, first_h2_text):
     """Execute the regular message sending flow"""
@@ -765,6 +953,18 @@ def send_messages(driver, first_h2_text):
 
 def extract_contact_details(driver):
     """Extract and send contact details to dashboard"""
+    try:
+        # Wait for view more button to be available
+        view_more_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@class='vd_text_vert por cp' and contains(text(), 'View More')]"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", view_more_button)
+        time.sleep(1)
+        view_more_button.click()
+        print("Clicked the 'View More' button.", flush=True)
+        time.sleep(3)  # Give more time for the page to load
+    except Exception as e:
+        print(f"Error clicking View More button: {e}", flush=True)
     try:
         # Extract and print contact details with multiple fallback selectors
         left_name = None
@@ -1016,7 +1216,104 @@ def select_lead_type(driver):
         print(f"Error while setting lead type filters: {e}")
         driver.save_screenshot("lead_type_error.png")
         print("Screenshot saved as lead_type_error.png")
-   
+
+def wait_for_overlay_to_disappear(driver, timeout=10):
+    """Wait for overlay elements to disappear or become hidden"""
+    try:
+        # Wait for overlay to either disappear or become hidden
+        WebDriverWait(driver, timeout).until(
+            lambda d: not d.find_elements(By.CSS_SELECTOR, ".overlay_fltr[style*='display: block']")
+        )
+        print("Overlay disappeared.")
+        return True
+    except TimeoutException:
+        print("Overlay didn't disappear in time, trying to dismiss it.")
+        return False
+
+def dismiss_overlay(driver):
+    """Try to dismiss any blocking overlays"""
+    try:
+        # Try clicking outside the overlay or finding a close button
+        overlays = driver.find_elements(By.CSS_SELECTOR, ".overlay_fltr")
+        for overlay in overlays:
+            if overlay.is_displayed():
+                # Try to find close button or click outside
+                close_buttons = driver.find_elements(By.CSS_SELECTOR, ".close, .dismiss, .cancel, [aria-label='Close']")
+                if close_buttons:
+                    close_buttons[0].click()
+                    time.sleep(1)
+                    return True
+                else:
+                    # Try pressing Escape key or removing overlay
+                    try:
+                        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+                        time.sleep(1)
+                        return True
+                    except:
+                        # Force remove overlay using JavaScript
+                        driver.execute_script("arguments[0].style.display = 'none';", overlay)
+                        print("Force removed overlay using JavaScript")
+                        time.sleep(1)
+                        return True
+        return False
+    except Exception as e:
+        print(f"Error dismissing overlay: {e}")
+        return False
+
+def click_element_safely(driver, element, max_attempts=3):
+    """Safely click an element, handling overlays and interceptions"""
+    for attempt in range(max_attempts):
+        try:
+            # First, wait for overlay to disappear
+            wait_for_overlay_to_disappear(driver, timeout=5)
+            
+            # Scroll element into view
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+            time.sleep(0.5)
+            
+            # Try regular click first
+            element.click()
+            print("Element clicked successfully")
+            return True
+            
+        except ElementClickInterceptedException:
+            print(f"Click intercepted on attempt {attempt + 1}, trying to handle overlay...")
+            
+            # Try to dismiss overlay
+            if dismiss_overlay(driver):
+                time.sleep(1)
+                continue
+            
+            # Try JavaScript click as alternative
+            try:
+                driver.execute_script("arguments[0].click();", element)
+                print("Element clicked using JavaScript")
+                return True
+            except Exception as js_error:
+                print(f"JavaScript click also failed: {js_error}")
+                
+            # Try ActionChains click
+            try:
+                ActionChains(driver).move_to_element(element).click().perform()
+                print("Element clicked using ActionChains")
+                return True
+            except Exception as action_error:
+                print(f"ActionChains click failed: {action_error}")
+                
+            if attempt == max_attempts - 1:
+                print("All click attempts failed")
+                return False
+            
+            time.sleep(2)  # Wait before next attempt
+            
+        except Exception as e:
+            print(f"Unexpected error clicking element: {e}")
+            if attempt == max_attempts - 1:
+                return False
+            time.sleep(1)
+    
+    return False
+
 def redirect_and_refresh(driver, wait):
     global lead_bought
     """
@@ -1036,8 +1333,7 @@ def redirect_and_refresh(driver, wait):
     h2_word_array = input_data.get("h2WordArray", []) 
 
     # Redirect to the second URL to check the buyer balance
-    
-    print(f"Redirecting to {second_url} to check buyer balance...",flush=True)
+    print(f"Redirecting to {second_url} to check buyer balance...", flush=True)
     driver.get(second_url)
     time.sleep(3)  # Static wait for dashboard loading
 
@@ -1049,40 +1345,416 @@ def redirect_and_refresh(driver, wait):
         print(f"BUYER_BALANCE:{buyer_balance}", flush=True)
 
         if buyer_balance > 0:
-            print("Buyer balance is greater than 0. Redirecting back to the first link...",flush=True)
+            print("Buyer balance is greater than 0. Redirecting back to the first link...", flush=True)
             driver.get(first_url)
             time.sleep(10)  # Static wait
 
-            # Click the 'India' label after redirecting back to the first URL
-            try:
-                driver.refresh()
-                time.sleep(3)  # Static wait
+            driver.refresh()
+            time.sleep(3)  # Static wait
 
-                # First try to remove the overlay if it exists
+            # Wait for overlays to disappear after refresh
+            wait_for_overlay_to_disappear(driver, timeout=10)
+
+            # Select specific states instead of 'All India'
+            selected_states = input_data.get("selectedStates", [])
+
+            # Map of alternative state names or spellings in case exact match fails
+            state_alternatives = {
+                "Karnataka": ["Karnataka", "Bangalore", "Bengaluru"],
+                "Maharashtra": ["Maharashtra", "Mumbai", "Pune"],
+                "Delhi": ["Delhi", "New Delhi", "NCR"]
+            }
+
+            if selected_states:
                 try:
-                    overlay = driver.find_element(By.CLASS_NAME, "overlay_fltr")
-                    if overlay.is_displayed():
-                        # Remove the overlay using JavaScript
-                        driver.execute_script("arguments[0].style.display = 'none';", overlay)
-                        print("Removed overlay element blocking the India label.")
+                    # Wait for any initial overlays to disappear
+                    wait_for_overlay_to_disappear(driver, timeout=10)
+                    
+                    # First, hover over the dropdown arrow to trigger the state selection interface
+                    try:
+                        dropdown_arrow = driver.find_element(By.CSS_SELECTOR, "span.dropdown_arrow")
+                        ActionChains(driver).move_to_element(dropdown_arrow).perform()
+                        print("Hovered over dropdown arrow.")
                         time.sleep(2)
+                    except:
+                        # Fallback: hover over the location container
+                        location_container = driver.find_element(By.CLASS_NAME, "SLC_dflx")
+                        ActionChains(driver).move_to_element(location_container).perform()
+                        print("Hovered over location container.")
+                        time.sleep(2)
+                    
+                    # Wait for the state selection area to appear and become visible
+                    state_selection_area = WebDriverWait(driver, 10).until(
+                        EC.visibility_of_element_located((By.CSS_SELECTOR, ".fltr_relead_hover[style*='display: block'], .fltr_relead_hover:not([style*='display: none'])"))
+                    )
+                    print("State selection area is now visible.")
+                    
+                    # Find and focus on the search input field
+                    search_input = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.ID, "city_others_filter"))
+                    )
+                    
+                    # Click on the input field to focus it
+                    search_input.click()
+                    time.sleep(1)
+                    
+                    # Process each state
+                    for state_name in selected_states:
+                        alternatives_to_try = state_alternatives.get(state_name, [state_name])
+                        state_successfully_selected = False
+                        
+                        for attempt_name in alternatives_to_try:
+                            if state_successfully_selected:
+                                break
+                                
+                            try:
+                                print(f"Searching for state: {attempt_name}")
+                                
+                                # Clear the search field completely using multiple methods
+                                search_input.clear()
+                                search_input.send_keys(Keys.CONTROL + "a")  # Select all
+                                search_input.send_keys(Keys.DELETE)  # Delete selected text
+                                time.sleep(0.5)
+                                
+                                # Focus on the input field and type the state name
+                                search_input.click()
+                                time.sleep(0.5)
+                                
+                                # Type character by character to trigger autocomplete
+                                for char in attempt_name:
+                                    search_input.send_keys(char)
+                                    time.sleep(0.1)  # Small delay between characters
+                                
+                                print(f"Typed '{attempt_name}' in search field character by character")
+                                
+                                # Debug: Check the current state instead of screenshot
+                                try:
+                                    # Check if text was actually entered
+                                    current_value = search_input.get_attribute("value")
+                                    print(f"Current input field value: '{current_value}'")
+                                    
+                                    # Check for any visible autocomplete elements
+                                    autocomplete_elements = driver.find_elements(By.CSS_SELECTOR, ".ui-autocomplete, [class*='autocomplete'], [class*='dropdown']")
+                                    print(f"Found {len(autocomplete_elements)} autocomplete-related elements")
+                                    
+                                    for i, elem in enumerate(autocomplete_elements):
+                                        try:
+                                            display_style = elem.get_attribute("style") or "no style"
+                                            class_name = elem.get_attribute("class") or "no class"
+                                            is_displayed = elem.is_displayed()
+                                            print(f"Autocomplete element {i+1}: class='{class_name}', style='{display_style}', visible={is_displayed}")
+                                        except:
+                                            print(f"Autocomplete element {i+1}: Could not get details")
+                                    
+                                    # Check for any loading indicators
+                                    loading_elements = driver.find_elements(By.CSS_SELECTOR, "[class*='loading'], [class*='spinner']")
+                                    if loading_elements:
+                                        print(f"Found {len(loading_elements)} loading elements")
+                                    
+                                except Exception as debug_error:
+                                    print(f"Debug inspection failed: {debug_error}")
+                                
+                                time.sleep(4)  # Wait longer for autocomplete results
+                                
+                                # Wait for the autocomplete dropdown to appear
+                                try:
+                                    # Look for the specific autocomplete container that's actually visible
+                                    # Based on debug output, we need to find the one with display: block and bl_city_filter class
+                                    autocomplete_container = None
+                                    
+                                    # First try to find the specific bl_city_filter autocomplete that's visible
+                                    potential_containers = driver.find_elements(By.CSS_SELECTOR, ".ui-autocomplete.bl_city_filter")
+                                    
+                                    for container in potential_containers:
+                                        container_style = container.get_attribute("style") or ""
+                                        if "display: block" in container_style and container.is_displayed():
+                                            autocomplete_container = container
+                                            print(f"Found visible autocomplete container with bl_city_filter class")
+                                            break
+                                    
+                                    # If not found, try broader search
+                                    if not autocomplete_container:
+                                        all_autocomplete = driver.find_elements(By.CSS_SELECTOR, ".ui-autocomplete.ui-menu")
+                                        for container in all_autocomplete:
+                                            if container.is_displayed():
+                                                container_style = container.get_attribute("style") or ""
+                                                if "display: block" in container_style:
+                                                    autocomplete_container = container
+                                                    print(f"Found visible autocomplete container with broader search")
+                                                    break
+                                    
+                                    if autocomplete_container:
+                                        print(f"Autocomplete dropdown found for {attempt_name}")
+                                        
+                                        # Debug: Inspect the autocomplete dropdown
+                                        try:
+                                            dropdown_style = autocomplete_container.get_attribute("style") or "no style"
+                                            dropdown_class = autocomplete_container.get_attribute("class") or "no class"
+                                            dropdown_html = autocomplete_container.get_attribute("outerHTML")[:200] + "..."
+                                            print(f"Autocomplete container details:")
+                                            print(f"  Class: {dropdown_class}")
+                                            print(f"  Style: {dropdown_style}")
+                                            print(f"  HTML preview: {dropdown_html}")
+                                        except Exception as debug_error:
+                                            print(f"Failed to inspect autocomplete container: {debug_error}")
+                                        
+                                        # Get all autocomplete list items - try multiple selectors
+                                        autocomplete_items = []
+                                        
+                                        # Try different selectors for list items
+                                        item_selectors = [
+                                            "li.ui-menu-item",
+                                            "li.as_D",
+                                            "li",
+                                            ".ui-menu-item",
+                                            "ul li"
+                                        ]
+                                        
+                                        for selector in item_selectors:
+                                            items = autocomplete_container.find_elements(By.CSS_SELECTOR, selector)
+                                            if items:
+                                                autocomplete_items = items
+                                                print(f"Found {len(items)} autocomplete items using selector: {selector}")
+                                                break
+                                        
+                                        if autocomplete_items:
+                                            print(f"Found {len(autocomplete_items)} autocomplete results")
+                                            
+                                            # Print all available options for debugging
+                                            for i, item in enumerate(autocomplete_items):
+                                                try:
+                                                    item_text = item.text.strip()
+                                                    item_html = item.get_attribute("outerHTML")[:150] + "..."
+                                                    print(f"Autocomplete option {i+1}: '{item_text}'")
+                                                    print(f"  HTML: {item_html}")
+                                                except:
+                                                    print(f"Autocomplete option {i+1}: Could not get text")
+                                            
+                                            # Find the matching state in the results
+                                            for item in autocomplete_items:
+                                                try:
+                                                    item_text = item.text.strip()
+                                                    print(f"Checking autocomplete item: '{item_text}'")
+                                                    
+                                                    # More flexible matching - check for state name in the text
+                                                    if (state_name.lower() in item_text.lower() or 
+                                                        attempt_name.lower() in item_text.lower()):
+                                                        
+                                                        # Try to click the anchor element within the li, or the li itself
+                                                        try:
+                                                            anchor = item.find_element(By.TAG_NAME, "a")
+                                                            click_target = anchor
+                                                        except:
+                                                            click_target = item
+                                                        
+                                                        # Use JavaScript click for more reliability
+                                                        driver.execute_script("arguments[0].click();", click_target)
+                                                        print(f"Successfully selected state from autocomplete: {attempt_name} -> {item_text}")
+                                                        state_successfully_selected = True
+                                                        time.sleep(2)
+                                                        break
+                                                        
+                                                except Exception as item_error:
+                                                    print(f"Error clicking autocomplete item: {item_error}")
+                                                    continue
+                                            
+                                            # If no match found, try the first result as fallback
+                                            if not state_successfully_selected and autocomplete_items:
+                                                try:
+                                                    first_item = autocomplete_items[0]
+                                                    try:
+                                                        first_anchor = first_item.find_element(By.TAG_NAME, "a")
+                                                        click_target = first_anchor
+                                                    except:
+                                                        click_target = first_item
+                                                    
+                                                    driver.execute_script("arguments[0].click();", click_target)
+                                                    print(f"Selected first available autocomplete result for: {attempt_name}")
+                                                    state_successfully_selected = True
+                                                    time.sleep(2)
+                                                except Exception as first_error:
+                                                    print(f"Failed to click first autocomplete result: {first_error}")
+                                        
+                                        else:
+                                            print(f"No autocomplete items found in container for {attempt_name}")
+                                    
+                                    else:
+                                        print(f"No visible autocomplete container found for {attempt_name}")
+                                        
+                                except Exception as autocomplete_error:
+                                    print(f"Error finding autocomplete dropdown: {autocomplete_error}")
+                                
+                                # If autocomplete selection was successful, skip the fallback to suggested states
+                                if state_successfully_selected:
+                                    print(f"Successfully selected {attempt_name} from autocomplete, skipping suggested states fallback")
+                                else:
+                                    print(f"No autocomplete dropdown appeared for state: {attempt_name}")
+                                    
+                                    # Debug: Inspect page state when autocomplete doesn't appear
+                                    try:
+                                        # Check current input value again
+                                        final_value = search_input.get_attribute("value")
+                                        print(f"Input field value when no autocomplete: '{final_value}'")
+                                        
+                                        # Look for any error messages or notifications
+                                        error_elements = driver.find_elements(By.CSS_SELECTOR, "[class*='error'], [class*='message'], [class*='notification']")
+                                        if error_elements:
+                                            print(f"Found {len(error_elements)} potential error/message elements")
+                                            for error in error_elements[:3]:  # Limit to first 3
+                                                if error.is_displayed():
+                                                    print(f"Error message: '{error.text}'")
+                                        
+                                        # Check if the dropdown area is still visible
+                                        dropdown_area = driver.find_elements(By.CLASS_NAME, "fltr_relead_hover")
+                                        for area in dropdown_area:
+                                            area_style = area.get_attribute("style") or "no style"
+                                            area_display = area.is_displayed()
+                                            print(f"Dropdown area visible: {area_display}, style: {area_style}")
+                                            
+                                    except Exception as debug_error:
+                                        print(f"Debug inspection when no autocomplete failed: {debug_error}")
+                                    
+                                    # Fallback: Try to find the state in suggested states
+                                    try:
+                                        print(f"Trying to find {attempt_name} in suggested states...")
+                                        
+                                        # First try exact match with data-val or title
+                                        suggested_state = None
+                                        try:
+                                            suggested_state = driver.find_element(By.XPATH, 
+                                                f"//div[@class='SLc_brs3 SLC_f14 SLC_cp filt_cps suggested_states_cls common_loc' and (@data-val='{attempt_name}' or @title='{attempt_name}')]")
+                                        except:
+                                            # Try case-insensitive search
+                                            try:
+                                                suggested_states = driver.find_elements(By.CSS_SELECTOR, 
+                                                    "div.suggested_states_cls.common_loc")
+                                                for state_elem in suggested_states:
+                                                    if (state_elem.get_attribute("data-val").lower() == attempt_name.lower() or 
+                                                        state_elem.get_attribute("title").lower() == attempt_name.lower() or
+                                                        state_elem.text.lower() == attempt_name.lower()):
+                                                        suggested_state = state_elem
+                                                        break
+                                            except Exception as search_error:
+                                                print(f"Error searching suggested states: {search_error}")
+                                        
+                                        if suggested_state:
+                                            if click_element_safely(driver, suggested_state):
+                                                print(f"Found and selected state from suggested list: {attempt_name}")
+                                                state_successfully_selected = True
+                                            else:
+                                                print(f"Failed to click suggested state: {attempt_name}")
+                                        else:
+                                            print(f"State {attempt_name} not found in suggested states list")
+                                            
+                                            # Alternative: Try typing a partial name to trigger autocomplete
+                                            if not state_successfully_selected and len(attempt_name) > 4:
+                                                print(f"Trying partial search for {attempt_name}...")
+                                                search_input.clear()
+                                                time.sleep(0.5)
+                                                
+                                                # Try with first 3-4 characters
+                                                partial_name = attempt_name[:4]
+                                                for char in partial_name:
+                                                    search_input.send_keys(char)
+                                                    time.sleep(0.2)
+                                                
+                                                time.sleep(3)  # Wait for autocomplete
+                                                
+                                                try:
+                                                    autocomplete_container = WebDriverWait(driver, 5).until(
+                                                        EC.visibility_of_element_located((By.CSS_SELECTOR, ".ui-autocomplete.ui-menu"))
+                                                    )
+                                                    autocomplete_items = autocomplete_container.find_elements(By.CSS_SELECTOR, "li.ui-menu-item")
+                                                    
+                                                    for item in autocomplete_items:
+                                                        if state_name.lower() in item.text.lower():
+                                                            anchor = item.find_element(By.TAG_NAME, "a")
+                                                            driver.execute_script("arguments[0].click();", anchor)
+                                                            print(f"Selected {state_name} from partial search autocomplete")
+                                                            state_successfully_selected = True
+                                                            break
+                                                except:
+                                                    print(f"Partial search also failed for {attempt_name}")
+                                                    
+                                    except Exception as suggested_error:
+                                        print(f"State {attempt_name} not found in suggested list either: {suggested_error}")
+                                
+                                # Clear the search field before next attempt/state
+                                try:
+                                    search_input.clear()
+                                    time.sleep(0.5)
+                                except:
+                                    pass
+                                    
+                                # If successful, break out of alternatives loop
+                                if state_successfully_selected:
+                                    break
+                                    
+                                # Small delay between attempts
+                                time.sleep(1)
+                                
+                            except Exception as state_error:
+                                print(f"Error processing state '{attempt_name}': {state_error}")
+                                # Clear search field even if there's an error
+                                try:
+                                    search_input.clear()
+                                except:
+                                    pass
+                        
+                        if not state_successfully_selected:
+                            print(f"Failed to select any variant of state: {state_name}")
+                        
+                        # Small delay between different states
+                        time.sleep(1)
+                    
+                    # Final clear of the search field
+                    try:
+                        search_input.clear()
+                        print("Cleared search field after all state selections")
+                    except:
+                        pass
+                        
+                    print(f"Completed processing {len(selected_states)} states.")
+                    
+                except Exception as main_error:
+                    print(f"Error in state selection process: {main_error}")
+                    # Fallback: if state selection fails, click All India as backup
+                    try:
+                        # Wait for overlays to disappear before fallback
+                        wait_for_overlay_to_disappear(driver, timeout=10)
+                        
+                        all_india_element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.ID, "location_2"))
+                        )
+                        
+                        if click_element_safely(driver, all_india_element):
+                            print("Fallback: Successfully clicked the 'All India' label.", flush=True)
+                        else:
+                            print("Fallback: Could not click 'All India' even with safe click method.", flush=True)
+                            
+                    except Exception as fallback_error:
+                        print(f"Fallback also failed: {fallback_error}", flush=True)
+                        
+            else:
+                # If no specific states are selected, default to All India
+                try:
+                    # Wait for overlays to disappear
+                    wait_for_overlay_to_disappear(driver, timeout=10)
+                    
+                    all_india_element = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.ID, "location_2"))
+                    )
+                    
+                    if click_element_safely(driver, all_india_element):
+                        print("No specific states provided, clicked 'All India' label.", flush=True)
+                    else:
+                        print("Could not click 'All India' label.", flush=True)
+                        
                 except Exception as e:
-                    print(f"No overlay found or couldn't remove it: {e}")
-                
-                india_label = driver.find_element(By.XPATH, "//label[contains(text(), 'India')]")
-                india_label.click()
-                print("Clicked the 'India' label.",flush=True)
-                
-                time.sleep(5)
-                
-            except Exception as e:
-                print(f"Failed to click the 'India' label: {e}",flush=True)
-                driver.save_screenshot("screenshot_after_login.png")
-                print("Screenshot saved as screenshot_after_login.png",flush=True)
+                    print(f"Could not click the 'All India' label: {e}", flush=True)
 
-            enter_custom_order_value(driver)
+            # Continue with the rest of the function logic
             time.sleep(3)
-            select_lead_type(driver)
 
             # Read the data from the span element with color: rgb(42, 166, 153)
             span_result = False
@@ -1098,7 +1770,7 @@ def redirect_and_refresh(driver, wait):
                 print(span_result, flush=True)
 
             except Exception as e:
-                print(f"Failed to read data from span with specified color: {e}",flush=True)
+                print(f"Failed to read data from span with specified color: {e}", flush=True)
 
             # After reading the span, get the first <h2> element on the page
             h2_result = False
@@ -1106,15 +1778,15 @@ def redirect_and_refresh(driver, wait):
                 time.sleep(3)  # Static wait
                 first_h2 = driver.find_element(By.XPATH, "//h2")
                 first_h2_text = first_h2.text
-                lead_bought=first_h2_text
-                print(f"Read data from the first <h2>: {first_h2_text}",flush=True)
+                lead_bought = first_h2_text
+                print(f"Read data from the first <h2>: {first_h2_text}", flush=True)
 
                 # Check if the extracted text matches any word in the h2_word_array
                 h2_result = first_h2_text not in h2_word_array
                 print(h2_result)
 
             except Exception as e:
-                print(f"Failed to read data from the first <h2>: {e}",flush=True)
+                print(f"Failed to read data from the first <h2>: {e}", flush=True)
 
             # Get the time element using the updated XPath based on the provided HTML structure
             time_result = False
@@ -1122,10 +1794,9 @@ def redirect_and_refresh(driver, wait):
                 time.sleep(3)  # Static wait
                 
                 # Updated XPath to match the actual HTML structure
-                # Looking for div with class containing "lstNwLftLoc" and "lstNwDflx" that has a strong element with time text
                 time_element = driver.find_element(By.XPATH, "//div[contains(@class, 'lstNwLftLoc') and contains(@class, 'lstNwDflx')]//strong")
                 time_text = time_element.text
-                print(f"Time text: {time_text}",flush=True)
+                print(f"Time text: {time_text}", flush=True)
 
                 # Parse the time value
                 if 'mins ago' in time_text:
@@ -1137,17 +1808,16 @@ def redirect_and_refresh(driver, wait):
                 else:
                     time_value = 11  # Default to a value greater than 10 mins if parsing fails
 
-                # Check if time is less than 10 minutes
                 time_result = time_value < 1000000
                 print(time_result, flush=True)
 
             except Exception as e:
-                print(f"Failed to read the time text: {e}",flush=True)
+                print(f"Failed to read the time text: {e}", flush=True)
                 # Try an alternative selector as a fallback
                 try:
                     time_element = driver.find_element(By.CSS_SELECTOR, "div.lstNwLftLoc.lstNwDflx strong")
                     time_text = time_element.text
-                    print(f"Time text (alternative method): {time_text}",flush=True)
+                    print(f"Time text (alternative method): {time_text}", flush=True)
                     
                     # Parse the time value
                     if 'mins ago' in time_text:
@@ -1159,25 +1829,26 @@ def redirect_and_refresh(driver, wait):
                     else:
                         time_value = 11  # Default to a value greater than 10 mins if parsing fails
 
-                    # Check if time is less than 10 minutes
+                    # Check if time is less than specified threshold
                     time_result = time_value < 1000000
                     print(time_result, flush=True)
                     
                 except Exception as e2:
-                    print(f"Failed to read the time text with alternative method: {e2}",flush=True)
-                    # driver.save_screenshot("time_element_error.png")
-                    print("Screenshot saved as time_element_error.png",flush=True)
+                    print(f"Failed to read the time text with alternative method: {e2}", flush=True)
+                    print("Screenshot saved as time_element_error.png", flush=True)
 
             # Check if the close button is available and click it if found
             try:
                 close_button = driver.find_element(By.XPATH, "//span[@class='glob_sa_close' and contains(text(), '—')]")
-                close_button.click()
-                print("Clicked the close button.",flush=True)
+                if click_element_safely(driver, close_button):
+                    print("Clicked the close button.", flush=True)
+                else:
+                    print("Failed to click close button safely.", flush=True)
             except Exception as e:
                 if 'no such element' in str(e).lower():
-                    print("Close button not found. Skipping this step.",flush=True)
+                    print("Close button not found. Skipping this step.", flush=True)
                 else:
-                    print(f"Close button not found or failed to click: {e}",flush=True)
+                    print(f"Close button not found or failed to click: {e}", flush=True)
 
             # If all conditions are True, click the "Contact Buyer Now" button
             if span_result and h2_result and time_result:
@@ -1185,16 +1856,18 @@ def redirect_and_refresh(driver, wait):
                     # Call the function to go to message center and click the 'Reply Now' button
                     go_to_message_center_and_click(driver, first_h2_text)
                 else:
-                    print("Failed to click the 'Contact Buyer Now' button.",flush=True)
+                    print("Failed to click the 'Contact Buyer Now' button.", flush=True)
 
                 # Refresh the page three times
-                print("Waiting for 10 seconds...",flush=True)
+                print("Waiting for 10 seconds...", flush=True)
                 time.sleep(10)  # Static wait for refresh
+                
         else:
             print("ZERO_BALANCE_DETECTED", flush=True)
             return
+            
     except Exception as e:
-        print(f"Error while checking buyer balance: {e}",flush=True)
+        print(f"Error while checking buyer balance: {e}", flush=True)
         return
     
 def execute_task_one(driver, wait):
@@ -1225,26 +1898,29 @@ def execute_task_one(driver, wait):
         start_selling_button.click()
         print("Clicked 'Start Selling' button.",flush=True)
 
+        # try:
+        #     enter_password_button = wait.until(
+        #         EC.element_to_be_clickable((By.ID, "passwordbtn1"))
+        #     )
+        #     enter_password_button.click()
+        #     print("Clicked 'Enter Password' button.")
+
+        #     user_password = input_data.get("password", "")
+        #     password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
+        #     password_input.clear()
+        #     password_input.send_keys(user_password)
+        #     print("Entered the password.")
+
+        #     sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
+        #     sign_in_button.click()
+        #     print("Clicked 'Sign In' button.")
+
+        # except (TimeoutException, NoSuchElementException):
+        #     print("Enter password button not found. Please login to your leads provider account first.",flush=True)
+        #     print("ROUTE_TO:/execute-task",flush=True)
+        #     return "Unsuccessful"
+
         try:
-            enter_password_button = wait.until(
-                EC.element_to_be_clickable((By.ID, "passwordbtn1"))
-            )
-            enter_password_button.click()
-            print("Clicked 'Enter Password' button.")
-
-            user_password = input_data.get("password", "")
-            password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
-            password_input.clear()
-            password_input.send_keys(user_password)
-            print("Entered the password.")
-
-            sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
-            sign_in_button.click()
-            print("Clicked 'Sign In' button.")
-
-        except (TimeoutException, NoSuchElementException):
-
-            try:
                 # Click 'Request OTP on Mobile' button
                 received_otp = None
                 otp_event.clear()
@@ -1309,9 +1985,9 @@ def execute_task_one(driver, wait):
                     print("Timeout waiting for correct OTP.", flush=True)
                     return "Unsuccessful"
                         
-            except (TimeoutException, NoSuchElementException) as e:
-                print(f"OTP flow failed: {e}",flush=True)
-                return "Unsuccessful"
+        except (TimeoutException, NoSuchElementException) as e:
+            print(f"OTP flow failed: {e}",flush=True)
+            return "Unsuccessful"
         
         # Final check for dashboard
         time.sleep(5)
@@ -1329,7 +2005,7 @@ def execute_task_one(driver, wait):
     except Exception as e:
         print(f"An error occurred during login: {e}",flush=True)
         return "Unsuccessful"
-                  
+                                 
 def send_to_node_api(expert_details):
     url = "https://api.leadscruise.com/api/support/bulk"
 
@@ -1515,7 +2191,7 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
         print("Fetching table data...", flush=True)
         try:
             # Check if table exists with the correct selector based on the HTML structure
-            table_selector = '#Enquiries_reportTableCSS__38-9b'
+            table_selector = '#Enquiries_reportTableCSS__34_qU'
             
             tables_exist = driver.execute_script(f"""
                 return document.querySelector('{table_selector}') !== null;
@@ -1526,7 +2202,7 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
                 
                 # Extract category data (default view - Top Categories tab is active)
                 category_data = driver.execute_script("""
-                    const table = document.querySelector('#Enquiries_reportTableCSS__38-9b');
+                    const table = document.querySelector('#Enquiries_reportTableCSS__34_qU');
                     const rows = Array.from(table.querySelectorAll('tbody tr'));
                     return rows.map(row => {
                         const cells = Array.from(row.querySelectorAll('td'));
@@ -1551,7 +2227,7 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
                         
                         # Extract location data
                         location_data = driver.execute_script("""
-                            const table = document.querySelector('#Enquiries_reportTableCSS__38-9b');
+                            const table = document.querySelector('#Enquiries_reportTableCSS__34_qU');
                             const rows = Array.from(table.querySelectorAll('tbody tr'));
                             return rows.map(row => {
                                 const cells = Array.from(row.querySelectorAll('td'));
@@ -1695,6 +2371,8 @@ def save_analytics_data_locally(analytics_data):
 
 def main():
     global redirect_count
+    global lead_count
+    global max_captures
     """
     Main function to run the program.
     If the login process is successful, it enters an infinite loop to refresh or check the dashboard.
@@ -1734,7 +2412,7 @@ def main():
     wait = WebDriverWait(driver, 10)
 
     # Start Xvfb in the background
-    unique_id = input_data.get("uniqueId", [])
+    unique_id = input_data.get("uniqueId", "123456")
     # Start Xvfb with dynamic unique_id
     subprocess.Popen(['Xvfb', f':{unique_id}', '-screen', '0', '1920x1080x24'])
 
@@ -1762,11 +2440,11 @@ def main():
                 expert_details = get_expert_details(driver)
                 print(expert_details)
                 send_to_node_api(expert_details)
-                
+          
                 # Fetch analytics data after successful login and expert details
                 user_mobile_number = input_data.get("mobileNumber", "")
                 user_password = input_data.get("password", "")
-                
+          
                 if user_mobile_number and user_password:
                     print("Fetching analytics data after successful login...", flush=True)
                     analytics_success = fetch_analytics_data(driver, user_mobile_number, user_password)
@@ -1776,11 +2454,9 @@ def main():
                         print("Failed to fetch analytics data, continuing with main process...", flush=True)
                 else:
                     print("Mobile number or password not available, skipping analytics fetch...", flush=True)
-                    
                 
             else:
                 print("Login failed, skipping expert data extraction.")
-            # Exit if the login process is unsuccessful
             if result == "Unsuccessful":
                 print("Login failed. Exiting program...", flush=True)
                 return
@@ -1789,7 +2465,7 @@ def main():
         while True:
             try:
                 # If we haven't completed redirect_and_refresh yet
-                if redirect_count < 10:
+                if redirect_count < 10 and lead_count < max_captures:
                     print(f"Running redirect_and_refresh (count: {redirect_count + 1}/10)...", flush=True)
                     redirect_count += 1
                     redirect_and_refresh(driver, wait)
@@ -1862,5 +2538,6 @@ def main():
             print("Error stopping display.", flush=True)
 
 if __name__ == "__main__":
+    # print("hi")
     main()
     

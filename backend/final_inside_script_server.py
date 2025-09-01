@@ -1355,405 +1355,352 @@ def redirect_and_refresh(driver, wait):
             # Wait for overlays to disappear after refresh
             wait_for_overlay_to_disappear(driver, timeout=10)
 
-            # Select specific states instead of 'All India'
-            selected_states = input_data.get("selectedStates", [])
-
-            # Map of alternative state names or spellings in case exact match fails
-            state_alternatives = {
-                "Karnataka": ["Karnataka", "Bangalore", "Bengaluru"],
-                "Maharashtra": ["Maharashtra", "Mumbai", "Pune"],
-                "Delhi": ["Delhi", "New Delhi", "NCR"]
-            }
-
-            if selected_states:
+            # State selection with comprehensive error handling
+            def handle_state_selection():
+                """Handle state selection with graceful error handling"""
                 try:
-                    # Wait for any initial overlays to disappear
-                    wait_for_overlay_to_disappear(driver, timeout=10)
-                    
-                    # First, hover over the dropdown arrow to trigger the state selection interface
-                    try:
-                        dropdown_arrow = driver.find_element(By.CSS_SELECTOR, "span.dropdown_arrow")
-                        ActionChains(driver).move_to_element(dropdown_arrow).perform()
-                        print("Hovered over dropdown arrow.")
-                        time.sleep(2)
-                    except:
-                        # Fallback: hover over the location container
-                        location_container = driver.find_element(By.CLASS_NAME, "SLC_dflx")
-                        ActionChains(driver).move_to_element(location_container).perform()
-                        print("Hovered over location container.")
-                        time.sleep(2)
-                    
-                    # Wait for the state selection area to appear and become visible
-                    state_selection_area = WebDriverWait(driver, 10).until(
-                        EC.visibility_of_element_located((By.CSS_SELECTOR, ".fltr_relead_hover[style*='display: block'], .fltr_relead_hover:not([style*='display: none'])"))
-                    )
-                    print("State selection area is now visible.")
-                    
-                    # Find and focus on the search input field
-                    search_input = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.ID, "city_others_filter"))
-                    )
-                    
-                    # Click on the input field to focus it
-                    search_input.click()
-                    time.sleep(1)
-                    
-                    # Process each state
-                    for state_name in selected_states:
-                        alternatives_to_try = state_alternatives.get(state_name, [state_name])
-                        state_successfully_selected = False
-                        
-                        for attempt_name in alternatives_to_try:
-                            if state_successfully_selected:
-                                break
-                                
+                    # Select specific states instead of 'All India'
+                    selected_states = input_data.get("selectedStates", [])
+
+                    # Map of alternative state names or spellings in case exact match fails
+                    state_alternatives = {
+                        "Karnataka": ["Karnataka", "Bangalore", "Bengaluru"],
+                        "Maharashtra": ["Maharashtra", "Mumbai", "Pune"],
+                        "Delhi": ["Delhi", "New Delhi", "NCR"]
+                    }
+
+                    if selected_states:
+                        # If there are 36 or more states, directly select All India instead
+                        if len(selected_states) >= 36:
+                            print(f"Found {len(selected_states)} states (>= 36). Selecting 'All India' instead of individual states.", flush=True)
                             try:
-                                print(f"Searching for state: {attempt_name}")
+                                # Wait for overlays to disappear
+                                wait_for_overlay_to_disappear(driver, timeout=5)
                                 
-                                # Clear the search field completely using multiple methods
-                                search_input.clear()
-                                search_input.send_keys(Keys.CONTROL + "a")  # Select all
-                                search_input.send_keys(Keys.DELETE)  # Delete selected text
-                                time.sleep(0.5)
+                                all_india_element = WebDriverWait(driver, 10).until(
+                                    EC.presence_of_element_located((By.ID, "location_2"))
+                                )
                                 
-                                # Focus on the input field and type the state name
-                                search_input.click()
-                                time.sleep(0.5)
-                                
-                                # Type character by character to trigger autocomplete
-                                for char in attempt_name:
-                                    search_input.send_keys(char)
-                                    time.sleep(0.1)  # Small delay between characters
-                                
-                                print(f"Typed '{attempt_name}' in search field character by character")
-                                
-                                # Debug: Check the current state instead of screenshot
-                                try:
-                                    # Check if text was actually entered
-                                    current_value = search_input.get_attribute("value")
-                                    print(f"Current input field value: '{current_value}'")
-                                    
-                                    # Check for any visible autocomplete elements
-                                    autocomplete_elements = driver.find_elements(By.CSS_SELECTOR, ".ui-autocomplete, [class*='autocomplete'], [class*='dropdown']")
-                                    print(f"Found {len(autocomplete_elements)} autocomplete-related elements")
-                                    
-                                    for i, elem in enumerate(autocomplete_elements):
-                                        try:
-                                            display_style = elem.get_attribute("style") or "no style"
-                                            class_name = elem.get_attribute("class") or "no class"
-                                            is_displayed = elem.is_displayed()
-                                            print(f"Autocomplete element {i+1}: class='{class_name}', style='{display_style}', visible={is_displayed}")
-                                        except:
-                                            print(f"Autocomplete element {i+1}: Could not get details")
-                                    
-                                    # Check for any loading indicators
-                                    loading_elements = driver.find_elements(By.CSS_SELECTOR, "[class*='loading'], [class*='spinner']")
-                                    if loading_elements:
-                                        print(f"Found {len(loading_elements)} loading elements")
-                                    
-                                except Exception as debug_error:
-                                    print(f"Debug inspection failed: {debug_error}")
-                                
-                                time.sleep(4)  # Wait longer for autocomplete results
-                                
-                                # Wait for the autocomplete dropdown to appear
-                                try:
-                                    # Look for the specific autocomplete container that's actually visible
-                                    # Based on debug output, we need to find the one with display: block and bl_city_filter class
-                                    autocomplete_container = None
-                                    
-                                    # First try to find the specific bl_city_filter autocomplete that's visible
-                                    potential_containers = driver.find_elements(By.CSS_SELECTOR, ".ui-autocomplete.bl_city_filter")
-                                    
-                                    for container in potential_containers:
-                                        container_style = container.get_attribute("style") or ""
-                                        if "display: block" in container_style and container.is_displayed():
-                                            autocomplete_container = container
-                                            print(f"Found visible autocomplete container with bl_city_filter class")
-                                            break
-                                    
-                                    # If not found, try broader search
-                                    if not autocomplete_container:
-                                        all_autocomplete = driver.find_elements(By.CSS_SELECTOR, ".ui-autocomplete.ui-menu")
-                                        for container in all_autocomplete:
-                                            if container.is_displayed():
-                                                container_style = container.get_attribute("style") or ""
-                                                if "display: block" in container_style:
-                                                    autocomplete_container = container
-                                                    print(f"Found visible autocomplete container with broader search")
-                                                    break
-                                    
-                                    if autocomplete_container:
-                                        print(f"Autocomplete dropdown found for {attempt_name}")
-                                        
-                                        # Debug: Inspect the autocomplete dropdown
-                                        try:
-                                            dropdown_style = autocomplete_container.get_attribute("style") or "no style"
-                                            dropdown_class = autocomplete_container.get_attribute("class") or "no class"
-                                            dropdown_html = autocomplete_container.get_attribute("outerHTML")[:200] + "..."
-                                            print(f"Autocomplete container details:")
-                                            print(f"  Class: {dropdown_class}")
-                                            print(f"  Style: {dropdown_style}")
-                                            print(f"  HTML preview: {dropdown_html}")
-                                        except Exception as debug_error:
-                                            print(f"Failed to inspect autocomplete container: {debug_error}")
-                                        
-                                        # Get all autocomplete list items - try multiple selectors
-                                        autocomplete_items = []
-                                        
-                                        # Try different selectors for list items
-                                        item_selectors = [
-                                            "li.ui-menu-item",
-                                            "li.as_D",
-                                            "li",
-                                            ".ui-menu-item",
-                                            "ul li"
-                                        ]
-                                        
-                                        for selector in item_selectors:
-                                            items = autocomplete_container.find_elements(By.CSS_SELECTOR, selector)
-                                            if items:
-                                                autocomplete_items = items
-                                                print(f"Found {len(items)} autocomplete items using selector: {selector}")
-                                                break
-                                        
-                                        if autocomplete_items:
-                                            print(f"Found {len(autocomplete_items)} autocomplete results")
-                                            
-                                            # Print all available options for debugging
-                                            for i, item in enumerate(autocomplete_items):
-                                                try:
-                                                    item_text = item.text.strip()
-                                                    item_html = item.get_attribute("outerHTML")[:150] + "..."
-                                                    print(f"Autocomplete option {i+1}: '{item_text}'")
-                                                    print(f"  HTML: {item_html}")
-                                                except:
-                                                    print(f"Autocomplete option {i+1}: Could not get text")
-                                            
-                                            # Find the matching state in the results
-                                            for item in autocomplete_items:
-                                                try:
-                                                    item_text = item.text.strip()
-                                                    print(f"Checking autocomplete item: '{item_text}'")
-                                                    
-                                                    # More flexible matching - check for state name in the text
-                                                    if (state_name.lower() in item_text.lower() or 
-                                                        attempt_name.lower() in item_text.lower()):
-                                                        
-                                                        # Try to click the anchor element within the li, or the li itself
-                                                        try:
-                                                            anchor = item.find_element(By.TAG_NAME, "a")
-                                                            click_target = anchor
-                                                        except:
-                                                            click_target = item
-                                                        
-                                                        # Use JavaScript click for more reliability
-                                                        driver.execute_script("arguments[0].click();", click_target)
-                                                        print(f"Successfully selected state from autocomplete: {attempt_name} -> {item_text}")
-                                                        state_successfully_selected = True
-                                                        time.sleep(2)
-                                                        break
-                                                        
-                                                except Exception as item_error:
-                                                    print(f"Error clicking autocomplete item: {item_error}")
-                                                    continue
-                                            
-                                            # If no match found, try the first result as fallback
-                                            if not state_successfully_selected and autocomplete_items:
-                                                try:
-                                                    first_item = autocomplete_items[0]
-                                                    try:
-                                                        first_anchor = first_item.find_element(By.TAG_NAME, "a")
-                                                        click_target = first_anchor
-                                                    except:
-                                                        click_target = first_item
-                                                    
-                                                    driver.execute_script("arguments[0].click();", click_target)
-                                                    print(f"Selected first available autocomplete result for: {attempt_name}")
-                                                    state_successfully_selected = True
-                                                    time.sleep(2)
-                                                except Exception as first_error:
-                                                    print(f"Failed to click first autocomplete result: {first_error}")
-                                        
-                                        else:
-                                            print(f"No autocomplete items found in container for {attempt_name}")
-                                    
-                                    else:
-                                        print(f"No visible autocomplete container found for {attempt_name}")
-                                        
-                                except Exception as autocomplete_error:
-                                    print(f"Error finding autocomplete dropdown: {autocomplete_error}")
-                                
-                                # If autocomplete selection was successful, skip the fallback to suggested states
-                                if state_successfully_selected:
-                                    print(f"Successfully selected {attempt_name} from autocomplete, skipping suggested states fallback")
+                                if click_element_safely(driver, all_india_element):
+                                    print("Successfully selected 'All India' for large state list.", flush=True)
                                 else:
-                                    print(f"No autocomplete dropdown appeared for state: {attempt_name}")
+                                    print("Could not click 'All India' label for large state list, but continuing...", flush=True)
                                     
-                                    # Debug: Inspect page state when autocomplete doesn't appear
-                                    try:
-                                        # Check current input value again
-                                        final_value = search_input.get_attribute("value")
-                                        print(f"Input field value when no autocomplete: '{final_value}'")
-                                        
-                                        # Look for any error messages or notifications
-                                        error_elements = driver.find_elements(By.CSS_SELECTOR, "[class*='error'], [class*='message'], [class*='notification']")
-                                        if error_elements:
-                                            print(f"Found {len(error_elements)} potential error/message elements")
-                                            for error in error_elements[:3]:  # Limit to first 3
-                                                if error.is_displayed():
-                                                    print(f"Error message: '{error.text}'")
-                                        
-                                        # Check if the dropdown area is still visible
-                                        dropdown_area = driver.find_elements(By.CLASS_NAME, "fltr_relead_hover")
-                                        for area in dropdown_area:
-                                            area_style = area.get_attribute("style") or "no style"
-                                            area_display = area.is_displayed()
-                                            print(f"Dropdown area visible: {area_display}, style: {area_style}")
+                            except Exception as e:
+                                print(f"Could not click the 'All India' label for large state list: {e}, but continuing execution...", flush=True)
+                            
+                            return  # Exit the state selection function since All India is selected
+                        
+                        print(f"Attempting to select {len(selected_states)} states individually: {selected_states}", flush=True)
+                        
+                        try:
+                            # Wait for any initial overlays to disappear
+                            wait_for_overlay_to_disappear(driver, timeout=10)
+                            
+                            # First, hover over the dropdown arrow to trigger the state selection interface
+                            try:
+                                dropdown_arrow = driver.find_element(By.CSS_SELECTOR, "span.dropdown_arrow")
+                                ActionChains(driver).move_to_element(dropdown_arrow).perform()
+                                print("Hovered over dropdown arrow.")
+                                time.sleep(2)
+                            except:
+                                # Fallback: hover over the location container
+                                try:
+                                    location_container = driver.find_element(By.CLASS_NAME, "SLC_dflx")
+                                    ActionChains(driver).move_to_element(location_container).perform()
+                                    print("Hovered over location container.")
+                                    time.sleep(2)
+                                except:
+                                    print("Could not hover over any location elements, continuing anyway...")
+                            
+                            # Wait for the state selection area to appear and become visible
+                            try:
+                                state_selection_area = WebDriverWait(driver, 10).until(
+                                    EC.visibility_of_element_located((By.CSS_SELECTOR, ".fltr_relead_hover[style*='display: block'], .fltr_relead_hover:not([style*='display: none'])"))
+                                )
+                                print("State selection area is now visible.")
+                            except:
+                                print("State selection area not found, but continuing with execution...")
+                                return  # Exit gracefully from state selection
+                            
+                            # Find and focus on the search input field
+                            try:
+                                search_input = WebDriverWait(driver, 10).until(
+                                    EC.element_to_be_clickable((By.ID, "city_others_filter"))
+                                )
+                                
+                                # Click on the input field to focus it
+                                search_input.click()
+                                time.sleep(1)
+                            except:
+                                print("Search input field not found, skipping state selection...")
+                                return  # Exit gracefully from state selection
+                            
+                            # Process each state with individual error handling
+                            for state_name in selected_states:
+                                try:
+                                    alternatives_to_try = state_alternatives.get(state_name, [state_name])
+                                    state_successfully_selected = False
+                                    
+                                    for attempt_name in alternatives_to_try:
+                                        if state_successfully_selected:
+                                            break
                                             
-                                    except Exception as debug_error:
-                                        print(f"Debug inspection when no autocomplete failed: {debug_error}")
-                                    
-                                    # Fallback: Try to find the state in suggested states
-                                    try:
-                                        print(f"Trying to find {attempt_name} in suggested states...")
-                                        
-                                        # First try exact match with data-val or title
-                                        suggested_state = None
                                         try:
-                                            suggested_state = driver.find_element(By.XPATH, 
-                                                f"//div[@class='SLc_brs3 SLC_f14 SLC_cp filt_cps suggested_states_cls common_loc' and (@data-val='{attempt_name}' or @title='{attempt_name}')]")
-                                        except:
-                                            # Try case-insensitive search
-                                            try:
-                                                suggested_states = driver.find_elements(By.CSS_SELECTOR, 
-                                                    "div.suggested_states_cls.common_loc")
-                                                for state_elem in suggested_states:
-                                                    if (state_elem.get_attribute("data-val").lower() == attempt_name.lower() or 
-                                                        state_elem.get_attribute("title").lower() == attempt_name.lower() or
-                                                        state_elem.text.lower() == attempt_name.lower()):
-                                                        suggested_state = state_elem
-                                                        break
-                                            except Exception as search_error:
-                                                print(f"Error searching suggested states: {search_error}")
-                                        
-                                        if suggested_state:
-                                            if click_element_safely(driver, suggested_state):
-                                                print(f"Found and selected state from suggested list: {attempt_name}")
-                                                state_successfully_selected = True
-                                            else:
-                                                print(f"Failed to click suggested state: {attempt_name}")
-                                        else:
-                                            print(f"State {attempt_name} not found in suggested states list")
+                                            print(f"Searching for state: {attempt_name}")
                                             
-                                            # Alternative: Try typing a partial name to trigger autocomplete
-                                            if not state_successfully_selected and len(attempt_name) > 4:
-                                                print(f"Trying partial search for {attempt_name}...")
+                                            # Clear the search field completely using multiple methods
+                                            search_input.clear()
+                                            search_input.send_keys(Keys.CONTROL + "a")  # Select all
+                                            search_input.send_keys(Keys.DELETE)  # Delete selected text
+                                            time.sleep(0.5)
+                                            
+                                            # Focus on the input field and type the state name
+                                            search_input.click()
+                                            time.sleep(0.5)
+                                            
+                                            # Type character by character to trigger autocomplete
+                                            for char in attempt_name:
+                                                search_input.send_keys(char)
+                                                time.sleep(0.1)  # Small delay between characters
+                                            
+                                            print(f"Typed '{attempt_name}' in search field character by character")
+                                            
+                                            time.sleep(4)  # Wait longer for autocomplete results
+                                            
+                                            # Wait for the autocomplete dropdown to appear
+                                            try:
+                                                # Look for the specific autocomplete container that's actually visible
+                                                autocomplete_container = None
+                                                
+                                                # First try to find the specific bl_city_filter autocomplete that's visible
+                                                potential_containers = driver.find_elements(By.CSS_SELECTOR, ".ui-autocomplete.bl_city_filter")
+                                                
+                                                for container in potential_containers:
+                                                    container_style = container.get_attribute("style") or ""
+                                                    if "display: block" in container_style and container.is_displayed():
+                                                        autocomplete_container = container
+                                                        print(f"Found visible autocomplete container with bl_city_filter class")
+                                                        break
+                                                
+                                                # If not found, try broader search
+                                                if not autocomplete_container:
+                                                    all_autocomplete = driver.find_elements(By.CSS_SELECTOR, ".ui-autocomplete.ui-menu")
+                                                    for container in all_autocomplete:
+                                                        if container.is_displayed():
+                                                            container_style = container.get_attribute("style") or ""
+                                                            if "display: block" in container_style:
+                                                                autocomplete_container = container
+                                                                print(f"Found visible autocomplete container with broader search")
+                                                                break
+                                                
+                                                if autocomplete_container:
+                                                    print(f"Autocomplete dropdown found for {attempt_name}")
+                                                    
+                                                    # Get all autocomplete list items - try multiple selectors
+                                                    autocomplete_items = []
+                                                    
+                                                    # Try different selectors for list items
+                                                    item_selectors = [
+                                                        "li.ui-menu-item",
+                                                        "li.as_D",
+                                                        "li",
+                                                        ".ui-menu-item",
+                                                        "ul li"
+                                                    ]
+                                                    
+                                                    for selector in item_selectors:
+                                                        items = autocomplete_container.find_elements(By.CSS_SELECTOR, selector)
+                                                        if items:
+                                                            autocomplete_items = items
+                                                            print(f"Found {len(items)} autocomplete items using selector: {selector}")
+                                                            break
+                                                    
+                                                    if autocomplete_items:
+                                                        print(f"Found {len(autocomplete_items)} autocomplete results")
+                                                        
+                                                        # Find the matching state in the results
+                                                        for item in autocomplete_items:
+                                                            try:
+                                                                item_text = item.text.strip()
+                                                                print(f"Checking autocomplete item: '{item_text}'")
+                                                                
+                                                                # More flexible matching - check for state name in the text
+                                                                if (state_name.lower() in item_text.lower() or 
+                                                                    attempt_name.lower() in item_text.lower()):
+                                                                    
+                                                                    # Try to click the anchor element within the li, or the li itself
+                                                                    try:
+                                                                        anchor = item.find_element(By.TAG_NAME, "a")
+                                                                        click_target = anchor
+                                                                    except:
+                                                                        click_target = item
+                                                                    
+                                                                    # Use JavaScript click for more reliability
+                                                                    driver.execute_script("arguments[0].click();", click_target)
+                                                                    print(f"Successfully selected state from autocomplete: {attempt_name} -> {item_text}")
+                                                                    state_successfully_selected = True
+                                                                    time.sleep(2)
+                                                                    break
+                                                                    
+                                                            except Exception as item_error:
+                                                                print(f"Error clicking autocomplete item: {item_error}")
+                                                                continue
+                                                        
+                                                        # If no match found, try the first result as fallback
+                                                        if not state_successfully_selected and autocomplete_items:
+                                                            try:
+                                                                first_item = autocomplete_items[0]
+                                                                try:
+                                                                    first_anchor = first_item.find_element(By.TAG_NAME, "a")
+                                                                    click_target = first_anchor
+                                                                except:
+                                                                    click_target = first_item
+                                                                
+                                                                driver.execute_script("arguments[0].click();", click_target)
+                                                                print(f"Selected first available autocomplete result for: {attempt_name}")
+                                                                state_successfully_selected = True
+                                                                time.sleep(2)
+                                                            except Exception as first_error:
+                                                                print(f"Failed to click first autocomplete result: {first_error}")
+                                                    
+                                                    else:
+                                                        print(f"No autocomplete items found in container for {attempt_name}")
+                                                
+                                                else:
+                                                    print(f"No visible autocomplete container found for {attempt_name}")
+                                                    
+                                            except Exception as autocomplete_error:
+                                                print(f"Error finding autocomplete dropdown: {autocomplete_error}")
+                                            
+                                            # If autocomplete selection was successful, skip the fallback to suggested states
+                                            if state_successfully_selected:
+                                                print(f"Successfully selected {attempt_name} from autocomplete, skipping suggested states fallback")
+                                            else:
+                                                print(f"No autocomplete dropdown appeared for state: {attempt_name}")
+                                                
+                                                # Fallback: Try to find the state in suggested states
+                                                try:
+                                                    print(f"Trying to find {attempt_name} in suggested states...")
+                                                    
+                                                    # First try exact match with data-val or title
+                                                    suggested_state = None
+                                                    try:
+                                                        suggested_state = driver.find_element(By.XPATH, 
+                                                            f"//div[@class='SLc_brs3 SLC_f14 SLC_cp filt_cps suggested_states_cls common_loc' and (@data-val='{attempt_name}' or @title='{attempt_name}')]")
+                                                    except:
+                                                        # Try case-insensitive search
+                                                        try:
+                                                            suggested_states = driver.find_elements(By.CSS_SELECTOR, 
+                                                                "div.suggested_states_cls.common_loc")
+                                                            for state_elem in suggested_states:
+                                                                if (state_elem.get_attribute("data-val").lower() == attempt_name.lower() or 
+                                                                    state_elem.get_attribute("title").lower() == attempt_name.lower() or
+                                                                    state_elem.text.lower() == attempt_name.lower()):
+                                                                    suggested_state = state_elem
+                                                                    break
+                                                        except Exception as search_error:
+                                                            print(f"Error searching suggested states: {search_error}")
+                                                    
+                                                    if suggested_state:
+                                                        if click_element_safely(driver, suggested_state):
+                                                            print(f"Found and selected state from suggested list: {attempt_name}")
+                                                            state_successfully_selected = True
+                                                        else:
+                                                            print(f"Failed to click suggested state: {attempt_name}")
+                                                    else:
+                                                        print(f"State {attempt_name} not found in suggested states list")
+                                                        
+                                                except Exception as suggested_error:
+                                                    print(f"State {attempt_name} not found in suggested list either: {suggested_error}")
+                                            
+                                            # Clear the search field before next attempt/state
+                                            try:
                                                 search_input.clear()
                                                 time.sleep(0.5)
+                                            except:
+                                                pass
                                                 
-                                                # Try with first 3-4 characters
-                                                partial_name = attempt_name[:4]
-                                                for char in partial_name:
-                                                    search_input.send_keys(char)
-                                                    time.sleep(0.2)
+                                            # If successful, break out of alternatives loop
+                                            if state_successfully_selected:
+                                                break
                                                 
-                                                time.sleep(3)  # Wait for autocomplete
-                                                
-                                                try:
-                                                    autocomplete_container = WebDriverWait(driver, 5).until(
-                                                        EC.visibility_of_element_located((By.CSS_SELECTOR, ".ui-autocomplete.ui-menu"))
-                                                    )
-                                                    autocomplete_items = autocomplete_container.find_elements(By.CSS_SELECTOR, "li.ui-menu-item")
-                                                    
-                                                    for item in autocomplete_items:
-                                                        if state_name.lower() in item.text.lower():
-                                                            anchor = item.find_element(By.TAG_NAME, "a")
-                                                            driver.execute_script("arguments[0].click();", anchor)
-                                                            print(f"Selected {state_name} from partial search autocomplete")
-                                                            state_successfully_selected = True
-                                                            break
-                                                except:
-                                                    print(f"Partial search also failed for {attempt_name}")
-                                                    
-                                    except Exception as suggested_error:
-                                        print(f"State {attempt_name} not found in suggested list either: {suggested_error}")
-                                
-                                # Clear the search field before next attempt/state
-                                try:
-                                    search_input.clear()
-                                    time.sleep(0.5)
-                                except:
-                                    pass
+                                            # Small delay between attempts
+                                            time.sleep(1)
+                                            
+                                        except Exception as state_error:
+                                            print(f"Error processing state '{attempt_name}': {state_error}")
+                                            # Clear search field even if there's an error
+                                            try:
+                                                search_input.clear()
+                                            except:
+                                                pass
                                     
-                                # If successful, break out of alternatives loop
-                                if state_successfully_selected:
-                                    break
+                                    if not state_successfully_selected:
+                                        print(f"Failed to select any variant of state: {state_name}, but continuing...")
                                     
-                                # Small delay between attempts
-                                time.sleep(1)
-                                
-                            except Exception as state_error:
-                                print(f"Error processing state '{attempt_name}': {state_error}")
-                                # Clear search field even if there's an error
-                                try:
-                                    search_input.clear()
-                                except:
-                                    pass
-                        
-                        if not state_successfully_selected:
-                            print(f"Failed to select any variant of state: {state_name}")
-                        
-                        # Small delay between different states
-                        time.sleep(1)
-                    
-                    # Final clear of the search field
-                    try:
-                        search_input.clear()
-                        print("Cleared search field after all state selections")
-                    except:
-                        pass
-                        
-                    print(f"Completed processing {len(selected_states)} states.")
-                    
-                except Exception as main_error:
-                    print(f"Error in state selection process: {main_error}")
-                    # Fallback: if state selection fails, click All India as backup
-                    try:
-                        # Wait for overlays to disappear before fallback
-                        wait_for_overlay_to_disappear(driver, timeout=10)
-                        
-                        all_india_element = WebDriverWait(driver, 10).until(
-                            EC.presence_of_element_located((By.ID, "location_2"))
-                        )
-                        
-                        if click_element_safely(driver, all_india_element):
-                            print("Fallback: Successfully clicked the 'All India' label.", flush=True)
-                        else:
-                            print("Fallback: Could not click 'All India' even with safe click method.", flush=True)
+                                    # Small delay between different states
+                                    time.sleep(1)
+                                    
+                                except Exception as individual_state_error:
+                                    print(f"Error processing individual state {state_name}: {individual_state_error}, continuing with next state...")
+                                    continue
                             
-                    except Exception as fallback_error:
-                        print(f"Fallback also failed: {fallback_error}", flush=True)
-                        
-            else:
-                # If no specific states are selected, default to All India
-                try:
-                    # Wait for overlays to disappear
-                    wait_for_overlay_to_disappear(driver, timeout=10)
-                    
-                    all_india_element = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.ID, "location_2"))
-                    )
-                    
-                    if click_element_safely(driver, all_india_element):
-                        print("No specific states provided, clicked 'All India' label.", flush=True)
+                            # Final clear of the search field
+                            try:
+                                search_input.clear()
+                                print("Cleared search field after all state selections")
+                            except:
+                                pass
+                                
+                            print(f"Completed processing {len(selected_states)} states.")
+                            
+                        except Exception as main_error:
+                            print(f"Error in main state selection process: {main_error}, trying fallback...")
+                            # Fallback: if state selection fails, try to click All India as backup
+                            try:
+                                # Wait for overlays to disappear before fallback
+                                wait_for_overlay_to_disappear(driver, timeout=5)
+                                
+                                all_india_element = WebDriverWait(driver, 5).until(
+                                    EC.presence_of_element_located((By.ID, "location_2"))
+                                )
+                                
+                                if click_element_safely(driver, all_india_element):
+                                    print("Fallback: Successfully clicked the 'All India' label after state selection failure.", flush=True)
+                                else:
+                                    print("Fallback: Could not click 'All India' even with safe click method.", flush=True)
+                                    
+                            except Exception as fallback_error:
+                                print(f"Fallback also failed: {fallback_error}, but continuing execution...", flush=True)
+                                
                     else:
-                        print("Could not click 'All India' label.", flush=True)
-                        
-                except Exception as e:
-                    print(f"Could not click the 'All India' label: {e}", flush=True)
+                        # If no specific states are selected, default to All India
+                        try:
+                            # Wait for overlays to disappear
+                            wait_for_overlay_to_disappear(driver, timeout=5)
+                            
+                            all_india_element = WebDriverWait(driver, 5).until(
+                                EC.presence_of_element_located((By.ID, "location_2"))
+                            )
+                            
+                            if click_element_safely(driver, all_india_element):
+                                print("No specific states provided, clicked 'All India' label.", flush=True)
+                            else:
+                                print("Could not click 'All India' label, but continuing...", flush=True)
+                                
+                        except Exception as e:
+                            print(f"Could not click the 'All India' label: {e}, but continuing execution...", flush=True)
+                
+                except Exception as outer_error:
+                    print(f"Outer error in state selection: {outer_error}, but continuing with main execution...", flush=True)
 
-            # Continue with the rest of the function logic
+            # Call the state selection function with comprehensive error handling
+            print("Starting state selection process...", flush=True)
+            handle_state_selection()
+            print("State selection process completed (with or without success), continuing with main execution...", flush=True)
+
+            # Continue with the rest of the function logic - THIS WILL ALWAYS EXECUTE
             time.sleep(3)
 
             # Read the data from the span element with color: rgb(42, 166, 153)
@@ -1904,17 +1851,14 @@ def execute_task_one(driver, wait):
         #     )
         #     enter_password_button.click()
         #     print("Clicked 'Enter Password' button.")
-
         #     user_password = input_data.get("password", "")
         #     password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
         #     password_input.clear()
         #     password_input.send_keys(user_password)
         #     print("Entered the password.")
-
         #     sign_in_button = wait.until(EC.element_to_be_clickable((By.ID, "signWP")))
         #     sign_in_button.click()
         #     print("Clicked 'Sign In' button.")
-
         # except (TimeoutException, NoSuchElementException):
         #     print("Enter password button not found. Please login to your leads provider account first.",flush=True)
         #     print("ROUTE_TO:/execute-task",flush=True)
