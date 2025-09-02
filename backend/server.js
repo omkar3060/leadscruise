@@ -564,7 +564,7 @@ app.post("/api/execute-task", async (req, res) => {
           const productPlaceholder = "{lead_product_requested}";
 
           const whatsappMessage = `Hi ${leadNamePlaceholder},
-Thank you for contacting ${companyName}. 📬
+Thank you for contacting ${companyName}. 
  
 ✅ You can post your requirements details for this number 
 else 

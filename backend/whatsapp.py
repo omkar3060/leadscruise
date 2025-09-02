@@ -10,6 +10,8 @@ from pyvirtualdisplay import Display
 import traceback
 import sys
 import json
+from selenium.webdriver.common.keys import Keys
+
 def open_whatsapp(whatsapp_number, messages_json, receiver_number):
     try:
         messages = json.loads(messages_json)
@@ -441,114 +443,326 @@ def forward_message(driver, wait, target_number, message):
         print(f"Opening chat with +{clean_target}...", flush=True)
         driver.get(f"https://web.whatsapp.com/send?phone={clean_target}")
         
-        # Take screenshot after navigating to the chat
-        # driver.save_screenshot("chat_loading.png")
-        print("Screenshot saved as chat_loading.png", flush=True)
-        
         # Wait for WhatsApp to fully load the chat
-        print("Waiting for chat to load (this may take up to 45 seconds)...", flush=True)
-        time.sleep(45)  # Longer explicit wait to allow page to fully render
+        print("Waiting for chat to load (this may take up to 60 seconds)...", flush=True)
+        time.sleep(60)  # Longer wait for page to fully render
 
+        # Handle any popups first
         try:
-            print("Checking for 'Fresh look' popup...", flush=True)
-            # Wait up to 10 seconds for the popup
-            continue_button = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[.//div[contains(text(), 'Continue')]]"))
-            )
-            print("Found 'Fresh look' popup, clicking continue button...", flush=True)
-            continue_button.click()
-            print("Clicked continue button to close popup", flush=True)
-            time.sleep(2)  # Wait a moment after closing popup
-            # Go to chat with target number
-            print(f"Opening chat with +{clean_target}...", flush=True)
-            driver.get(f"https://web.whatsapp.com/send?phone={clean_target}")
-            
-            # Take screenshot after navigating to the chat
-            # driver.save_screenshot("chat_loading.png")
-            print("Screenshot saved as chat_loading.png", flush=True)
-            
-            # Wait for WhatsApp to fully load the chat
-            print("Waiting for chat to load (this may take up to 45 seconds)...", flush=True)
-            time.sleep(45)  # Longer explicit wait to allow page to fully render
+            print("Checking for any popups...", flush=True)
+            popup_selectors = [
+                "//button[.//div[contains(text(), 'Continue')]]",
+                "//button[contains(text(), 'OK')]",
+                "//button[contains(text(), 'Got it')]",
+                "//button[@aria-label='Close']"
+            ]
+            for selector in popup_selectors:
+                try:
+                    popup_button = WebDriverWait(driver, 3).until(
+                        EC.element_to_be_clickable((By.XPATH, selector))
+                    )
+                    popup_button.click()
+                    print(f"Closed popup with selector: {selector}", flush=True)
+                    time.sleep(2)
+                    break
+                except:
+                    continue
         except Exception as e:
-            print("No 'Fresh look' popup detected or unable to close it:", e, flush=True)
+            print("No popups detected", flush=True)
         
-        # Take another screenshot after waiting
-        # driver.save_screenshot("chat_after_wait.png")
-        print("Screenshot saved as chat_after_wait.png", flush=True)
-        
-        # Wait for message input field with a longer timeout
+        # Take screenshot to see current state
         try:
-            # Wait explicitly for the message input field to be both present and interactable
-            print("Looking for message input field...", flush=True)
-            chat_box = WebDriverWait(driver, 60).until(
-                EC.element_to_be_clickable((By.XPATH, "//div[@aria-label='Type a message' and @role='textbox']"))
+            # driver.save_screenshot("current_state.png")
+            print("Screenshot saved as current_state.png", flush=True)
+        except:
+            pass
+        
+        # Find the message input field
+        print("Attempting to find message input field...", flush=True)
+        
+        try:
+            # Wait for the footer to load
+            footer = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.XPATH, "//footer"))
             )
-            print("Found message input field and it's clickable", flush=True)
+            print("Found footer element", flush=True)
             
-            # Take screenshot after finding chat box
-            # driver.save_screenshot("found_chat_box.png")
+            # Look for message input within footer
+            message_inputs = [
+                "//footer//div[@contenteditable='true' and @role='textbox']",
+                "//footer//div[@contenteditable='true']",
+                "//div[@aria-label='Type a message']",
+                "//div[contains(@aria-label, 'Type to')]",
+                "//div[@data-lexical-editor='true']"
+            ]
             
-            # Use Actions to move to the element before interacting
-            actions = webdriver.ActionChains(driver)
-            actions.move_to_element(chat_box).click().perform()
-            print("Clicked on input field using ActionChains", flush=True)
+            chat_box = None
+            for selector in message_inputs:
+                try:
+                    chat_box = driver.find_element(By.XPATH, selector)
+                    print(f"Found input with selector: {selector}", flush=True)
+                    break
+                except:
+                    continue
             
-            # Wait a moment after clicking
-            time.sleep(2)
+            if not chat_box:
+                raise Exception("Could not find message input in footer")
             
-            # Send the message text directly
-            actions.send_keys(message).perform()
-            print(f"Typed message using ActionChains: {message}", flush=True)
+            # Scroll into view and focus
+            driver.execute_script("arguments[0].scrollIntoView(true);", chat_box)
+            time.sleep(1)
+            driver.execute_script("arguments[0].focus();", chat_box)
+            time.sleep(1)
             
-            # Wait a moment before trying to send
-            time.sleep(2)
+            print("Attempting to set message content using advanced method...", flush=True)
             
-            # Take screenshot before sending
-            # driver.save_screenshot("before_send.png")
-            
-            # Press Enter to send the message
-            actions.send_keys(webdriver.Keys.ENTER).perform()
-            print("Pressed Enter to send message", flush=True)
-            
-            # Also try to find and click the send button as a backup
+            # Method 1: Use document.execCommand which is more reliable for contenteditable
             try:
-                send_button = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Send']"))
-                )
+                print("Method 1: Using document.execCommand...", flush=True)
                 
-                # Use Actions to click the send button
-                actions = webdriver.ActionChains(driver)
-                actions.move_to_element(send_button).click().perform()
-                print("Also clicked send button using ActionChains", flush=True)
-            except:
-                print("Send button not found or not clickable, continuing with Enter key method", flush=True)
+                # Clear any existing content first
+                driver.execute_script("""
+                    var element = arguments[0];
+                    element.focus();
+                    document.execCommand('selectAll', false, null);
+                    document.execCommand('delete', false, null);
+                """, chat_box)
+                
+                time.sleep(0.5)
+                
+                # Insert the text using execCommand
+                result = driver.execute_script("""
+                    var element = arguments[0];
+                    var text = arguments[1];
+                    
+                    element.focus();
+                    
+                    // Use execCommand to insert text - this is more reliable for contenteditable
+                    var success = document.execCommand('insertText', false, text);
+                    
+                    if (!success) {
+                        // Fallback: direct content setting
+                        element.textContent = text;
+                        
+                        // Trigger input event
+                        var inputEvent = new Event('input', { bubbles: true, cancelable: true });
+                        element.dispatchEvent(inputEvent);
+                    }
+                    
+                    // Return the content to verify
+                    return {
+                        success: success,
+                        content: element.textContent || element.innerText || '',
+                        contentLength: (element.textContent || element.innerText || '').length
+                    };
+                """, chat_box, message)
+                
+                print(f"execCommand result: {result}", flush=True)
+                
+                if result and result['contentLength'] > 0:
+                    print(f"Content successfully set via execCommand. Length: {result['contentLength']}", flush=True)
+                    
+                    # Small delay before sending
+                    time.sleep(1)
+                    
+                    # Send using ONLY Enter key, no other keys
+                    driver.execute_script("""
+                        var element = arguments[0];
+                        element.focus();
+                        
+                        // Create and dispatch Enter key event
+                        var enterEvent = new KeyboardEvent('keydown', {
+                            key: 'Enter',
+                            code: 'Enter',
+                            keyCode: 13,
+                            which: 13,
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        element.dispatchEvent(enterEvent);
+                        
+                        var enterUpEvent = new KeyboardEvent('keyup', {
+                            key: 'Enter',
+                            code: 'Enter',
+                            keyCode: 13,
+                            which: 13,
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        element.dispatchEvent(enterUpEvent);
+                    """, chat_box)
+                    
+                    print("Sent message using JavaScript Enter event", flush=True)
+                    time.sleep(2)
+                    
+                else:
+                    raise Exception("execCommand method failed - no content set")
+                    
+            except Exception as execCommand_error:
+                print(f"execCommand method failed: {execCommand_error}", flush=True)
+                
+                # Method 2: Direct clipboard simulation (without external tools)
+                try:
+                    print("Method 2: Direct clipboard simulation...", flush=True)
+                    
+                    # Clear the field
+                    driver.execute_script("""
+                        var element = arguments[0];
+                        element.focus();
+                        element.textContent = '';
+                        element.innerHTML = '';
+                    """, chat_box)
+                    
+                    time.sleep(0.5)
+                    
+                    # Use the Clipboard API if available, otherwise fallback
+                    clipboard_result = driver.execute_script("""
+                        var text = arguments[1];
+                        var element = arguments[0];
+                        
+                        element.focus();
+                        
+                        // Try using the modern Clipboard API
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(text).then(function() {
+                                console.log('Text copied to clipboard');
+                                // Simulate Ctrl+V
+                                element.focus();
+                                document.execCommand('paste');
+                            }).catch(function(err) {
+                                console.error('Clipboard API failed:', err);
+                                // Fallback to direct insertion
+                                element.textContent = text;
+                                var inputEvent = new Event('input', { bubbles: true });
+                                element.dispatchEvent(inputEvent);
+                            });
+                            return 'clipboard_api_used';
+                        } else {
+                            // Direct fallback
+                            element.textContent = text;
+                            var inputEvent = new Event('input', { bubbles: true });
+                            element.dispatchEvent(inputEvent);
+                            return 'direct_fallback';
+                        }
+                    """, chat_box, message)
+                    
+                    print(f"Clipboard simulation result: {clipboard_result}", flush=True)
+                    
+                    # Wait a moment for clipboard operations
+                    time.sleep(2)
+                    
+                    # Check if content was set
+                    content_check = driver.execute_script("return (arguments[0].textContent || arguments[0].innerText || '').length;", chat_box)
+                    print(f"Content length after clipboard method: {content_check}", flush=True)
+                    
+                    if content_check > 0:
+                        # Send the message with JavaScript
+                        driver.execute_script("""
+                            var element = arguments[0];
+                            element.focus();
+                            
+                            var enterEvent = new KeyboardEvent('keydown', {
+                                key: 'Enter',
+                                code: 'Enter',
+                                keyCode: 13,
+                                bubbles: true,
+                                cancelable: true
+                            });
+                            element.dispatchEvent(enterEvent);
+                        """, chat_box)
+                        
+                        print("Sent message using clipboard simulation method", flush=True)
+                        time.sleep(2)
+                    else:
+                        raise Exception("Clipboard simulation failed - no content")
+                        
+                except Exception as clipboard_error:
+                    print(f"Clipboard simulation failed: {clipboard_error}", flush=True)
+                    
+                    # Method 3: Find and click send button directly
+                    try:
+                        print("Method 3: Setting content and using send button...", flush=True)
+                        
+                        # Final attempt: set content and find send button
+                        driver.execute_script("""
+                            var element = arguments[0];
+                            var text = arguments[1];
+                            
+                            element.focus();
+                            element.textContent = text;
+                            
+                            // Trigger all possible events
+                            var events = ['input', 'change', 'keyup', 'keydown'];
+                            events.forEach(function(eventType) {
+                                var event = new Event(eventType, { bubbles: true, cancelable: true });
+                                element.dispatchEvent(event);
+                            });
+                        """, chat_box, message)
+                        
+                        time.sleep(1)
+                        
+                        # Look for send button and click it
+                        send_button_selectors = [
+                            "//button[@aria-label='Send']",
+                            "//button[contains(@aria-label, 'Send')]",
+                            "//span[@data-icon='send']//ancestor::button[1]",
+                            "//button[.//span[@data-icon='send']]",
+                            "//footer//button[last()]"  # Often the last button in footer
+                        ]
+                        
+                        send_button = None
+                        for selector in send_button_selectors:
+                            try:
+                                send_button = WebDriverWait(driver, 2).until(
+                                    EC.element_to_be_clickable((By.XPATH, selector))
+                                )
+                                print(f"Found send button with selector: {selector}", flush=True)
+                                break
+                            except:
+                                continue
+                        
+                        if send_button:
+                            driver.execute_script("arguments[0].click();", send_button)
+                            print("Clicked send button successfully", flush=True)
+                            time.sleep(2)
+                        else:
+                            raise Exception("Could not find send button")
+                            
+                    except Exception as send_button_error:
+                        print(f"Send button method failed: {send_button_error}", flush=True)
+                        print("All methods failed to send the message", flush=True)
+                        return False
             
-            # Verify message was sent by checking for message status indicators
+            # Final verification - wait and check if message appears in chat
+            print("Waiting for message delivery confirmation...", flush=True)
             time.sleep(3)
             
-            # Take screenshot after sending
-            # driver.save_screenshot("after_send.png")
-            print("Screenshot saved as after_send.png", flush=True)
+            # Take final screenshot
+            try:
+                # driver.save_screenshot("after_send.png")
+                print("Final screenshot saved as after_send.png", flush=True)
+            except:
+                pass
             
-            print("Message forwarded successfully!", flush=True)
+            print("Message sending process completed!", flush=True)
+            return True
             
-            # Wait longer before continuing to ensure the message is fully sent
-            time.sleep(5)
-            
-        except Exception as e:
-            print(f"Error interacting with chat elements: {e}", flush=True)
-            print(traceback.format_exc(), flush=True)        
+        except Exception as main_error:
+            print(f"Main process failed: {main_error}", flush=True)
+            return False
     
     except Exception as e:
         print(f"Error in forward_message function: {e}", flush=True)
         print(traceback.format_exc(), flush=True)
+        
         # Take final error screenshot
         try:
             # driver.save_screenshot("forward_message_error.png")
-            print("Screenshot saved as forward_message_error.png", flush=True)
+            print("Error screenshot saved as forward_message_error.png", flush=True)
         except:
             print("Failed to save error screenshot", flush=True)
+        
+        return False
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:

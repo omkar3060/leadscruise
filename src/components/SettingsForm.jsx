@@ -239,7 +239,7 @@ const handleRevert = async () => {
     if (window.confirm("Are you sure you want to revert? This will permanently restore your settings to the state they were in when your account was first created.")) {
       setIsLoading(true);
       try {
-        const response = await axios.post("http://localhost:5000/api/restore-initial-settings", {
+        const response = await axios.post("https://api.leadscruise.com/api/restore-initial-settings", {
           userEmail,
         });
 
