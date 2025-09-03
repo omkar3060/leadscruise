@@ -504,7 +504,7 @@ def execute_task_one(driver, wait):
         time.sleep(3)
         
         # Get mobile number from input data
-        user_mobile_number = "8087110998"
+        user_mobile_number = "9579797269"
         
         # Enter mobile number
         input_field = wait.until(EC.presence_of_element_located((By.ID, "mobNo")))
@@ -526,7 +526,7 @@ def execute_task_one(driver, wait):
             enter_password_button.click()
             print("Clicked 'Enter Password' button.")
 
-            user_password = "Ame@2025"
+            user_password = "Focus@12345"
             password_input = wait.until(EC.presence_of_element_located((By.ID, "usr_password")))
             password_input.clear()
             password_input.send_keys(user_password)

@@ -243,7 +243,7 @@ app.post("/api/check-number", async (req, res) => {
     }
 
     if (mobileNumber === "9579797269") {
-      return res.json({ code:0, message: "Number is not subscribed." });
+      return res.json({ code: 0, message: "Number is not subscribed." });
     }
 
     // Step 1: DB check
@@ -746,7 +746,7 @@ app.post("/api/restore-initial-settings", async (req, res) => {
     // Copy the initial data back to the main fields
     settings.sentences = settings.initialSentences;
     settings.wordArray = settings.initialWordArray;
-    
+
     await settings.save(); // Save the changes
 
     res.json({
@@ -1973,16 +1973,16 @@ app.post('/api/reset-user-data', async (req, res) => {//start 26-8(7)
       return res.status(400).json({ success: false, message: "User email and mobile are required" });
     }
     if (userEmail === "demo@leadscruise.com") {
-        return res.status(403).json({ success: false, message: "Demo account cannot be modified" });
+      return res.status(403).json({ success: false, message: "Demo account cannot be modified" });
     }
 
     const user = await User.findOne({ email: userEmail });
 
     if (!user) {
-        await Lead.deleteMany({ user_mobile_number: userMobile });
-        await FetchedLead.deleteMany({ user_mobile_number: userMobile });
-        await Settings.deleteOne({ userEmail: userEmail });
-        return res.status(200).json({ success: true, message: "User not found, but associated data cleared." });
+      await Lead.deleteMany({ user_mobile_number: userMobile });
+      await FetchedLead.deleteMany({ user_mobile_number: userMobile });
+      await Settings.deleteOne({ userEmail: userEmail });
+      return res.status(200).json({ success: true, message: "User not found, but associated data cleared." });
     }
 
     // Delete all related data
