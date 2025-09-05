@@ -783,7 +783,7 @@ const Sheets = () => {
 
   const fetchLeads = async () => {
     try {
-      
+
       const userMobile = localStorage.getItem("mobileNumber");
       if (!userMobile) {
         alert("Kindly login to your account first!");
@@ -1160,11 +1160,13 @@ const Sheets = () => {
                           <td>{lead.name}</td>
                           <td>{lead.email || 'N/A'}</td>
                           <td>{lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile}</td>
-                          <td>{lead.createdAt
-                            ? new Date(lead.createdAt).toLocaleString("en-IN", {
-                              timeZone: "Asia/Kolkata"
-                            })
-                            : "N/A"}</td>
+                          <td>
+                            {lead.createdAt
+                              ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                                timeZone: "UTC"
+                              })
+                              : "N/A"}
+                          </td>
                           <td style={{ textAlign: 'center' }}>
                             <button
                               onClick={() => handleToggleRejected(lead.lead_bought, isRejected)}

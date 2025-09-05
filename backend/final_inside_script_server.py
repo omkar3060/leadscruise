@@ -19,6 +19,26 @@ import threading
 import select
 from datetime import datetime, timedelta
 from selenium.common.exceptions import ElementClickInterceptedException, StaleElementReferenceException
+import pytz
+
+def reset_lead_count_daily():
+    global lead_count
+    ist = pytz.timezone("Asia/Kolkata")
+    
+    while True:
+        now_ist = datetime.now(ist)
+        # Reset exactly at 5:00:00 AM IST
+        if now_ist.hour == 5 and now_ist.minute == 0 and now_ist.second == 0:
+            print("⏰ It's 5 AM IST → resetting lead_count to 0", flush=True)
+            lead_count = 0
+            # Sleep 1 second to avoid multiple resets in the same second
+            time.sleep(1)
+        time.sleep(0.5)  # check twice every second
+
+# Start reset thread
+reset_thread = threading.Thread(target=reset_lead_count_daily, daemon=True)
+reset_thread.start()
+
 # Global variable to store OTP when received
 received_otp = None
 otp_event = threading.Event()
