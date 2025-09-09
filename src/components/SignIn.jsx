@@ -342,7 +342,8 @@ const SignIn = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (e) => {
+    e.preventDefault();
     try {
       setIsLoading(true);
       const res = await axios.post("https://api.leadscruise.com/api/login", {
@@ -579,7 +580,7 @@ const SignIn = () => {
             <div className="input-group">
               <div className="password-label-group">
                 <label htmlFor="password">Password</label>
-                <a href="#" className="forgot-password-link" onClick={handleForgotPassword}>Forgot Password?</a>
+                <a className="forgot-password-link" onClick={handleForgotPassword}>Forgot Password?</a>
               </div>
               <div className="password-input-wrapper">
                 <input 
@@ -595,7 +596,7 @@ const SignIn = () => {
                 </button>
               </div>
             </div>
-            <button type="submit" className="login-button">Login</button>
+            <button type="submit" className="login-button" >Login</button>
           </form>
           
           <p className="signup-prompt">

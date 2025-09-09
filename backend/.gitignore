@@ -25,3 +25,4 @@ yarn-debug.log*
 yarn-error.log*
 whatsapp_profiles/
 firefox_profiles/
+__pycache__/

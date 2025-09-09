@@ -19,6 +19,7 @@ const Support = require("./models/Support");
 const Settings = require('./models/Settings');
 const BillingDetails = require('./models/billingDetails');
 const WhatsappSettings = require('./models/WhatsAppSettings');
+const WhatsAppMessageQueue = require('./models/WhatsAppMessageQueue');
 const paymentRoutes = require("./routes/paymentRoutes");
 const emailRoutes = require("./routes/emailRoutes");
 const billingDetailsRoutes = require("./routes/billingDetailsRoutes");
@@ -1514,150 +1515,320 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       .replace("{lead_product_requested}", lead_bought)
       .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
 
-    // Update WhatsApp settings messages to send the updated one
-    const messagesJSON = JSON.stringify([templateMessage]);
-    const whatsappNumber = settings.whatsappNumber;
+    // Instead of running WhatsApp script immediately, add to queue
+    const whatsappQueueItem = new WhatsAppMessageQueue({
+      user_mobile_number,
+      whatsappNumber: settings.whatsappNumber,
+      receiverNumber,
+      templateMessage,
+      leadId: newLead._id,
+      status: 'pending',
+      scheduledAt: new Date() // Process immediately, but queue processor will handle timing
+    });
 
-    console.log("Launching WhatsApp script with parameters:");
-    console.log("WhatsApp Number:", whatsappNumber);
-    console.log("Receiver Number:", receiverNumber);
+    await whatsappQueueItem.save();
 
-    // Process the WhatsApp messaging and WAIT for completion
-    try {
-      // Create a promise to handle the Python process
-      const pythonProcessPromise = new Promise((resolve, reject) => {
-        let verificationCode = null;
-        let errorOutput = "";
-        let isCompleted = false;
+    console.log("WhatsApp message added to queue:", whatsappQueueItem._id);
 
-        // Start the Python process
-        const pythonProcess = spawn('python3', [
-          'whatsapp.py',
-          whatsappNumber,
-          messagesJSON,
-          receiverNumber,
-        ]);
-
-        const rl = readline.createInterface({ input: pythonProcess.stdout });
-
-        rl.on('line', async (line) => {
-          console.log(`Python output: ${line}`);
-
-          // Handle specific errors that should be ignored
-          if (line.includes("504 Gateway Time-out") ||
-            line.includes("Failed to send data") ||
-            line.includes("Send button not found or not clickable")) {
-            console.warn("Detected known error but continuing execution:", line);
-            // These are expected errors we want to ignore
-          }
-
-          const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
-          if (codeMatch && codeMatch[1]) {
-            verificationCode = codeMatch[1];
-            console.log(`Verification code captured: ${verificationCode}`);
-
-            try {
-              // Update the verificationCode immediately in DB
-              await WhatsAppSettings.findOneAndUpdate(
-                { mobileNumber: user_mobile_number }, // Fixed: changed from mobileNumber to user_mobile_number
-                { verificationCode },
-                { new: true }
-              );
-              console.log("Verification code updated in DB");
-            } catch (dbError) {
-              console.error("Error updating verification code:", dbError);
-              // Continue execution even if DB update fails
-            }
-          }
-        });
-
-        pythonProcess.stderr.on('data', (data) => {
-          const errorMsg = data.toString();
-          errorOutput += errorMsg;
-          console.error(`Python error: ${errorMsg}`);
-
-          // Don't fail for specific errors that we want to tolerate
-          if (errorMsg.includes("Send button not found or not clickable")) {
-            console.warn("Send button issue detected, continuing with process");
-            // We don't want to fail the entire process for this error
-          }
-        });
-
-        pythonProcess.on('close', (code) => {
-          if (isCompleted) return; // Prevent double resolution
-          isCompleted = true;
-
-          console.log(`WhatsApp script exited with code ${code}`);
-
-          if (code === 0 || code === null) {
-            // Consider both 0 and null (killed by timeout) as successful completions
-            resolve({ success: true, verificationCode });
-          } else {
-            resolve({
-              success: false,
-              code,
-              error: errorOutput,
-              message: `WhatsApp script failed with code ${code}`
-            });
-          }
-        });
-
-        pythonProcess.on('error', (err) => {
-          if (isCompleted) return;
-          isCompleted = true;
-
-          console.error("Failed to start Python process:", err);
-          reject(err);
-        });
-
-        // Set a hard timeout to ensure we ALWAYS wait the full 10 minutes
-        // This guarantees we won't process another WhatsApp request until this one is done
-        const timeout = setTimeout(() => {
-          if (isCompleted) return;
-          isCompleted = true;
-
-          console.log("WhatsApp script reached the mandatory 10-minute timeout, completing process");
-          pythonProcess.kill();
-          resolve({
-            success: true,
-            timeout: true,
-            message: "WhatsApp script completed after full 10-minute wait",
-            verificationCode
-          });
-        }, 10 * 60 * 1000); // Full 10 minutes (600,000 ms)
-
-        // Clear the timeout if the process completes before timeout
-        pythonProcess.on('close', () => {
-          clearTimeout(timeout);
-        });
-      });
-
-      // Wait for the Python process to complete - this will block for up to 10 minutes
-      console.log("Waiting for WhatsApp script to complete (up to 10 minutes)...");
-      const result = await pythonProcessPromise;
-      console.log("WhatsApp script process completed:", result);
-
-      // NOW respond to the client after WhatsApp script has fully completed
-      return res.json({
-        message: "Lead data stored successfully and WhatsApp messaging completed",
-        lead: newLead,
-        whatsapp: result
-      });
-
-    } catch (pythonError) {
-      console.error("Error in WhatsApp script execution:", pythonError);
-
-      // Return response even if WhatsApp script fails
-      return res.json({
-        message: "Lead data stored successfully but WhatsApp messaging failed",
-        lead: newLead,
-        whatsapp: { success: false, error: pythonError.message }
-      });
-    }
+    // Return immediately after queuing
+    return res.json({
+      message: "Lead data stored successfully and WhatsApp message queued for processing",
+      lead: newLead,
+      queueId: whatsappQueueItem._id
+    });
 
   } catch (error) {
     console.error("Error saving lead:", error);
     return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// WhatsApp Queue Processor - runs as a separate background process
+class WhatsAppQueueProcessor {
+  constructor() {
+    this.isProcessing = false;
+    this.processInterval = null;
+  }
+
+  start() {
+    if (this.processInterval) {
+      console.log("Queue processor is already running");
+      return;
+    }
+
+    console.log("Starting WhatsApp queue processor...");
+    
+    // Check for messages every 10 seconds
+    this.processInterval = setInterval(() => {
+      this.processQueue();
+    }, 10000);
+
+    // Process immediately on start
+    this.processQueue();
+  }
+
+  stop() {
+    if (this.processInterval) {
+      clearInterval(this.processInterval);
+      this.processInterval = null;
+      console.log("WhatsApp queue processor stopped");
+    }
+  }
+
+  async processQueue() {
+    if (this.isProcessing) {
+      console.log("Queue processor is already running, skipping this cycle");
+      return;
+    }
+
+    this.isProcessing = true;
+
+    try {
+      // Find the next pending message that's scheduled to be sent
+      const nextMessage = await WhatsAppMessageQueue.findOne({
+        status: 'pending',
+        scheduledAt: { $lte: new Date() },
+        attempts: { $lt: 3 } // Max 3 attempts
+      }).sort({ scheduledAt: 1 });
+
+      if (!nextMessage) {
+        // No messages to process
+        this.isProcessing = false;
+        return;
+      }
+
+      console.log(`Processing WhatsApp message: ${nextMessage._id}`);
+
+      // Mark as processing
+      nextMessage.status = 'processing';
+      nextMessage.attempts += 1;
+      nextMessage.lastAttempt = new Date();
+      await nextMessage.save();
+
+      // Process the message
+      const result = await this.sendWhatsAppMessage(nextMessage);
+
+      if (result.success) {
+        // Mark as completed
+        nextMessage.status = 'completed';
+        nextMessage.completedAt = new Date();
+        if (result.verificationCode) {
+          nextMessage.verificationCode = result.verificationCode;
+        }
+        await nextMessage.save();
+
+        console.log(`WhatsApp message completed: ${nextMessage._id}`);
+
+        // Schedule next message processing with 60-second delay
+        await this.scheduleNextMessages();
+
+      } else {
+        // Handle failure
+        if (nextMessage.attempts >= nextMessage.maxAttempts) {
+          nextMessage.status = 'failed';
+          nextMessage.errorMessage = result.error || 'Max attempts reached';
+        } else {
+          nextMessage.status = 'pending';
+          // Retry after 5 minutes
+          nextMessage.scheduledAt = new Date(Date.now() + 5 * 60 * 1000);
+        }
+        await nextMessage.save();
+
+        console.log(`WhatsApp message failed: ${nextMessage._id}, attempts: ${nextMessage.attempts}`);
+      }
+
+    } catch (error) {
+      console.error("Error in queue processor:", error);
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  async scheduleNextMessages() {
+    // Find all pending messages and ensure they have proper spacing
+    const pendingMessages = await WhatsAppMessageQueue.find({
+      status: 'pending',
+      attempts: { $lt: 3 }
+    }).sort({ scheduledAt: 1 });
+
+    if (pendingMessages.length === 0) return;
+
+    // Schedule messages with 60-second gaps
+    const now = new Date();
+    const baseTime = new Date(now.getTime() + 60000); // Start 60 seconds from now
+
+    for (let i = 0; i < pendingMessages.length; i++) {
+      const message = pendingMessages[i];
+      const scheduledTime = new Date(baseTime.getTime() + (i * 60000)); // 60 seconds apart
+      
+      if (message.scheduledAt < scheduledTime) {
+        message.scheduledAt = scheduledTime;
+        await message.save();
+      }
+    }
+  }
+
+  async sendWhatsAppMessage(messageItem) {
+    return new Promise((resolve) => {
+      let verificationCode = null;
+      let errorOutput = "";
+      let isCompleted = false;
+
+      const messagesJSON = JSON.stringify([messageItem.templateMessage]);
+
+      // Start the Python process
+      const pythonProcess = spawn('python3', [
+        'whatsapp.py',
+        messageItem.whatsappNumber,
+        messagesJSON,
+        messageItem.receiverNumber,
+      ]);
+
+      const rl = readline.createInterface({ input: pythonProcess.stdout });
+
+      rl.on('line', async (line) => {
+        console.log(`Python output for ${messageItem._id}: ${line}`);
+
+        // Handle specific errors that should be ignored
+        if (line.includes("504 Gateway Time-out") ||
+          line.includes("Failed to send data") ||
+          line.includes("Send button not found or not clickable")) {
+          console.warn("Detected known error but continuing execution:", line);
+        }
+
+        const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
+        if (codeMatch && codeMatch[1]) {
+          verificationCode = codeMatch[1];
+          console.log(`Verification code captured for ${messageItem._id}: ${verificationCode}`);
+
+          try {
+            // Update the verificationCode in WhatsApp settings
+            await WhatsAppSettings.findOneAndUpdate(
+              { mobileNumber: messageItem.user_mobile_number },
+              { verificationCode },
+              { new: true }
+            );
+            console.log("Verification code updated in DB");
+          } catch (dbError) {
+            console.error("Error updating verification code:", dbError);
+          }
+        }
+      });
+
+      pythonProcess.stderr.on('data', (data) => {
+        const errorMsg = data.toString();
+        errorOutput += errorMsg;
+        console.error(`Python error for ${messageItem._id}: ${errorMsg}`);
+      });
+
+      pythonProcess.on('close', (code) => {
+        if (isCompleted) return;
+        isCompleted = true;
+
+        console.log(`WhatsApp script for ${messageItem._id} exited with code ${code}`);
+
+        if (code === 0 || code === null) {
+          resolve({ success: true, verificationCode });
+        } else {
+          resolve({
+            success: false,
+            code,
+            error: errorOutput,
+            message: `WhatsApp script failed with code ${code}`
+          });
+        }
+      });
+
+      pythonProcess.on('error', (err) => {
+        if (isCompleted) return;
+        isCompleted = true;
+
+        console.error(`Failed to start Python process for ${messageItem._id}:`, err);
+        resolve({ success: false, error: err.message });
+      });
+
+      // Set timeout for this specific message (10 minutes)
+      const timeout = setTimeout(() => {
+        if (isCompleted) return;
+        isCompleted = true;
+
+        console.log(`WhatsApp script for ${messageItem._id} reached timeout, completing process`);
+        pythonProcess.kill();
+        resolve({
+          success: true,
+          timeout: true,
+          message: "WhatsApp script completed after timeout",
+          verificationCode
+        });
+      }, 10 * 60 * 1000);
+
+      pythonProcess.on('close', () => {
+        clearTimeout(timeout);
+      });
+    });
+  }
+}
+
+// Initialize and start the queue processor
+const whatsappQueueProcessor = new WhatsAppQueueProcessor();
+
+// Start the processor when the application starts
+whatsappQueueProcessor.start();
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, stopping queue processor...');
+  whatsappQueueProcessor.stop();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, stopping queue processor...');
+  whatsappQueueProcessor.stop();
+  process.exit(0);
+});
+
+// Optional: API endpoints to manage the queue
+app.get("/api/whatsapp-queue/status", async (req, res) => {
+  try {
+    const stats = await WhatsAppMessageQueue.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const pending = await WhatsAppMessageQueue.find({
+      status: 'pending'
+    }).sort({ scheduledAt: 1 }).limit(10);
+
+    res.json({
+      stats,
+      nextPendingMessages: pending
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/whatsapp-queue/retry-failed", async (req, res) => {
+  try {
+    const result = await WhatsAppMessageQueue.updateMany(
+      { status: 'failed', attempts: { $lt: 3 } },
+      { 
+        status: 'pending',
+        scheduledAt: new Date(),
+        errorMessage: null
+      }
+    );
+
+    res.json({
+      message: `${result.modifiedCount} failed messages queued for retry`
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
