@@ -192,7 +192,7 @@ def process_messages_incrementally(driver):
     print("Starting incremental message processing...", flush=True)
     
     third_url = "https://seller.indiamart.com/messagecentre/"
-    thirty_days_ago = datetime.now() - timedelta(days=30)
+    thirty_days_ago = datetime.now() - timedelta(days=10)
     processed_messages = 0
     processed_identifiers = set()
     
