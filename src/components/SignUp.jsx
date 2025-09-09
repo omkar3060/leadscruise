@@ -10,6 +10,55 @@ import { Eye, EyeOff } from "lucide-react";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
+import loginBg from "../images/login-background.jpg";
+
+// Add the typing animation component
+const TypingAnimation = () => {
+  const messages = [
+    "working 24×7 !",
+    "capturing leads automatically !",
+    "sending messages on WhatsApp !"
+  ];
+  
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [currentText, setCurrentText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState(50);
+
+  useEffect(() => {
+    const handleTyping = () => {
+      const currentMessage = messages[currentMessageIndex];
+      
+      if (isDeleting) {
+        setCurrentText(currentMessage.substring(0, currentText.length - 1));
+        setTypingSpeed(25);
+      } else {
+        setCurrentText(currentMessage.substring(0, currentText.length + 1));
+        setTypingSpeed(50);
+      }
+
+      if (!isDeleting && currentText === currentMessage) {
+        setTimeout(() => setIsDeleting(true), 1000);
+      } else if (isDeleting && currentText === '') {
+        setIsDeleting(false);
+        setCurrentMessageIndex((prevIndex) => (prevIndex + 1) % messages.length);
+      }
+    };
+
+    const timer = setTimeout(handleTyping, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [currentText, isDeleting, currentMessageIndex, typingSpeed, messages]);
+
+  return (
+    <div className="typing-container">
+      <span className="static-text">Your LeadsCruise AI is </span>
+      <span className="typing-text">
+        {currentText}
+        <span className="cursor">|</span>
+      </span>
+    </div>
+  );
+};
 
 const SignUp = () => {
   const [refId, setRefId] = useState("");
@@ -17,6 +66,7 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confPassword, setConfPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfPassword, setShowConfPassword] = useState(false);
   const navigate = useNavigate();
   const [selected, setSelected] = useState(0);
   const [isChecked, setIsChecked] = useState(false);
@@ -31,13 +81,15 @@ const SignUp = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setSelected((prev) => (prev + 1) % 2);
-    }, 5000); // Change every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const handleSignUp = async () => {
+  const handleSignUp = async (e) => {
+    e.preventDefault();
     setIsLoading(true);
+    
     if (error) {
       setShowError(true);
       setIsLoading(false);
@@ -76,7 +128,7 @@ const SignUp = () => {
       });
       setIsLoading(false);
       alert(res.data.message);
-      navigate("/"); // Redirect to SignIn page after successful signup
+      navigate("/");
     } catch (error) {
       setIsLoading(false);
       alert(
@@ -101,7 +153,7 @@ const SignUp = () => {
   };
 
   return (
-    <div className="signin-container">
+    <div className="login-page-container signup-form-compact" style={{ backgroundImage: `url(${loginBg})` }}>
       {isLoading && (
         <div className="loading-overlay">
           <div className="loading-container">
@@ -110,7 +162,7 @@ const SignUp = () => {
               <div className="double-bounce2"></div>
             </div>
             <div className="loading-text">
-              <h3>Authenticating</h3>
+              <h3>Creating Account</h3>
               <div className="loading-dots">
                 <span className="dot"></span>
                 <span className="dot"></span>
@@ -123,235 +175,146 @@ const SignUp = () => {
           </div>
         </div>
       )}
-      <div className="center-div">
-        <div className="signin-left">
-          <div className="signin-logo-class">
-            <img
-              src={logo}
-              alt="LeadsCruise Logo"
-              onClick={() => window.location.href = "https://leadscruise.com"} // Navigate to external URL
-              style={{ cursor: "pointer" }} // Optional: Change cursor on hover
-            />
-            <div className="smart-scan" onClick={() => navigate("/")}>
-              {/* <img
-                src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
-                alt=""
-                className="scan-icon"
-              /> */}
-              <img
-                src="https://icons.veryicon.com/png/o/miscellaneous/esgcc-basic-icon-library/1-login.png"
-                alt=""
-              />
-              <span>Sign In</span>
-            </div>
-          </div>
-          <h2 className="signin-tag">Sign up</h2>
-          <p className="signin-descriptor">to access Leads Cruise Home</p>
+      
+      <div className="login-form-wrapper">
+        <div className="login-box">
+          <div className="login-form-container">
+            <h1 className="login-title">Sign Up</h1>
 
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            name="email"
-            autoComplete="email"
-          />
-          <input
-            type="text"
-            placeholder="Mobile number"
-            value={mobileNumber}
-            onChange={(e) => setMobileNumber(e.target.value)}
-            className="mobile-number-input"
-          />
-          <div className="pass-cont">
-            <input
-              className="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={handlePasswordChange}
-              name="password"
-              autoComplete="current-password"
-              onFocus={() => setShowError(true)}
-              onBlur={() => setShowError(false)}
-            />
-
-            <input
-              className="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Confirm Password"
-              value={confPassword}
-              onChange={(e) => setConfPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-            {showError && error && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: "0",
-                  background: "#ffdddd",
-                  color: "#d9534f",
-                  padding: "8px",
-                  fontSize: "12px",
-                  marginTop: "5px",
-                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.2)",
-                }}
-              >
-                {error}
+            <form onSubmit={handleSignUp}>
+              <div className="input-group">
+                <label htmlFor="email">Email</label>
+                <input 
+                  type="email" 
+                  id="email" 
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required 
+                />
               </div>
-            )}
-          </div>
 
-          <input
-            type="text"
-            placeholder="Refferal ID"
-            value={refId}
-            onChange={(e) => setRefId(e.target.value)}
-          />
-          <div className="terms-div">
-            <input
-              type="checkbox"
-              id="remember"
-              name="remember"
-              checked={isChecked}
-              onChange={(e) => setIsChecked(e.target.checked)}
-            />
-            <p className="agree">
-               I agree to{" "}
+              <div className="input-group">
+                <label htmlFor="mobile">Mobile Number</label>
+                <input 
+                  type="text" 
+                  id="mobile" 
+                  placeholder="Mobile Number"
+                  value={mobileNumber}
+                  onChange={(e) => setMobileNumber(e.target.value)}
+                  required 
+                />
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="password">Password</label>
+                <div className="password-input-wrapper">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    id="password" 
+                    placeholder="Password"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    onFocus={() => setShowError(true)}
+                    onBlur={() => setShowError(false)}
+                    required
+                  />
+                  <button 
+                    type="button" 
+                    className="show-password-button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                {showError && error && (
+                  <div className="password-error">
+                    {error}
+                  </div>
+                )}
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <div className="password-input-wrapper">
+                  <input 
+                    type={showConfPassword ? "text" : "password"} 
+                    id="confirmPassword" 
+                    placeholder="Confirm Password"
+                    value={confPassword}
+                    onChange={(e) => setConfPassword(e.target.value)}
+                    required
+                  />
+                  <button 
+                    type="button" 
+                    className="show-password-button" 
+                    onClick={() => setShowConfPassword(!showConfPassword)}
+                  >
+                    {showConfPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="refId">Referral ID</label>
+                <input 
+                  type="text" 
+                  id="refId" 
+                  placeholder="Referral ID"
+                  value={refId}
+                  onChange={(e) => setRefId(e.target.value)}
+                  required 
+                />
+              </div>
+
+              <div className="terms-checkbox">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={isChecked}
+                  onChange={(e) => setIsChecked(e.target.checked)}
+                />
+                <label htmlFor="terms" className="terms-label">
+                  I agree to{" "}
                   <a 
-                    href="/terms-and-conditions.pdf" // This path points to the file in your public folder
-                    download="LeadsCruise-Terms-and-Conditions.pdf" // This is the name the file will have when downloaded
-                    className="priv-link" // Using an existing class for styling
-                    >
-                  Terms & Conditions
-                  </a>.
-              </p>
-          </div>
-          <button
-            onClick={handleSignUp}
-            className={`signup-btn ${!isChecked ? "dimmed" : ""}`}
-            disabled={!isChecked}
-          >
-            Sign Up
-          </button>
-          <div className="pri-cont">
-            <p className="priv-p">
-              By creating this account, you agree to our{" "}
-              <a href="https://leadscruise.com/#faq" className="priv-link">
-                Privacy Policy
-              </a>{" "}
-              &{" "}
-              <a href="https://leadscruise.com/#faq" className="priv-link">
-                Cookie Policy
-              </a>.
-            </p>
-          </div>
-
-          {/* <div className="signup-link">
-            Already have an account?{" "}
-            <span onClick={() => navigate("/")}>Sign In</span>
-          </div> */}
-        </div>
-        <div className="signin-right">
-          <div className="banner-container">
-            {/* First Banner */}
-            <div
-              className={`banner overlapBanner ${selected === 0 ? "active" : ""
-                }`}
-            >
-              <div className="rightbanner">
-                <div
-                  className="banner1_img"
-                  style={{
-                    backgroundImage: `url(${bgImage1})`,
-                  }}
-                ></div>
-                <div className="banner1_heading">
-                  Intergrate AI to your Business
-                </div>
-                <div className="banner1_content">
-                  Let our AI do all the work even while you sleep. With
-                  leadscruise all the software tasks are now automated with AI
-                </div>
-                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
-
+                    href="/terms-and-conditions.pdf"
+                    download="LeadsCruise-Terms-and-Conditions.pdf"
+                    className="terms-link"
+                  >
+                    Terms & Conditions
+                  </a>
+                </label>
               </div>
-            </div>
 
-            {/* Second Banner */}
-            <div
-              className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}
-            >
-              <div
-                className="product_img"
-                style={{
-                  width: "300px",
-                  height: "240px",
-                  margin: "auto",
-                  backgroundSize: "100%",
-                  backgroundRepeat: "no-repeat",
-                  backgroundImage: `url(${bgImage2})`,
-                }}
-              ></div>
-              <div className="banner1_heading">A Rocket for your Business</div>
-              <div className="banner2_content">
-                Get to customers within the blink of opponent's eyes,
-                LeadsCruise provides 100% uptime utilising FA cloud systems
-              </div>
-              <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                Learn more
-              </a>
-            </div>
-
-            <div
-              className={`banner taskBanner ${selected === 2 ? "active" : ""}`}
-            >
-              <div className="rightbanner">
-                <div
-                  className="banner3_img"
-                  style={{
-                    backgroundImage: `url(${bgImage3})`,
-                  }}
-                ></div>
-                <div className="banner1_heading">All tasks on time</div>
-                <div className="banner1_content">
-                  With leadscruise all the tasks are now automated so that you
-                  no more need to do them manually
-                </div>
-                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
-              </div>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="pagination-container">
-              <div
-                className={`pagination-dot ${selected === 0 ? "selected" : ""}`}
+              <button 
+                type="submit" 
+                className={`login-button ${!isChecked ? "dimmed" : ""}`}
+                disabled={!isChecked}
               >
-                <div className="progress-fill"></div>
-              </div>
-              <div
-                className={`pagination-dot ${selected === 1 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-              <div
-                className={`pagination-dot ${selected === 2 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-            </div>
+                Sign Up
+              </button>
+            </form>
+            
+            <p className="signup-prompt">
+  Already have an account? {" "}
+  <a 
+    href="#" 
+    onClick={(e) => {e.preventDefault(); navigate('/');}} 
+    className="signup-now-link"
+  >
+    Login Now!
+  </a>
+</p>
           </div>
         </div>
+      </div>
+
+      <div className="login-info-panel">
+        <div className="info-box">
+          <TypingAnimation />
+          <button className="arrow-button" aria-label="More info">↑</button>
+        </div>
+        <button className="contact-support-button">Contact Support</button>
       </div>
     </div>
   );

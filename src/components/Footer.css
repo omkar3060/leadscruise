@@ -73,44 +73,22 @@
   width: 100%;
   gap: 15px;
 }
-
-.copyright {
-  width: 70%;
-  font-size: 14px;
-  color: #666;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
 .support-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  background-color: #6a8fe6;
+  background-color: #ffffff; /* White background */
+  color: #2d3748; /* Dark text color */
+  border: 1px solid #e2e8f0; /* Light grey border */
+  border-radius: 12px; /* This creates the pill shape */
+  padding: 10px 20px;
+  font-weight: 500;
   font-size: 14px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  font-weight: bolder;
-  transition: all 0.3s ease;
-  border-radius: 4px;
-  margin-bottom: 0px;
-  width: fit-content;
+  transition: all 0.2s ease-in-out;
 }
 
 .support-button:hover {
-  background-color: #0056b3;
-  transform: translateY(-1px);
-}
-
-.mail-icon {
-  transition: transform 0.3s ease;
-}
-
-.support-button:hover .mail-icon {
-  transform: scale(1.1);
+  transform: translateY(-2px); /* A subtle lift on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Hide scroll message on mobile */
@@ -255,13 +233,6 @@
     padding: 0 15px;
   }
   
-  .copyright {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
-    font-size: 12px;
-  }
-  
   .support-button {
     display: none; /* Hide support button on mobile */
   }
@@ -308,11 +279,7 @@
   .footer {
     padding: 8px 0;
   }
-  
-  .copyright {
-    font-size: 11px;
-  }
-  
+
   .popup-header h2 {
     font-size: 18px;
   }

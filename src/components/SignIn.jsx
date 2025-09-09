@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate} from "react-router-dom";
 import axios from "axios";
 import "./styles.css";
 import "./PaginationSlider.css";
@@ -8,7 +8,8 @@ import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
 import logo from "../images/logo_front.png";
-import { FaUserPlus } from "react-icons/fa";
+import loginBg from "../images/login-background.jpg";
+import { FaGoogle, FaFacebookF, FaUserPlus } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
 import {
   auth,
@@ -24,6 +25,52 @@ import {
 } from "./firebase";
 
 import { getAuth } from "firebase/auth";
+const TypingAnimation = () => {
+  const messages = [
+    "working 24×7 !",
+    "capturing leads automatically !",
+    "sending messages on WhatsApp !"
+  ];
+  
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [currentText, setCurrentText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState(50);
+
+  useEffect(() => {
+    const handleTyping = () => {
+      const currentMessage = messages[currentMessageIndex];
+      
+      if (isDeleting) {
+        setCurrentText(currentMessage.substring(0, currentText.length - 1));
+        setTypingSpeed(25);
+      } else {
+        setCurrentText(currentMessage.substring(0, currentText.length + 1));
+        setTypingSpeed(50);
+      }
+
+      if (!isDeleting && currentText === currentMessage) {
+        setTimeout(() => setIsDeleting(true), 1000); // Pause before deleting
+      } else if (isDeleting && currentText === '') {
+        setIsDeleting(false);
+        setCurrentMessageIndex((prevIndex) => (prevIndex + 1) % messages.length);
+      }
+    };
+
+    const timer = setTimeout(handleTyping, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [currentText, isDeleting, currentMessageIndex, typingSpeed, messages]);
+
+  return (
+    <div className="typing-container">
+      <span className="static-text">Your LeadsCruise AI is </span>
+      <span className="typing-text">
+        {currentText}
+        <span className="cursor">|</span>
+      </span>
+    </div>
+  );
+};
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -490,268 +537,82 @@ const SignIn = () => {
   }, []);
 
   return (
-    <div className="signin-container">
+    <div className="login-page-container" style={{ backgroundImage: `url(${loginBg})` }}>
       {isLoading && (
         <div className="loading-overlay">
-          <div className="loading-container">
-            <div className="spinner">
-              <div className="double-bounce1"></div>
-              <div className="double-bounce2"></div>
-            </div>
-            <div className="loading-text">
-              <h3>Authenticating</h3>
-              <div className="loading-dots">
-                <span className="dot"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
-              </div>
-            </div>
-            <p className="loading-message">Please wait while we securely log you in</p>
-          </div>
+          {/* Your original loading indicator JSX can be placed here */}
+          <p>Loading...</p>
         </div>
       )}
+      <div className="login-form-wrapper">
+        <div className="login-box"> {/* <-- ADD THIS WRAPPER */}
+        <div className="login-form-container">
+          <h1 className="login-title">Login</h1>
 
-      <div className="center-div">
-        <div className="signin-left">
-          <div className="signin-logo-class">
-            <img
-              src={logo}
-              alt="LeadsCruise Logo"
-              onClick={() => window.location.href = "https://leadscruise.com"} // Navigate to external URL
-              style={{ cursor: "pointer" }} // Optional: Change cursor on hover
-            />
-            <div className="smart-scan" onClick={() => navigate("/signup")}>
-              <FaUserPlus className="scan-icon" />
-              <span>Sign Up</span>
-            </div>
-          </div>
-          <h2 className="signin-tag">Sign in</h2>
-          <p className="signin-descriptor">to access Leads Cruise Home</p>
-          <div className="input-group">
-            <input
-              type="email"
-              placeholder="Enter Your Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => {
-                // Use setTimeout to allow suggestion clicks to register
-                timeoutRef.current = setTimeout(() => {
-                  setShowSuggestions(false);
-                }, 200);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  setShowSuggestions(false);
-                  passwordInputRef.current?.focus();
-                }
-              }}
-              name="email"
-              autoComplete="email"
-            />
+          
+          <button className="social-button" onClick={handleGoogleSignIn}>
+              Continue with Google
+          </button>
 
-            {showSuggestions && savedCredentials.length > 0 && (
-              <div className="suggestions-dropdown">
-                {savedCredentials.map((cred, index) => (
-                  <div
-                    key={index}
-                    className="suggestion-item"
-                    onClick={() => handleCredentialSelect(cred)}
-                  >
-                    <span className="suggestion-icon">👤</span>
-                    <span>{cred.email}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          <button className="social-button">
+              Continue with Facebook
+          </button>
+
+          <div className="divider-container">
+            <div className="divider-line"></div>
+            <span className="divider-text">OR</span>
+            <div className="divider-line"></div>
           </div>
-          <div className="password-container">
-            <input
-              type={showPassword ? "text" : "password"}
-              ref={passwordInputRef}
-              placeholder="Enter Your Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              name="password"
-              autoComplete="current-password"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSignIn(); // Trigger sign-in when Enter is pressed
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-          </div>
-          <div className="fp-cont">
-            <div className="cb-cont">
-              <input
-                type="checkbox"
-                className="cb"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+
+          <form onSubmit={handleSignIn}>
+            <div className="input-group">
+              <label htmlFor="email">Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
               />
-              Remember Me
             </div>
-            <div className="fp" onClick={() => navigate("/enter-email")}>
-              Forgot Password?
-            </div>
-          </div>
-
-          <button onClick={handleSignIn}>Next</button>
-
-          <div className="or-cont">
-            <div className="hr"></div>
-            <p>or</p>
-            <div className="hr"></div>
-          </div>
-
-          <div className="alt-signins">
-            {/* <p>Sign in using</p> */}
-            <div className="alt-btns" onClick={handleGoogleSignIn}>
-              <p className="goo">Google</p>
-              <div className="google sp-btns">
-                <img
-                  src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"
-                  alt=""
+            <div className="input-group">
+              <div className="password-label-group">
+                <label htmlFor="password">Password</label>
+                <a href="#" className="forgot-password-link" onClick={handleForgotPassword}>Forgot Password?</a>
+              </div>
+              <div className="password-input-wrapper">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  id="password" 
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
+                <button type="button" className="show-password-button" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
-
-            <div className="alt-btns" onClick={handleGitHubSignIn}>
-              <p className="goo">GitHub</p>
-              <div className="google sp-btns">
-                <img
-                  src="https://e7.pngegg.com/pngimages/678/920/png-clipart-github-computer-icons-gitlab-github-cdr-white.png"
-                  alt=""
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="pri-cont">
-            <p className="priv-p">
-              By creating this account, you agree to our{" "}
-              <a href="https://leadscruise.com/#faq" className="priv-link">
-                Privacy Policy
-              </a>{" "}
-              &{" "}
-              <a href="https://leadscruise.com/#faq" className="priv-link">
-                Cookie Policy
-              </a>.
-            </p>
-          </div>
-
-          {/* <p className="signup-link">
-            Don't have a Zoho account?
-            <span onClick={() => navigate("/signup")}>Sign up now</span>
-          </p> */}
-          {/* <div className="end-block">
-            <p className="gback" onClick={() => (window.location.href = "https://leadscruise.com")}>
-              Go Back
-            </p>
-          </div> */}
+            <button type="submit" className="login-button">Login</button>
+          </form>
+          
+          <p className="signup-prompt">
+            Don't have an account? 
+              <a href="#" onClick={() => navigate('/signup')} className="signup-now-link">Sign up</a>
+              <span> Now!</span>
+          </p>
         </div>
+        </div> {/* <-- AND ITS CLOSING TAG */}
+      </div>
 
-        <div className="signin-right">
-          <div className="banner-container">
-            {/* First Banner */}
-            <div
-              className={`banner overlapBanner ${selected === 0 ? "active" : ""
-                }`}
-            >
-              <div className="rightbanner">
-                <div
-                  className="banner1_img"
-                  style={{
-                    backgroundImage: `url(${bgImage1})`,
-                  }}
-                ></div>
-                <div className="banner1_heading">
-                  Intergrate AI to your Business
-                </div>
-                <div className="banner1_content">
-                  Let our AI do all the work even while you sleep. With
-                  leadscruise all the software tasks are now automated with AI
-                </div>
-                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
-              </div>
-            </div>
-
-            {/* Second Banner */}
-            <div
-              className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}
-            >
-              <div
-                className="product_img"
-                style={{
-                  width: "300px",
-                  height: "240px",
-                  margin: "auto",
-                  backgroundSize: "100%",
-                  backgroundRepeat: "no-repeat",
-                  backgroundImage: `url(${bgImage2})`,
-                }}
-              ></div>
-              <div className="banner1_heading">A Rocket for your Business</div>
-              <div className="banner2_content">
-                Get to customers within the blink of opponent's eyes,
-                LeadsCruise provides 100% uptime utilising FA cloud systems
-              </div>
-              <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                Learn more
-              </a>
-            </div>
-
-            <div
-              className={`banner taskBanner ${selected === 2 ? "active" : ""}`}
-            >
-              <div className="rightbanner">
-                <div
-                  className="banner3_img"
-                  style={{
-                    backgroundImage: `url(${bgImage3})`,
-                  }}
-                ></div>
-                <div className="banner1_heading">All tasks on time</div>
-                <div className="banner1_content">
-                  With leadscruise all the tasks are now automated so that you
-                  no more need to do them manually
-                </div>
-                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
-              </div>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="pagination-container">
-              <div
-                className={`pagination-dot ${selected === 0 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-              <div
-                className={`pagination-dot ${selected === 1 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-              <div
-                className={`pagination-dot ${selected === 2 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-            </div>
-          </div>
+      <div className="login-info-panel" >
+        <div className="info-box">
+          <TypingAnimation />
+          <button className="arrow-button" aria-label="More info">↑</button>
         </div>
+        <button className="contact-support-button">Contact Support</button>
       </div>
     </div>
   );
