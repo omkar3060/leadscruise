@@ -1,385 +1,1124 @@
 [
   {
-    "id": "158497979",
-    "name": "Aerocon Wall Panel",
-    "price": "55",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/9/NP/IG/MQ/36369433/ecobricktech-wall-panel-ewalls--250x250.jpg",
-    "group": "Wall Panel",
-    "categories": [
-      "Aerocon Panel"
-    ],
-    "description": "Available in different size with 50mm / 75mm/ 100mm thickness. Made with the latest and upgraded technology of building construction. If you want to buid something fast, fabulous, fantastic and more strong than other methods then you should go with Ecobricktech eWalls. Our wall panels contain benefits which are valuable and necessary for your construction and more powerfull and adorable than other buildign materials. Our wall panels *save time. * save space. *save money.",
-    "specifications": {
-      "Material": "Aerocon Concrete and steel",
-      "Thickness": "50mm - 75mm- 100mm",
-      "Usage/Application": "Residential & Commercial",
-      "Position": "Vertical",
-      "Install Type": "Rapid"
-    }
-  },
-  {
-    "id": "158571743",
-    "name": "Modular Mezzanine Floors",
-    "price": "300",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/BW/ZH/DR/36369433/modular-mezzanine-floors-250x250.jpg",
-    "group": "Mezzanine Floor",
-    "categories": [
-      "Mezzanine Floor"
-    ],
-    "description": "A modular mezzanine floor is a type of elevated floor structure that is built inside a building to create additional space without the need for major construction or expansion. These floors are typically designed in sections or \"modules\" that can be easily assembled and disassembled. They are versatile, flexible, and ideal for optimizing vertical space in commercial, industrial, and retail environments.",
-    "specifications": {
-      "Storage Capacity(Missing)": "Add",
-      "Thickness": "100 mm",
-      "Brand": "Ecobricktech",
-      "Size (feet)": "2x10",
-      "Design": "Mezzanine"
-    }
-  },
-  {
-    "id": "158571856",
-    "name": "Concrete Everest Rapicon Wall Panel",
-    "price": "75",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/1/RQ/NS/RU/36369433/aerated-concrete-wall-panel-250x250.jpg",
-    "group": "Wall Panel",
-    "categories": [
-      "Wall Panels"
-    ],
-    "description": "The Concrete Everest Rapicon Wall Panel is a type of pre-cast concrete panel used in construction for both residential and commercial buildings. It is known for its efficiency in providing sturdy, durable, and insulated walls with faster construction timelines. Here’s an overview of what you can typically expect from these panels:",
-    "specifications": {
-      "Material": "Concrete",
-      "Thickness": "75mm",
-      "Brand": "Ecobricktech",
-      "Install Type": "Rapid",
-      "Position": "Vertical"
-    }
-  },
-  {
-    "id": "158571855",
-    "name": "Industrial Shed Construction",
-    "price": "200",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/GD/PQ/ET/36369433/industrial-shed-construction-250x250.jpg",
-    "group": "Industrial Shed",
-    "categories": [
-      "Industrial Sheds",
-      "Shed Construction"
-    ],
-    "description": "eWalls Ecobricktech provide prefabricated industrial shed construction. It's rapid and quick revenue generator solution.",
-    "specifications": {
-      "Material": "Prefabricated",
-      "Color": "Gray",
-      "Shape": "Rectangular",
-      "Usage/Application": "Commercial",
-      "Core Filling": "Cement"
-    }
-  },
-  {
-    "id": "158705874",
-    "name": "AAC Blocks Making Machine",
-    "price": "2600000",
+    "id": "128808697",
+    "name": "Three Phase Voltage Stabilizer",
+    "price": "25000",
     "unit": "/Unit",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2024/11/467013214/VV/GD/OS/36369433/aac-blocks-making-machine-250x250.jpg",
-    "group": "Block Making Machine",
+    "image": "https://5.imimg.com/data5/OA/IO/MY-2186195/three-phase-voltage-stabilizer-250x250.jpg",
+    "group": "Voltage Stabilizer",
     "categories": [
-      "AAC Block Manufacturing Machine"
+      "Three Phase Voltage Stabilizer",
+      "Three Phase Air Cooled Servo Stabilizers"
     ],
-    "description": "An AAC (Autoclaved Aerated Concrete) block making machine is a specialized piece of equipment used for the production of AAC blocks, which are lightweight, energy-efficient, and durable building materials. AAC blocks are made from a mixture of sand, lime, cement, water, and a small amount of aluminum powder that causes the material to expand, creating a cellular structure that is highly insulated and fire-resistant.",
+    "description": "Backed by expert and experienced professionals, we provide Three Phase Voltage Stabilizer.Price Range:-Rs.25000 - 250000 Per Unit",
+    "specifications": {
+      "Cooling Type": "Air Cooled",
+      "Type": "Automatic",
+      "Output Voltage": "110-220 V",
+      "Frequency": "50 Hz",
+      "Phase": "Three Phase"
+    }
+  },
+  {
+    "id": "244047084",
+    "name": "Advance cooling- Panel Ac",
+    "price": "31000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/8/444267529/NA/OM/DN/2186195/advance-cooling-panel-ac-250x250.png",
+    "group": "Panel Air Conditioner",
+    "categories": [
+      "Panel Air Conditioner"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Power": "1000 W",
+      "Country of Origin": "Made in India",
+      "Tonnage": "4 ton",
+      "Star Rating": "3 Star",
+      "Model Name/Number": "Advance cooling"
+    }
+  },
+  {
+    "id": "284544634",
+    "name": "Frequency Converter",
+    "price": "50000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/8/444264472/GV/TC/BP/2186195/industrial-online-ups-systems-250x250.png",
+    "group": "Frequency Converters",
+    "categories": [
+      "Frequency Converters"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Capacity": ">100 KVA",
+      "Phase": "Three Phase",
+      "Usage/Application": "Industrial",
+      "Input Voltage": "415V",
+      "Output Voltage": "415-380-400-460-480V 3PH 60Hz"
+    }
+  },
+  {
+    "id": "45196268",
+    "name": "Sine Wave UPS",
+    "price": "15000",
+    "unit": "/Unit",
+    "image": "https://4.imimg.com/data4/XB/TK/ANDROID-2186195/product-250x250.jpeg",
+    "group": "Sine Wave UPS",
+    "categories": [
+      "UPS",
+      "Sine Wave UPS"
+    ],
+    "description": "We are a highly acknowledged organization, engaged in presenting a remarkable range of Sine Wave UPS.Price Range:-Rs.15000-1500000 Per Unit",
+    "specifications": {
+      "Capacity": "1 KVA",
+      "Phase": "Single Phase",
+      "Back Up Time": "1 Hour",
+      "Type": "Offline UPS",
+      "Protection": "OverVoltage"
+    }
+  },
+  {
+    "id": "293234063",
+    "name": "Harmonic Filter Reactor",
+    "price": "45000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492549984/UH/FA/AV/2186195/harmonic-filter-reactor-250x250.jpg",
+    "group": "APFC Panel",
+    "categories": [
+      "Harmonic Filter Reactor"
+    ],
+    "description": "A \"Harmonic Filter Reactor\" is an inductor used in electrical power systems to filter out unwanted harmonic currents generated by non-linear loads",
+    "specifications": {
+      "Phase": "Three Phase",
+      "Material": "Copper",
+      "Size": "as per requirement",
+      "Voltage": "415",
+      "Usage/Application": "motar"
+    }
+  },
+  {
+    "id": "128789311",
+    "name": "Automatic Voltage Stabilizer",
+    "price": "25000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/WM/MN/MY-2186195/automatic-voltage-stabilizer-250x250.jpg",
+    "group": "Voltage Stabilizer",
+    "categories": [
+      "Automatic Voltage Stabilizer",
+      "Voltage Stabilizers",
+      "Industrial Stabilizer"
+    ],
+    "description": "Enriched by our vast industrial experience in this business, we are involved in offering an enormous quality range of Automatic Voltage Stabilizer.Price Range:-Rs.25000 - 250000 Per Unit",
     "specifications": {
       "Capacity(Missing)": "Add",
-      "Production Capacity": "125 pieces per minute",
+      "Input Voltage": "160-260 V",
+      "Phase": "Three Phase",
+      "Frequency (Hz)": "50",
+      "Efficiency (%)": "95%"
+    }
+  },
+  {
+    "id": "160020377",
+    "name": "Neel Servo Stabilizer",
+    "price": "40000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453941275/JB/JE/LN/2186195/neel-servo-stabilizer-250x250.jpg",
+    "group": "Voltage Stabilizers",
+    "categories": [
+      "Oil Cooled Servo Stabilizers"
+    ],
+    "description": "NEEL SERVO STABILSIER : 1KVA - 5000 KVAHighest Rate of Corrcetion 105v/secNo Oscillation & HuntingReliable and Enegy saving Stabilsier",
+    "specifications": {
+      "Load Capacity(Missing)": "Add",
+      "Usage/Application": "Industrial",
+      "Phase": "Three Phase",
+      "Country of Origin": "Made in India",
+      "Short circuit Protection": "YES"
+    }
+  },
+  {
+    "id": "45196267",
+    "name": "Servo Voltage Stabilizers",
+    "price": "25000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/DG/BQ/MY-2186195/servo-voltage-stabilizers-250x250.jpg",
+    "group": "Voltage Stabilizer",
+    "categories": [
+      "Servo Voltage Stabilizer"
+    ],
+    "description": "Our company holds immense experience in this domain and is involved in offering a wide assortment of Servo Voltage Stabilizers.Price Range:-Rs.25000 - 250000 Per Unit",
+    "specifications": {
+      "Capacity(Missing)": "Add",
+      "Phase": "Three Phase",
+      "Control Type": "Relay controller",
       "Automation Grade": "Automatic",
-      "Brand": "Ecobricktech",
-      "Brick Material": "OPC Cement"
+      "Input Voltage": "220-240 V"
     }
   },
   {
-    "id": "259729929",
-    "name": "Ewall Cement Panel",
-    "price": "95",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/UD/WX/KT/36369433/industrial-shed-construction-250x250.jpg",
-    "group": "Wall Panel",
+    "id": "293235202",
+    "name": "Step Up Transformer",
+    "price": "10000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492536302/MG/KD/OY/2186195/step-up-transformer-250x250.jpg",
+    "group": "Power Transformers",
     "categories": [
-      "Cement Panel",
-      "Aerocon Panel"
+      "Step Up Transformer"
     ],
-    "description": "Available in different size with 50mm / 75mm/ 100mm thickness. Made with the latest and upgraded technology of building construction. If you want to buid something fast, fabulous, fantastic and more strong than other methods then you should go with Ecobricktech eWalls. Our wall panels contain benefits which are valuable and necessary for your construction and more powerfull and adorable than other buildign materials. Our wall panels *save time. * save space. *save money.",
+    "description": "A step-up transformer is a device that increases the voltage of an alternating current (AC) supply. It's used in power stations and electrical equipment.",
     "specifications": {
-      "Thickness": "75 mm",
-      "Material": "Cement",
-      "Color": "Grey",
-      "Usage/Application": "Commercial",
-      "Position": "Sliding Vertical"
+      "Power": "500 kVA",
+      "Brand": "Neel/ Neelkanth",
+      "Country of Origin": "Made in India",
+      "Type": "Copper Wound",
+      "Cooling Type": "Air Cooled"
     }
   },
   {
-    "id": "172317326",
-    "name": "Reinforced Wall Panels",
-    "price": "90",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/1/SS/QC/VZ/36369433/reinforced-wall-panels-250x250.jpg",
-    "group": "Wall Panel",
+    "id": "257903600",
+    "name": "Hydraulic Press Brake",
+    "price": "1000000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/9/341420996/VY/MW/NI/2186195/hydraulic-press-brakes-1-250x250.png",
+    "group": "Hydraulic Machines",
     "categories": [
-      "Wall Panels"
+      "Hydraulic Press Brakes"
     ],
-    "description": "Reinforced wall panels are structural elements commonly used in construction for walls that require added strength and durability. These panels are designed to withstand heavy loads, provide insulation, and resist various environmental factors like moisture, temperature fluctuations, and impact.",
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
     "specifications": {
-      "Material(Missing)": "Add",
-      "Thickness": "50 - 75 mm",
-      "Built Type": "Modular",
-      "Design": "Plan wall panel",
-      "Color": "Gray"
+      "Max Sheet Width": "4 meter",
+      "Usage/Application": "Industrial",
+      "Control Type": "CNC",
+      "Automation Grade": "Automatic",
+      "Cutting Load": "30-60 ton"
     }
   },
   {
-    "id": "158571671",
-    "name": "EPS Sandwich Wall Panel",
-    "price": "65",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2020/12/TY/FY/GJ/36369433/waterproof-sandwich-wall-panel-500x500-v1-250x250.jpg",
-    "group": "Wall Panel",
+    "id": "128821120",
+    "name": "Electric Servo Voltage Stabilizer",
+    "price": "25000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/DL/QP/MY-2186195/servo-voltage-stabilizer-250x250.jpg",
+    "group": "Voltage Stabilizer",
     "categories": [
-      "EPS Sandwich Panel",
-      "Sandwich Panels"
+      "Servo Voltage Stabilizer",
+      "Air Cooled Servo Stabilizer"
     ],
-    "description": "An EPS (Expanded Polystyrene) Sandwich Wall Panel is a type of building material used primarily in the construction of walls, especially for commercial, industrial, and residential buildings. It consists of three layers: two outer layers of concrete, steel, or other materials, and an inner core of EPS foam.",
+    "description": "Banking on the skills of our qualified team of professionals, we are involved in providing Electric Servo Voltage Stabilizer.Price Range:-Rs.25000 - 250000 Per Unit",
     "specifications": {
-      "Thickness": "40 mm",
-      "Surface Treatment": "Coated",
-      "Usage/Application": "Walls & Partitions",
-      "Material": "Asbestos Cement",
-      "Brand": "Ecobricktech"
+      "Capacity(Missing)": "Add",
+      "Output Voltage": "400V",
+      "Cooling Type": "Air Cooled",
+      "Frequency (Hz)": "47 - 53Hz",
+      "Efficiency (%)": "98-99%"
     }
   },
   {
-    "id": "172317559",
-    "name": "Concrete Sandwich Panels",
-    "price": "60",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/IH/SC/QP/36369433/readymade-farm-house-cabins-250x250.jpg",
-    "group": "Building Structure",
+    "id": "178278108",
+    "name": "ACTIVE HARMONIC FILTER",
+    "price": "50000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2022/2/KK/GK/CC/2186195/active-harmonic-filter-250x250.jpg",
+    "group": "Power Ups",
+    "categories": [
+      "Harmonic Filters",
+      "Active Harmonic Filter"
+    ],
+    "description": "We deal in Active Harmonic Filter 10A - 300 A",
+    "specifications": {
+      "Rated Voltage": "415V",
+      "Filter Type": "Active",
+      "Voltage": "415 v 3ph",
+      "Brand": "R S AUTOMATION",
+      "Model Name/Number": "10A- 300 A"
+    }
+  },
+  {
+    "id": "144571675",
+    "name": "CNC  MACHINE Spin Window System (  Rotoclear  & Visiport)",
+    "price": "180000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492529387/ZF/IH/PB/2186195/cnc-machine-spin-window-system-rotoclear-visiport-250x250.png",
+    "group": "CNC MACHINE LASER CALIBRATION & BALL BAR",
     "categories": [],
-    "description": "Concrete sandwich panels are a type of prefabricated composite building material used in construction, especially for walls, floors, and roofs. These panels consist of two outer layers of concrete with an insulating core material sandwiched in between. The core typically serves as a thermal insulator, while the outer concrete layers provide strength, durability, and protection.",
+    "description": "SPIN WINDOW - ( VISIPORT & ROTOCLEAR) A clear view of the production processes under the toughest milling conditions. The spinning window is an approved system to keep inspection window clean and thus to ensure continuous control of work flow. ROTOCLEAR / VISIPORT is suitable for all kinds of metal cutting machines such as turning centers, milling machines, including machining centers and test stands . A rotating disc flings off striking coolants and cuttings, whether water-soluble or water-insoluble. This enables the operator to have a clear view into the processing area at all times – thus guaranteeing safety according to the applicable safety regulations.",
     "specifications": {
-      "Material": "Concrete",
-      "Built Type": "Prefab",
-      "Usage/Application": "House",
-      "Surface Treatment": "Plain",
-      "Color": "Gray"
+      "Material": "GLASS",
+      "Customization": "STD",
+      "Usage/Application": "CNC MACHINES - TO CLEAR COOLANT FROM WINDOW",
+      "Brand": "ROTOCLEAR",
+      "Voltage": "24V DC"
     }
   },
   {
-    "id": "284401693",
-    "name": "Sandwich Light Weight Panel Machine",
-    "price": "14000000",
+    "id": "128809476",
+    "name": "Automatic Three Phase Voltage Stabilizer",
+    "price": "25000",
     "unit": "/Unit",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2024/11/467001376/TB/BZ/XU/36369433/sandwich-light-weight-panel-machine-250x250.jpg",
-    "group": "Machinery",
+    "image": "https://5.imimg.com/data5/JE/OB/MY-2186195/three-phase-voltage-stabilizer-250x250.jpg",
+    "group": "Voltage Stabilizer",
     "categories": [
-      "Sandwich Panel Machine"
+      "Three Phase Voltage Stabilizer"
     ],
-    "description": "A Sandwich Lightweight Panel Machine is a type of industrial equipment used for manufacturing sandwich panels, which are composite materials widely used in construction for walls, roofs, and floors. These panels consist of a lightweight core material, usually foam, mineral wool, or honeycomb, sandwiched between two outer layers, typically made of metal (such as steel or aluminum), plywood, or other rigid materials.",
+    "description": "By keeping track of current market development, we are into offering an excellent range of Automatic Three Phase Voltage Stabilizer.Price Range:-Rs.25000 - 250000 Per Unit",
     "specifications": {
-      "Machine Material": "Mild Steel",
-      "Frequency": "50Hz",
-      "Voltage": "380V",
-      "Automation Grade": "Automatic",
-      "Power Source": "Electric"
+      "Cooling Type": "Air Coolied",
+      "Phase": "Three Phase",
+      "Input Voltage": "160-260 V",
+      "Capacity (KVA)": "1-350",
+      "Frequency (Hz)": "50"
     }
   },
   {
-    "id": "167043897",
-    "name": "Everest Rapicon Wall Panel",
-    "price": "85",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/1/AM/RA/VZ/36369433/everest-rapicon-wall-panel-250x250.jpg",
-    "group": "Wall Panel",
+    "id": "160020488",
+    "name": "Neel Powerconditioner ( Combination Of Servo Stabilizer With Isolation Transformer)",
+    "price": "100000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2021/3/VK/QE/MB/2186195/neel-powerconditioner-combination-of-servo-stabilizer-with-isolation-transformer--250x250.PNG",
+    "group": "Stabilsier With Isolation Transformer",
     "categories": [
-      "Wall Panels"
+      "Isolation Transformers"
     ],
-    "description": "The Everest Rapicon Wall Panel is a type of pre-engineered, modular wall panel system that is used in construction for both residential and commercial projects. These panels are known for their ease of installation, durability, and versatility. They typically come in a variety of sizes and materials, and are designed to provide a quick, efficient solution for building interior or exterior walls.",
+    "description": "NEEL POWERCONDITIONE( COMBINATION OF SERVO STABILSIER WITH ISOLATION TRANSFORMER): 1KVA TO 200KVAInput: 340-480v 3ph 4 w Output : 200 -220-380-400-415-480v 3ph ( Any One)",
     "specifications": {
-      "Materials Used": "Aerated Concrete",
-      "Thickness": "100 mm",
-      "Material": "Flyash",
-      "Size": "2x10 Feet",
-      "Usage/Application": "Residential"
+      "Power": "10 KVA -200 KVA",
+      "Input Voltage": "340-480V 3PH 4 W",
+      "Output Voltage": "200-220- 380 400-415 -460-480V 3PH",
+      "Brand": "NEEL",
+      "Cooling Type": "Dry type/Air cooled"
     }
   },
   {
-    "id": "158497980",
-    "name": "Readymade Wall Panels",
-    "price": "75",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2020/12/YQ/QQ/IS/36369433/eps-wall-panel-250x250.jpg",
-    "group": "Cement Board",
+    "id": "293235203",
+    "name": "Control Transformers",
+    "price": "10000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492536444/JL/YK/OC/2186195/control-transformers-250x250.jpg",
+    "group": "Control Panels",
     "categories": [
-      "Readymade Wall Panel"
+      "Control Transformers"
     ],
-    "description": "Available in different size with 50mm / 75mm/ 100mm thickness. Made with the latest and upgraded technology of building construction. If you want to buid something fast, fabulous, fantastic and more strong than other methods then you should go with Ecobricktech eWalls. Our wall panels contain benefits which are valuable and necessary for your construction and more powerfull and adorable than other buildign materials. Our wall panels *save time. * save space. *save money.",
+    "description": "A control transformer is a device that regulates voltage levels in control circuits. It's also known as an instrument transformer.",
     "specifications": {
-      "Thickness": "50 mm",
-      "Brand": "Ecobricktech",
-      "Usage/Application": "Commercial",
-      "Color": "Gray",
-      "Material": "EPS"
+      "Power Rating": "10 kVA",
+      "Manufactured By": "RS Automation",
+      "Input Voltage": "230V",
+      "Country of Origin": "Made in India",
+      "Output Voltage": "230/110 V"
     }
   },
   {
-    "id": "300401945",
-    "name": "Prefabricated Farm House",
-    "price": "350",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/ANDROID/Default/2025/5/513817808/EA/TM/ZV/36369433/product-jpeg-250x250.jpg",
-    "group": "Prefabricated Houses",
+    "id": "128963328",
+    "name": "Panel Air Conditioner",
+    "price": "25000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453946944/AD/DV/WI/2186195/panel-air-conditioner-250x250.jpg",
+    "group": "Panel Air Conditioner",
     "categories": [
-      "Prefabricated Houses"
+      "Panel Air Conditioner"
     ],
-    "description": "We make pre fabricated farmhouse with ready made farmhouse slabs and steel rapidly at remote locations.",
+    "description": "Efficient name in the industry involved in offering the optimum quality of Panel Air Conditioner.Price Range:- Rs.32000 - 200000 Per Unit",
     "specifications": {
+      "Power": "1000 W",
+      "Extreme Static Pressure": "27 Bar",
+      "Voltage (V)": "230 V",
+      "Temperature (deg. Celsius)": "20-50 degree C",
+      "Rated Current Cooling Ampere": "1.5 A"
+    }
+  },
+  {
+    "id": "128821271",
+    "name": "Three Phase Servo Controlled Voltage Stabilizer",
+    "price": "25000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492551187/FS/TM/PY/2186195/three-phase-servo-controlled-voltage-stabilizer-250x250.jpg",
+    "group": "Voltage Stabilizer",
+    "categories": [
+      "Three Phase Servo Controlled Voltage Stabilizer",
+      "Servo Voltage Stabilizer",
+      "Three Phase Voltage Stabilizer"
+    ],
+    "description": "Our company is highly esteemed in offering Three Phase Servo Controlled Voltage Stabilizer.Price Range:-Rs.25000 - 250000 Per Unit",
+    "specifications": {
+      "Type(Missing)": "Add",
+      "Rated Capacity(Missing)": "Add",
+      "Input Voltage": "270-490V",
+      "Display Type": "Digital",
+      "Frequency (Hz)": "50Hz, 60Hz"
+    }
+  },
+  {
+    "id": "160020639",
+    "name": "Static  Stabilsier  10kva -200 Kva",
+    "price": "50000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492579054/PH/CI/AH/2186195/static-stabilsier-10kva-200-kva-250x250.jpg",
+    "group": "Voltage Stabilizer",
+    "categories": [
+      "Static Voltage Stabilizer"
+    ],
+    "description": "STATIC STABILSIER : 10 KVA -200KVStatic Voltage Regulator (SVR) is made by using high frequency IGBT (Insulated Gate Bi-Polar Transistor) through 20 KHz PWM inverter based technology to maintain constant precise voltage. SVR will give Fully Uniform Conditioned Power.\nFree from Surge-Spike-Brown-Outs.\nReal-Time Precisely Regulated Voltage i.e. +/- 1%.\nVery Fast Correction Time within 20ms i.e. One Waveform.\nAll Solid State Technology, No Moving Parts.\nSilent Operation & Minimum Maintenance.",
+    "specifications": {
+      "Phase": "Three Phase",
+      "Country of Origin": "Made in India",
+      "Warranty": "12  MONTH",
+      "Output Voltage": "415 V 3PH",
+      "Input Voltage": "340- 480V 3OH 4 W"
+    }
+  },
+  {
+    "id": "128808252",
+    "name": "Single Phase Transformer",
+    "price": "25000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/OU/NV/MY-2186195/single-phase-transformer-250x250.jpg",
+    "group": "Power Transformers",
+    "categories": [
+      "Single Phase Transformer"
+    ],
+    "description": "Due to our enormous understanding and massive knowledge of this business, we are involved in offering Single Phase Transformer.Price Range:-Rs.25000 - 400000 Per Unit",
+    "specifications": {
+      "Power(Missing)": "Add",
+      "Output Voltage": "12-24 V",
+      "Cooling Type": "Dry Type/Air Cooled",
+      "Frequency": "50 Hz",
+      "Winding Material": "Copper"
+    }
+  },
+  {
+    "id": "303610849",
+    "name": "Hitachi Ups",
+    "price": "",
+    "unit": "/",
+    "image": null,
+    "group": "New Items",
+    "categories": [
+      "Hitachi UPS"
+    ],
+    "description": null,
+    "specifications": {
+      "Capacity": "",
+      "Model Name/Number": "",
+      "Usage/Application": "",
+      "Battery Type": "",
+      "Phase": ""
+    }
+  },
+  {
+    "id": "303610109",
+    "name": "Automatic Voltage Stabilizer",
+    "price": "50000",
+    "unit": "/Piece",
+    "image": null,
+    "group": "Voltage Stabilizers",
+    "categories": [
+      "Automatic Voltage Stabilizer"
+    ],
+    "description": null,
+    "specifications": {
+      "Capacity": "",
+      "Phase": "",
+      "Input Voltage": "",
+      "Power": "",
+      "Display": ""
+    }
+  },
+  {
+    "id": "161212804",
+    "name": "Neel K Rated Isolation Transformer -Neelkanth Power Solutions",
+    "price": "50000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492537029/BS/KA/GJ/2186195/neel-k-rated-isolation-transformer-neelkanth-power-solutions-250x250.png",
+    "group": "Power Transformers",
+    "categories": [
+      "K Rated Transformer",
+      "Isolation Transformers"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Transformer Type": "Isolation Transformer",
+      "Phase": "Three Phase",
+      "Brand": "Neel and Neelkant",
+      "Cooling Type": "Dry Type/Air Cooled",
+      "Power": "500 kVA"
+    }
+  },
+  {
+    "id": "293235186",
+    "name": "Isolation Transformers",
+    "price": "10000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492535983/JU/GH/XL/2186195/step-down-transformer-250x250.jpg",
+    "group": "Power Transformers",
+    "categories": [
+      "Isolation Transformers"
+    ],
+    "description": "A step-down transformer is an electrical device that reduces the voltage of an alternating current (AC) power supply. It's used to convert high voltage to low voltage, making it safe for use in homes and buildings.",
+    "specifications": {
+      "Power": "500 kVA",
+      "Country of Origin": "Made in India",
+      "Winding Material": "Copper",
+      "Type": "Isolation",
+      "Current": "10 amp"
+    }
+  },
+  {
+    "id": "128497916",
+    "name": "Cnc Machine Telescopic Cover",
+    "price": "10000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/10/461302196/QX/BN/FH/2186195/telescopic-cover-250x250.jpg",
+    "group": "Industrial Cover",
+    "categories": [
+      "Telescopic Covers"
+    ],
+    "description": "Matching up with the ever increasing requirements of the customers, our company is engaged in providing Telescopic Cover.Price Range:-Rs10000 - 100000 per Unit",
+    "specifications": {
+      "Thickness": "1.5 mm to 3 mm",
       "Material": "Steel",
-      "Built Type": "Panel Build"
+      "Components": "Guide rails and way extensions,Bumpers, Scissors",
+      "Shape": "Rectangle",
+      "Surface": "Corrosion Proof"
     }
   },
   {
-    "id": "158571741",
-    "name": "Fly Ash Wall Panel",
-    "price": "87",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/1/ZH/WG/PZ/36369433/fly-ash-wall-panel-250x250.jpg",
-    "group": "Wall Panel",
+    "id": "139218769",
+    "name": "Static Frequency Converters",
+    "price": "100000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/BR/WZ/SP/SELLER-2186195/frequency-converters-250x250.jpeg",
+    "group": "Frequency Converters",
     "categories": [
-      "Readymade Wall Panel",
-      "Partition Panel"
+      "Frequency Converters"
     ],
-    "description": "Fly ash wall panels are a type of construction panel made using fly ash, a byproduct of coal combustion in power plants. These panels are a sustainable and energy-efficient alternative to traditional concrete wall panels.",
+    "description": "We can Provide Frequency ConvertersPrice Range :- Rs. 100000 - 1000000 / UnitGet Best Price Of Solid State Frequency Converters For Rs.100000/-",
     "specifications": {
-      "Thickness": "100mm",
-      "Brand": "Ecobricktech",
-      "Color": "Gray",
-      "Shape": "Rectangular",
-      "Usage/Application": "Residential"
+      "Phase": "Three Phase",
+      "Capacity": "10KVA -200KVA",
+      "Input Voltage": "415 V   3PH   50HZ",
+      "Output Voltage": "415 V- 380V -220 V  3PH ANY ONE  60HZ",
+      "Usage/Application": "Industrial"
     }
   },
   {
-    "id": "284401190",
-    "name": "Readymade Wall Panel Machinery",
-    "price": "15000000",
+    "id": "128811079",
+    "name": "Round Bellow Cover",
+    "price": "20000",
     "unit": "/Unit",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2024/11/467019848/AA/IZ/WS/36369433/readymade-wall-panel-machinery-250x250.jpg",
-    "group": "Machinery",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/10/461301312/NI/VA/YY/2186195/bellows-cover-250x250.jpg",
+    "group": "Industrial Cover",
     "categories": [
-      "Wall Panel Forming Machine",
-      "Readymade Wall Panel"
+      "Bellow Covers"
     ],
-    "description": "We are a premium manufacturer of wall panel machinery and provide franchise for wall panel units under our brand eWalls . We provide manufacturing guidance, plant installation , sales assitance, raw mateial availability and other services as well .",
+    "description": "Since our commencement, we are immersed in presenting an elite array of Bellows Cover.Price Range:- Rs.20000 -200000 Per Unit",
     "specifications": {
-      "Machine Material": "Mild Steel",
-      "Production Capacity": "50000 CBM",
-      "Automation Grade": "Automatic",
+      "Material": "Nylon Fabric",
+      "Usage/Application": "Industrial",
+      "Color": "Black",
+      "Size": "3 mm",
+      "Is It Water Proof": "Water Proof"
+    }
+  },
+  {
+    "id": "45196266",
+    "name": "Real Time Power Factor Systems",
+    "price": "100000",
+    "unit": "/Unit",
+    "image": "https://4.imimg.com/data4/DY/SY/ANDROID-2186195/product-250x250.jpeg",
+    "group": "Power Factor Correction Units",
+    "categories": [
+      "Power Factor Correction Panel"
+    ],
+    "description": "Our company is highly esteemed in offering Real Time Power Factor Systems.Price Range:-Rs.100000 - 1000000 Per Unit",
+    "specifications": {
+      "Phase(Missing)": "Add",
+      "IP Rating": "IP 65",
+      "Frequency (Hz)": "50-60",
+      "Noise Level (dB)": "60-80",
+      "Material": "Stainless Steel"
+    }
+  },
+  {
+    "id": "45196264",
+    "name": "PLC Control Panels",
+    "price": "100000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492543552/MR/AE/GH/2186195/plc-control-panels-250x250.jpg",
+    "group": "Control Panels",
+    "categories": [
+      "PLC Control Panel"
+    ],
+    "description": "Banking on the skills of our qualified team of professionals, we are involved in providing PLC Control Panels.Price Range:-Rs 100000 - 400000 Per Unit",
+    "specifications": {
+      "Phase": "Three Phase",
+      "Material": "Mild Steel",
+      "Panels": "SS / MS / FRP / FLP",
+      "Integrated Type": "PLC, HMI, Barriers, VFD",
+      "Screen Size": "3.5\" to 15\""
+    }
+  },
+  {
+    "id": "155463316",
+    "name": "ABB ACH550 1 HP AC Drive 3 Phase",
+    "price": "20000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492548062/WX/PV/WW/2186195/abb-ach550-1-hp-ac-drive-3-phase-250x250.jpg",
+    "group": "Electrical Panel And Ac Drive",
+    "categories": [
+      "ABB VFD"
+    ],
+    "description": "An AC drive is a device used to control the speed of an electrical motor in order to: ... decrease mechanical stress on motor control applications. optimize the operation of various applications relying on electric motors.",
+    "specifications": {
+      "Power Rating(Missing)": "Add",
+      "Brand": "ABB",
+      "Model Name/Number": "ACH550",
+      "Motor Power": "1 HP",
+      "Input Phase": "3 - Phase"
+    }
+  },
+  {
+    "id": "160020561",
+    "name": "Neel Powerlux -lighting Energy Saver- Neelkanth Power Solutions",
+    "price": "50000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/10/461303338/NL/DO/YV/2186195/neel-powerlux-lighting-energy-saver-neelkanth-power-solutions-250x250.png",
+    "group": "LIGHT ENERGY SAVER",
+    "categories": [
+      "Air Conditioner Energy Saver"
+    ],
+    "description": "NEEL POWERLUX -LIGHTING ENERGY SAVER 50KVA -200KVAPowerlux is a comprehensive Light Energy Management and saving system which is compatible with lighting loads of all kinds. Powerlux reduces losses, wastage",
+    "specifications": {
+      "Usage/Application": "Lighting energy saver",
+      "Current": "200Amph",
+      "Color": "RAL",
+      "Capacity": "50KVA -200 KVA",
+      "Power": "3000 W"
+    }
+  },
+  {
+    "id": "128965413",
+    "name": "Apron Cover",
+    "price": "25000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453945684/PT/FY/ZN/2186195/apron-cover-250x250.jpg",
+    "group": "Industrial Cover",
+    "categories": [
+      "Apron Cover"
+    ],
+    "description": "Backed by our adroit team of professionals, we are able to provide our clients with an assorted gamut of Apron Cover.Price Range:- Rs.25000 - 100000 Per Unit",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Features": "Flexible",
+      "Size": "As per requirement",
+      "Finish": "Polished",
+      "Shape": "Rectangle"
+    }
+  },
+  {
+    "id": "45196265",
+    "name": "MCC Control Panel",
+    "price": "100000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492544368/YC/PR/FA/2186195/mcc-control-panel-250x250.jpg",
+    "group": "Control Panels",
+    "categories": [
+      "MCC Panels",
+      "Electric Control Panel"
+    ],
+    "description": "We are a most trusted name among the topmost companies in this business, involved in offering MCC Control Panel.Price Range:-Rs 100000 - 400000 Per Unit",
+    "specifications": {
+      "Phase(Missing)": "Add",
       "Power Source": "Electric",
-      "Voltage": "450V"
+      "Usage/Application": "Motor Control",
+      "Output Voltage": "500 V",
+      "Phase Type": "3 Phase"
     }
   },
   {
-    "id": "284401692",
-    "name": "Aerocon Panel Making Machinery",
-    "price": "12500000",
+    "id": "293234159",
+    "name": "Detuned Filter Reactor",
+    "price": "30000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492538318/XE/SU/VR/2186195/detuned-filter-reactor-250x250.jpg",
+    "group": "Power Transformers",
+    "categories": [
+      "Detuned Filter Reactor"
+    ],
+    "description": "A \"Detuned Filter Reactor\" is a specific type of inductor used in power systems to prevent harmonic amplification and protect capacitors by intentionally designing its impedance to not resonate at the frequencies of common harmonic currents",
+    "specifications": {
+      "Reactor Rating(Missing)": "Add",
+      "Material": "Copper",
+      "Brand": "RS Automation",
+      "De Tuning Factor": "1",
+      "Input Frequency": "50HZ"
+    }
+  },
+  {
+    "id": "128959888",
+    "name": "Vertical Axis Drop Preventer",
+    "price": "55000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/3/492531309/FW/RX/NL/2186195/vertical-axis-drop-preventer-250x250.jpg",
+    "group": "Axis Drop Preventer",
+    "categories": [
+      "Voltage Preventer"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.\nAxis drop problem in CNC machines:\nThe introduction of Computer numerical control(CNC) machines radically\nchanged the manufacturing industry because of it is key advantages like high\naccuracy and faster production. In one sense, CNC machines may be said to\nrepresent special industrial robot systems ,as they are programmable to perform\nany kind of machining operation.\nMost of the manufacturing industries face problems in position control of\nthe vertical axis during machining on CNC machines in the event of an\nunprecedented power failure .The axis slips downwards due to inertia and\ngravitational force acting on vertical axis of CNC machines.\nIn case of die and mold applications, where the accuracy of jobs are\ncomparatively very high, the damages caused due to this problem a",
+    "specifications": {
+      "Frequency": "50 Hz",
+      "Input Supply AC": "Three Phase 4 Wire R Y B E 220 / 415 V",
+      "Weight": "3 Kgs.",
+      "Mounting": "Panel Mounting",
+      "Cooling": "Natural Air Cooling"
+    }
+  },
+  {
+    "id": "45196269",
+    "name": "Ultra Isolation Transformers",
+    "price": "25000",
     "unit": "/Unit",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2024/11/466999936/MK/WS/XQ/36369433/aerocon-panel-making-machinery-250x250.jpg",
-    "group": "Machinery",
+    "image": "https://4.imimg.com/data4/OX/MU/ANDROID-2186195/product-250x250.jpeg",
+    "group": "Power Transformers",
     "categories": [
-      "Panel Making Machine",
-      "Aerocon Panel"
+      "Ultra Isolation Transformers",
+      "Three Phase Isolation Transformer"
     ],
-    "description": "We are a premium manufacturer of wall panel machinery and provide franchise for wall panel units under our brand eWalls . We provide manufacturing guidance, plant installation , sales assitance, raw mateial availability and other services as well .",
+    "description": "In order to keep pace with the never-ending demands of customers, we are involved in offering a wide range of Ultra Isolation Transformers.Price Range:-Rs.25000 - 400000 Per Unit",
     "specifications": {
-      "Production Capacity": "50000 CBM",
+      "Power Rating": "500 kVA",
+      "IP Standards": "IP21",
+      "Capacity": "1KVA-50KVA",
+      "Primary Voltage": "230V",
+      "Secondary Voltage for Step Down": "110V"
+    }
+  },
+  {
+    "id": "289871406",
+    "name": "Industrial Air Conditioner",
+    "price": "35000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453947651/MQ/RY/PN/2186195/advance-cooling-panel-ac-250x250.jpg",
+    "group": "Panel Air Conditioner",
+    "categories": [
+      "Panel Air Conditioner"
+    ],
+    "description": "Product Details: Weight (kg)\n14 kg Voltage (V)\n230 V Frequency (Hz)\n50 hz Temperature (deg. Celsius)\n20-50 degree C Cooling Capacity\n300 W Extreme Static Pressure\n27 Bar Rated Current Cooling Ampere\n1.5 A Running Current\n3.0 A Efficient name in the industry involved in offering the optimum quality of Panel Air Conditioner.",
+    "specifications": {
+      "Power": "5000 W",
+      "Country of Origin": "Made in India"
+    }
+  },
+  {
+    "id": "289871405",
+    "name": "Panel Air Conditioner",
+    "price": "31000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453946946/WZ/ZC/UZ/2186195/panel-air-conditioner-250x250.jpg",
+    "group": "Panel Air Conditioner",
+    "categories": [
+      "Panel Air Conditioner"
+    ],
+    "description": "Product Details: Weight (kg)\n14 kg Voltage (V)\n230 V Frequency (Hz)\n50 hz Temperature (deg. Celsius)\n20-50 degree C Cooling Capacity\n300 W Extreme Static Pressure\n27 Bar Rated Current Cooling Ampere\n1.5 A Running Current\n3.0 A Efficient name in the industry involved in offering the optimum quality of Panel Air Conditioner.",
+    "specifications": {
+      "Power": "5000 W",
+      "Country of Origin": "Made in India"
+    }
+  },
+  {
+    "id": "160020542",
+    "name": "Neel Power Factor Panel  - APFC AND RTPFC  50KVAR-3000KVAR",
+    "price": "200000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2021/3/FU/QB/QK/2186195/neel-power-factor-panel-apfc-and-rtpfc-50kvar-3000kvar-250x250.PNG",
+    "group": "Power Factor Correction Units",
+    "categories": [
+      "Power Factor Correction Panel",
+      "Electric Control Panel",
+      "APFC Panels"
+    ],
+    "description": "Neel power factor pannel - 50kvar -2000kvarapfc : contactor logic systemrtpfc : thyrister switching system",
+    "specifications": {
+      "Phase": "3 - Phase",
+      "Brand": "NEEL",
+      "Usage/Application": "Cement Plant",
+      "Rated Reactive Power": "50KVAR-3000KVAR"
+    }
+  },
+  {
+    "id": "139215685",
+    "name": "Online UPS On Rent",
+    "price": "10000",
+    "unit": "/Month",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/10/461300375/XS/IU/DF/2186195/online-ups-on-rent-250x250.jpg",
+    "group": "UPS On Rent",
+    "categories": [
+      "UPS Rental Services"
+    ],
+    "description": "we can Provide UPS on Rent.Price Range :-Rs. 10000 - 200000 / Month",
+    "specifications": {
+      "Type Of UPS": "Online UPS",
+      "Usage/Application": "Industrial",
+      "Capacity": "10/30/40/60 KVA"
+    }
+  },
+  {
+    "id": "128810339",
+    "name": "Numeric-Legrand Online UPS 1PH To Three Phase",
+    "price": "15000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/JD/IF/MY-2186195/earth-leakage-relay-250x250.jpg",
+    "group": "Three Phase UPS",
+    "categories": [
+      "Three Phase UPS",
+      "Online UPS",
+      "Industrial Online UPS"
+    ],
+    "description": "As an authentic name of this domain, we hold expertise in providing a high-quality array of NUMERIC-LEGRAND Three Phase UPS.Price Range:-Rs.15000-1500000 Per Unit",
+    "specifications": {
+      "Capacity(Missing)": "Add",
+      "Input Voltage": "380-400 V",
+      "Protection": "OverVoltage",
+      "Dimension": "450x1200x640 mm",
+      "Frequency": "50-60 Hz"
+    }
+  },
+  {
+    "id": "160020442",
+    "name": "Ultra Isolation Transformer - Neel",
+    "price": "50000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2021/3/VP/FM/BA/2186195/neel-ultra-isolation-transformer-neelkanth-power-solutions-250x250.PNG",
+    "group": "Isolation Transformer",
+    "categories": [
+      "Three Phase Isolation Transformer"
+    ],
+    "description": "NEEL ULTRA ISOLATION TRANSFORMER : 1KVA TO 3000KVAInpu : 380-400-415v 3ph outot; 200-220-400-415-460-489v 3ph (Any One0NOISE ATTN: 100dBDelta /StarLeakage Current : lesss than 20 microamp",
+    "specifications": {
+      "Power Rating(Missing)": "Add",
+      "Input Voltage": "1PH   & 3PH",
+      "Output Voltage": "200-220- 380 400-415 -460-480V 3PH",
+      "Usage/Application": "Industrial",
+      "Brand": "NEEL   -  NEELKANTH POWER SOLUTIONS"
+    }
+  },
+  {
+    "id": "172843467",
+    "name": "Rellio Online UPS",
+    "price": "50000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/12/475922306/XH/DK/JG/2186195/rellio-online-ups-250x250.jpg",
+    "group": "Three Phase UPS",
+    "categories": [
+      "Online UPS"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Type": "Online",
+      "Capacity": ">20 KVA",
+      "Brand": "Rellio",
+      "Configuration": "3 Phase IN - 3 Phase OUT",
+      "Model Name/Number": "Rellio Online ups"
+    }
+  },
+  {
+    "id": "149763718",
+    "name": "Industrial UPS Systems",
+    "price": "300000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/XH/ZP/JX/SELLER-2186195/industrial-ups-systems-250x250.png",
+    "group": "Power Ups",
+    "categories": [
+      "Industrial UPS Systems",
+      "IGBT Online UPS"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Capacity": "20 KVA",
+      "Brand": "Legrand-Numeric",
+      "Input Voltage": "230V 1PH  OR 415 V 3PH",
+      "Type": "Online UPS",
+      "Phase": "1P-1P,  3P-1P, 3P-3P"
+    }
+  },
+  {
+    "id": "228215161",
+    "name": "Industrial Online Ups Systems",
+    "price": "25000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2022/2/WQ/KW/FC/2186195/apc-online-ups-250x250.jpg",
+    "group": "Uninterruptible Power Supply",
+    "categories": [
+      "Industrial Online UPS"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Capacity": "1 KVA",
+      "Brand": "APC",
+      "Configuration": "3 Phase IN & 3 Phase OUT",
+      "Country of Origin": "Made in India",
+      "Form Factor": "Tower Model"
+    }
+  },
+  {
+    "id": "128821166",
+    "name": "Single/Three Phase Isolation Transformer",
+    "price": "25000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453953699/EV/SE/VM/2186195/single-phase-isolation-transformer-250x250.jpg",
+    "group": "Three Phase Isolation Transformer",
+    "categories": [
+      "Single Phase Isolation Transformer",
+      "Three Phase Isolation Transformer"
+    ],
+    "description": "Matching up with the ever increasing requirements of the customers, our company is engaged in providing Single Phase Isolation Transformer.Price Range:-Rs.25000 - 400000 Per Unit",
+    "specifications": {
+      "Power Rating(Missing)": "Add",
+      "Phase": "Three Phase",
+      "Features": "EMI filter, Auto Resealable Thermal cut out Fuse",
+      "Power": "1kva-3000 , kva",
+      "Output Voltage": "415/200/220 3 ph"
+    }
+  },
+  {
+    "id": "284543814",
+    "name": "UL and CE Mark Transformer",
+    "price": "20000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453956179/XP/YZ/BT/2186195/ul-and-ce-mark-transformer-250x250.jpg",
+    "group": "Isolation Transformer",
+    "categories": [
+      "Electronic Transformers"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of UL Transformer, Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Power": "1600 kva",
+      "Type": "Isolation",
+      "Current": "10 amp",
+      "Electronic Transformer Type": "Isolation",
+      "Phase": "Three Phase"
+    }
+  },
+  {
+    "id": "161213228",
+    "name": "Montronix Collossion Detection And Spindle Protection Of CNC Machines",
+    "price": "300000",
+    "unit": "/Unit",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2021/3/SG/AU/YQ/2186195/montronix-collossion-detection-and-spindle-protection-of-cnc-machines-250x250.jpg",
+    "group": "Cnc Machine",
+    "categories": [
+      "CNC Spindle"
+    ],
+    "description": "Montronix solutions are a must for all machine tools, but also for many other manufacturing plants and plant parts: enable a continuous process monitoring and real-time detection of machine and tool collisions, tool breakage, blank cuts , overloading, excessive tool wear, unusually strong vibrations of the spindle and the machine structure, as well as many other deviations from the normal process behavior. These damage the manufacturing system and drive the costs up. Montronix , with head quarter in Germany , world leader in Real time process and tool monitoring, machine protection, and machine status analysis ,having 20,000 installations worldwide including 2,000 in India. Specially in following areas- Tool & Process monitoring system in real time thru high quality sensors will detect tool missing/worn out/collision/breakage etc . Also useful in process optimization. Potable Machine condition monitoring with Wi-Fi ( Machine Diagnostic) Collision detection ( machine airbag) for Machine",
+    "specifications": {
+      "Material": "Metal",
       "Automation Grade": "Automatic",
-      "Voltage": "450V",
-      "Surface Finishing": "Polished",
-      "Machine Material": "Mild Steel"
+      "Power": "2.2 KW",
+      "Country of Origin": "Made in India",
+      "Brand": "Montronix"
     }
   },
   {
-    "id": "158571670",
-    "name": "Concrete Wall Panel",
-    "price": "90",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/VJ/HH/AG/36369433/waterproof-sandwich-wall-panel-250x250.jpg",
-    "group": "Wall Panel",
+    "id": "284542710",
+    "name": "Industrial Water Chiller",
+    "price": "100000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453951707/SL/TK/WA/2186195/industrial-water-chiller-250x250.jpg",
+    "group": "Industrial Water Chiller",
     "categories": [
-      "Drywall Partitions",
-      "Precast Concrete Walls"
+      "Industrial Water Chiller"
     ],
-    "description": "eWalls Ecobricktech readymade walls are strong, rapid, ecofriendly and pocket friendly with features of waterproof, weather proof, termite proof, moisture proof, fire proof.",
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
     "specifications": {
-      "Material": "Concrete",
-      "Surface Treatment": "Coated",
-      "Dimensions": "2x8",
-      "Brand": "Ecobricktech",
-      "Usage/Application": "Walls & Partitions"
+      "Material": "Stainless Steel",
+      "Capacity": "1 TR",
+      "Automation Grade": "Automatic",
+      "Phase": "3 Phase",
+      "Type": "Water-Cooled"
     }
   },
   {
-    "id": "158497978",
-    "name": "Temporary Buildings Structure",
-    "price": "75",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/GR/YR/JL/36369433/temporary-buildings-structure-250x250.jpg",
-    "group": "Building Structure",
+    "id": "244049020",
+    "name": "Industrial Oil Chillers",
+    "price": "100000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/8/444268907/QC/PA/VB/2186195/industrial-oil-chillers-250x250.jpg",
+    "group": "Oil Chiller",
     "categories": [
-      "Pre Engineered Building Structure",
-      "Temporary Buildings"
+      "Oil Chiller",
+      "Online Chiller",
+      "Industrial Water Chiller"
     ],
-    "description": "A temporary building structure refers to a type of building or shelter that is designed for short-term use or a specific period, after which it can be disassembled or relocated. These structures are commonly used in situations where a permanent building is not needed, or when quick, flexible solutions are required for housing, events, storage, or industrial purposes.",
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
     "specifications": {
-      "Material(Missing)": "Add",
-      "Brand": "Ecobricktech",
-      "Built Type": "Prefab",
-      "Usage/Application": "Commercial",
-      "Core Filling": "Cement"
+      "Capacity": "10 TR",
+      "Material": "Stainless Steel",
+      "Brand": "Advance Cooling",
+      "Usage/Application": "Industrial Cnc",
+      "No. Of Compressor": "1"
     }
   },
   {
-    "id": "158571742",
-    "name": "Prefabricated Readymade House",
-    "price": "150",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/9/CF/GC/JV/36369433/prefabricated-concrete-house-readymade-house--250x250.jpg",
-    "group": "Prefabricated Houses",
+    "id": "172843532",
+    "name": "Eaton Online UPS",
+    "price": "25000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/9/453938643/NO/PH/KJ/2186195/eaton-online-ups-250x250.png",
+    "group": "Three Phase UPS",
     "categories": [
-      "Prefabricated Houses"
+      "Eaton UPS",
+      "UPS"
     ],
-    "description": "Ecobricktech presents you a Concrete Prefabricated Readymade house. With strong wallpanel, Steel trust and door and winodws. This is the easiest way of Rapid Construction.",
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost ,Trader and Service Provider of Eton Online UPS System.",
     "specifications": {
-      "Material": "Cement",
-      "Built Type": "Prefab",
-      "Brand": "Ecobricktech",
-      "Usage/Application": "Commercial / Residential",
-      "Thickness": "100mm"
+      "Capacity(Missing)": "Add",
+      "Type": "Online",
+      "Model Name/Number": "1KVA-2000KVA",
+      "Brand": "Eton"
     }
   },
   {
-    "id": "167043827",
-    "name": "Prefabricated Sample Flats",
-    "price": "100",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/1/LI/ZP/EA/36369433/prefab-sample-flat-250x250.jpg",
-    "group": "Prefabricated Houses",
+    "id": "149193908",
+    "name": "Numeric Online UPS",
+    "price": "15000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/TestImages/WS/NN/XU/SELLER-2186195/numeric-ups-250x250.png",
+    "group": "Numeric Ups",
     "categories": [
-      "Prefabricated Buildings"
+      "Numeric UPS"
     ],
-    "description": "Sample flat can be made with wall panels for demostrate the idea Rapidly, Pocket friendly with easily move, remove, reuse the structure.",
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Trader and Service Provider of Numeric UPS from 600VA to 1000KVA",
     "specifications": {
-      "Material": "Aerated Concrete",
-      "Built Type": "Prefab",
-      "Roof Type": "Profile Sheet and Mezzanince",
-      "Thickness": "75 mm",
-      "Height": "10 feet"
+      "Capacity": "600VA- 1000KVA",
+      "Usage/Application": "Power Backup",
+      "Warranty": "2 Years",
+      "Back Up Time": "20 Min"
+    }
+  },
+  {
+    "id": "172843213",
+    "name": "APC Online UPS",
+    "price": "20000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2022/2/DA/KA/IK/2186195/smt750ic-250x250.jpg",
+    "group": "Three Phase UPS",
+    "categories": [
+      "APC Online UPS"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Capacity": "1 KVA",
+      "Configuration": "3 Phase IN & 3 Phase OUT",
+      "Brand": "APC",
+      "Country of Origin": "Made in India",
+      "Back Up Time": "30 Mins"
+    }
+  },
+  {
+    "id": "253940337",
+    "name": "Line Interactive Ups",
+    "price": "2100",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/8/444262567/FX/CY/HA/2186195/line-interactive-ups-250x250.png",
+    "group": "Uninterruptible Power Supply",
+    "categories": [
+      "Line Interactive UPS"
+    ],
+    "description": "We “RS Automation” are a Sole Proprietorship (Individual) based firm, engaged as the foremost Manufacturer, Trader and Service Provider of Vertical Axis Drop Preventer, Laser Calibration Ball Bar Testing Service, etc.",
+    "specifications": {
+      "Capacity": ">10000VA",
+      "Country of Origin": "Made in India",
+      "Protection": "All",
+      "Usage/Application": "Industrial",
+      "Warranty": "1 Year"
+    }
+  },
+  {
+    "id": "155472755",
+    "name": "ABB PM554-RP PLC",
+    "price": "15000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/3/403842058/LW/SR/TA/2186195/abb-pm554-r-24vdc-plc-250x250.webp",
+    "group": "Abb Controller",
+    "categories": [
+      "ABB PLC"
+    ],
+    "description": "ABB PM554-RP: A compact powerhouse for distributed automation. The ABB PM554-RP Programmable Logic Controller (PLC) delivers a powerful punch in a small package, making it perfect for dispersed automation applications. Consider it the brains of your smaller control systems, efficiently handling logic and communication tasks. AC500-based: Takes advantage of the proven technology and versatility of the ABB AC500 platform.v128 kB RAM: Enough memory for your control applications and data. 8 digital inputs/6 digital outputs: Addresses critical I/O requirements immediately, with extension options available. RS485 and 2x option slots: Enables connectivity with a variety of devices and modules, increasing functionality. Get best price of ABB PM554-RP PLC at ₹15000 /-",
+    "specifications": {
+      "Manufacturer Series": "PM554",
+      "Communication Interface": "Ethernet",
+      "Usage/Application": "Industrial",
+      "Country of Origin": "Made in India",
+      "Output Type": "Digital"
+    }
+  },
+  {
+    "id": "186498199",
+    "name": "Emerson Online UPS",
+    "price": "15000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/9/341435765/SZ/WH/BH/2186195/emerson-online-ups-250x250.jpg",
+    "group": "Power Ups",
+    "categories": [
+      "Emerson Online UPS"
+    ],
+    "description": "Emerson(Vertiv) Online Unintrupted power supplyUPS 1KVA-2000KVA We provide all types of Ups Services.",
+    "specifications": {
+      "Capacity": "6 KVA",
+      "Input Voltage": "3 phase and single phase",
+      "Output Voltage": "3 phase and single phase",
+      "Brand": "Emerson",
+      "Model Name/Number": "Emerson"
+    }
+  },
+  {
+    "id": "128811493",
+    "name": "Laser Calibration Ball Bar & Rotary Testing Service",
+    "price": "25000",
+    "unit": "/machine",
+    "image": "https://5.imimg.com/data5/XF/WO/MY-2186195/laser-calibration-ball-bar-testing-service-250x250.jpg",
+    "group": "Laser Calibration Ball Bar Testing Service",
+    "categories": [
+      "Laser Calibration Services"
+    ],
+    "description": "We have established ourselves as coveted organization, involved in offering Laser Calibration Ball Bar Testing Service.Price Range:-Rs.12000 - 20000 Per Machine",
+    "specifications": {
+      "Location": "On site",
+      "Machine Type": "CNC Machine",
+      "CNC Machine Type": "VMC, HMC, EDM Wire Cut, Laser Cutting Machine, CNC Machine"
+    }
+  },
+  {
+    "id": "129809476",
+    "name": "Cnc Laser Calibration Services",
+    "price": "15000",
+    "unit": "/Instrument",
+    "image": "https://5.imimg.com/data5/SC/JY/MY-2186195/cnc-laser-calibration-250x250.jpg",
+    "group": "CNC MACHINE LASER CALIBRATION & BALL BAR",
+    "categories": [
+      "Laser Calibration Services"
+    ],
+    "description": "We have established ourselves as coveted organization, involved in offering CNC Laser Calibration Service.",
+    "specifications": {
+      "Display Type": "Digital"
+    }
+  },
+  {
+    "id": "128962645",
+    "name": "Servo Drive Repair",
+    "price": "10000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/UD/KQ/MY-2186195/industrial-electronic-pcb-repair-service-250x250.png",
+    "group": "Servo Drive Repair",
+    "categories": [
+      "DC Drive Repair Services",
+      "Servo Drive Repair",
+      "AC DC Drive Repair Services"
+    ],
+    "description": "Backed by our skilled professionals, we are involved in providing Industrial Electronic PCB Repair Service.Price Range:-Rs.10000 - 100000 Per Machine",
+    "specifications": {
+      "Service Period": "2-3 Days",
+      "We Repair": "Printed Circuit Board",
+      "Service Type": "Repair Service"
     }
   }
 ]
