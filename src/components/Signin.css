@@ -36,6 +36,9 @@ html, body {
   justify-content: center;
   background-color: transparent;
   padding: 2rem;
+  border-right: 1px solid #d1d5db; 
+  box-sizing: border-box;
+  height: 100vh;
 }
 
 /* Enhanced white centered box with more transparency and backdrop blur */
@@ -49,6 +52,8 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
   width: 100%;
   max-width: 100%;
+  margin: 0;
+  max-height: 92vh;
 }
 
 .login-form-container {
@@ -523,8 +528,8 @@ html, body {
 
 /* Compact signup form styles to match login box height */
 .signup-form-compact .login-box {
-  min-height: 675px; /* Match login box height */
-  max-height: 675px;
+  min-height: 93vh; /* Match login box height */
+  max-height: 93vh;
   padding: 2.5rem 4.5rem; /* Slightly reduced padding */
   display: flex;
   flex-direction: column;
