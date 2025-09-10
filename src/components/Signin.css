@@ -1,879 +1,245 @@
-/* --- New Styles for Modern Login Page --- */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+.signin-container {
+  width: 100%;
+  /* height: 100%; */
+  margin: 0px;
+}
 
-/* Reset any default margins/padding that might cause gaps */
-* {
-  margin: 0;
-  padding: 0;
+.signin-container .signin-left {
   box-sizing: border-box;
+  border-right: 1px solid rgb(230, 228, 228);
+  margin-bottom: 0px;
+  width: 55%;
+  height: 100%;  
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-}
-
-.login-page-container {
+.signin-container .signin-right {
+  width: 45%;
+  box-sizing: border-box;
   display: flex;
-  width: 100vw;
-  height: 100vh;
-  font-family: 'Poppins', sans-serif;
-  margin: 0;
-  padding: 0;
-
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-}
-
-.login-form-wrapper {
-  flex: 50%;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  background-color: transparent;
-  padding: 2rem;
-  border-right: 1px solid #d1d5db; 
-  box-sizing: border-box;
-  height: 100vh;
+  align-items: center;
+  /* height: 100%; */
 }
 
-/* Enhanced white centered box with more transparency and backdrop blur */
-.login-box {
-  background-color: rgba(255, 255, 255, 0.95); /* Slightly more transparent */
-  backdrop-filter: blur(10px); /* Add blur effect */
-  -webkit-backdrop-filter: blur(10px); /* Safari support */
-  padding: 4rem 4.5rem;
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15); /* Enhanced shadow */
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
+.signin-logo-class {
+  display: flex;
   width: 100%;
-  max-width: 100%;
-  margin: 0;
-  max-height: 92vh;
+  height: 40px;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
-.login-form-container {
-  max-width: 680px;
-  width: 100%;
-}
-
-.login-title {
-  font-size: 2.25rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
-  color: #1a202c;
-}
-
-/* --- Improved Social Button Styles --- */
-.social-button {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #f0f2f5; /* Brighter background */
-  font-weight: 500;
-  color: #2d3748; /* Darker text color for readability */
+.signin-logo-class img {
   cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
+  width: 50px;
+  height: 38px;
+}
 
-  /* Flexbox to align icon and text */
+.signin-logo-class .smart-scan {
+  width: 120px;
+  background: linear-gradient(180deg, #3949be 0%, #0013a7 100%);
+  border-radius: 20px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px; /* Space between icon and text */
-  font-size: 0.95rem;
+  gap: 6px;
+  cursor: pointer;
 }
 
-.social-button:hover {
-  background-color: #f7fafc;
+.signin-logo-class .smart-scan img {
+  width: 20px;
+  height: 20px;
+  filter: invert(100%);
+  color: white;
 }
 
-.social-icon {
-  font-size: 1.2rem; /* Make icon slightly larger */
+.signin-logo-class .smart-scan span {
+  color: white;
 }
 
-.divider-container {
+.scan-icon {
+  width: 20px;
+  height: 20x;
+  color: white;
+}
+
+.alt-signins {
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.alt-signins p {
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.alt-signins .alt-btns {
   display: flex;
   align-items: center;
-  margin: 1.5rem 0;
+  justify-content: space-around;
+  width: 125px;
+  height: 40px;
+  background-color: rgb(236, 235, 235);
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-.divider-line {
-  flex-grow: 1;
-  height: 1px;
-  background-color: #e2e8f0;
+.alt-signins .alt-btns .goo {
+  font-size: large;
+  margin: 0;
 }
 
-.divider-text {
-  padding: 0 1rem;
-  font-size: 0.875rem;
-  color: #a0aec0;
+.alt-signins .alt-btns .sp-btns {
+  width: 30px;
+  height: 30px;
 }
 
-.input-group {
-  margin-bottom: 1.5rem;
+.alt-signins .alt-btns .sp-btns img {
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: pointer;
+  border-radius: 15px;
 }
 
-.input-group label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: #4a5568;
+.alt-signins .alt-btns .google img {
+  background-color: white;
 }
 
-.input-group input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
-/* Password input wrapper and label group styles */
-.password-label-group {
+.signin-left .fp-cont {
   display: flex;
   justify-content: space-between;
+  height: 20px;
   align-items: center;
-  margin-bottom: 0.5rem;
+  box-sizing: border-box;
+  color: rgb(98, 97, 97);
+  font-size: 14px;
 }
 
-/* This turns the wrapper into a horizontal container */
-.password-input-wrapper {
+.signin-left .fp-cont .cb-cont {
   display: flex;
+  height: 100%;
   align-items: center;
-  gap: 0.5rem; /* This creates the small space between the input and the button */
-  width: 100%;
+  gap: 6px;
 }
 
-/* This makes the input field take up all available space */
-.password-input-wrapper input {
-  flex-grow: 1; 
-  width: auto;
+.signin-left .fp-cont .cb-cont .cb {
+  height: 14px;
+  width: 14px;
+  border-radius: 0px;
 }
 
-/* Replace your existing .show-password-button CSS with this: */
-
-.show-password-button {
-  flex-shrink: 0; /* Prevents the button from shrinking */
-  width: auto;  /* Auto width to match input height */
-  min-width: 48px; /* Minimum width for proper button size */
-  height: 100%; /* Match the height of the input field exactly */
-  padding: 12px; /* Match input padding */
-  margin: 0;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background-color: #ffffff;
-  color: #1a202c; /* Black icon color */
+.signin-left .fp-cont .fp {
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-  box-sizing: border-box; /* Ensure consistent sizing */
 }
 
-.show-password-button:hover {
-  background-color: #f7fafc; /* Adds a subtle hover effect */
-}
-
-.show-password-button:focus {
-  outline: none;
-}
-
-.show-password-button:hover {
-  background-color: #2d3748; /* Slightly lighter black on hover */
-}
-
-.forgot-password-link {
-  font-size: 0.8rem;
-  color: #4a5568;
-  text-decoration: none;
-}
-
-.forgot-password-link:hover {
-  color: #2c5282;
-}
-
-/* Login button - centered and positioned right below eye button */
-.login-button {
-  width: auto;
-  padding: 12px 40px;
-  border: none;
-  border-radius: 12px;
-  background-color: #1a202c;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 1rem;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.login-button:hover {
-  background-color: #2d3748;
-}
-
-/* Reduce margin on the password input group to bring login button closer */
-.input-group:last-of-type {
-  margin-bottom: 1rem; /* Reduced from 1.5rem */
-}
-
-.signup-prompt {
-  text-align: center;
-  margin-top: 2rem;
-  font-size: 0.9rem;
-  font-weight: 400;
-}
-
-.signup-now-link {
-  color: #1a202c;
-  font-weight: 600;
-}
-
-.signup-now-link:hover {
+.signin-left .fp-cont .fp:hover {
   text-decoration: underline;
 }
 
-.login-info-panel {
-  flex: 50%;
-  /* Remove background image from here since it's now on the main container */
-  background: transparent;
-  position: relative;
+.signin-left .or-cont {
   display: flex;
+  justify-content: space-between;
+  height: 20px;
   align-items: center;
-  justify-content: center;
+  box-sizing: border-box;
+  color: rgb(0, 0, 0);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.signin-left .or-cont .hr {
+  background-color: rgb(0, 0, 0);
+  height: 1px;
+  width: 45%;
+}
+
+.signin-left .or-cont p {
   margin: 0;
-  min-height: 100vh;
-}
-.typing-container {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #2d3748;
-  line-height: 1.5;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  margin: 0;
+  width: 10%;
+  text-align: center;
+  font-size: 15px;
 }
 
-.static-text {
-  color: #2d3748;
-  font-weight: 600;
-  margin-right: 0.2rem;
+.signin-left .pri-cont p {
+  font-size: 12px;
+  color: black;
+  font-weight: 100;
+  text-align: center;
+  line-height: 20px;
 }
 
-.typing-text {
-  color: #2d3748;
-  font-weight: 500;
-  min-height: 1.5em;
-  display: inline-block;
-}
-
-.cursor {
-  animation: blink 1s infinite;
-  font-weight: 400;
-  color: #2d3748;
+.signin-left .pri-cont span {
+  color: rgb(3, 102, 250);
+  cursor: pointer;
+  margin-right: 1px;
   margin-left: 1px;
 }
 
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-.info-box {
-  background-color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 0.75rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  position: relative;
-  max-width: 700px;
-  width: 95%;
-  text-align: left;
-}
-@media (max-width: 768px) {
-  .typing-container {
-    font-size: 1rem;
-  }
-  
-  .static-text {
-    margin-right: 0.1rem;
-  }
-}
-
-
-
-.arrow-button {
-  position: absolute;
-  top: 50%;
-  right: 1rem;
-  transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
-  background-color: #1a202c;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-}
-
-.arrow-button:hover {
-  background-color: #2d3748;
-}
-
-.contact-support-button {
-  display: none; /* Hide the contact support button */
-}
-
-/* Loading overlay styles */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  color: white;
-  font-size: 1.2rem;
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 768px) {
-  .login-page-container {
-    flex-direction: column;
-    height: 100vh;
-  }
-  
-  .login-form-wrapper {
-    flex: 1;
-    padding: 1rem;
-  }
-  
-  .login-info-panel {
-    flex: 0.5;
-    min-height: 40vh;
-  }
-  
-  .info-box {
-    max-width: 90%;
-    padding: 1rem;
-  }
-  
-  .login-box {
-    padding: 2rem 2rem; /* Reduce padding on mobile */
-    max-width: 100%;
-  }
-}
-/* Add these styles to your Signin.css file for the SignUp page */
-
-/* Terms and Conditions Checkbox */
-.terms-checkbox {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 1.5rem;
-}
-
-.terms-checkbox input[type="checkbox"] {
-  height: 16px;
-  width: 16px;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.terms-label {
-  margin: 0;
-  color: #4a5568;
-  font-weight: 400;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.terms-link {
-  color: #1a202c;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.terms-link:hover {
+.signin-left .pri-cont span:hover {
   text-decoration: underline;
 }
 
-/* Password Error Message */
-.password-error {
+.priv-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.priv-link:hover {
+  text-decoration: underline;
+}
+
+.input-group {
+  position: relative;
+}
+
+.suggestions-dropdown {
   position: absolute;
+  width: 100%;
   top: 100%;
   left: 0;
-  right: 0;
-  background: #fee;
-  color: #c53030;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
   padding: 8px 12px;
-  font-size: 12px;
-  margin-top: 5px;
-  border-radius: 6px;
-  border: 1px solid #feb2b2;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-/* Dimmed button state */
-.login-button.dimmed {
-  background-color: #718096 !important;
-  cursor: not-allowed;
+.suggestion-item:hover {
+  background-color: #f3f4f6;
 }
 
-.login-button.dimmed:hover {
-  background-color: #718096 !important;
+.suggestion-icon {
+  margin-right: 8px;
+  color: #666;
 }
 
-/* Loading overlay for signup */
-.loading-container {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  text-align: center;
-  max-width: 300px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-}
+@media (max-width: 1024px) {
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  position: relative;
-  margin: 0 auto 1rem;
-}
+  .signin-container{
+    height: 100%;
+  }
 
-.double-bounce1, .double-bounce2 {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background-color: #1a202c;
-  opacity: 0.6;
-  position: absolute;
-  top: 0;
-  left: 0;
-  animation: sk-bounce 2.0s infinite ease-in-out;
-}
+  .signin-container .signin-right {
+    display: none; /* Hide the right section */
+  }
 
-.double-bounce2 {
-  animation-delay: -1.0s;
-}
-
-@keyframes sk-bounce {
-  0%, 100% {
-    transform: scale(0);
-  } 50% {
-    transform: scale(1);
-  }
-}
-
-.loading-text h3 {
-  margin: 0 0 0.5rem;
-  color: #1a202c;
-  font-weight: 600;
-}
-
-.loading-dots {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  margin-bottom: 1rem;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #1a202c;
-  animation: loading-dots 1.4s infinite ease-in-out both;
-}
-
-.dot:nth-child(1) { animation-delay: -0.32s; }
-.dot:nth-child(2) { animation-delay: -0.16s; }
-
-@keyframes loading-dots {
-  0%, 80%, 100% {
-    transform: scale(0);
-  } 40% {
-    transform: scale(1);
-  }
-}
-
-.loading-message {
-  color: #4a5568;
-  font-size: 0.9rem;
-  margin: 0;
-}
-/* Add these styles to your Signin.css file - ONLY affects signup page */
-
-/* Compact signup form styles to match login box height */
-.signup-form-compact .login-box {
-  min-height: 93vh; /* Match login box height */
-  max-height: 93vh;
-  padding: 2.5rem 4.5rem; /* Slightly reduced padding */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  /*overflow-y: auto;*/ /* Allow scroll if needed */
-}
-
-.signup-form-compact .login-form-container {
-  max-width: 680px;
-  width: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-/* Reduce spacing only for signup form */
-.signup-form-compact .input-group {
-  margin-bottom: 1rem; /* Reduced from 1.5rem */
-}
-
-.signup-form-compact .login-title {
-  font-size: 2.25rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem; /* Reduced from 2rem */
-  color: #1a202c;
-}
-
-.signup-form-compact .terms-checkbox {
-  margin-bottom: 1rem; /* Reduced from 1.5rem */
-}
-
-.signup-form-compact .login-button {
-  margin-top: 0.5rem; /* Reduced margin */
-  margin-bottom: 1rem;
-}
-
-.signup-form-compact .signup-prompt {
-  margin-top: 1rem; /* Reduced from 2rem */
-}
-
-.signup-form-compact .password-error {
-  padding: 6px 12px; /* Slightly smaller padding */
-  font-size: 11px; /* Slightly smaller text */
-  margin-top: 3px;
-}
-
-/* Mobile responsive for signup only */
-@media (max-width: 768px) {
-  .signup-form-compact .login-box {
-    min-height: 500px;
-    max-height: 500px;
-    padding: 2rem 2rem;
-  }
-  
-  .signup-form-compact .input-group {
-    margin-bottom: 0.75rem;
-  }
-  
-  .signup-form-compact .login-title {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-  }
-}
-/* Enhanced Responsive Styles for SignUp Form */
-
-/* Base styles remain the same, adding better responsive behavior */
-
-/* Improved tablet and smaller desktop breakpoints */
-@media (max-width: 1200px) {
-  .login-page-container {
-    flex-direction: column;
-  }
-  
-  .login-form-wrapper {
-    flex: none;
-    min-height: 100vh;
-    padding: 1rem;
-  }
-  
-  .login-info-panel {
-    display: none; /* Hide the right panel on smaller screens */
-  }
-  
-  .login-box {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 3rem 2.5rem;
-  }
-  
-  .signup-form-compact .login-box {
-    min-height: auto;
-    max-height: none;
-  }
-}
-
-/* Tablet styles */
-@media (max-width: 768px) {
-  .login-page-container {
-    height: auto;
-    min-height: 100vh;
-    padding: 1rem 0;
-  }
-  
-  .login-form-wrapper {
-    padding: 0.5rem;
-    justify-content: flex-start;
-    padding-top: 2rem;
-  }
-  
-  .login-box {
-    padding: 2rem 1.5rem;
-    margin: 0;
-    border-radius: 8px;
-    max-width: none;
-    width: 100%;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  }
-  
-  .login-title {
-    font-size: 1.875rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
-  }
-  
-  .signup-form-compact .login-title {
-    font-size: 1.875rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .input-group {
-    margin-bottom: 1.25rem;
-  }
-  
-  .signup-form-compact .input-group {
-    margin-bottom: 1.25rem;
-  }
-  
-  .input-group input {
-    padding: 14px 12px;
-    font-size: 16px; /* Prevents zoom on iOS */
-  }
-  
-  .password-input-wrapper {
-    gap: 0.75rem;
-  }
-  
-  .show-password-button {
-    min-width: 52px;
-    padding: 14px 12px;
-  }
-  
-  .login-button {
-    width: 100%;
-    padding: 14px;
-    font-size: 1rem;
-    margin-top: 1rem;
-  }
-  
-  .terms-checkbox {
-    margin-bottom: 1.25rem;
-  }
-  
-  .signup-prompt {
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
-  }
-}
-
-/* Mobile styles */
-@media (max-width: 480px) {
-  .login-page-container {
-    padding: 0.5rem 0;
-  }
-  
-  .login-form-wrapper {
-    padding: 0.25rem;
-    padding-top: 1rem;
-  }
-  
-  .login-box {
-    padding: 1.5rem 1rem;
-    border-radius: 6px;
-    background-color: rgba(255, 255, 255, 0.98);
-  }
-  
-  .login-title {
-    font-size: 1.625rem;
-    margin-bottom: 1.25rem;
-  }
-  
-  .input-group {
-    margin-bottom: 1rem;
-  }
-  
-  .signup-form-compact .input-group {
-    margin-bottom: 1rem;
-  }
-  
-  .input-group label {
-    font-size: 0.8rem;
-    margin-bottom: 0.4rem;
-  }
-  
-  .input-group input {
-    padding: 12px 10px;
-    font-size: 16px;
-    border-radius: 6px;
-  }
-  
-  .password-input-wrapper {
-    gap: 0.5rem;
-  }
-  
-  .show-password-button {
-    min-width: 48px;
-    padding: 12px 8px;
-    border-radius: 6px;
-  }
-  
-  .terms-checkbox {
-    margin-bottom: 1rem;
-  }
-  
-  .terms-label {
-    font-size: 0.8rem;
-  }
-  
-  .login-button {
-    padding: 12px;
-    border-radius: 6px;
-  }
-  
-  .signup-prompt {
-    font-size: 0.85rem;
-    margin-top: 1.25rem;
-  }
-  
-  .password-error {
-    font-size: 10px;
-    padding: 5px 8px;
-  }
-}
-
-/* Very small screens (narrow phones) */
-@media (max-width: 360px) {
-  .login-box {
-    padding: 1.25rem 0.75rem;
-  }
-  
-  .login-title {
-    font-size: 1.5rem;
-  }
-  
-  .input-group input {
-    padding: 10px 8px;
-  }
-  
-  .show-password-button {
-    min-width: 44px;
-    padding: 10px 6px;
-  }
-  
-  .terms-label {
-    font-size: 0.75rem;
-    line-height: 1.3;
-  }
-}
-
-/* Landscape orientation on mobile devices */
-@media (max-width: 768px) and (orientation: landscape) {
-  .login-page-container {
-    height: auto;
-    min-height: 100vh;
-  }
-  
-  .login-form-wrapper {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-  }
-  
-  .login-box {
-    padding: 1.5rem;
-  }
-  
-  .login-title {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .input-group {
-    margin-bottom: 0.875rem;
-  }
-  
-  .signup-form-compact .input-group {
-    margin-bottom: 0.875rem;
-  }
-}
-
-/* Loading overlay responsive adjustments */
-@media (max-width: 480px) {
-  .loading-container {
-    max-width: 280px;
-    padding: 1.5rem;
-    margin: 0 1rem;
-  }
-  
-  .spinner {
-    width: 35px;
-    height: 35px;
-  }
-  
-  .loading-text h3 {
-    font-size: 1rem;
-  }
-  
-  .loading-message {
-    font-size: 0.8rem;
-  }
-}
-
-/* Ensure the form never gets cut off */
-@media (max-height: 600px) {
-  .login-form-wrapper {
-    align-items: flex-start;
-    padding-top: 1rem;
-  }
-  
-  .login-box {
-    margin-bottom: 1rem;
-  }
-}
-
-/* High DPI display adjustments */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .login-box {
-    border: 1px solid rgba(255, 255, 255, 0.4);
-  }
-  
-  .input-group input {
-    border-width: 1px;
-  }
-  
-  .show-password-button {
-    border-width: 1px;
+  .signin-container .signin-left {
+    width: 100%; /* Make left section take full width */
   }
 }
