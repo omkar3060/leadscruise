@@ -36,7 +36,6 @@ const Whatsapp = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [whatsappNumber, setWhatsappNumber] = useState("");
-  const [customMessage, setCustomMessage] = useState("");
   const [isLoading, setIsLoading] = useState(() => {
     const savedLoadingState = localStorage.getItem(
       "whatsappVerificationLoading"
@@ -54,27 +53,118 @@ const Whatsapp = () => {
   const [isEditingWhatsapp, setIsEditingWhatsapp] = useState(false);
   const [messages, setMessages] = useState([{ id: Date.now(), text: "" }]);
   const [verificationCode, setVerificationCode] = useState("");
-  const addMessage = () => {
-    setMessages([...messages, { id: Date.now(), text: "" }]);
+  const [showPopup, setShowPopup] = useState(false);
+  const [phoneNumbers, setPhoneNumbers] = useState([]);
+  const [newNumber, setNewNumber] = useState('');
+
+   const extractPhoneNumbers = (messages) => {
+  if (messages.length === 0) return [];
+
+  const firstMessage = messages[0].text;
+
+  // Extract the part between "You can contact" and "or send a mail"
+  const match = firstMessage.match(/You can contact(.*?)or send a mail/i);
+  if (!match) return [];
+
+  // Extract only phone numbers (10-digit or +91XXXXXXXXXX)
+  const numbers = match[1]
+    .split(',')
+    .map(num => num.trim())
+    .filter(num => /^(\+91\d{10}|\d{10})$/.test(num)); // ✅ Validation
+
+  return numbers;
+};
+
+  const handleEditClick = () => {
+    const extractedNumbers = extractPhoneNumbers(messages);
+    setPhoneNumbers(extractedNumbers.map((num, index) => ({ id: index, number: num })));
+    setShowPopup(true);
   };
+
+const handleAddNumber = () => {
+  if (newNumber.trim()) {
+    const trimmedNumber = newNumber.trim();
+
+    // ✅ Validate number: allow 10-digit or +91XXXXXXXXXX
+    const isValid = /^(\+91\d{10}|\d{10})$/.test(trimmedNumber);
+    if (!isValid) {
+      alert("Please enter a valid phone number (10 digits or +91XXXXXXXXXX).");
+      return;
+    }
+
+    // Prevent adding duplicates
+    if (phoneNumbers.some(p => p.number === trimmedNumber)) {
+      alert("This number is already added.");
+      return;
+    }
+
+    const newId = phoneNumbers.length > 0 ? Math.max(...phoneNumbers.map(p => p.id)) + 1 : 1;
+    setPhoneNumbers([...phoneNumbers, { id: newId, number: trimmedNumber }]);
+    setNewNumber('');
+  }
+};
+
+  const handleDeleteNumber = (id) => {
+    setPhoneNumbers(phoneNumbers.filter(phone => phone.id !== id));
+  };
+
+  const handleEditNumber = (id, newValue) => {
+    setPhoneNumbers(phoneNumbers.map(phone => 
+      phone.id === id ? { ...phone, number: newValue } : phone
+    ));
+  };
+
+const handleSave = async () => {
+  const mobileNumber = localStorage.getItem("mobileNumber");
+  try {
+    if (messages.length === 0) {
+      alert("No messages to update");
+      return;
+    }
+
+    // Join all phone numbers into a comma-separated string
+    const newNumbersString = phoneNumbers.map(p => p.number).join(", ");
+
+    // Replace numbers inside each message where applicable
+    const updatedMessages = messages.map(m => {
+      return {
+        ...m,
+        text: m.text.replace(
+          /(You can contact)(.*?)(or send a mail)/i,
+          `$1 ${newNumbersString} $3`
+        )
+      };
+    });
+
+    const response = await fetch('https://api.leadscruise.com/api/whatsapp-settings/save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        mobileNumber,
+        messages: updatedMessages.map(m => m.text)
+      })
+    });
+
+    if (response.ok) {
+      alert('Phone numbers and messages updated successfully!');
+      setShowPopup(false);
+      window.location.reload();
+    } else {
+      alert('Failed to update settings');
+    }
+  } catch (error) {
+    console.error('Error saving WhatsApp settings:', error);
+    alert('Error saving WhatsApp settings');
+  }
+};
 
   const updateLoadingState = (newLoadingState) => {
     setIsLoading(newLoadingState);
     localStorage.setItem(
       "whatsappVerificationLoading",
       newLoadingState.toString()
-    );
-  };
-
-  const removeMessage = (id) => {
-    if (messages.length >= 1) {
-      setMessages(messages.filter((msg) => msg.id !== id));
-    }
-  };
-
-  const handleMessageChange = (id, text) => {
-    setMessages(
-      messages.map((msg) => (msg.id === id ? { ...msg, text } : msg))
     );
   };
 
@@ -219,9 +309,6 @@ const Whatsapp = () => {
     );
   }, [isLoading, verificationCode]);
 
-  // Use a ref to store the interval ID so we can clear it from within fetchVerificationCode
-  const intervalRef = useRef(null);
-
   // Simplified polling with fewer dependencies
   useEffect(() => {
     // Initial fetch
@@ -246,51 +333,6 @@ const Whatsapp = () => {
       setEditLockedUntil(Number(savedLock));
     }
   }, []);
-
-  const handleSubmit = async () => {
-    const mobileNumber = localStorage.getItem("mobileNumber");
-
-    if (
-      !mobileNumber ||
-      !whatsappNumber ||
-      messages.length === 0 ||
-      messages.some((msg) => !msg.text)
-    ) {
-      return alert(
-        "All fields are required and you need at least one message!"
-      );
-    }
-
-    const formData = new FormData();
-    formData.append("mobileNumber", mobileNumber);
-    formData.append("whatsappNumber", whatsappNumber);
-    formData.append(
-      "messages",
-      JSON.stringify(messages.map((msg) => msg.text))
-    );
-
-    try {
-      const res = await fetch(
-        "https://api.leadscruise.com/api/whatsapp-settings/save",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await res.json();
-      if (res.ok) {
-        alert("Settings saved successfully!");
-        // Refresh settings to get updated file list
-        fetchSettings();
-      } else {
-        alert(data.error || "Something went wrong.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Server error while saving settings.");
-    }
-  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -385,9 +427,6 @@ const Whatsapp = () => {
     });
   }, [messages]);
 
-  // Modal States
-  const [modalType, setModalType] = useState("");
-  const [modalData, setModalData] = useState([]);
   const [newItem, setNewItem] = useState("");
   const textareaRef = useRef(null);
 
@@ -406,85 +445,6 @@ const Whatsapp = () => {
   useEffect(() => {
     adjustHeight();
   }, [newItem]);
-
-  // Open modal
-  const openModal = (type) => {
-    setModalData(messages.map((msg) => msg.text));
-    setModalType(type);
-  };
-
-  // Close modal
-  const closeModal = () => {
-    setModalType("");
-    setModalData([]);
-    setNewItem("");
-  };
-
-  const addItemInModal = () => {
-    if (newItem.trim() && !modalData.includes(newItem.trim())) {
-      setModalData([...modalData, newItem.trim()]);
-      setNewItem("");
-
-      setTimeout(() => {
-        const listItems = document.querySelectorAll(".modal-content li");
-        if (listItems.length > 0) {
-          const lastItem = listItems[listItems.length - 1];
-          lastItem.classList.add("item-added");
-
-          setTimeout(() => {
-            lastItem.classList.remove("item-added");
-          }, 1500);
-        }
-      }, 10);
-    } else {
-      alert("Item already exists or empty!");
-    }
-  };
-
-  // Delete item inside modal
-  const deleteItemInModal = (index) => {
-    const updatedData = modalData.filter((_, i) => i !== index);
-    setModalData(updatedData);
-  };
-
-  // Save changes from modal to main state
-  const saveChanges = async () => {
-    const mobileNumber = localStorage.getItem("mobileNumber");
-    if (!mobileNumber) {
-      alert("Mobile number not found!");
-      return;
-    }
-
-    try {
-      await axios.post(
-        "https://api.leadscruise.com/api/whatsapp-settings/save",
-        {
-          mobileNumber,
-          whatsappNumber: newWhatsappNumber,
-          verificationCode,
-          messages: modalData, // Save new message list
-        }
-      );
-
-      // Update local state
-      setMessages(
-        modalData.map((text, index) => ({
-          id: Date.now() + index,
-          text,
-        }))
-      );
-
-      alert("Messages saved successfully!");
-    } catch (err) {
-      console.error("Error saving messages:", err);
-      alert("Failed to save messages.");
-    }
-
-    closeModal();
-  };
-
-  const [editIndex, setEditIndex] = useState(null);
-  const [tempValue, setTempValue] = useState("");
 
   return (
     <div
@@ -527,151 +487,12 @@ const Whatsapp = () => {
                   cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
                   color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                 }}
-                onClick={() => {
-                  alert("You cannot edit the messages. They are preset by AI.");
-                  return;
-                }}
+                 onClick={handleEditClick}
               >
                 Edit
               </button>
             </div>
           </div>
-
-          {/* Modal Popup */}
-          {modalType === "sentences" && (
-            <div
-              className="modal-overlay"
-              onClick={(e) => {
-                if (e.target.className === "modal-overlay") closeModal();
-              }}
-            >
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h2>Edit Messages to send as replies</h2>
-                  <button
-                    className="modal-close-icon"
-                    onClick={closeModal}
-                    aria-label="Close modal"
-                  >
-                    &times;
-                  </button>
-                </div>
-                <ul>
-                  {modalData.map((item, index) => (
-                    <li key={index} className="modal-list-item">
-                      {editIndex === index ? (
-                        <>
-                          <input
-                            type="text"
-                            value={tempValue}
-                            onChange={(e) => setTempValue(e.target.value)}
-                            className="modal-input"
-                          />
-                          <div className="modal-button-group">
-                            <button
-                              className="btn save-btn"
-                              onClick={() => {
-                                const updated = [...modalData];
-                                updated[index] = tempValue;
-                                setModalData(updated);
-                                setEditIndex(null);
-                                setTempValue("");
-                              }}
-                            >
-                              Save
-                            </button>
-                            <button
-                              className="btn cancel-btn"
-                              onClick={() => {
-                                setEditIndex(null);
-                                setTempValue("");
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <span className="modal-text">{item}</span>
-                          <div className="modal-button-group">
-                            <button
-                              className="btn edit-btn"
-                              onClick={() => {
-                                setEditIndex(index);
-                                setTempValue(item);
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="btn delete-btn"
-                              onClick={() => deleteItemInModal(index)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-                <div className="add-keyword-container">
-                  <textarea
-                    ref={textareaRef}
-                    value={newItem}
-                    onChange={(e) => setNewItem(e.target.value)}
-                    placeholder="Enter new message"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        addItemInModal();
-                      }
-                    }}
-                    className="adaptable-textarea"
-                    rows={1}
-                    style={{
-                      resize: "none",
-                      overflow: "hidden",
-                      minHeight: "38px",
-                      width: "100%",
-                      maxWidth: "100%",
-                      padding: "8px 12px",
-                      boxSizing: "border-box",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      fontFamily: "inherit",
-                      fontSize: "inherit",
-                      lineHeight: "1.5",
-                      wordWrap: "break-word",
-                      whiteSpace: "pre-wrap",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="add-button"
-                    onClick={addItemInModal}
-                  >
-                    Add
-                  </button>
-                </div>
-                <div className="modal-buttons">
-                  <button
-                    className="save-button"
-                    onClick={() => saveChanges(modalType, modalData)}
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    className="settings-close-button"
-                    onClick={closeModal}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           <ProfileCredentials
             isProfilePage={true}
@@ -691,6 +512,159 @@ const Whatsapp = () => {
           />
         </div>
       </div>
+      {showPopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '10px',
+            width: '500px',
+            maxHeight: '70vh',
+            overflow: 'auto',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h3 style={{ marginBottom: '20px', color: '#333' }}>
+              Edit Phone Numbers
+            </h3>
+            
+            {/* Existing phone numbers */}
+            <div style={{ marginBottom: '20px' }}>
+              <h4 style={{ color: '#555', marginBottom: '10px' }}>
+                Extracted Phone Numbers:
+              </h4>
+              {phoneNumbers.length > 0 ? (
+                phoneNumbers.map((phone) => (
+                  <div key={phone.id} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    marginBottom: '10px',
+                    padding: '8px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '4px'
+                  }}>
+                    <input
+                      type="text"
+                      value={phone.number}
+                      onChange={(e) => handleEditNumber(phone.id, e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        marginRight: '10px'
+                      }}
+                    />
+                    <button
+                      onClick={() => handleDeleteNumber(phone.id)}
+                      style={{
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        width: 'fit-content',
+                        marginBottom: '0'
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p style={{ color: '#666', fontStyle: 'italic' }}>
+                  No phone numbers found in messages
+                </p>
+              )}
+            </div>
+            
+            {/* Add new phone number */}
+            <div style={{ marginBottom: '20px' }}>
+              <h4 style={{ color: '#555', marginBottom: '10px' }}>
+                Add New Phone Number:
+              </h4>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={newNumber}
+                  onChange={(e) => setNewNumber(e.target.value)}
+                  placeholder="Enter phone number"
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    marginRight: '10px'
+                  }}
+                />
+                <button
+                  onClick={handleAddNumber}
+                  style={{
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    width: 'fit-content',
+                    marginBottom: '0'
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+            
+            {/* Action buttons */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end',
+              gap: '10px',
+              marginTop: '20px'
+            }}>
+              <button
+                onClick={() => setShowPopup(false)}
+                style={{
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  marginBottom: '0'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  marginBottom: '0'
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="support-info support-info-width">
         <h3 className="support-info__title">
           <svg

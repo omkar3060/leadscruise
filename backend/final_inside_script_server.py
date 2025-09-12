@@ -2154,8 +2154,11 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
         # Scrape table data
         print("Fetching table data...", flush=True)
         try:
-            # Check if table exists with the correct selector based on the HTML structure
-            table_selector = '#Enquiries_reportTableCSS__34_qU'
+            # Use flexible selector that matches the table ID pattern
+            table_selector = 'table[id^="Enquiries_reportTableCSS"]'
+            
+            # Wait for table to be present
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, table_selector)))
             
             tables_exist = driver.execute_script(f"""
                 return document.querySelector('{table_selector}') !== null;
@@ -2164,44 +2167,58 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
             if tables_exist:
                 print(f"Found table with selector: {table_selector}", flush=True)
                 
+                # Debug: Get the actual table ID
+                actual_table_id = driver.execute_script("""
+                    const table = document.querySelector('table[id^="Enquiries_reportTableCSS"]');
+                    return table ? table.id : null;
+                """)
+                print(f"Actual table ID found: {actual_table_id}", flush=True)
+                
                 # Extract category data (default view - Top Categories tab is active)
                 category_data = driver.execute_script("""
-                    const table = document.querySelector('#Enquiries_reportTableCSS__34_qU');
+                    const table = document.querySelector('table[id^="Enquiries_reportTableCSS"]');
+                    if (!table) return [];
+                    
                     const rows = Array.from(table.querySelectorAll('tbody tr'));
                     return rows.map(row => {
                         const cells = Array.from(row.querySelectorAll('td'));
                         return {
                             category: cells[0]?.textContent?.trim() || '',
-                            leadsConsumed: parseInt(cells[1]?.textContent?.trim() || '0'),
-                            enquiries: parseInt(cells[2]?.textContent?.trim() || '0'),
-                            calls: parseInt(cells[3]?.textContent?.trim() || '0')
+                            leadsConsumed: parseInt(cells[1]?.textContent?.trim().replace(/,/g, '') || '0'),
+                            enquiries: parseInt(cells[2]?.textContent?.trim().replace(/,/g, '') || '0'),
+                            calls: parseInt(cells[3]?.textContent?.trim().replace(/,/g, '') || '0')
                         };
-                    });
+                    }).filter(item => item.category !== ''); // Filter out empty rows
                 """)
                 print(f"Extracted {len(category_data)} category records", flush=True)
                 
                 # Check if there are location/category tabs to switch between
                 try:
                     # Look for the specific location tab using the correct selector
-                    location_tab = driver.find_element(By.CSS_SELECTOR, "#locations")
+                    location_tab = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#locations")))
                     if location_tab:
                         print("Found location tab, switching to extract location data...", flush=True)
                         location_tab.click()
-                        time.sleep(3)  # Wait for table to update
+                        time.sleep(4)  # Wait for table to update
+                        
+                        # Wait for table to refresh with location data
+                        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, table_selector)))
                         
                         # Extract location data
                         location_data = driver.execute_script("""
-                            const table = document.querySelector('#Enquiries_reportTableCSS__34_qU');
+                            const table = document.querySelector('table[id^="Enquiries_reportTableCSS"]');
+                            if (!table) return [];
+                            
                             const rows = Array.from(table.querySelectorAll('tbody tr'));
                             return rows.map(row => {
                                 const cells = Array.from(row.querySelectorAll('td'));
                                 return {
                                     location: cells[0]?.textContent?.trim() || '',
-                                    leadsConsumed: parseInt(cells[1]?.textContent?.trim() || '0'),
-                                    enquiries: parseInt(cells[2]?.textContent?.trim() || '0'),
-                                    calls: parseInt(cells[3]?.textContent?.trim() || '0')
+                                    leadsConsumed: parseInt(cells[1]?.textContent?.trim().replace(/,/g, '') || '0'),
+                                    enquiries: parseInt(cells[2]?.textContent?.trim().replace(/,/g, '') || '0'),
+                                    calls: parseInt(cells[3]?.textContent?.trim().replace(/,/g, '') || '0')
                                 };
-                            });
+                            }).filter(item => item.location !== ''); // Filter out empty rows
                         """)
                         print(f"Extracted {len(location_data)} location records", flush=True)
                     else:
@@ -2219,6 +2236,17 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
                 
         except Exception as e:
             print(f"Error in table scraping: {e}", flush=True)
+            
+            # Additional debugging
+            try:
+                page_source_snippet = driver.execute_script("""
+                    const tableContainer = document.querySelector('.Enquiries_tableRen__3RhuF');
+                    return tableContainer ? tableContainer.innerHTML.substring(0, 500) : 'Table container not found';
+                """)
+                print(f"Page source snippet: {page_source_snippet}", flush=True)
+            except:
+                pass
+                
             category_data = []
             location_data = []
         
@@ -2249,7 +2277,7 @@ def fetch_analytics_data(driver, user_mobile_number, user_password):
     except Exception as e:
         print(f"Error fetching analytics data: {e}", flush=True)
         return False
-
+    
 def store_analytics_data(analytics_data):
     """
     Store analytics data in the database via API call

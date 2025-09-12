@@ -569,7 +569,7 @@ Thank you for contacting ${companyName}.
  
 ✅ You can post your requirements details for this number 
 else 
-✅ You can contact ${mobileNumbers && mobileNumbers.length > 0 ? mobileNumbers.join(", ") : mobileNumber} or send a mail at {leadscruise_email} for more details on your enquiry of ${productPlaceholder}
+✅ You can contact ${mobileNumbers && mobileNumbers.length > 0 ? mobileNumbers.join(" , ") : mobileNumber} or send a mail at {leadscruise_email} for more details on your enquiry of ${productPlaceholder}
 
 We typically respond within some minutes!`;
 

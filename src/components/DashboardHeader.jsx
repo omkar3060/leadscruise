@@ -396,16 +396,33 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   return (
     <div className={styles.dashboardHeader}>
       {/* Subscription Expiry Popup */}
-      {showPopup && localStorage.getItem("userEmail") !== "support@leadscruise.com" && localStorage.getItem("userEmail") !== "demo@leadscruise.com" && (
-        <div className={styles.popupOverlay}>
-          <div className={styles.popupContent}>
-            <h2>Subscription Expiring Soon!</h2>
-            <p>Your subscription will expire in {daysLeft} day(s). Please renew it to continue using the service.</p>
-            <button onClick={() => navigate("/plans")} className={styles.renewButton}>Renew Now</button>
-            <button onClick={handleClosePopup} className={styles.closeButton}>Close</button>
-          </div>
-        </div>
-      )}
+      {showPopup &&
+  localStorage.getItem("userEmail") !== "support@leadscruise.com" &&
+  localStorage.getItem("userEmail") !== "demo@leadscruise.com" && (
+    <div className={styles.popupOverlay}>
+      <div className={styles.popupContent}>
+        <h2>
+          {daysLeft > 0
+            ? "Subscription Expiring Soon!"
+            : "Subscription Expired"}
+        </h2>
+        <p>
+          {daysLeft > 0
+            ? `Your subscription will expire in ${daysLeft} day(s). Please renew it to continue using the service.`
+            : "Your subscription has expired. Please renew it to continue using the service."}
+        </p>
+        <button
+          onClick={() => navigate("/plans")}
+          className={styles.renewButton}
+        >
+          Renew Now
+        </button>
+        <button onClick={handleClosePopup} className={styles.closeButton}>
+          Close
+        </button>
+      </div>
+    </div>
+)}
 
 {showMaintenancePopup && notice && (
         <div className={styles.popupOverlay}>
