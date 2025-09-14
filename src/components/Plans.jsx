@@ -121,7 +121,7 @@ const Plans = () => {
     }
 
     // ✅ Block if user already used demo
-    if (selectedPlan === "1-day") {
+    if (selectedPlan === "7-days") {
       try {
         const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
         if (res.data.used) {
@@ -147,7 +147,7 @@ const Plans = () => {
           payment_id: `FREE-DEMO-${timestamp}`,
           signature: "FREE",
           order_amount: 0,
-          subscription_type: "1-day",
+          subscription_type: "7-days",
         });
 
         alert("Demo subscription activated successfully!");
@@ -284,7 +284,7 @@ const Plans = () => {
                 </div>
               </div>
             </div> */}
-            <div
+            {/* <div
               className={`one-mo common first-one ${selectedPlan === "one-mo" ? "selected" : ""
                 }`}
               onClick={() => handlePlanSelect("one-mo", 2999)}
@@ -356,12 +356,12 @@ const Plans = () => {
                   <h3 className="prices-h3">₹ 14999</h3>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div
               className={`year-mo common fourth-one ${selectedPlan === "year-mo" ? "selected" : ""
                 }`}
-              onClick={() => handlePlanSelect("year-mo", 29999)}
+              onClick={() => handlePlanSelect("year-mo", 14999)}
             >
               <div className="part-1">
                 <div className="heading-row">
@@ -375,9 +375,9 @@ const Plans = () => {
               <div className="part-2">
                 <div className="tag-4"></div>
                 <div className="prices">
-                  <p className="overline prices-p">₹ 95999</p>
+                  <p className="overline prices-p">₹ 23999</p>
                   <p className="prices-p">62.50% OFF</p>
-                  <h3 className="prices-h3">₹ 29999</h3>
+                  <h3 className="prices-h3">₹ 14999</h3>
                 </div>
               </div>
             </div>
@@ -389,13 +389,13 @@ const Plans = () => {
               <span
                 className="demo-link"
                 onClick={() => {
-                  handlePlanSelect("1-day", 99);
+                  handlePlanSelect("7-days", 0);
                   setShowModal(true);
                 }}
               >
                 Want a demo?
               </span>
-              Try our service for 1 day at FREE OF COST!
+              Try our service for 7 days at FREE OF COST!
             </p>
           </div>
 
@@ -518,16 +518,16 @@ const Plans = () => {
                   selectedPlan === "one-mo" ? "1 Month" :
                     selectedPlan === "three-mo" ? "3 Months" :
                       selectedPlan === "six-mo" ? "6 Months" :
-                        selectedPlan === "1-day" ? "1 Day" :
+                        selectedPlan === "7-days" ? "7 Days" :
                           "12 Months"
               }</p>
               <p><strong>Price:</strong> ₹{selectedPlan === "3-days" ? 299 :
                 selectedPlan === "one-mo" ? 2999 :
                   selectedPlan === "three-mo" ? 7999 :
                     selectedPlan === "six-mo" ? 14999 :
-                      selectedPlan === "1-day" ? 0 :
-                        29999} 
-                        {selectedPlan === "1-day" ? "" : " + GST"}
+                      selectedPlan === "7-days" ? 0 :
+                        14999} 
+                        {selectedPlan === "7-days" ? "" : " + GST"}
                         </p>
             </div>
 

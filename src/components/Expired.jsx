@@ -21,7 +21,7 @@ const ExpiredSubscriptions = () => {
   const [uploadedInvoices, setUploadedInvoices] = useState({});
   const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
     const subscriptionMapping = {
-    "1-day": "1 Day",
+    "7-days": "7 Days",
     "3-days": "3 Days",
     "one-mo": "One Month",
     "three-mo": "Three Months",
@@ -46,11 +46,11 @@ const ExpiredSubscriptions = () => {
     const expiryDate = new Date(createdDate);
 
     const SUBSCRIPTION_DURATIONS = {
-      "1-day": 1,
+      "7-days": 7,
       "3-days": 3,
       "One Month": 30,
       "6 Months": 180,
-      "Yearly": 365,
+      "year-mo": 365,
     };
 
     const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;

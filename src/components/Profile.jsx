@@ -184,10 +184,13 @@ const Profile = () => {
 
   const calculateEndDate = (startDate, subscriptionType) => {
     const start = new Date(startDate);
-
+    console.log("Calculating end date from", startDate, "with type", subscriptionType);
     switch (subscriptionType.toLowerCase()) {
       case "1-day":
         start.setDate(start.getDate() + 1);
+        break;
+      case "7-days":
+        start.setDate(start.getDate() + 7);
         break;
       case "3-days":
         start.setDate(start.getDate() + 3);
@@ -198,7 +201,7 @@ const Profile = () => {
       case "6 months":
         start.setDate(start.getDate() + 180);
         break;
-      case "yearly":
+      case "year-mo":
         start.setDate(start.getDate() + 365);
         break;
       default:
@@ -266,6 +269,7 @@ const Profile = () => {
                       // Mapping subscription types to readable formats
                       const subscriptionMapping = {
                         "1-day": "1 Day",
+                        "7-days": "7 Days",
                         "3-days": "3 Days",
                         "one-mo": "One Month",
                         "three-mo": "Three Months",

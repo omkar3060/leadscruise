@@ -104,13 +104,13 @@ const Sidebar = ({ status }) => {
               <BiBarChartSquare className={styles.icon} />
               <span className={styles.tooltipText}>Analytics</span>
             </div>
-            <div
+            {/* <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/whatsapp")}
             >
               <FaWhatsapp className={styles.icon} />
               <span className={styles.tooltipText}>WhatsApp</span>
-            </div>
+            </div> */}
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip} ${status === "Running" ? styles.disabled : ""
                 }`}

@@ -190,7 +190,7 @@ app.get("/api/has-used-demo", async (req, res) => {
 
     const existingDemo = await Payment.findOne({
       contact,
-      subscription_type: "1-day",
+      subscription_type: "7-days",
     });
 
     if (existingDemo) {
@@ -207,15 +207,15 @@ app.get("/api/has-used-demo", async (req, res) => {
 // Helper function to get subscription duration in days based on type
 function getSubscriptionDuration(subscription_type) {
   switch (subscription_type) {
-    case "1-day":
-      return 1;
+    case "7-days":
+      return 7;
     case "3-days":
       return 3;
     case "One Month":
       return 30;
     case "6 Months":
       return 180;
-    case "Yearly":
+    case "year-mo":
       return 365;
     default:
       return 30; // Default fallback
@@ -1500,41 +1500,40 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     console.log("Lead Data Stored:", newLead);
 
     // Fetch WhatsApp settings
-    const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
-    const user = await User.findOne({ mobileNumber: user_mobile_number });
+    // const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
+    // const user = await User.findOne({ mobileNumber: user_mobile_number });
 
-    if (!settings || !settings.whatsappNumber || !settings.messages) {
-      console.warn("No WhatsApp settings found for this user");
-      return res.json({ message: "Lead data stored successfully", lead: newLead });
-    }
+    // if (!settings || !settings.whatsappNumber || !settings.messages) {
+    //   console.warn("No WhatsApp settings found for this user");
+    //   return res.json({ message: "Lead data stored successfully", lead: newLead });
+    // }
 
-    const receiverNumber = mobile; // Use the mobile number from the lead
-    let templateMessage = settings.messages[0];
-    templateMessage = templateMessage
-      .replace("{lead_name}", name)
-      .replace("{lead_product_requested}", lead_bought)
-      .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
+    // const receiverNumber = mobile; // Use the mobile number from the lead
+    // let templateMessage = settings.messages[0];
+    // templateMessage = templateMessage
+    //   .replace("{lead_name}", name)
+    //   .replace("{lead_product_requested}", lead_bought)
+    //   .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
 
-    // Instead of running WhatsApp script immediately, add to queue
-    const whatsappQueueItem = new WhatsAppMessageQueue({
-      user_mobile_number,
-      whatsappNumber: settings.whatsappNumber,
-      receiverNumber,
-      templateMessage,
-      leadId: newLead._id,
-      status: 'pending',
-      scheduledAt: new Date() // Process immediately, but queue processor will handle timing
-    });
+    // // Instead of running WhatsApp script immediately, add to queue
+    // const whatsappQueueItem = new WhatsAppMessageQueue({
+    //   user_mobile_number,
+    //   whatsappNumber: settings.whatsappNumber,
+    //   receiverNumber,
+    //   templateMessage,
+    //   leadId: newLead._id,
+    //   status: 'pending',
+    //   scheduledAt: new Date() // Process immediately, but queue processor will handle timing
+    // });
 
-    await whatsappQueueItem.save();
+    // await whatsappQueueItem.save();
 
-    console.log("WhatsApp message added to queue:", whatsappQueueItem._id);
+    // console.log("WhatsApp message added to queue:", whatsappQueueItem._id);
 
     // Return immediately after queuing
     return res.json({
-      message: "Lead data stored successfully and WhatsApp message queued for processing",
+      message: "Lead data stored successfully",
       lead: newLead,
-      queueId: whatsappQueueItem._id
     });
 
   } catch (error) {
@@ -1544,293 +1543,293 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 });
 
 // WhatsApp Queue Processor - runs as a separate background process
-class WhatsAppQueueProcessor {
-  constructor() {
-    this.isProcessing = false;
-    this.processInterval = null;
-  }
+// class WhatsAppQueueProcessor {
+//   constructor() {
+//     this.isProcessing = false;
+//     this.processInterval = null;
+//   }
 
-  start() {
-    if (this.processInterval) {
-      console.log("Queue processor is already running");
-      return;
-    }
+//   start() {
+//     if (this.processInterval) {
+//       console.log("Queue processor is already running");
+//       return;
+//     }
 
-    console.log("Starting WhatsApp queue processor...");
+//     console.log("Starting WhatsApp queue processor...");
     
-    // Check for messages every 10 seconds
-    this.processInterval = setInterval(() => {
-      this.processQueue();
-    }, 10000);
+//     // Check for messages every 10 seconds
+//     this.processInterval = setInterval(() => {
+//       this.processQueue();
+//     }, 10000);
 
-    // Process immediately on start
-    this.processQueue();
-  }
+//     // Process immediately on start
+//     this.processQueue();
+//   }
 
-  stop() {
-    if (this.processInterval) {
-      clearInterval(this.processInterval);
-      this.processInterval = null;
-      console.log("WhatsApp queue processor stopped");
-    }
-  }
+//   stop() {
+//     if (this.processInterval) {
+//       clearInterval(this.processInterval);
+//       this.processInterval = null;
+//       console.log("WhatsApp queue processor stopped");
+//     }
+//   }
 
-  async processQueue() {
-    if (this.isProcessing) {
-      console.log("Queue processor is already running, skipping this cycle");
-      return;
-    }
+//   async processQueue() {
+//     if (this.isProcessing) {
+//       console.log("Queue processor is already running, skipping this cycle");
+//       return;
+//     }
 
-    this.isProcessing = true;
+//     this.isProcessing = true;
 
-    try {
-      // Find the next pending message that's scheduled to be sent
-      const nextMessage = await WhatsAppMessageQueue.findOne({
-        status: 'pending',
-        scheduledAt: { $lte: new Date() },
-        attempts: { $lt: 3 } // Max 3 attempts
-      }).sort({ scheduledAt: 1 });
+//     try {
+//       // Find the next pending message that's scheduled to be sent
+//       const nextMessage = await WhatsAppMessageQueue.findOne({
+//         status: 'pending',
+//         scheduledAt: { $lte: new Date() },
+//         attempts: { $lt: 3 } // Max 3 attempts
+//       }).sort({ scheduledAt: 1 });
 
-      if (!nextMessage) {
-        // No messages to process
-        this.isProcessing = false;
-        return;
-      }
+//       if (!nextMessage) {
+//         // No messages to process
+//         this.isProcessing = false;
+//         return;
+//       }
 
-      console.log(`Processing WhatsApp message: ${nextMessage._id}`);
+//       console.log(`Processing WhatsApp message: ${nextMessage._id}`);
 
-      // Mark as processing
-      nextMessage.status = 'processing';
-      nextMessage.attempts += 1;
-      nextMessage.lastAttempt = new Date();
-      await nextMessage.save();
+//       // Mark as processing
+//       nextMessage.status = 'processing';
+//       nextMessage.attempts += 1;
+//       nextMessage.lastAttempt = new Date();
+//       await nextMessage.save();
 
-      // Process the message
-      const result = await this.sendWhatsAppMessage(nextMessage);
+//       // Process the message
+//       const result = await this.sendWhatsAppMessage(nextMessage);
 
-      if (result.success) {
-        // Mark as completed
-        nextMessage.status = 'completed';
-        nextMessage.completedAt = new Date();
-        if (result.verificationCode) {
-          nextMessage.verificationCode = result.verificationCode;
-        }
-        await nextMessage.save();
+//       if (result.success) {
+//         // Mark as completed
+//         nextMessage.status = 'completed';
+//         nextMessage.completedAt = new Date();
+//         if (result.verificationCode) {
+//           nextMessage.verificationCode = result.verificationCode;
+//         }
+//         await nextMessage.save();
 
-        console.log(`WhatsApp message completed: ${nextMessage._id}`);
+//         console.log(`WhatsApp message completed: ${nextMessage._id}`);
 
-        // Schedule next message processing with 60-second delay
-        await this.scheduleNextMessages();
+//         // Schedule next message processing with 60-second delay
+//         await this.scheduleNextMessages();
 
-      } else {
-        // Handle failure
-        if (nextMessage.attempts >= nextMessage.maxAttempts) {
-          nextMessage.status = 'failed';
-          nextMessage.errorMessage = result.error || 'Max attempts reached';
-        } else {
-          nextMessage.status = 'pending';
-          // Retry after 5 minutes
-          nextMessage.scheduledAt = new Date(Date.now() + 5 * 60 * 1000);
-        }
-        await nextMessage.save();
+//       } else {
+//         // Handle failure
+//         if (nextMessage.attempts >= nextMessage.maxAttempts) {
+//           nextMessage.status = 'failed';
+//           nextMessage.errorMessage = result.error || 'Max attempts reached';
+//         } else {
+//           nextMessage.status = 'pending';
+//           // Retry after 5 minutes
+//           nextMessage.scheduledAt = new Date(Date.now() + 5 * 60 * 1000);
+//         }
+//         await nextMessage.save();
 
-        console.log(`WhatsApp message failed: ${nextMessage._id}, attempts: ${nextMessage.attempts}`);
-      }
+//         console.log(`WhatsApp message failed: ${nextMessage._id}, attempts: ${nextMessage.attempts}`);
+//       }
 
-    } catch (error) {
-      console.error("Error in queue processor:", error);
-    } finally {
-      this.isProcessing = false;
-    }
-  }
+//     } catch (error) {
+//       console.error("Error in queue processor:", error);
+//     } finally {
+//       this.isProcessing = false;
+//     }
+//   }
 
-  async scheduleNextMessages() {
-    // Find all pending messages and ensure they have proper spacing
-    const pendingMessages = await WhatsAppMessageQueue.find({
-      status: 'pending',
-      attempts: { $lt: 3 }
-    }).sort({ scheduledAt: 1 });
+//   async scheduleNextMessages() {
+//     // Find all pending messages and ensure they have proper spacing
+//     const pendingMessages = await WhatsAppMessageQueue.find({
+//       status: 'pending',
+//       attempts: { $lt: 3 }
+//     }).sort({ scheduledAt: 1 });
 
-    if (pendingMessages.length === 0) return;
+//     if (pendingMessages.length === 0) return;
 
-    // Schedule messages with 60-second gaps
-    const now = new Date();
-    const baseTime = new Date(now.getTime() + 60000); // Start 60 seconds from now
+//     // Schedule messages with 60-second gaps
+//     const now = new Date();
+//     const baseTime = new Date(now.getTime() + 60000); // Start 60 seconds from now
 
-    for (let i = 0; i < pendingMessages.length; i++) {
-      const message = pendingMessages[i];
-      const scheduledTime = new Date(baseTime.getTime() + (i * 60000)); // 60 seconds apart
+//     for (let i = 0; i < pendingMessages.length; i++) {
+//       const message = pendingMessages[i];
+//       const scheduledTime = new Date(baseTime.getTime() + (i * 60000)); // 60 seconds apart
       
-      if (message.scheduledAt < scheduledTime) {
-        message.scheduledAt = scheduledTime;
-        await message.save();
-      }
-    }
-  }
+//       if (message.scheduledAt < scheduledTime) {
+//         message.scheduledAt = scheduledTime;
+//         await message.save();
+//       }
+//     }
+//   }
 
-  async sendWhatsAppMessage(messageItem) {
-    return new Promise((resolve) => {
-      let verificationCode = null;
-      let errorOutput = "";
-      let isCompleted = false;
+//   async sendWhatsAppMessage(messageItem) {
+//     return new Promise((resolve) => {
+//       let verificationCode = null;
+//       let errorOutput = "";
+//       let isCompleted = false;
 
-      const messagesJSON = JSON.stringify([messageItem.templateMessage]);
+//       const messagesJSON = JSON.stringify([messageItem.templateMessage]);
 
-      // Start the Python process
-      const pythonProcess = spawn('python3', [
-        'whatsapp.py',
-        messageItem.whatsappNumber,
-        messagesJSON,
-        messageItem.receiverNumber,
-      ]);
+//       // Start the Python process
+//       const pythonProcess = spawn('python3', [
+//         'whatsapp.py',
+//         messageItem.whatsappNumber,
+//         messagesJSON,
+//         messageItem.receiverNumber,
+//       ]);
 
-      const rl = readline.createInterface({ input: pythonProcess.stdout });
+//       const rl = readline.createInterface({ input: pythonProcess.stdout });
 
-      rl.on('line', async (line) => {
-        console.log(`Python output for ${messageItem._id}: ${line}`);
+//       rl.on('line', async (line) => {
+//         console.log(`Python output for ${messageItem._id}: ${line}`);
 
-        // Handle specific errors that should be ignored
-        if (line.includes("504 Gateway Time-out") ||
-          line.includes("Failed to send data") ||
-          line.includes("Send button not found or not clickable")) {
-          console.warn("Detected known error but continuing execution:", line);
-        }
+//         // Handle specific errors that should be ignored
+//         if (line.includes("504 Gateway Time-out") ||
+//           line.includes("Failed to send data") ||
+//           line.includes("Send button not found or not clickable")) {
+//           console.warn("Detected known error but continuing execution:", line);
+//         }
 
-        const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
-        if (codeMatch && codeMatch[1]) {
-          verificationCode = codeMatch[1];
-          console.log(`Verification code captured for ${messageItem._id}: ${verificationCode}`);
+//         const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
+//         if (codeMatch && codeMatch[1]) {
+//           verificationCode = codeMatch[1];
+//           console.log(`Verification code captured for ${messageItem._id}: ${verificationCode}`);
 
-          try {
-            // Update the verificationCode in WhatsApp settings
-            await WhatsAppSettings.findOneAndUpdate(
-              { mobileNumber: messageItem.user_mobile_number },
-              { verificationCode },
-              { new: true }
-            );
-            console.log("Verification code updated in DB");
-          } catch (dbError) {
-            console.error("Error updating verification code:", dbError);
-          }
-        }
-      });
+//           try {
+//             // Update the verificationCode in WhatsApp settings
+//             await WhatsAppSettings.findOneAndUpdate(
+//               { mobileNumber: messageItem.user_mobile_number },
+//               { verificationCode },
+//               { new: true }
+//             );
+//             console.log("Verification code updated in DB");
+//           } catch (dbError) {
+//             console.error("Error updating verification code:", dbError);
+//           }
+//         }
+//       });
 
-      pythonProcess.stderr.on('data', (data) => {
-        const errorMsg = data.toString();
-        errorOutput += errorMsg;
-        console.error(`Python error for ${messageItem._id}: ${errorMsg}`);
-      });
+//       pythonProcess.stderr.on('data', (data) => {
+//         const errorMsg = data.toString();
+//         errorOutput += errorMsg;
+//         console.error(`Python error for ${messageItem._id}: ${errorMsg}`);
+//       });
 
-      pythonProcess.on('close', (code) => {
-        if (isCompleted) return;
-        isCompleted = true;
+//       pythonProcess.on('close', (code) => {
+//         if (isCompleted) return;
+//         isCompleted = true;
 
-        console.log(`WhatsApp script for ${messageItem._id} exited with code ${code}`);
+//         console.log(`WhatsApp script for ${messageItem._id} exited with code ${code}`);
 
-        if (code === 0 || code === null) {
-          resolve({ success: true, verificationCode });
-        } else {
-          resolve({
-            success: false,
-            code,
-            error: errorOutput,
-            message: `WhatsApp script failed with code ${code}`
-          });
-        }
-      });
+//         if (code === 0 || code === null) {
+//           resolve({ success: true, verificationCode });
+//         } else {
+//           resolve({
+//             success: false,
+//             code,
+//             error: errorOutput,
+//             message: `WhatsApp script failed with code ${code}`
+//           });
+//         }
+//       });
 
-      pythonProcess.on('error', (err) => {
-        if (isCompleted) return;
-        isCompleted = true;
+//       pythonProcess.on('error', (err) => {
+//         if (isCompleted) return;
+//         isCompleted = true;
 
-        console.error(`Failed to start Python process for ${messageItem._id}:`, err);
-        resolve({ success: false, error: err.message });
-      });
+//         console.error(`Failed to start Python process for ${messageItem._id}:`, err);
+//         resolve({ success: false, error: err.message });
+//       });
 
-      // Set timeout for this specific message (10 minutes)
-      const timeout = setTimeout(() => {
-        if (isCompleted) return;
-        isCompleted = true;
+//       // Set timeout for this specific message (10 minutes)
+//       const timeout = setTimeout(() => {
+//         if (isCompleted) return;
+//         isCompleted = true;
 
-        console.log(`WhatsApp script for ${messageItem._id} reached timeout, completing process`);
-        pythonProcess.kill();
-        resolve({
-          success: true,
-          timeout: true,
-          message: "WhatsApp script completed after timeout",
-          verificationCode
-        });
-      }, 10 * 60 * 1000);
+//         console.log(`WhatsApp script for ${messageItem._id} reached timeout, completing process`);
+//         pythonProcess.kill();
+//         resolve({
+//           success: true,
+//           timeout: true,
+//           message: "WhatsApp script completed after timeout",
+//           verificationCode
+//         });
+//       }, 10 * 60 * 1000);
 
-      pythonProcess.on('close', () => {
-        clearTimeout(timeout);
-      });
-    });
-  }
-}
+//       pythonProcess.on('close', () => {
+//         clearTimeout(timeout);
+//       });
+//     });
+//   }
+// }
 
-// Initialize and start the queue processor
-const whatsappQueueProcessor = new WhatsAppQueueProcessor();
+// // Initialize and start the queue processor
+// const whatsappQueueProcessor = new WhatsAppQueueProcessor();
 
-// Start the processor when the application starts
-whatsappQueueProcessor.start();
+// // Start the processor when the application starts
+// whatsappQueueProcessor.start();
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, stopping queue processor...');
-  whatsappQueueProcessor.stop();
-  process.exit(0);
-});
+// process.on('SIGTERM', () => {
+//   console.log('Received SIGTERM, stopping queue processor...');
+//   whatsappQueueProcessor.stop();
+//   process.exit(0);
+// });
 
-process.on('SIGINT', () => {
-  console.log('Received SIGINT, stopping queue processor...');
-  whatsappQueueProcessor.stop();
-  process.exit(0);
-});
+// process.on('SIGINT', () => {
+//   console.log('Received SIGINT, stopping queue processor...');
+//   whatsappQueueProcessor.stop();
+//   process.exit(0);
+// });
 
 // Optional: API endpoints to manage the queue
-app.get("/api/whatsapp-queue/status", async (req, res) => {
-  try {
-    const stats = await WhatsAppMessageQueue.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
+// app.get("/api/whatsapp-queue/status", async (req, res) => {
+//   try {
+//     const stats = await WhatsAppMessageQueue.aggregate([
+//       {
+//         $group: {
+//           _id: "$status",
+//           count: { $sum: 1 }
+//         }
+//       }
+//     ]);
 
-    const pending = await WhatsAppMessageQueue.find({
-      status: 'pending'
-    }).sort({ scheduledAt: 1 }).limit(10);
+//     const pending = await WhatsAppMessageQueue.find({
+//       status: 'pending'
+//     }).sort({ scheduledAt: 1 }).limit(10);
 
-    res.json({
-      stats,
-      nextPendingMessages: pending
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+//     res.json({
+//       stats,
+//       nextPendingMessages: pending
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
-app.post("/api/whatsapp-queue/retry-failed", async (req, res) => {
-  try {
-    const result = await WhatsAppMessageQueue.updateMany(
-      { status: 'failed', attempts: { $lt: 3 } },
-      { 
-        status: 'pending',
-        scheduledAt: new Date(),
-        errorMessage: null
-      }
-    );
+// app.post("/api/whatsapp-queue/retry-failed", async (req, res) => {
+//   try {
+//     const result = await WhatsAppMessageQueue.updateMany(
+//       { status: 'failed', attempts: { $lt: 3 } },
+//       { 
+//         status: 'pending',
+//         scheduledAt: new Date(),
+//         errorMessage: null
+//       }
+//     );
 
-    res.json({
-      message: `${result.modifiedCount} failed messages queued for retry`
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+//     res.json({
+//       message: `${result.modifiedCount} failed messages queued for retry`
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
 app.post("/api/start-fetching-leads", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));

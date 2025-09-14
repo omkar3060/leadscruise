@@ -82,14 +82,12 @@ const Layout = () => {
 
       <Routes>
         {/* Redirect "/" to "/login" if on app.leadscruise.com */}
-        {isAppDomain ? (
-          <Route path="/" element={<SignIn />} />
-        ) : (
-          <Route path="/" element={<LandingPage />} />
-        )}
+        
+        <Route path="/" element={<LandingPage />} />
+        
 
         {/* Public Routes */}
-        {/* <Route path="/login" element={<SignIn />} /> */}
+        <Route path="/login" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/enter-email" element={<EnterEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -261,14 +259,14 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/whatsapp"
           element={
             <ProtectedRoute>
               <Whatsapp />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/sheets"
           element={
