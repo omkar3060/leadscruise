@@ -517,7 +517,7 @@ const SignIn = () => {
             <img
               src={logo}
               alt="LeadsCruise Logo"
-              onClick={() => window.location.href = "https://leadscruise.com"} // Navigate to external URL
+              onClick={() => window.location.href = "https://app.leadscruise.com/login"} // Navigate to external URL
               style={{ cursor: "pointer" }} // Optional: Change cursor on hover
             />
             <div className="smart-scan" onClick={() => navigate("/signup")}>

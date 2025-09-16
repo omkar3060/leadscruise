@@ -129,10 +129,10 @@ const SignUp = () => {
             <img
               src={logo}
               alt="LeadsCruise Logo"
-              onClick={() => window.location.href = "https://leadscruise.com"} // Navigate to external URL
+              onClick={() => window.location.href = "https://app.leadscruise.com/login"} // Navigate to external URL
               style={{ cursor: "pointer" }} // Optional: Change cursor on hover
             />
-            <div className="smart-scan" onClick={() => navigate("/")}>
+            <div className="smart-scan" onClick={() => navigate("/login")}>
               {/* <img
                 src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
                 alt=""
