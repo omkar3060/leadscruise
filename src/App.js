@@ -83,7 +83,7 @@ const Layout = () => {
       <Routes>
         {/* Redirect "/" to "/login" if on app.leadscruise.com */}
         
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage page="index.html" />} />
         
 
         {/* Public Routes */}
@@ -91,6 +91,11 @@ const Layout = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/enter-email" element={<EnterEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/terms" element={<LandingPage page="terms.html" />} />
+        <Route path="/privacy" element={<LandingPage page="privacy.html" />} />
+        <Route path="/refund" element={<LandingPage page="refund.html" />} />
+        <Route path="/shipping" element={<LandingPage page="shipping.html" />} />
+        <Route path="/contact" element={<LandingPage page="contact.html" />} />
 
         {/* Protected Routes */}
         <Route
