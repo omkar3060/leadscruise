@@ -26,3 +26,4 @@ yarn-error.log*
 whatsapp_profiles/
 firefox_profiles/
 __pycache__/
+dist/

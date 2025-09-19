@@ -444,3 +444,6 @@
 .btn:hover {
   opacity: 0.9;
 }
+.table-container .whatsapp-settings-table{
+  background-color: white;
+}

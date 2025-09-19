@@ -32,6 +32,7 @@ const supportRoutes = require("./routes/support");
 const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
 const teammateRoutes = require('./routes/teammates');
+const path = require("path");
 const server = createServer(app); // ✅ Create HTTP server
 server.setTimeout(15 * 60 * 1000);
 const io = new Server(server, {
@@ -1963,6 +1964,70 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
     console.error("Error fetching user leads:", error);
     res.status(500).json({
       error: "Internal server error",
+      message: error.message
+    });
+  }
+});
+
+app.post("/api/data-received-confirmation", async (req, res) => {
+  try {
+    const {
+      status,
+      message,
+      mobile_number,
+      timestamp,
+      client_info,
+      received_data_summary
+    } = req.body;
+
+    console.log("📨 Data Received Confirmation:");
+    console.log("================================");
+    console.log(`Status: ${status}`);
+    console.log(`Message: ${message}`);
+    console.log(`Mobile Number: ${mobile_number}`);
+    console.log(`Timestamp: ${timestamp}`);
+    console.log(`Client: ${client_info?.application} v${client_info?.version}`);
+    console.log(`Total Leads: ${received_data_summary?.total_leads}`);
+    console.log(`Leads Retrieved: ${received_data_summary?.leads_count}`);
+    console.log("================================");
+
+    // Prepare data object to store
+    const confirmationData = {
+      status,
+      message,
+      mobile_number,
+      timestamp,
+      client_info,
+      received_data_summary,
+      received_at: new Date().toISOString()
+    };
+
+    // Save to confirmations.json (append mode)
+    const filePath = path.join(__dirname, "confirmations.json");
+
+    let existingData = [];
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      existingData = JSON.parse(fileContent || "[]");
+    }
+
+    existingData.push(confirmationData);
+
+    fs.writeFileSync(filePath, JSON.stringify(existingData, null, 2));
+
+    // Send success response back to client
+    res.status(200).json({
+      success: true,
+      message: "Confirmation received successfully",
+      received_at: confirmationData.received_at,
+      confirmation_id: `conf_${Date.now()}_${mobile_number}`
+    });
+
+  } catch (error) {
+    console.error("Error processing data received confirmation:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to process confirmation",
       message: error.message
     });
   }

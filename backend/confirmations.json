@@ -1,0 +1,18 @@
+[
+  {
+    "status": "received",
+    "message": "Data has been successfully received by client application",
+    "mobile_number": "9579797269",
+    "timestamp": "2025-09-18T15:31:57.831927",
+    "client_info": {
+      "application": "LeadFetcher-Client",
+      "version": "1.0"
+    },
+    "received_data_summary": {
+      "total_leads": 596,
+      "leads_count": 596,
+      "success": true
+    },
+    "received_at": "2025-09-18T10:01:57.864Z"
+  }
+]

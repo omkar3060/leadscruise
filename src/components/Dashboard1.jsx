@@ -916,47 +916,10 @@ useEffect(() => {
           cooldownTime={cooldownTime}
         />
 
-        {/* Metrics Section */}
-        <div className={styles.metricsSection}>
-          <div
-            onClick={() => navigate("/totalLeadsToday")}
-            className={styles.metricBox}
-          >
-            {metrics.totalLeadsToday} <br />
-            <span>Total Leads Today</span>
-          </div>
-          <div
-            onClick={() => navigate("/totalLeadsThisWeek")}
-            className={styles.metricBox}
-          >
-            {metrics.totalLeadsThisWeek} <br />
-            <span>Total Leads This Week</span>
-          </div>
-          <div className={styles.metricBox} onClick={() => navigate("/totalLeadsToday")}>
-            {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
-            <br />
-            <span>Replies Sent Today</span>
-          </div>
-          <div className={styles.metricBox} style={{ color: "#28a745" }} onClick={() => navigate("/totalLeadsToday")}>
-            {messageCount * metrics.totalLeadsToday || 0}
-            <br />
-            <span>WA Messages Sent Today</span>
-          </div>
-          <div className={styles.metricBox} onClick={() => navigate("/totalLeadsToday")}>
-            {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
-            <br />
-            <span>Emails Sent Today</span>
-          </div>
-          <div className={styles.metricBox} onClick={() => navigate("/totalLeadsCaptured")}>
-            {metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}
-            <br />
-            <span>Total Emails Sent</span>
-          </div>
-          <div className={styles.metricBox} onClick={() => navigate("/totalLeadsCaptured")}>
-            {metrics.totalLeadsCaptured} <br />
-            <span>Total Leads Captured</span>
-          </div>
-        </div>
+        
+  <div className={styles.assistantText}>
+    Your AI Sales Capture Reply Assistant Working 24x7!
+  </div>
         <div className={styles.container}>
           <div className={styles.gridContainer}>
             {/* Overall AI Activity Card */}

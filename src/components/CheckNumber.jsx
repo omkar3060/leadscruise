@@ -3,291 +3,317 @@ import axios from "axios";
 import successImage from "../images/success.png";
 import errorImage from "../images/error.png";
 import loadingGif from "../images/loading.gif";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./styles.css";
-import bgImage1 from "../images/values-1.png";
-import bgImage2 from "../images/values-2.png";
-import bgImage3 from "../images/values-3.png";
-import "./CheckNumber.css";
+import "./TaskExecutor.css";
+import "./Signin.css";
+import "./Plans.css";
+import styles from "./Dashboard.module.css";
+import loginBg from "../images/login-background.jpg";
+
+// Custom hook for dynamic separator (same as TaskExecutor)
+const useDynamicSeparator = () => {
+  useEffect(() => {
+    const updateSeparatorHeight = () => {
+      const loginBox = document.querySelector('.login-box');
+      
+      // Only apply on larger screens where separator is visible
+      if (loginBox && window.innerWidth > 1200) {
+        const boxHeight = loginBox.offsetHeight;
+        
+        // Set CSS custom property for separator height
+        document.documentElement.style.setProperty('--separator-height', boxHeight + 'px');
+      } else {
+        // Reset the custom property on smaller screens
+        document.documentElement.style.removeProperty('--separator-height');
+      }
+    };
+    
+    // Update on mount
+    updateSeparatorHeight();
+    
+    // Update on window resize
+    const handleResize = () => {
+      updateSeparatorHeight();
+    };
+    
+    // Update when login box content changes
+    const handleMutation = () => {
+      setTimeout(updateSeparatorHeight, 100); // Small delay to ensure DOM is updated
+    };
+    
+    // Set up event listeners
+    window.addEventListener('resize', handleResize);
+    
+    // Use MutationObserver to detect changes in login box content
+    const observer = new MutationObserver(handleMutation);
+    const loginBox = document.querySelector('.login-box');
+    
+    if (loginBox) {
+      observer.observe(loginBox, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      });
+    }
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
+  }, []);
+};
+
+const TypingAnimation = () => {
+  const messages = [
+    "working 24×7 !",
+    "capturing leads automatically !",
+    "sending messages on WhatsApp !"
+  ];
+  
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [currentText, setCurrentText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState(50);
+
+  useEffect(() => {
+    const handleTyping = () => {
+      const currentMessage = messages[currentMessageIndex];
+      
+      if (isDeleting) {
+        setCurrentText(currentMessage.substring(0, currentText.length - 1));
+        setTypingSpeed(25);
+      } else {
+        setCurrentText(currentMessage.substring(0, currentText.length + 1));
+        setTypingSpeed(50);
+      }
+
+      if (!isDeleting && currentText === currentMessage) {
+        setTimeout(() => setIsDeleting(true), 1000); // Pause before deleting
+      } else if (isDeleting && currentText === '') {
+        setIsDeleting(false);
+        setCurrentMessageIndex((prevIndex) => (prevIndex + 1) % messages.length);
+      }
+    };
+
+    const timer = setTimeout(handleTyping, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [currentText, isDeleting, currentMessageIndex, typingSpeed, messages]);
+
+  return (
+    <div className="typing-container">
+      <span className="static-text">Your LeadsCruise AI is </span>
+      <span className="typing-text">
+        {currentText}
+        <span className="cursor">|</span>
+      </span>
+    </div>
+  );
+};
 
 const CheckNumber = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [status, setStatus] = useState("idle"); // 'idle', 'loading', 'success', or 'error'
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  const [selected, setSelected] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSelected((prev) => (prev + 1) % 2);
-    }, 5000); // Change every 5 seconds
+  // Add the dynamic separator hook
+  useDynamicSeparator();
 
-    return () => clearInterval(interval);
-  }, []);
-
-const handleCheckNumber = async () => {
-  setStatus("loading");
-  try {
-    localStorage.setItem("mobileNumber", mobileNumber);
-    const response = await axios.post(
-      "https://api.leadscruise.com/api/check-number",
-      { mobileNumber }
-    );
-
-    const data = response.data;
-
-    if (data.exists) {
-      // Number already subscribed
-      setStatus("error");
-      setMessage("Oops, you have already subscribed from this number. Contact Support for more details.");
-    } else {
-      // Handle OTP scenarios
-      if (data.code === 0) {
-        setStatus("success");
-        setMessage("Great! You are now eligible to subscribe to Leads Cruise.")
-      } else {
-        setStatus("error");
-        setMessage("Oops, something went wrong. Please try again later.");
-      }
+  const handleCheckNumber = async () => {
+    if (!mobileNumber) {
+      setMessage("Mobile number is required.");
+      return;
     }
-  } catch (error) {
-    setMessage("Error occurred while checking the number.");
-    setStatus("idle");
-  }
-};
+
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      localStorage.setItem("mobileNumber", mobileNumber);
+      const response = await axios.post(
+        "https://api.leadscruise.com/api/check-number",
+        { mobileNumber }
+      );
+
+      const data = response.data;
+
+      if (data.exists) {
+        // Number already subscribed
+        setStatus("error");
+        setMessage("Oops, you have already subscribed from this number. Contact Support for more details.");
+      } else {
+        // Handle OTP scenarios
+        if (data.code === 0) {
+          setStatus("success");
+          setMessage("Great! You are now eligible to subscribe to Leads Cruise.");
+        } else {
+          setStatus("error");
+          setMessage("Oops, something went wrong. Please try again later.");
+        }
+      }
+    } catch (error) {
+      setStatus("error");
+      setMessage("Error occurred while checking the number.");
+    }
+  };
 
   const handleLogout = async () => {
+    const isConfirmed = window.confirm("Are you sure you want to logout?");
+
+    if (!isConfirmed) return;
+
     const userEmail = localStorage.getItem("userEmail");
-  
+
     try {
-      await axios.post("https://api.leadscruise.com/api/logout", { email: userEmail });
-  
+      await axios.post("https://api.leadscruise.com/api/logout", {
+        email: userEmail,
+      });
+
       localStorage.clear();
-      sessionStorage.clear(); // Clear session storage as well
-      if (window.location.hostname === "app.leadscruise.com") {
-        window.location.href = "https://app.leadscruise.com/"; // Replace with actual landing page URL
-      } else {
-        window.location.href = "http://localhost:3000"; // Local development
-      }
+      sessionStorage.clear();
+      window.location.href =
+        window.location.hostname === "app.leadscruise.com"
+          ? "https://app.leadscruise.com/"
+          : "http://localhost:3000";
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
-  
 
   return (
-    <div className="signin-container">
-      <div className="center-div">
-        <div className="signin-left">
-          {/* Loading Screen */}
-          {status === "loading" && (
-            <div className="loading-screen">
-              <img
-                src={loadingGif}
-                alt="Loading"
-                className="loading-gif"
-                style={{
-                  width: "150px",
-                  height: "125px",
-                  marginBottom: "20px",
-                }}
-              />
-              <p>Please, wait while AI searches for you.</p>
-              <p className="logout-link">
-                Wish to <span onClick={handleLogout}>Logout?</span>
-              </p>
-            </div>
-          )}
+    <div className="login-page-container" style={{ backgroundImage: `url(${loginBg})` }}>
+      <div className="login-form-wrapper">
+        <div className="login-box">
+          <div className="login-form-container">
+            {status === "idle" && (
+              <>
+                <h1 className="login-title">Check Number Status</h1>
+                <div className="instruction-section">
+                  <p className="instruction-text">
+                    Enter your Leads Provider login number below and click next to
+                    check if you have already subscribed to us.
+                  </p>
+                  <div className="warning-box">
+                    <p className="warning-text">Please enter your mobile number correctly.</p>
+                    <p className="warning-text">This will help us verify your subscription status with us.</p>
+                  </div>
+                </div>
+                
+                <div className="input-group">
+                  <label htmlFor="mobile">Mobile Number</label>
+                  <input 
+                    type="text" 
+                    id="mobile" 
+                    placeholder="Enter Your Mobile number"
+                    value={mobileNumber}
+                    onChange={(e) => setMobileNumber(e.target.value)}
+                    required 
+                  />
+                </div>
+                
+                <p className="confirm-text">
+                  By clicking next you confirm to check subscription status
+                </p>
 
-          {/* Success Screen */}
-          {status === "success" && (
-            <div className="success-screen">
-              <div className="icon-cont">
-                <div className="success-icon">
+                <button onClick={handleCheckNumber} className="login-button">
+                  Next
+                </button>
+
+                <div className="navigation-links">
+                  <p className="back-link" onClick={() => window.history.back()}>
+                    Go Back
+                  </p>
+                  <p className="logout-text">
+                    Wish to <span onClick={handleLogout} className="logout-link">Logout</span>?
+                  </p>
+                </div>
+
+                {message && <p className="error-message">{message}</p>}
+              </>
+            )}
+
+            {status === "loading" && (
+              <div className="loading-content">
+                <img
+                  src={loadingGif}
+                  alt="Loading"
+                  className="loading-image"
+                />
+                <p className="loading-text">Please, wait while AI searches for you.</p>
+              </div>
+            )}
+
+            {status === "success" && (
+              <div className="success-content">
+                <h1 className="login-title">Eligibility Confirmed</h1>
+                <div className="status-icon">
                   <img
                     src={successImage}
                     alt="Success"
-                    style={{ width: "175px", height: "125px" }}
+                    className="status-image"
                   />
                 </div>
-                <p>Great! You are now eligible to subscribe to Leads Cruise.</p>
-              </div>
-              <p className="phone-number">
-                Wish to proceed and connect with {mobileNumber}?
-              </p>
-              <button
-                className="next-button"
-                onClick={() => navigate("/plans")}
-              >
-                Next
-              </button>
-              <div className="end-block">
-                <p className="gback" onClick={() => window.location.reload()}>
-                  Go Back
+                <p className="status-message">Great! You are now eligible to subscribe to Leads Cruise.</p>
+                <p className="confirm-text">
+                  Wish to proceed and connect with {mobileNumber}?
                 </p>
-                <p className="logout-link">
-                  Wish to <span onClick={handleLogout}>Logout</span>?
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Error Screen */}
-          {status === "error" && (
-            <div className="error-screen">
-              <h2>Check Status</h2>
-              <div className="error-icon">
-                <img
-                  src={errorImage}
-                  alt="Error"
-                  style={{ width: "225px", height: "125px" }}
-                />
-              </div>
-              <p>
-                {message || "Oops, something went wrong. Please try again later."}
-              </p>
-              <button
-                onClick={() => setStatus("idle")}
-                className="try-again-button"
-              >
-                Try Again
-              </button>
-              <p className="logout-link">
-                Wish to <span onClick={handleLogout}>Logout?</span>
-              </p>
-            </div>
-          )}
-
-          {/* Input Screen */}
-          {status === "idle" && (
-            <div className="check-number-input-screen">
-              <h2>Check if your number is subscribed with us earlier</h2>
-              <p>
-                Enter your Leads Provider login number below and click next to
-                check if you have already subscribed to us.
-              </p>
-              <input
-                type="text"
-                placeholder="Enter Your Mobile number"
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
-                className="mobile-number-input"
-              />
-              <button onClick={handleCheckNumber} className="next-button">
-                Next
-              </button>
-              {message && <p className="response-message">{message}</p>}
-              <div
-                className="end-block"
-                style={{
-                  marginTop: "30px",
-                  height: "30px",
-                }}
-              >
-                <p className="gback" onClick={() => window.history.back()}>
-                  Go Back
-                </p>
-
-                <p className="logout-link">
-                  Wish to <span onClick={handleLogout}>Logout</span>?
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="signin-right">
-          <div className="banner-container">
-            {/* First Banner */}
-            <div
-              className={`banner overlapBanner ${selected === 0 ? "active" : ""
-                }`}
-            >
-              <div className="rightbanner">
-                <div
-                  className="banner1_img"
-                  style={{
-                    backgroundImage: `url(${bgImage1})`,
-                  }}
-                ></div>
-                <div className="banner1_heading">
-                  Intergrate AI to your Business
+                <button
+                  onClick={() => navigate("/plans")}
+                  className="login-button"
+                >
+                  Next
+                </button>
+                <div className="navigation-links">
+                  <p className="back-link" onClick={() => window.location.reload()}>
+                    Go Back
+                  </p>
+                  <p className="logout-text">
+                    Wish to <span onClick={handleLogout} className="logout-link">Logout</span>?
+                  </p>
                 </div>
-                <div className="banner1_content">
-                  Let our AI do all the work even while you sleep. With
-                  leadscruise all the software tasks are now automated with AI
+              </div>
+            )}
+
+            {status === "error" && (
+              <div className="error-content">
+                <h1 className="login-title">Check Status</h1>
+                <div className="status-icon">
+                  <img
+                    src={errorImage}
+                    alt="Error"
+                    className="status-image"
+                  />
                 </div>
-                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
-              </div>
-            </div>
-
-            {/* Second Banner */}
-            <div
-              className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}
-            >
-              <div
-                className="product_img"
-                style={{
-                  width: "300px",
-                  height: "240px",
-                  margin: "auto",
-                  backgroundSize: "100%",
-                  backgroundRepeat: "no-repeat",
-                  backgroundImage: `url(${bgImage2})`,
-                }}
-              ></div>
-              <div className="banner1_heading">A Rocket for your Business</div>
-              <div className="banner2_content">
-                Get to customers within the blink of opponent's eyes,
-                LeadsCruise provides 100% uptime utilising FA cloud systems
-              </div>
-              <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
-            </div>
-
-            <div
-              className={`banner taskBanner ${selected === 2 ? "active" : ""}`}
-            >
-              <div className="rightbanner">
-                <div
-                  className="banner3_img"
-                  style={{
-                    backgroundImage: `url(${bgImage3})`,
-                  }}
-                ></div>
-                <div className="banner1_heading">All tasks on time</div>
-                <div className="banner1_content">
-                  With leadscruise all the tasks are now automated so that you
-                  no more need to do them manually
+                <p className="status-message">
+                  {message || "Oops, something went wrong. Please try again later."}
+                </p>
+                <button
+                  onClick={() => setStatus("idle")}
+                  className="login-button"
+                >
+                  Try Again
+                </button>
+                <div className="navigation-links">
+                  <p className="back-link" onClick={() => window.location.reload()}>
+                    Go Back
+                  </p>
+                  <p className="logout-text">
+                    Wish to <span onClick={handleLogout} className="logout-link">Logout</span>?
+                  </p>
                 </div>
-                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
               </div>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="pagination-container">
-              <div
-                className={`pagination-dot ${selected === 0 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-              <div
-                className={`pagination-dot ${selected === 1 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-              <div
-                className={`pagination-dot ${selected === 2 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-            </div>
+            )}
           </div>
+        </div>
+      </div>
+
+      <div className="login-info-panel">
+        <div className="info-box">
+          <TypingAnimation />
+          <button className="arrow-button" aria-label="More info">↑</button>
         </div>
       </div>
     </div>

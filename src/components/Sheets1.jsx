@@ -262,7 +262,7 @@ const Sheets = () => {
 
     fetchSettings();
   }, [navigate]);
-
+  
   // Add OTP submission handler
   const handleOtpSubmit = async () => {
     if (!otpValue || otpValue.length !== 4) {
@@ -988,109 +988,75 @@ const Sheets = () => {
         cooldownActive={cooldownActive}
         cooldownTime={cooldownTime}
       />
-      <div className={styles.metricsSection}>
-        <div
-          onClick={() => navigate("/totalLeadsToday")}
-          className={styles.metricBox}
-        >
-          {metrics.totalLeadsToday} <br />
-          <span>Total Leads Today</span>
-        </div>
-        <div
-          onClick={() => navigate("/totalLeadsThisWeek")}
-          className={styles.metricBox}
-        >
-          {metrics.totalLeadsThisWeek} <br />
-          <span>Total Leads This Week</span>
-        </div>
-        <div className={styles.metricBox} onClick={() => navigate("/totalLeadsToday")}>
-          {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
-          <br />
-          <span>Replies Sent Today</span>
-        </div>
-        <div className={styles.metricBox} style={{ color: "#28a745" }} onClick={() => navigate("/totalLeadsToday")}>
-          {messageCount * metrics.totalLeadsToday || 0}
-          <br />
-          <span>WA Messages Sent Today</span>
-        </div>
-        <div className={styles.metricBox} onClick={() => navigate("/totalLeadsToday")}>
-          {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
-          <br />
-          <span>Emails Sent Today</span>
-        </div>
-        <div className={styles.metricBox} onClick={() => navigate("/totalLeadsCaptured")}>
-          {metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}
-          <br />
-          <span>Total Emails Sent</span>
-        </div>
-        <div className={styles.metricBox} onClick={() => navigate("/totalLeadsCaptured")}>
-          {metrics.totalLeadsCaptured} <br />
-          <span>Total Leads Captured</span>
-        </div>
-      </div>
+
+
+<div style={{ 
+  background: "#fff", 
+  borderRadius: "8px", 
+  boxShadow: "0 2px 8px rgba(0,0,0,0.1)", 
+  padding: "20px 40px",
+  margin: "20px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center"
+}}>
+
+  {/* Metrics Section */}
+  <div className={styles.metricsSection}>
+    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+      <strong>{metrics.totalLeadsToday}</strong>
+      <span>Leads Purchased Today</span>
+    </div>
+    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsThisWeek")}>
+      <strong>{metrics.totalLeadsThisWeek}</strong>
+      <span>Leads Purchased This Week</span>
+    </div>
+    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+      <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
+      <span>Lead Manager Replies Today</span>
+    </div>
+    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+      <strong>{messageCount * metrics.totalLeadsToday || 0}</strong>
+      <span>Whatsapp Replies Today</span>
+    </div>
+    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+      <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
+      <span>Emails Sent Today</span>
+    </div>
+    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
+      <strong>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}</strong>
+      <span>Total Emails Sent</span>
+    </div>
+    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
+      <strong>{metrics.totalLeadsCaptured}</strong>
+      <span>Total Leads Captured</span>
+    </div>
+  </div>
+
+  {/* Controls Section inside the same container */}
+  <div style={{ 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "4px",
+    marginLeft: "20px"
+  }}>
+    <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
+      Settings
+    </button>
+    <button className={styles.buttonLarge} 
+    onClick={() => console.log("download")}  
+    style={{ marginBottom: 0 }}
+    >
+      Download Reports From LeadsCruise
+    </button>
+  </div>
+
+</div>
       <div className="settings-scroll-container">
         <div className="sheets-container">
           <div className="table-container table-container-height">
 
-            <h2 className="sheets-header">
-              All Leads from your leadsprovider: {totalLeads ? totalLeads : 0}
-              {leads.length > 0 && (
-                <button
-                  onClick={downloadExcel}
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: '#28a745',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginLeft: '12px',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    marginBottom: '0px',
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#218838';
-                    // e.target.style.transform = 'translateY(-2px) scale(1.05)';
-                    e.target.style.boxShadow = '0 8px 20px rgba(40, 167, 69, 0.4)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = '#28a745';
-                    e.target.style.transform = 'translateY(0) scale(1)';
-                    e.target.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)';
-                  }}
-                  onMouseDown={(e) => {
-                    e.target.style.transform = 'translateY(0) scale(0.95)';
-                  }}
-                  onMouseUp={(e) => {
-                    e.target.style.transform = 'translateY(-2px) scale(1.05)';
-                  }}
-                  title="Download leads as Excel file"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7,10 12,15 17,10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                </button>
-              )}
-            </h2>
+            
             {isLoadingLeads ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
                 Loading leads...

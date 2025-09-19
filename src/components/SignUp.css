@@ -1,59 +1,535 @@
-.signin-left .pass-cont {
+/* --- Modern SignUp Page Styles --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+.signin-container {
   display: flex;
-  justify-content: space-between;
-  position: relative;
-  gap:3px;
+  width: 100vw;
+  height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  /* Move the background image here for full screen coverage */
+  background: 
+    linear-gradient(135deg, rgba(79, 209, 199, 0.6) 0%, rgba(99, 179, 237, 0.6) 50%, rgba(159, 122, 234, 0.6) 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
-.signin-left .pass-cont input {
-  width: 48%;
+.center-div {
+  display: flex;
+  width: 100%;
+  height: 100%;
 }
 
-.terms-div {
+.signin-left {
+  flex: 50%;
   display: flex;
   align-items: center;
-  height: 4vh;
   justify-content: center;
+  padding:2rem; /* Increased top and bottom padding for gaps */
+  background-color: transparent;
+}
+
+.signin-logo-class {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 2rem;
+}
+
+.signin-logo-class img {
+  display: none; /* Hide the logo */
+}
+
+.smart-scan {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #4a5568;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.smart-scan img {
+  width: 20px;
+  height: 20px;
+}
+
+.smart-scan:hover {
+  color: #2c5282;
+}
+
+.signin-tag {
+  font-size: 2.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1a202c;
+  text-align: left;        /* Center the text */
+  width: 100%;
+  max-width: 380px;          /* Keep constraint if desired */
+  align-self: center;        /* Center within flex container */
+}
+
+
+
+.signin-descriptor {
+  color: #4a5568;
+  margin-bottom: 2rem;
+  align-self: flex-start;
+  width: 100%;
+  max-width: 380px;
+}
+
+/* Input Styles */
+.signin-left input[type="email"],
+.signin-left input[type="text"] {
+  width: 100%;
+  max-width: 380px;
+  padding: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent background */
+}
+
+.signin-left input[type="email"]:focus,
+.signin-left input[type="text"]:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+  background-color: rgba(255, 255, 255, 1); /* Full opacity on focus */
+}
+
+/* Password Container Styles */
+.pass-cont {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 1rem;
+}
+
+.pass-cont .password {
+  width: 100%;
+  padding: 12px;
+  padding-right: 45px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent background */
+}
+
+.pass-cont .password:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+  background-color: rgba(255, 255, 255, 1); /* Full opacity on focus */
+}
+
+/* Eye button styling */
+.pass-cont button {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1a202c;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  z-index: 1;
+  width: fit-content;
+  margin: 0;
+}
+
+.pass-cont button:hover {
+  color: #2d3748;
+}
+
+.pass-cont button:focus {
+  outline: none;
+}
+/* This creates the side-by-side container */
+.password-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between input and button */
+  width: 100%;
+}
+
+/* This makes the input field fill the available space */
+.password-input-wrapper .password {
+  flex-grow: 1;
+  margin-bottom: 0; /* Remove bottom margin from this specific input */
+}
+
+/* This styles the eye button as a separate box */
+.show-password-button {
+  flex-shrink: 0;
+  width: 48px;
+  height: 43px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1a202c;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.show-password-button:hover {
+  background-color: #f7fafc;
+}
+/* Terms and Conditions */
+.terms-div {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 380px;
 }
 
 .terms-div #remember {
-  height: 14px;
-  width: 14px;
-  margin-right: 3px;
+  height: 16px;
+  width: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .terms-div .agree {
-  margin-bottom: 0px;
-  color: black;
-  font-weight: 500;
+  margin: 0;
+  color: #4a5568;
+  font-weight: 400;
   font-size: 14px;
+  line-height: 1.4;
 }
 
-.signup-btn {
-  margin-bottom: 20px;
+.terms-div .agree a {
+  color: #1a202c; /* This is the new black color */
+  text-decoration: none;
+  font-weight: 500;
 }
 
-.terms-div .agree span {
-  color: rgb(3, 102, 250);
-  cursor: pointer;
-  margin-right: 1px;
-  margin-left: 1px;
-}
-
-.terms-div .agree span:hover {
+.terms-div .agree a:hover {
   text-decoration: underline;
 }
 
-.signup-btn.dimmed {
-  background-color: #9ecaec;
+.signup-btn,
+button.signup-btn,
+input[type="submit"].signup-btn {
+  width: auto; /* Allow the button to size to its content */
+  display: block; /* Make it a block element to allow margin auto */
+  margin-left: auto; /* Center the button */
+  margin-right: auto; /* Center the button */
+  padding: 12px 40px; /* Control the width with horizontal padding */
+  border-radius: 12px; /* Make it pill-shaped like the login button */
+  border: none;
+  background-color: #1a202c !important;
+  color: white !important;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: background-color 0.2s;
+}
+
+.signup-btn:hover:not(.dimmed),
+button.signup-btn:hover:not(.dimmed),
+input[type="submit"].signup-btn:hover:not(.dimmed) {
+  background-color: #2d3748 !important;
+}
+
+.signup-btn.dimmed,
+button.signup-btn.dimmed,
+input[type="submit"].signup-btn.dimmed {
+  background-color: #718096 !important;
   cursor: not-allowed;
 }
 
-.signup-btn.dimmed:hover {
-  background-color: #9ecaec;
+.signup-btn.dimmed:hover,
+button.signup-btn.dimmed:hover,
+input[type="submit"].signup-btn.dimmed:hover {
+  background-color: #718096 !important;
 }
 
-.pass-cont button{
-  width: fit-content;
-  margin: 10px 0;
+/* Privacy Policy Section */
+.pri-cont {
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+
+.priv-p {
+  font-size: 0.875rem;
+  color: #4a5568;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.pri-cont a.priv-link {
+  color: #1a202c; /* This is the new black color */
+  text-decoration: underline; /* This ensures it's underlined */
+  font-weight: 500;
+}
+
+.pri-cont a.priv-link:visited {
+  color: #1a202c !important; /* Ensure visited links stay black */
+}
+
+.pri-cont a.priv-link:hover {
+  color: #2d3748 !important; /* Slightly darker on hover */
+  text-decoration: underline;
+}
+
+.pri-cont a.priv-link:active {
+  color: #1a202c !important; /* Stay black when clicked */
+}
+/* Right Panel Styles - Remove background image from here */
+.signin-right {
+  flex: 50%;
+  /* Remove background image from here since it's now on the main container */
+  background: transparent;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.signup-box {
+  background-color: white;
+  padding: 4.75rem 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%; /* Increased width as requested */
+  margin: 2rem 0; /* Add top and bottom margin for gaps */
+  max-height: none; /* Ensure it doesn't exceed viewport height minus gaps */
+  /*overflow-y: auto; *//* Add scroll if content is too tall */
+    display: flex;                /* Add this */
+  flex-direction: column;      /* Stack items vertically */
+  align-items: center;         /* Center content horizontally */
+  justify-content: center;     /* Center content vertically */
+  text-align: center;
+}
+
+.simple-message-container {
+  background-color: rgba(255, 255, 255, 0.9); /* More transparent */
+  backdrop-filter: blur(10px); /* Add blur effect */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  text-align: left;
+  max-width: 700px;
+  width: 95%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); /* Enhanced shadow */
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle border */
+  position: relative;
+}
+
+
+
+.simple-message {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #2d3748;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.arrow-up-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  background-color: #1a202c;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.arrow-up-icon:hover {
+  background-color: #2d3748;
+}
+
+.arrow-up-icon::before {
+  content: '↑';
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-container {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 300px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  margin: 0 auto 1rem;
+}
+
+.double-bounce1, .double-bounce2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #1a202c;
+  opacity: 0.6;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: sk-bounce 2.0s infinite ease-in-out;
+}
+
+.double-bounce2 {
+  animation-delay: -1.0s;
+}
+
+@keyframes sk-bounce {
+  0%, 100% {
+    transform: scale(0);
+  } 50% {
+    transform: scale(1);
+  }
+}
+
+.loading-text h3 {
+  margin: 0 0 0.5rem;
+  color: #1a202c;
+  font-weight: 600;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 1rem;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #1a202c;
+  animation: loading-dots 1.4s infinite ease-in-out both;
+}
+
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes loading-dots {
+  0%, 80%, 100% {
+    transform: scale(0);
+  } 40% {
+    transform: scale(1);
+  }
+}
+
+.loading-message {
+  color: #4a5568;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .signin-container {
+    flex-direction: column;
+  }
+  
+  .center-div {
+    flex-direction: column;
+  }
+  
+  .signin-left {
+    max-width: none;
+    padding: 2rem 1rem; /* Reduced padding on mobile */
+  }
+  
+  .signup-box {
+    margin: 1rem 0; /* Reduced gaps on mobile */
+    max-height: calc(100vh - 2rem);
+  }
+  
+  .signin-right {
+    flex: 1;
+    min-height: 300px;
+  }
+  
+  .banner-container {
+    height: 400px;
+  }
+}
+/* Add this CSS to make the login link more clickable */
+.signup-prompt {
+  text-align: center;
+  margin-top: 1rem;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.signup-now-link {
+  color: #1a202c !important;
+  text-decoration: underline;
+  font-weight: 600;
+  padding: 4px 8px; /* Add padding to increase clickable area */
+  margin: 0 2px; /* Small margin for better spacing */
+  border-radius: 4px; /* Subtle rounded corners */
+  display: inline-block; /* Makes padding work properly */
+  transition: all 0.2s ease; /* Smooth hover transition */
+}
+
+.signup-now-link:hover {
+  color: #2d3748 !important;
+  background-color: rgba(26, 32, 44, 0.05); /* Subtle background on hover */
+  text-decoration: underline;
+}
+
+.signup-now-link:active {
+  transform: translateY(1px); /* Subtle click feedback */
+}
+
+.signup-now-link:focus {
+  outline: 2px solid #4299e1;
+  outline-offset: 2px;
 }

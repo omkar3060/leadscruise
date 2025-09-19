@@ -132,12 +132,97 @@
 }
 
 /* Metrics Section - Responsive Grid */
-.metricsSection {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Dynamic grid */
-  gap: 10px;
-  margin-bottom: 20px;
+.metrics-controls-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  gap: 20px;
 }
+
+/* Wrapper for metrics section */
+.metrics-section-wrapper {
+  flex: 1;
+  margin-right: 20px;
+}
+
+/* White box styling for metrics */
+.metrics-white-box {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px 40px;
+  width: 100%;
+}
+.metricsSection {
+  display: flex;
+  align-items: center;
+  padding-left: 0; /* Remove existing padding */
+  margin-left: 0;
+}
+
+.metric {
+  padding: 0 20px;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+}
+
+.metric:not(:last-child) {
+  border-right: 1px solid #ccc;
+}
+
+.metric strong {
+  font-size: 24px;
+  color: #222;
+}
+
+.metric span {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.controlsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;          /* Very small space between buttons */
+  align-items: flex-end;
+  flex-shrink: 0; /* Add this line */
+  margin-left: 0; /* Remove the existing margin-left: 10px */
+  margin-right: 0; /* Remove the existing margin-right: 10px */
+  align-self: flex-start;
+}
+
+.buttonSmall, .buttonLarge {
+  background: white;
+  border-radius: 5px;
+  padding: 10px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.buttonSmall {
+  color: #555;
+  border: 1px solid #ccc;
+}
+
+.buttonLarge {
+  color: black;
+  border: 1px solid black;
+}
+
+.buttonSmall:hover, .buttonLarge:hover {
+  background-color: #f0f0f0;
+}
+
+
+
+
+
 
 /* Individual Metric Box */
 .metricBox, .comingSoon {
@@ -194,10 +279,11 @@
 
 /* Leads Table */
 .leadsTable {
-  width: 100%;
+  width: calc(100% - 40px); /* Account for left and right margins */
+  max-width: calc(100% - 40px);
   border-collapse: collapse;
-  /* min-width: 600px;
-  height: 100vh;  */
+  margin: 0 20px; /* Keep existing margins */
+  table-layout: fixed; /* This ensures columns respect width constraints */
 }
 
 /* Table Cells */
@@ -885,5 +971,35 @@
   .gridContainer {
     grid-template-columns: repeat(1, 1fr);
     gap: 16px;
+  }
+}
+.assistantText {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: black;
+  padding: 2rem 2rem;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .metrics-controls-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .metrics-section-wrapper {
+    margin-right: 0;
+  }
+  
+  .controlsSection {
+    align-items: stretch;
+  }
+  
+  .buttonSmall, .buttonLarge {
+    width: 100%;
   }
 }

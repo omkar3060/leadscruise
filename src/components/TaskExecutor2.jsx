@@ -335,7 +335,7 @@ const TaskExecutor2 = () => {
           {status === "idle" && (
             <div className="task-input-screen">
               <h4 className="te-tis-h4">
-                Connect Your LeadsProvider Account to LeadsCruise
+                 Your LeadsProvider Account to LeadsCruise
               </h4>
               <div className="instr-wrapper">
                 <div className="para">

@@ -1,48 +1,745 @@
-.task-input-screen .te-tis-h4 {
-  margin-bottom: 10px;
-  font-size: 17px;
-}
-
-.task-input-screen .instr-wrapper {
-  display: flex;
-  min-height: 80px;
-  justify-content: space-between;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.task-input-screen .instr-wrapper .para {
-  width: 50%;
-  display: flex;
-  margin-top: 5px;
-}
-
-.task-input-screen .instr-wrapper .para .te-tis-p {
-  margin-bottom: 0px;
-  color: rgb(80, 79, 79);
-  font-size: 15px;
-}
-
-.task-input-screen .instr-wrapper .red-divs {
-  width: 50%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-}
-
-.task-input-screen .instr-wrapper .red-divs .red-cont {
-  background-color: #e34c26;
-  color: white;
-  font-size: 10px;
-  padding: 5px;
-  border-radius: 4px;
+/* TaskExecutor.css */
+.logout-link {
+  color: #1a202c;
+  cursor: pointer;
+  text-decoration: underline;
   font-weight: 500;
 }
 
-.task-input-screen .confirm {
+.logout-link:hover {
+  color: #2d3748;
+}
+
+.error-message {
+  color: #e53e3e;
+  font-size: 0.875rem;
   text-align: center;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #fed7d7;
+  border: 1px solid #feb2b2;
+  border-radius: 6px;
+}
+
+/* Loading content styles */
+.loading-content {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.loading-image {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 2rem;
+}
+
+.loading-text {
+  color: #1a202c;
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Success and Error content styles */
+.success-content,
+.error-content {
+  text-align: center;
+}
+
+.status-icon {
+  margin: 2rem 0;
+}
+
+.status-image {
+  width: 150px;
+  height: auto;
+}
+
+.status-message {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+/* Button disabled state for try again */
+.login-button:disabled {
+  background-color: #cbd5e0 !important;
+  cursor: not-allowed;
+  color: #718096;
+}
+
+.login-button:disabled:hover {
+  background-color: #cbd5e0 !important;
+}
+.logout-text {
+  color: #666;
+  font-size: 0.875rem;
+  margin: 0;
+}
+.instruction-section {
+  margin-bottom: 2rem;
+}
+
+.instruction-text {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.warning-box {
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.warning-text {
+  color: #c53030;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.warning-text:last-child {
+  margin-bottom: 0;
+}
+
+.confirm-text {
+  color: #666;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.navigation-links {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.back-link {
+  color: #666;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  display: block;
+}
+
+.back-link:hover {
+  color: #333;
+}
+.task-executor-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: transparent;
+}
+
+.task-executor-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* White Container */
+.task-executor-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 40px 0;
+}
+
+.task-executor-content {
+  padding: 40px;
+}
+
+/* Form Styling */
+.task-input-screen h4.te-tis-h4 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.instr-wrapper {
+  margin-bottom: 20px;
+}
+
+.para p.te-tis-p {
+  color: #666;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.red-divs {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.red-cont {
+  color: #c53030;
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.red-cont:last-child {
+  margin-bottom: 0;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #74b9ff;
+  box-shadow: 0 0 0 3px rgba(116, 185, 255, 0.1);
+}
+
+.confirm {
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.execute-button {
+  width: 100%;
+  background: #000;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-bottom: 20px;
+}
+
+.execute-button:hover {
+  background: #000;
+}
+
+.execute-button:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.end-block {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.gback {
+  color: #666;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.gback:hover {
+  color: #333;
+}
+
+.logout-link {
+  color: #666;
+  font-size: 14px;
+}
+
+.logout-link span {
   color: black;
-  font-size: 12px;
-  font-weight: 100;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.logout-link span:hover {
+  color: #000;
+}
+
+/* Loading Screen */
+.loading-screen {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.loading-gif {
+  margin: 20px 0;
+}
+
+/* Success Screen */
+.success-screen {
+  text-align: center;
+  padding: 20px;
+}
+
+.success-screen h2 {
+  color: #27ae60;
+  margin-bottom: 20px;
+}
+
+.icon-cont p {
+  color: #666;
+  margin: 15px 0;
+}
+
+.next-button {
+  width: 100%;
+  background: #27ae60;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin: 20px 0;
+}
+
+.next-button:hover {
+  background: #219a52;
+}
+
+/* Error Screen */
+.error-screen {
+  text-align: center;
+  padding: 20px;
+}
+
+.error-screen h2 {
+  color: #e74c3c;
+  margin-bottom: 20px;
+}
+
+.error-screen p {
+  color: #666;
+  line-height: 1.5;
+}
+
+.try-again-button {
+  width: 100%;
+  background: #e74c3c;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin: 20px 0;
+}
+
+.try-again-button:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+.try-again-button:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.response-message {
+  color: #e74c3c;
+  font-size: 14px;
+  text-align: center;
   margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .task-executor-page {
+    padding: 10px;
+  }
+  
+  .task-executor-card {
+    margin: 20px 0;
+  }
+  
+  .task-executor-content {
+    padding: 30px 20px;
+  }
+  
+  .task-input-screen h4.te-tis-h4 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .instruction-section {
+    margin-bottom: 1.5rem;
+  }
+  
+  .warning-box {
+    padding: 0.5rem;
+  }
+  
+  .warning-text {
+    font-size: 0.75rem;
+  }
+  
+  .confirm-text {
+    font-size: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .navigation-links {
+    margin-top: 1.5rem;
+  }
+  
+  .loading-image {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .loading-text {
+    font-size: 0.9rem;
+  }
+  
+  .status-image {
+    width: 100px;
+  }
+  
+  .status-message {
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+  .task-executor-page {
+    padding: 5px;
+  }
+  
+  .task-executor-card {
+    margin: 10px 0;
+    border-radius: 8px;
+  }
+  
+  .task-executor-content {
+    padding: 20px 15px;
+  }
+  
+  .task-input-screen h4.te-tis-h4 {
+    font-size: 18px;
+  }
+  
+  .input-field {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .execute-button,
+  .next-button,
+  .try-again-button {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+}
+
+/* Form Styling */
+.task-input-screen h4.te-tis-h4 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.instr-wrapper {
+  margin-bottom: 20px;
+}
+
+.para p.te-tis-p {
+  color: #666;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.red-divs {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.red-cont {
+  color: #c53030;
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.red-cont:last-child {
+  margin-bottom: 0;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #74b9ff;
+  box-shadow: 0 0 0 3px rgba(116, 185, 255, 0.1);
+}
+
+.confirm {
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+
+
+.end-block {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.gback {
+  color: #666;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.gback:hover {
+  color: #333;
+}
+
+.logout-link {
+  color: #666;
+  font-size: 14px;
+}
+
+.logout-link span {
+  color: #e74c3c;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.logout-link span:hover {
+  color: #c0392b;
+}
+
+/* Loading Screen */
+.loading-screen {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.loading-gif {
+  margin: 20px 0;
+}
+
+/* Success Screen */
+.success-screen {
+  text-align: center;
+  padding: 20px;
+}
+
+.success-screen h2 {
+  color: #27ae60;
+  margin-bottom: 20px;
+}
+
+.icon-cont p {
+  color: #666;
+  margin: 15px 0;
+}
+
+.next-button {
+  width: 100%;
+  background: #27ae60;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin: 20px 0;
+}
+
+.next-button:hover {
+  background: #219a52;
+}
+
+/* Error Screen */
+.error-screen {
+  text-align: center;
+  padding: 20px;
+}
+
+.error-screen h2 {
+  color: #e74c3c;
+  margin-bottom: 20px;
+}
+
+.error-screen p {
+  color: #666;
+  line-height: 1.5;
+}
+
+.try-again-button {
+  width: 100%;
+  background: #e74c3c;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin: 20px 0;
+}
+
+.try-again-button:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+.try-again-button:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.response-message {
+  color: #e74c3c;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .instruction-text {
+    font-size: 0.9rem;
+  }
+  
+  .warning-box {
+    padding: 0.75rem;
+  }
+  
+  .warning-text {
+    font-size: 0.8rem;
+  }
+  
+  .confirm-text {
+    font-size: 0.8rem;
+  }
+  
+  .loading-image {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .loading-text {
+    font-size: 1rem;
+  }
+  
+  .status-image {
+    width: 120px;
+  }
+  
+  .status-message {
+    font-size: 0.9rem;
+  }
+  .signin-container {
+    padding: 10px;
+  }
+  
+  .content-wrapper {
+    margin: 20px 0;
+  }
+  
+  .signin-left {
+    padding: 30px 20px;
+  }
+  
+  .task-input-screen h4.te-tis-h4 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .signin-container {
+    padding: 5px;
+  }
+  
+  .content-wrapper {
+    margin: 10px 0;
+    border-radius: 8px;
+  }
+  
+  .signin-left {
+    padding: 20px 15px;
+  }
+  
+  .task-input-screen h4.te-tis-h4 {
+    font-size: 18px;
+  }
+  
+  .input-field {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .execute-button,
+  .next-button,
+  .try-again-button {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+}
+@media (max-width: 768px) and (orientation: landscape) {
+  .loading-image {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1rem;
+  }
+  
+  .status-image {
+    width: 80px;
+  }
+  
+  .instruction-section {
+    margin-bottom: 1rem;
+  }
+  
+  .navigation-links {
+    margin-top: 1rem;
+  }
 }

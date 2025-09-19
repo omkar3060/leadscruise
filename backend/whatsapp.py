@@ -770,7 +770,7 @@ if __name__ == "__main__":
         sys.exit(1)
     
     # Parse command line arguments
-    whatsapp_number = sys.argv[1]
+    whatsapp_number = "9148016901"
     messages_json = sys.argv[2]
     receiver_number = sys.argv[3]
     

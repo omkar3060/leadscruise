@@ -81,7 +81,7 @@
 }
 
 .billing-table thead th {
-  background-color: #6ea8fe;
+  background-color: white;
   font-weight: bold;
   position: sticky;
   top: 0;
@@ -130,7 +130,7 @@
 }
 
 .billing-header {
-  background-color: #6ea8fe;
+  background-color: #fff;
   color: black;
   font-size: 16px;
   font-weight: bold;
@@ -219,7 +219,7 @@
 /* Edit Button */
 .edit-button,.save-button,.cancel-button {
   display: block;
-  background-color: #5cb85c;
+  background-color: #000;
   color: white;
   padding: 10px;
   text-align: center;
@@ -247,7 +247,7 @@
 }
 
 .edit-button:hover {
-  background-color: #218838;
+  background-color: #000;
 }
 
 .edit-button-container{

@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import "./styles.css";
+import "./TaskExecutor.css";
 import "./Signin.css";
+import "./Plans.css";
+import styles from "./Dashboard.module.css";
+import loginBg from "../images/login-background.jpg";
 import logo from "../images/logo_front.png";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
@@ -11,6 +15,108 @@ import successImage from "../images/success.png";
 import errorImage from "../images/error.png";
 import loadingGif from "../images/loading.gif";
 import { Eye, EyeOff } from "lucide-react";
+
+// Custom hook for dynamic separator (same as TaskExecutor)
+const useDynamicSeparator = () => {
+  useEffect(() => {
+    const updateSeparatorHeight = () => {
+      const loginBox = document.querySelector('.login-box');
+      
+      // Only apply on larger screens where separator is visible
+      if (loginBox && window.innerWidth > 1200) {
+        const boxHeight = loginBox.offsetHeight;
+        
+        // Set CSS custom property for separator height
+        document.documentElement.style.setProperty('--separator-height', boxHeight + 'px');
+      } else {
+        // Reset the custom property on smaller screens
+        document.documentElement.style.removeProperty('--separator-height');
+      }
+    };
+    
+    // Update on mount
+    updateSeparatorHeight();
+    
+    // Update on window resize
+    const handleResize = () => {
+      updateSeparatorHeight();
+    };
+    
+    // Update when login box content changes
+    const handleMutation = () => {
+      setTimeout(updateSeparatorHeight, 100); // Small delay to ensure DOM is updated
+    };
+    
+    // Set up event listeners
+    window.addEventListener('resize', handleResize);
+    
+    // Use MutationObserver to detect changes in login box content
+    const observer = new MutationObserver(handleMutation);
+    const loginBox = document.querySelector('.login-box');
+    
+    if (loginBox) {
+      observer.observe(loginBox, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      });
+    }
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
+  }, []);
+};
+
+const TypingAnimation = () => {
+  const messages = [
+    "working 24×7 !",
+    "capturing leads automatically !",
+    "sending messages on WhatsApp !"
+  ];
+  
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [currentText, setCurrentText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState(50);
+
+  useEffect(() => {
+    const handleTyping = () => {
+      const currentMessage = messages[currentMessageIndex];
+      
+      if (isDeleting) {
+        setCurrentText(currentMessage.substring(0, currentText.length - 1));
+        setTypingSpeed(25);
+      } else {
+        setCurrentText(currentMessage.substring(0, currentText.length + 1));
+        setTypingSpeed(50);
+      }
+
+      if (!isDeleting && currentText === currentMessage) {
+        setTimeout(() => setIsDeleting(true), 1000); // Pause before deleting
+      } else if (isDeleting && currentText === '') {
+        setIsDeleting(false);
+        setCurrentMessageIndex((prevIndex) => (prevIndex + 1) % messages.length);
+      }
+    };
+
+    const timer = setTimeout(handleTyping, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [currentText, isDeleting, currentMessageIndex, typingSpeed, messages]);
+
+  return (
+    <div className="typing-container">
+      <span className="static-text">Your LeadsCruise AI is </span>
+      <span className="typing-text">
+        {currentText}
+        <span className="cursor">|</span>
+      </span>
+    </div>
+  );
+};
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -28,6 +134,9 @@ const ResetPassword = () => {
   var email = searchParams.get("email");
 
   email = decodeURIComponent(email);
+
+  // Add the dynamic separator hook
+  useDynamicSeparator();
 
   useEffect(() => {
     if (!token) {
@@ -56,6 +165,8 @@ const ResetPassword = () => {
 
     console.log({ token, newPassword, email });
 
+    setStatus("loading");
+
     try {
       const response = await fetch("https://api.leadscruise.com/api/reset-password", {
         method: "POST",
@@ -80,8 +191,10 @@ const ResetPassword = () => {
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
+      setStatus("error");
     }
   };
+
   const strongPasswordRegex =
     /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
@@ -103,14 +216,15 @@ const ResetPassword = () => {
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
 
-    if (!isConfirmed) return; // Stop if user cancels
+    if (!isConfirmed) return;
 
     const userEmail = localStorage.getItem("userEmail");
-    if(!userEmail) {
+    if (!userEmail) {
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
           ? "https://app.leadscruise.com/"
           : "http://localhost:3000";
+      return;
     }
 
     try {
@@ -129,251 +243,189 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="signin-container">
-      <div className="center-div">
-        <div className="signin-left">
-          {status === "loading" && (
-            <div className="loading-screen">
-              <img
-                src={loadingGif}
-                alt="Loading"
-                className="loading-gif"
-                style={{
-                  width: "150px",
-                  height: "125px",
-                  marginBottom: "20px",
-                }}
-              />
-              <p>Please, wait....</p>
-              <p className="logout-link">
-                Wish to <span onClick={handleLogout}>Logout?</span>
-              </p>
-            </div>
-          )}
+    <div className="login-page-container" style={{ backgroundImage: `url(${loginBg})` }}>
+      <div className="login-form-wrapper">
+        <div className="login-box">
+          <div className="login-form-container">
+            {status === "idle" && (
+              <>
+                <h1 className="login-title">Reset Your Password</h1>
+                <div className="instruction-section">
+                  <p className="instruction-text">Enter your new password below to reset your account password</p>
+                  <div className="warning-box">
+                    <p className="warning-text">Password must contain at least 8 characters, an uppercase letter, a lowercase letter, a number, and a special character.</p>
+                    <p className="warning-text">Make sure both passwords match before proceeding.</p>
+                  </div>
+                </div>
+                
+                <div className="input-group">
+                  <label htmlFor="email">Email Address</label>
+                  <input 
+                    type="email" 
+                    id="email" 
+                    placeholder="Enter Your Email Address"
+                    value={email}
+                    name="email"
+                    autoComplete="email"
+                    readOnly
+                    required 
+                  />
+                </div>
 
-          {status === "success" && (
-            <div className="success-screen">
-              <div className="icon-cont">
-                <h2>Password Changed</h2>
-                <div className="success-icon">
+                <div className="input-group">
+                  <label htmlFor="newPassword">New Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type={showPassword ? "text" : "password"}
+                      id="newPassword" 
+                      placeholder="New Password"
+                      value={newPassword}
+                      onChange={handlePasswordChange}
+                      name="password"
+                      autoComplete="new-password"
+                      onFocus={() => setShowError(true)}
+                      onBlur={() => setShowError(false)}
+                      required 
+                      style={{ paddingRight: '45px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '12px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#666',
+                        height: '20px',
+                        width: '28px'
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label htmlFor="confirmPassword">Confirm Password</label>
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    id="confirmPassword" 
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    name="confirmpassword"
+                    autoComplete="new-password"
+                    required 
+                  />
+                </div>
+                
+                <p className="confirm-text">
+                  By clicking next you confirm to reset your password
+                </p>
+
+                <button onClick={handleResetPassword} className="login-button">
+                  Reset Password
+                </button>
+
+                <div className="navigation-links">
+                  <p className="back-link" onClick={() => navigate("/")}>
+                    Back to Sign In
+                  </p>
+                  <p className="logout-text">
+                    Need help? <span onClick={handleLogout} className="logout-link">Contact Support</span>
+                  </p>
+                </div>
+
+                {showError && error && <p className="error-message">{error}</p>}
+              </>
+            )}
+
+            {status === "loading" && (
+              <div className="loading-content">
+                <img
+                  src={loadingGif}
+                  alt="Loading"
+                  className="loading-image"
+                />
+                <p className="loading-text">Please wait while we reset your password.</p>
+              </div>
+            )}
+
+            {status === "success" && (
+              <div className="success-content">
+                <h1 className="login-title">Password Changed</h1>
+                <div className="status-icon">
                   <img
                     src={successImage}
                     alt="Success"
-                    style={{ width: "175px", height: "125px" }}
+                    className="status-image"
                   />
                 </div>
-                <p>Great!! Password Succesfully Updated.</p>
-              </div>
-              <p
-                className="instruction"
-                style={{
-                  color: "black",
-                  fontWeight: "500",
-                  fontSize: "17px",
-                  textAlign: "center",
-                }}
-              >
-                You can now signin with new password clicking next.
-              </p>
-              <button className="next-button" onClick={() => navigate("/")}>
-                Sign In
-              </button>
-
-              <div className="end-block">
-                <p className="gback" onClick={() => window.location.reload()}>
-                  Go Back
+                <p className="status-message">Great!! Password Successfully Updated.</p>
+                <p className="confirm-text">
+                  You can now sign in with your new password by clicking next.
                 </p>
-                <p className="logout-link">
-                  Wish to <span onClick={handleLogout}>Logout</span>?
-                </p>
-              </div>
-            </div>
-          )}
-
-          {status === "error" && (
-            <div className="error-screen">
-              <h2>Check Status</h2>
-              <div className="error-icon">
-                <img
-                  src={errorImage}
-                  alt="Error"
-                  style={{ width: "225px", height: "125px" }}
-                />
-              </div>
-              <p>
-                Oops! There was a Problem Updating Your Password, Try Again to
-                Update Your Password.
-              </p>
-              <button
-                onClick={() => setStatus("idle")}
-                className="try-again-button"
-              >
-                Try Again
-              </button>
-              <p className="logout-link">
-                Wish to <span onClick={handleLogout}>Logout?</span>
-              </p>
-            </div>
-          )}
-
-          {status === "idle" && (
-            <div>
-              <div className="signin-logo-class">
-                <img
-                  src={logo} // Use the imported image
-                  alt="LeadsCruise Logo"
-                  onClick={() => navigate("/")} // Navigate to home when clicked
-                // Add styling if needed
-                />
-                <div className="smart-scan" onClick={() => navigate("/")}>
-                  {/* <img
-                src="https://previews.123rf.com/images/fokaspokas/fokaspokas1809/fokaspokas180900207/108562561-scanning-qr-code-technology-icon-white-icon-with-shadow-on-transparent-background.jpg"
-                alt=""
-                className="scan-icon"
-              /> */}
-                  <img
-                    src="https://icons.veryicon.com/png/o/miscellaneous/esgcc-basic-icon-library/1-login.png"
-                    alt=""
-                  />
-                  <span>Sign In</span>
-                </div>
-              </div>
-              <h2 className="signin-tag">Reset Your Password</h2>
-              <p className="signin-descriptor">to access Leads Cruise Home</p>
-              <input
-                type="email"
-                placeholder="Enter Your Email Address"
-                value={email}
-                name="email"
-                autoComplete="email"
-                readOnly
-              />
-              <div className="pass-cont">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="New Password"
-                  value={newPassword}
-                  onChange={handlePasswordChange}
-                  name="password"
-                  autoComplete="current-password"
-
-                  onFocus={() => setShowError(true)}
-                  onBlur={() => setShowError(false)}
-                />
-
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  name="confirmpassword"
-                  autoComplete="current-password"
-                />
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => navigate("/")}
+                  className="login-button"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  Sign In
                 </button>
-              </div>
-              <button onClick={handleResetPassword}>Next</button>
-
-            </div>
-          )}
-        </div>
-
-        <div className="signin-right">
-          <div className="banner-container">
-            {/* First Banner */}
-            <div
-              className={`banner overlapBanner ${selected === 0 ? "active" : ""
-                }`}
-            >
-              <div className="rightbanner">
-                <div
-                  className="banner1_img"
-                  style={{
-                    backgroundImage: `url(${bgImage1})`,
-                  }}
-                ></div>
-                <div className="banner1_heading">
-                  Intergrate AI to your Business
+                <div className="navigation-links">
+                  <p className="back-link" onClick={() => window.location.reload()}>
+                    Go Back
+                  </p>
+                  <p className="logout-text">
+                    Wish to <span onClick={handleLogout} className="logout-link">Logout</span>?
+                  </p>
                 </div>
-                <div className="banner1_content">
-                  Let our AI do all the work even while you sleep. With
-                  leadscruise all the software tasks are now automated with AI
+              </div>
+            )}
+
+            {status === "error" && (
+              <div className="error-content">
+                <h1 className="login-title">Reset Failed</h1>
+                <div className="status-icon">
+                  <img
+                    src={errorImage}
+                    alt="Error"
+                    className="status-image"
+                  />
                 </div>
-                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
-              </div>
-            </div>
-
-            {/* Second Banner */}
-            <div
-              className={`banner mfa_panel ${selected === 1 ? "active" : ""}`}
-            >
-              <div
-                className="product_img"
-                style={{
-                  width: "300px",
-                  height: "240px",
-                  margin: "auto",
-                  backgroundSize: "100%",
-                  backgroundRepeat: "no-repeat",
-                  backgroundImage: `url(${bgImage2})`,
-                }}
-              ></div>
-              <div className="banner1_heading">A Rocket for your Business</div>
-              <div className="banner2_content">
-                Get to customers within the blink of opponent's eyes,
-                LeadsCruise provides 100% uptime utilising FA cloud systems
-              </div>
-              <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                Learn more
-              </a>
-            </div>
-
-            <div
-              className={`banner taskBanner ${selected === 2 ? "active" : ""}`}
-            >
-              <div className="rightbanner">
-                <div
-                  className="banner3_img"
-                  style={{
-                    backgroundImage: `url(${bgImage3})`,
-                  }}
-                ></div>
-                <div className="banner1_heading">All tasks on time</div>
-                <div className="banner1_content">
-                  With leadscruise all the tasks are now automated so that you
-                  no more need to do them manually
+                <p className="status-message">
+                  Oops! There was a problem updating your password. Try again to update your password.
+                </p>
+                <button
+                  onClick={() => setStatus("idle")}
+                  className="login-button"
+                >
+                  Try Again
+                </button>
+                <div className="navigation-links">
+                  <p className="back-link" onClick={() => navigate("/")}>
+                    Back to Sign In
+                  </p>
+                  <p className="logout-text">
+                    Wish to <span onClick={handleLogout} className="logout-link">Logout</span>?
+                  </p>
                 </div>
-                <a className="banner1_href" href="https://leadscruise.com" rel="noopener noreferrer">
-                  Learn more
-                </a>
               </div>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="pagination-container">
-              <div
-                className={`pagination-dot ${selected === 0 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-              <div
-                className={`pagination-dot ${selected === 1 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-              <div
-                className={`pagination-dot ${selected === 2 ? "selected" : ""}`}
-              >
-                <div className="progress-fill"></div>
-              </div>
-            </div>
+            )}
           </div>
+        </div>
+      </div>
+
+      <div className="login-info-panel">
+        <div className="info-box">
+          <TypingAnimation />
+          <button className="arrow-button" aria-label="More info">↑</button>
         </div>
       </div>
     </div>

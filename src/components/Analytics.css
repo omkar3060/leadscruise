@@ -37,9 +37,9 @@
 }
 
 .button-selected {
-  background-color: #007bff !important;
+  background-color: #000 !important;
   color: white;
-  border-color: #007bff !important;
+  border-color: #000 !important;
 }
 
 .button-not-selected {

@@ -1,3 +1,11 @@
+body, html {
+    background-image: url('../images/login-background.jpg') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+}
 body {
   font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
     "Lucida Sans", Arial, sans-serif;
@@ -87,7 +95,7 @@ button {
 }
 
 button:hover {
-  background-color: #005bb5;
+  background-color: #000;
 }
 
 .learn-more {
