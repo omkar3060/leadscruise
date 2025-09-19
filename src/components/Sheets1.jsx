@@ -1045,7 +1045,7 @@ const Sheets = () => {
     </button>
     <button className={styles.buttonLarge} 
     onClick={() => console.log("download")}  
-    style={{ marginBottom: 0 }}
+    // style={{ marginBottom: 0 }}
     >
       Download Reports From LeadsCruise
     </button>

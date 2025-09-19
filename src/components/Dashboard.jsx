@@ -931,7 +931,7 @@ const Dashboard = () => {
     </button>
     <button className={styles.buttonLarge} 
     onClick={handleDownloadLeadsExcel}
-    style={{ marginBottom: 0 }}
+    // style={{ marginBottom: 0 }}
     >
       Download Reports From LeadsCruise
     </button>
