@@ -881,9 +881,9 @@ const Dashboard = () => {
   borderRadius: "8px", 
   boxShadow: "0 2px 8px rgba(0,0,0,0.1)", 
   padding: "20px 40px",
-  margin: "20px",
+  margin: "0px 20px 15px 20px",  // Reduced from 20px to 10px top margin,
   display: "flex",
-  justifyContent: "space-between",
+  justifyContent: "space-between", 
   alignItems: "center"
 }}>
 
@@ -943,12 +943,12 @@ const Dashboard = () => {
 
 
           {/* Recent Leads Table */}
-        <div className={styles.leadsSection}>
+        <div className={styles.leadsSection}  style={{ height: 'calc(100vh - 410px)' }}>
           <div className={styles.mobileOnlyMessage}>
             <p>Use Desktop to login to see recent leads captured information</p>
           </div>
 
-          <div className={styles.tableWrapper}>
+          <div className={styles.tableWrapper} >
 
             <table className={styles.leadsTable}>
               <thead>

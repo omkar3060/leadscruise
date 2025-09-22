@@ -995,7 +995,7 @@ const Sheets = () => {
   borderRadius: "8px", 
   boxShadow: "0 2px 8px rgba(0,0,0,0.1)", 
   padding: "20px 40px",
-  margin: "20px",
+  margin: "0px 20px 15px 20px",  // Reduced from 20px to 10px top margin
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center"
@@ -1112,7 +1112,9 @@ const Sheets = () => {
                       <th style={{ width: '100px' }}>Action</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody style={{  
+                   overflowY: 'auto',  
+                      }}>
                     {leads.map((lead, index) => {
                       const isRejected = isLeadRejected(lead.lead_bought);
                       return (

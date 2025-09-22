@@ -222,7 +222,7 @@
 }
 
 .demo-bold {
-  color: #000; /* Bold black for "Demo?" */
+  color: white; /* Bold black for "Demo?" */
   font-weight: 600; /* Bold weight for "Demo?" */
 }
 
@@ -231,7 +231,7 @@
 }
 
 .logout-link {
-  color: red;
+  color: #3b82f6;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;

@@ -207,7 +207,7 @@
 
 .buttonSmall {
   color: #555;
-  border: 1px solid #ccc;
+  border: 1px solid black;
 }
 
 .buttonLarge {
@@ -254,7 +254,10 @@
   /* max-height: 400px; Prevents unwanted shrinking */
   display: flex;
   flex-direction: column;
-  height: 59%;
+  height: 45vh;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Add shadow if needed */
+  margin: 0 20px; /* Add margins to match other sections */
 }
 
 /* Table Wrapper */
@@ -262,7 +265,7 @@
   overflow-y: auto;
   overflow-x: auto; /* Allows horizontal scrolling if needed */
   z-index: 0;
-
+  height: 45vh;
 }
 
 /* Table Header */
@@ -293,6 +296,7 @@
   padding: 12px;
   text-align: left;
   font-size: 14px;
+  background-color: white;
 }
 
 /* Sticky Header */

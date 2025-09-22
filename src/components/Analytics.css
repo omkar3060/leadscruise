@@ -19,6 +19,9 @@
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   padding: 5px;
+  width:98%; /*hereeeeeeeeeeeeeee*/
+  margin-left: 15px;
+  margin-right: 100px;
 }
 
 .chart-selection {
@@ -68,9 +71,12 @@
   flex-wrap: wrap;
   gap: 20px;
   margin-top: 10px;
-  overflow-y: scroll;
+  margin-left: 15px;
+  margin-right: 20px;
+  /*overflow-y: scroll;*/
   flex-direction: row;
-  height: 70%;
+  height: 60%;
+  background-color: white;
 }
 
 .table-section {
@@ -108,7 +114,7 @@
 .table-section thead {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 0;
   background-color: #f1f1f1;
 }
 
@@ -120,7 +126,7 @@
   border-bottom: 2px solid #ddd;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Add shadow for better separation */
 }
 
@@ -162,3 +168,11 @@
     height: 40vh;
   }
 }
+.contact-support-overlay,
+   .contact-support-popup,
+   .modal-overlay,
+   .popup-overlay {
+     z-index: 9999 !important;
+     position: fixed !important;
+   }
+   /* Add to your Analytics.css - Better image rendering */

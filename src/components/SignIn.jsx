@@ -582,11 +582,50 @@ const SignIn = () => {
 
   return (
     <div className="login-page-container" style={{ backgroundImage: `url(${loginBg})` }}>
-      {isLoading && (
-        <div className="loading-overlay">
-          <p>Loading...</p>
-        </div>
-      )}
+      
+
+{isLoading && (
+  <div className="loading-overlay">
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <div className="loading-text">Please wait<span className="loading-dots"></span></div>
+      <div className="loading-message">Processing your request</div>
+    </div>
+  </div>
+)}
+
+
+{isLoading && (
+  <div className="loading-overlay">
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <div className="loading-text">Sending reset email<span className="loading-dots"></span></div>
+      <div className="loading-message">Please check your inbox in a moment</div>
+    </div>
+  </div>
+)}
+
+
+{isLoading && (
+  <div className="loading-overlay">
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <div className="loading-text">Signing you in<span className="loading-dots"></span></div>
+      <div className="loading-message">This may take a few seconds</div>
+    </div>
+  </div>
+)}
+
+
+{isLoading && (
+  <div className="loading-overlay">
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <div className="loading-text">Connecting<span className="loading-dots"></span></div>
+      <div className="loading-message">Authenticating with your account</div>
+    </div>
+  </div>
+)}
       <div className="login-form-wrapper">
         <div className="login-box">
         <div className="login-form-container">

@@ -249,7 +249,11 @@ const Plans = () => {
     }
     setShowModal(true); // you can later show your coupon popup here
   };
-
+  const handleGoBack = () => {
+  navigate(-1); // Goes back to previous page
+  // OR if you want to go to a specific route:
+  // navigate('/specific-route');
+};
   const handleDemoClick = () => {
     handlePlanSelect("1-day", "0", "Demo Plan");
     setShowModal(true);
@@ -534,7 +538,7 @@ const Plans = () => {
         <div className="demo-section">
           <button className="demo-link" onClick={handleDemoClick}>Need a&nbsp;<span className="demo-bold">Demo?</span></button>
         </div>
-        <button className="logout-link" onClick={handleLogout}>Logout</button>
+        <button className="logout-link" onClick={handleGoBack}>Go Back</button>
       </div>
 
       {showModal && (
