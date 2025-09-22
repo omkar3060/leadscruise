@@ -1045,7 +1045,7 @@ const Sheets = () => {
     </button>
     <button className={styles.buttonLarge} 
     onClick={() => console.log("download")}  
-    // style={{ marginBottom: 0 }}
+    style={{ marginBottom: 0 }}
     >
       Download Reports From LeadsCruise
     </button>
@@ -1099,7 +1099,7 @@ const Sheets = () => {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table className={`${styles.leadsTable} ${styles.tablePadding}`}>
+                <table className={`${styles.leadsTable} ${styles.tablePadding}`}> 
                   <thead>
                     <tr>
                       <th style={{ width: '50px' }}>No.</th> {/* New column for row number */}
