@@ -1503,19 +1503,16 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     // Fetch WhatsApp settings
     // const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
     // const user = await User.findOne({ mobileNumber: user_mobile_number });
-
     // if (!settings || !settings.whatsappNumber || !settings.messages) {
     //   console.warn("No WhatsApp settings found for this user");
     //   return res.json({ message: "Lead data stored successfully", lead: newLead });
     // }
-
     // const receiverNumber = mobile; // Use the mobile number from the lead
     // let templateMessage = settings.messages[0];
     // templateMessage = templateMessage
     //   .replace("{lead_name}", name)
     //   .replace("{lead_product_requested}", lead_bought)
     //   .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
-
     // // Instead of running WhatsApp script immediately, add to queue
     // const whatsappQueueItem = new WhatsAppMessageQueue({
     //   user_mobile_number,
@@ -1526,11 +1523,8 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     //   status: 'pending',
     //   scheduledAt: new Date() // Process immediately, but queue processor will handle timing
     // });
-
     // await whatsappQueueItem.save();
-
     // console.log("WhatsApp message added to queue:", whatsappQueueItem._id);
-
     // Return immediately after queuing
     return res.json({
       message: "Lead data stored successfully",
@@ -1549,24 +1543,19 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //     this.isProcessing = false;
 //     this.processInterval = null;
 //   }
-
 //   start() {
 //     if (this.processInterval) {
 //       console.log("Queue processor is already running");
 //       return;
 //     }
-
 //     console.log("Starting WhatsApp queue processor...");
-    
 //     // Check for messages every 10 seconds
 //     this.processInterval = setInterval(() => {
 //       this.processQueue();
 //     }, 10000);
-
 //     // Process immediately on start
 //     this.processQueue();
 //   }
-
 //   stop() {
 //     if (this.processInterval) {
 //       clearInterval(this.processInterval);
@@ -1574,15 +1563,12 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //       console.log("WhatsApp queue processor stopped");
 //     }
 //   }
-
 //   async processQueue() {
 //     if (this.isProcessing) {
 //       console.log("Queue processor is already running, skipping this cycle");
 //       return;
 //     }
-
 //     this.isProcessing = true;
-
 //     try {
 //       // Find the next pending message that's scheduled to be sent
 //       const nextMessage = await WhatsAppMessageQueue.findOne({
@@ -1590,24 +1576,19 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //         scheduledAt: { $lte: new Date() },
 //         attempts: { $lt: 3 } // Max 3 attempts
 //       }).sort({ scheduledAt: 1 });
-
 //       if (!nextMessage) {
 //         // No messages to process
 //         this.isProcessing = false;
 //         return;
 //       }
-
 //       console.log(`Processing WhatsApp message: ${nextMessage._id}`);
-
 //       // Mark as processing
 //       nextMessage.status = 'processing';
 //       nextMessage.attempts += 1;
 //       nextMessage.lastAttempt = new Date();
 //       await nextMessage.save();
-
 //       // Process the message
 //       const result = await this.sendWhatsAppMessage(nextMessage);
-
 //       if (result.success) {
 //         // Mark as completed
 //         nextMessage.status = 'completed';
@@ -1616,12 +1597,9 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //           nextMessage.verificationCode = result.verificationCode;
 //         }
 //         await nextMessage.save();
-
 //         console.log(`WhatsApp message completed: ${nextMessage._id}`);
-
 //         // Schedule next message processing with 60-second delay
 //         await this.scheduleNextMessages();
-
 //       } else {
 //         // Handle failure
 //         if (nextMessage.attempts >= nextMessage.maxAttempts) {
@@ -1633,49 +1611,39 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //           nextMessage.scheduledAt = new Date(Date.now() + 5 * 60 * 1000);
 //         }
 //         await nextMessage.save();
-
 //         console.log(`WhatsApp message failed: ${nextMessage._id}, attempts: ${nextMessage.attempts}`);
 //       }
-
 //     } catch (error) {
 //       console.error("Error in queue processor:", error);
 //     } finally {
 //       this.isProcessing = false;
 //     }
 //   }
-
 //   async scheduleNextMessages() {
 //     // Find all pending messages and ensure they have proper spacing
 //     const pendingMessages = await WhatsAppMessageQueue.find({
 //       status: 'pending',
 //       attempts: { $lt: 3 }
 //     }).sort({ scheduledAt: 1 });
-
 //     if (pendingMessages.length === 0) return;
-
 //     // Schedule messages with 60-second gaps
 //     const now = new Date();
 //     const baseTime = new Date(now.getTime() + 60000); // Start 60 seconds from now
-
 //     for (let i = 0; i < pendingMessages.length; i++) {
 //       const message = pendingMessages[i];
 //       const scheduledTime = new Date(baseTime.getTime() + (i * 60000)); // 60 seconds apart
-      
 //       if (message.scheduledAt < scheduledTime) {
 //         message.scheduledAt = scheduledTime;
 //         await message.save();
 //       }
 //     }
 //   }
-
 //   async sendWhatsAppMessage(messageItem) {
 //     return new Promise((resolve) => {
 //       let verificationCode = null;
 //       let errorOutput = "";
 //       let isCompleted = false;
-
 //       const messagesJSON = JSON.stringify([messageItem.templateMessage]);
-
 //       // Start the Python process
 //       const pythonProcess = spawn('python3', [
 //         'whatsapp.py',
@@ -1683,24 +1651,19 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //         messagesJSON,
 //         messageItem.receiverNumber,
 //       ]);
-
 //       const rl = readline.createInterface({ input: pythonProcess.stdout });
-
 //       rl.on('line', async (line) => {
 //         console.log(`Python output for ${messageItem._id}: ${line}`);
-
 //         // Handle specific errors that should be ignored
 //         if (line.includes("504 Gateway Time-out") ||
 //           line.includes("Failed to send data") ||
 //           line.includes("Send button not found or not clickable")) {
 //           console.warn("Detected known error but continuing execution:", line);
 //         }
-
 //         const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
 //         if (codeMatch && codeMatch[1]) {
 //           verificationCode = codeMatch[1];
 //           console.log(`Verification code captured for ${messageItem._id}: ${verificationCode}`);
-
 //           try {
 //             // Update the verificationCode in WhatsApp settings
 //             await WhatsAppSettings.findOneAndUpdate(
@@ -1714,19 +1677,15 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //           }
 //         }
 //       });
-
 //       pythonProcess.stderr.on('data', (data) => {
 //         const errorMsg = data.toString();
 //         errorOutput += errorMsg;
 //         console.error(`Python error for ${messageItem._id}: ${errorMsg}`);
 //       });
-
 //       pythonProcess.on('close', (code) => {
 //         if (isCompleted) return;
 //         isCompleted = true;
-
 //         console.log(`WhatsApp script for ${messageItem._id} exited with code ${code}`);
-
 //         if (code === 0 || code === null) {
 //           resolve({ success: true, verificationCode });
 //         } else {
@@ -1738,20 +1697,16 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //           });
 //         }
 //       });
-
 //       pythonProcess.on('error', (err) => {
 //         if (isCompleted) return;
 //         isCompleted = true;
-
 //         console.error(`Failed to start Python process for ${messageItem._id}:`, err);
 //         resolve({ success: false, error: err.message });
 //       });
-
 //       // Set timeout for this specific message (10 minutes)
 //       const timeout = setTimeout(() => {
 //         if (isCompleted) return;
 //         isCompleted = true;
-
 //         console.log(`WhatsApp script for ${messageItem._id} reached timeout, completing process`);
 //         pythonProcess.kill();
 //         resolve({
@@ -1761,33 +1716,27 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //           verificationCode
 //         });
 //       }, 10 * 60 * 1000);
-
 //       pythonProcess.on('close', () => {
 //         clearTimeout(timeout);
 //       });
 //     });
 //   }
 // }
-
 // // Initialize and start the queue processor
 // const whatsappQueueProcessor = new WhatsAppQueueProcessor();
-
 // // Start the processor when the application starts
 // whatsappQueueProcessor.start();
-
 // Graceful shutdown
 // process.on('SIGTERM', () => {
 //   console.log('Received SIGTERM, stopping queue processor...');
 //   whatsappQueueProcessor.stop();
 //   process.exit(0);
 // });
-
 // process.on('SIGINT', () => {
 //   console.log('Received SIGINT, stopping queue processor...');
 //   whatsappQueueProcessor.stop();
 //   process.exit(0);
 // });
-
 // Optional: API endpoints to manage the queue
 // app.get("/api/whatsapp-queue/status", async (req, res) => {
 //   try {
@@ -1799,11 +1748,9 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //         }
 //       }
 //     ]);
-
 //     const pending = await WhatsAppMessageQueue.find({
 //       status: 'pending'
 //     }).sort({ scheduledAt: 1 }).limit(10);
-
 //     res.json({
 //       stats,
 //       nextPendingMessages: pending
@@ -1812,7 +1759,6 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //     res.status(500).json({ error: error.message });
 //   }
 // });
-
 // app.post("/api/whatsapp-queue/retry-failed", async (req, res) => {
 //   try {
 //     const result = await WhatsAppMessageQueue.updateMany(
@@ -1823,7 +1769,6 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //         errorMessage: null
 //       }
 //     );
-
 //     res.json({
 //       message: `${result.modifiedCount} failed messages queued for retry`
 //     });
@@ -1969,6 +1914,71 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
   }
 });
 
+app.get("/api/get-user-leads-with-message/:userMobile", async (req, res) => {
+  try {
+    const { userMobile } = req.params;
+
+    if (!userMobile) {
+      return res.status(400).json({ error: "User mobile number is required" });
+    }
+
+    // Fetch WhatsApp settings for this user
+    const settings = await WhatsAppSettings.findOne({ mobileNumber: userMobile });
+    const user = await User.findOne({ mobileNumber: userMobile });
+
+    if (!settings || !settings.whatsappNumber || !settings.messages || settings.messages.length === 0) {
+      console.warn("No WhatsApp settings found for this user");
+      return res.status(404).json({
+        success: false,
+        message: "No WhatsApp settings found for this user"
+      });
+    }
+
+    // Fetch all leads
+    const leads = await FetchedLead.find({
+      user_mobile_number: userMobile
+    })
+      .sort({ createdAt: -1 })
+      .select("name email mobile lead_bought createdAt address");
+
+    // Prepare message for each lead
+    const leadsWithMessages = leads.map((lead) => {
+      let templateMessage = settings.messages[0]; // pick first template
+      templateMessage = templateMessage
+        .replace("{lead_name}", lead.name || "")
+        .replace("{lead_product_requested}", lead.lead_bought || "")
+        .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
+
+      return {
+        ...lead._doc,
+        whatsappMessage: templateMessage,
+        receiverNumber: lead.mobile
+      };
+    });
+
+    const responsePayload = {
+      success: true,
+      totalLeads: leadsWithMessages.length,
+      leads: leadsWithMessages,
+      generated_at: new Date().toISOString()
+    };
+
+    // Save response to api_response.json
+    const filePath = path.join(process.cwd(), "api_response.json");
+    fs.writeFileSync(filePath, JSON.stringify(responsePayload, null, 2));
+
+    res.status(200).json(responsePayload);
+
+  } catch (error) {
+    console.error("Error fetching user leads with message:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message: error.message
+    });
+  }
+});
+
 app.post("/api/data-received-confirmation", async (req, res) => {
   try {
     const {
@@ -1991,7 +2001,7 @@ app.post("/api/data-received-confirmation", async (req, res) => {
     console.log(`Leads Retrieved: ${received_data_summary?.leads_count}`);
     console.log("================================");
 
-    // Prepare data object to store
+    // Prepare data object (overwrite each time)
     const confirmationData = {
       status,
       message,
@@ -2002,18 +2012,9 @@ app.post("/api/data-received-confirmation", async (req, res) => {
       received_at: new Date().toISOString()
     };
 
-    // Save to confirmations.json (append mode)
-    const filePath = path.join(__dirname, "confirmations.json");
-
-    let existingData = [];
-    if (fs.existsSync(filePath)) {
-      const fileContent = fs.readFileSync(filePath, "utf-8");
-      existingData = JSON.parse(fileContent || "[]");
-    }
-
-    existingData.push(confirmationData);
-
-    fs.writeFileSync(filePath, JSON.stringify(existingData, null, 2));
+    // Overwrite confirmations.json
+    const filePath = path.join(process.cwd(), "confirmations.json");
+    fs.writeFileSync(filePath, JSON.stringify(confirmationData, null, 2));
 
     // Send success response back to client
     res.status(200).json({

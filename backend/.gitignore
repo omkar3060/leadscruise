@@ -27,3 +27,8 @@ whatsapp_profiles/
 firefox_profiles/
 __pycache__/
 dist/
+whatsapp_automation.log
+lead_fetcher.spec
+api_response.json
+confirmations.json
+
