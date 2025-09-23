@@ -5,19 +5,252 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 import threading
+import base64
+
+class LoginApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("LeadsCruise Login")
+        self.root.geometry("400x350")
+        self.root.resizable(False, False)
+        
+        # Center the window
+        self.root.update_idletasks()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        self.root.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Login API Configuration
+        self.login_url = "http://localhost:5000/api/login"
+        
+        # Setup Login GUI
+        self.setup_login_gui()
+        
+    def setup_login_gui(self):
+        # Main frame
+        main_frame = ttk.Frame(self.root, padding="20")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Logo/Title
+        title_label = ttk.Label(main_frame, text="LeadsCruise", 
+                               font=("Arial", 20, "bold"))
+        title_label.pack(pady=(0, 10))
+        
+        subtitle_label = ttk.Label(main_frame, text="Lead Management System", 
+                                  font=("Arial", 12))
+        subtitle_label.pack(pady=(0, 20))
+        
+        # Email
+        email_frame = ttk.Frame(main_frame)
+        email_frame.pack(fill=tk.X, pady=5)
+        ttk.Label(email_frame, text="Email:").pack(anchor=tk.W)
+        self.email_var = tk.StringVar()
+        email_entry = ttk.Entry(email_frame, textvariable=self.email_var, width=30)
+        email_entry.pack(fill=tk.X, pady=5)
+        
+        # Password
+        password_frame = ttk.Frame(main_frame)
+        password_frame.pack(fill=tk.X, pady=5)
+        ttk.Label(password_frame, text="Password:").pack(anchor=tk.W)
+        self.password_var = tk.StringVar()
+        password_entry = ttk.Entry(password_frame, textvariable=self.password_var, width=30, show="*")
+        password_entry.pack(fill=tk.X, pady=5)
+        
+        # Show Password Checkbox
+        self.show_password_var = tk.BooleanVar()
+        show_password_cb = ttk.Checkbutton(password_frame, text="Show Password", 
+                                          variable=self.show_password_var,
+                                          command=self.toggle_password_visibility)
+        show_password_cb.pack(anchor=tk.W, pady=5)
+        
+        # Login Button
+        self.login_button = ttk.Button(main_frame, text="Login", 
+                                      command=self.login_threaded)
+        self.login_button.pack(pady=10)
+        
+        # Status label
+        self.status_var = tk.StringVar(value="Enter your credentials to login")
+        status_label = ttk.Label(main_frame, textvariable=self.status_var)
+        status_label.pack(pady=5)
+        
+        # Progress bar (hidden initially)
+        self.progress = ttk.Progressbar(main_frame, mode='indeterminate', length=300)
+        
+        # Demo credentials hint
+        hint_frame = ttk.Frame(main_frame)
+        hint_frame.pack(pady=10)
+        ttk.Label(hint_frame, text="Demo Credentials:", font=("Arial", 10, "bold")).pack()
+        ttk.Label(hint_frame, text="Email: demo@leadscruise.com").pack()
+        ttk.Label(hint_frame, text="Password: demo123").pack()
+        
+    def toggle_password_visibility(self):
+        if self.show_password_var.get():
+            # Find password entry and show characters
+            for widget in self.root.winfo_children():
+                if isinstance(widget, ttk.Frame):
+                    for child in widget.winfo_children():
+                        if isinstance(child, ttk.Entry) and child.cget('show') == '*':
+                            child.config(show='')
+        else:
+            # Find password entry and hide characters
+            for widget in self.root.winfo_children():
+                if isinstance(widget, ttk.Frame):
+                    for child in widget.winfo_children():
+                        if isinstance(child, ttk.Entry) and child.cget('show') == '':
+                            child.config(show='*')
+    
+    def login_threaded(self):
+        """Run login in a separate thread to prevent GUI freezing"""
+        if not hasattr(self, '_login_thread') or not self._login_thread.is_alive():
+            self._login_thread = threading.Thread(target=self.login)
+            self._login_thread.daemon = True
+            self._login_thread.start()
+    
+    def login(self):
+        """Authenticate user with the LeadsCruise API"""
+        email = self.email_var.get().strip()
+        password = self.password_var.get()
+        
+        if not email or not password:
+            self.update_status("Error: Email and password are required!")
+            messagebox.showerror("Error", "Please enter both email and password!")
+            return
+            
+        # Update GUI
+        self.root.after(0, lambda: self.login_button.config(state='disabled'))
+        self.root.after(0, lambda: self.progress.pack(pady=5))
+        self.root.after(0, lambda: self.progress.start())
+        self.root.after(0, lambda: self.update_status("Authenticating..."))
+        
+        try:
+            # Prepare login data
+            login_data = {
+                "email": email,
+                "password": password,
+                "emailVerified": False
+            }
+            
+            headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'LeadFetcher-Client/1.0'
+            }
+            
+            # Make API request
+            response = requests.post(
+                self.login_url, 
+                json=login_data, 
+                headers=headers, 
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    if data.get('success'):
+                        # Extract user info
+                        user_data = data.get('user', {})
+                        token = data.get('token')
+                        session_id = data.get('sessionId')
+                        mobile_number = user_data.get('mobileNumber', '')
+                        
+                        # Store user data for main app
+                        self.user_data = {
+                            'email': user_data.get('email', ''),
+                            'role': user_data.get('role', ''),
+                            'mobileNumber': mobile_number,
+                            'token': token,
+                            'sessionId': session_id
+                        }
+                        
+                        # Update status
+                        self.root.after(0, lambda: self.update_status("Login successful!"))
+                        
+                        # Close login window and open main app
+                        self.root.after(0, self.open_main_app)
+                        
+                    else:
+                        error_msg = data.get('message', 'Login failed')
+                        self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
+                        self.root.after(0, lambda: messagebox.showerror("Login Failed", error_msg))
+                        
+                except json.JSONDecodeError as e:
+                    error_msg = f"Failed to parse response: {str(e)}"
+                    self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
+                    
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.reason}"
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('message', error_msg)
+                except:
+                    pass
+                self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
+                self.root.after(0, lambda: messagebox.showerror("Login Failed", error_msg))
+                
+        except requests.exceptions.Timeout:
+            error_msg = "Request timeout (30 seconds)"
+            self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
+            
+        except requests.exceptions.ConnectionError:
+            error_msg = "Connection error - check internet connection"
+            self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
+            
+        except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
+            
+        finally:
+            # Re-enable GUI
+            self.root.after(0, lambda: self.progress.stop())
+            self.root.after(0, lambda: self.progress.pack_forget())
+            self.root.after(0, lambda: self.login_button.config(state='normal'))
+    
+    def open_main_app(self):
+        """Open the main application after successful login"""
+        self.root.destroy()  # Close login window
+        
+        # Create main application window
+        main_root = tk.Tk()
+        app = LeadFetcherApp(main_root, self.user_data)
+        
+        # Handle window closing
+        def on_closing():
+            if app.auto_fetch_timer:
+                main_root.after_cancel(app.auto_fetch_timer)
+            main_root.quit()
+            main_root.destroy()
+            
+        main_root.protocol("WM_DELETE_WINDOW", on_closing)
+        
+        # Start the GUI event loop
+        main_root.mainloop()
+        
+    def update_status(self, message):
+        """Update status label"""
+        self.status_var.set(message)
 
 
 class LeadFetcherApp:
-    def __init__(self, root):
+    def __init__(self, root, user_data):
         self.root = root
         self.root.title("Lead Fetcher - LeadsCruise API Client")
         self.root.geometry("800x600")
         self.root.resizable(True, True)
         
+        # User data from login
+        self.user_data = user_data
+        self.token = user_data.get('token', '')
+        self.session_id = user_data.get('sessionId', '')
+        self.user_email = user_data.get('email', '')
+        self.user_role = user_data.get('role', '')
+        
         # API Configuration
-        self.base_url = "https://api.leadscruise.com/api/get-user-leads/"
-        self.callback_url = "https://api.leadscruise.com/api/data-received-confirmation"
-        self.default_mobile = "9579797269"
+        self.base_url = "http://localhost:5000/api/get-user-leads-with-message/"
+        self.callback_url = "http://localhost:5000/api/data-received-confirmation"
+        self.default_mobile = user_data.get('mobileNumber', '9579797269')
         
         # Setup GUI
         self.setup_gui()
@@ -32,10 +265,18 @@ class LeadFetcherApp:
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
         
-        # Title
-        title_label = ttk.Label(main_frame, text="LeadsCruise API Data Fetcher", 
+        # Title with user info
+        title_frame = ttk.Frame(main_frame)
+        title_frame.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        
+        title_label = ttk.Label(title_frame, text="LeadsCruise API Data Fetcher", 
                                font=("Arial", 16, "bold"))
-        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        title_label.pack()
+        
+        user_info_label = ttk.Label(title_frame, 
+                                   text=f"Logged in as: {self.user_email} ({self.user_role})",
+                                   font=("Arial", 10))
+        user_info_label.pack()
         
         # Mobile number input
         ttk.Label(main_frame, text="Mobile Number:").grid(row=1, column=0, sticky=tk.W, pady=5)
@@ -90,9 +331,9 @@ class LeadFetcherApp:
                                        command=self.toggle_auto_fetch)
         auto_fetch_cb.grid(row=8, column=1, pady=10, sticky=tk.W)
         
-        # Exit button
-        exit_button = ttk.Button(main_frame, text="Exit", command=self.root.quit)
-        exit_button.grid(row=8, column=2, pady=10, sticky=tk.E)
+        # Logout button
+        logout_button = ttk.Button(main_frame, text="Logout", command=self.logout)
+        logout_button.grid(row=8, column=2, pady=10, sticky=tk.E)
         
         # Auto-fetch timer
         self.auto_fetch_timer = None
@@ -127,10 +368,13 @@ class LeadFetcherApp:
             self.log_to_response(f"{'='*60}")
             self.log_to_response(f"URL: {url}")
             self.log_to_response(f"Mobile Number: {mobile}")
+            self.log_to_response(f"User: {self.user_email} ({self.user_role})")
             
             headers = {
                 'Content-Type': 'application/json',
-                'User-Agent': 'LeadFetcher-Client/1.0'
+                'User-Agent': 'LeadFetcher-Client/1.0',
+                'Authorization': f'Bearer {self.token}',
+                'X-Session-ID': self.session_id
             }
             
             response = requests.get(url, headers=headers, timeout=30)
@@ -231,7 +475,9 @@ class LeadFetcherApp:
                 "timestamp": datetime.now().isoformat(),
                 "client_info": {
                     "application": "LeadFetcher-Client",
-                    "version": "1.0"
+                    "version": "1.0",
+                    "user": self.user_email,
+                    "role": self.user_role
                 },
                 "received_data_summary": {
                     "total_leads": received_data.get('totalLeads', 0),
@@ -242,7 +488,9 @@ class LeadFetcherApp:
             
             headers = {
                 'Content-Type': 'application/json',
-                'User-Agent': 'LeadFetcher-Client/1.0'
+                'User-Agent': 'LeadFetcher-Client/1.0',
+                'Authorization': f'Bearer {self.token}',
+                'X-Session-ID': self.session_id
             }
             
             # Send POST request with confirmation
@@ -316,26 +564,29 @@ class LeadFetcherApp:
         if self.auto_fetch_var.get():
             self.fetch_data_threaded()
             self.auto_fetch_timer = self.root.after(30000, self.schedule_auto_fetch)  # 30 seconds
+            
+    def logout(self):
+        """Logout and return to login screen"""
+        # Stop any auto-fetch
+        if self.auto_fetch_timer:
+            self.root.after_cancel(self.auto_fetch_timer)
+            
+        # Close current window
+        self.root.destroy()
+        
+        # Reopen login window
+        login_root = tk.Tk()
+        login_app = LoginApp(login_root)
+        login_root.mainloop()
 
 
 def main():
     """Main application entry point"""
     try:
-        # Create and run the application
-        root = tk.Tk()
-        app = LeadFetcherApp(root)
-        
-        # Handle window closing
-        def on_closing():
-            if app.auto_fetch_timer:
-                root.after_cancel(app.auto_fetch_timer)
-            root.quit()
-            root.destroy()
-            
-        root.protocol("WM_DELETE_WINDOW", on_closing)
-        
-        # Start the GUI event loop
-        root.mainloop()
+        # Create and run the login application
+        login_root = tk.Tk()
+        app = LoginApp(login_root)
+        login_root.mainloop()
         
     except Exception as e:
         print(f"Application error: {e}")
