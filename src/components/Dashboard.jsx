@@ -943,7 +943,7 @@ const Dashboard = () => {
 
 
           {/* Recent Leads Table */}
-        <div className={styles.leadsSection}  style={{ height: 'calc(100vh - 410px)' }}>
+        <div className={styles.leadsSection}  style={{ height: '53vh' }}>
           <div className={styles.mobileOnlyMessage}>
             <p>Use Desktop to login to see recent leads captured information</p>
           </div>

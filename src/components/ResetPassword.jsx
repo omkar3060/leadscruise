@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
+import Lottie from "lottie-react"; // Add this import
 import "./styles.css";
 import "./TaskExecutor.css";
 import "./Signin.css";
@@ -11,8 +12,8 @@ import logo from "../images/logo_front.png";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
-import successImage from "../images/success.png";
-import errorImage from "../images/error.png";
+import successAnimation from "../animations/success.json"; // Replace with your Lottie JSON file
+import errorAnimation from "../animations/error_red.json"; // Replace with your Lottie JSON file
 import loadingGif from "../images/loading.gif";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -361,11 +362,16 @@ const ResetPassword = () => {
             {status === "success" && (
               <div className="success-content">
                 <h1 className="login-title">Password Changed</h1>
-                <div className="status-icon">
-                  <img
-                    src={successImage}
-                    alt="Success"
-                    className="status-image"
+                <div className="status-icon" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <Lottie 
+                    animationData={successAnimation}
+                    className="status-animation"
+                    loop={false}
+                    autoplay={true}
+                    style={{ 
+                      width: '100px', 
+                      height: '100px' 
+                    }}
                   />
                 </div>
                 <p className="status-message">Great!! Password Successfully Updated.</p>
@@ -392,11 +398,16 @@ const ResetPassword = () => {
             {status === "error" && (
               <div className="error-content">
                 <h1 className="login-title">Reset Failed</h1>
-                <div className="status-icon">
-                  <img
-                    src={errorImage}
-                    alt="Error"
-                    className="status-image"
+                <div className="status-icon" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <Lottie 
+                    animationData={errorAnimation}
+                    className="status-animation"
+                    loop={true}
+                    autoplay={true}
+                    style={{ 
+                      width: '100px', 
+                      height: '100px' 
+                    }}
                   />
                 </div>
                 <p className="status-message">

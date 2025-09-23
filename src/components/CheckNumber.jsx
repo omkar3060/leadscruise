@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import successImage from "../images/success.png";
-import errorImage from "../images/error.png";
+import Lottie from "lottie-react"; // Add this import
+import successAnimation from "../animations/success.json"; // Replace with your Lottie JSON file
+import errorAnimation from "../animations/error_red.json"; // Replace with your Lottie JSON file
 import loadingGif from "../images/loading.gif";
 import { useNavigate } from "react-router-dom";
 import "./styles.css";
@@ -249,11 +250,16 @@ const CheckNumber = () => {
             {status === "success" && (
               <div className="success-content">
                 <h1 className="login-title">Eligibility Confirmed</h1>
-                <div className="status-icon">
-                  <img
-                    src={successImage}
-                    alt="Success"
-                    className="status-image"
+                <div className="status-icon" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <Lottie 
+                    animationData={successAnimation}
+                    className="status-animation"
+                    loop={false}
+                    autoplay={true}
+                    style={{ 
+                      width: '100px', 
+                      height: '100px' 
+                    }}
                   />
                 </div>
                 <p className="status-message">Great! You are now eligible to subscribe to Leads Cruise.</p>
@@ -280,11 +286,16 @@ const CheckNumber = () => {
             {status === "error" && (
               <div className="error-content">
                 <h1 className="login-title">Check Status</h1>
-                <div className="status-icon">
-                  <img
-                    src={errorImage}
-                    alt="Error"
-                    className="status-image"
+                <div className="status-icon" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <Lottie 
+                    animationData={errorAnimation}
+                    className="status-animation"
+                    loop={true}
+                    autoplay={true}
+                    style={{ 
+                      width: '100px', 
+                      height: '100px' 
+                    }}
                   />
                 </div>
                 <p className="status-message">
