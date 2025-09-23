@@ -14,9 +14,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.common.action_chains import ActionChains
 from pyvirtualdisplay import Display
+from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.firefox.service import Service
 
 # Configuration Section
 HEADLESS_MODE = True
@@ -55,7 +56,7 @@ def sanitize_phone_number(phone_number):
 def get_user_directory(phone_number):
     """Get the directory path for a specific user based on phone number"""
     sanitized_number = sanitize_phone_number(phone_number)
-    user_dir = os.path.join(os.getcwd(), "whatsapp_users", sanitized_number)
+    user_dir = os.path.join(os.getcwd(), "whatsapp_profiles", sanitized_number)
     return ensure_directory_exists(user_dir)
 
 def get_cookies_file_path(phone_number):
@@ -196,33 +197,41 @@ def compare_contacts_and_feedback(contacts, feedback):
 
 def setup_firefox_driver(phone_number):
     """Set up Firefox WebDriver with headless mode and user-specific profile"""
-    display = None
+    import platform
     driver = None
     
     try:
-        # Set up virtual display if in headless mode
-        if HEADLESS_MODE:
+        # Virtual display is only needed on Linux, not Windows
+        if platform.system() == "Linux" and HEADLESS_MODE:
             logger.info("Starting virtual display...")
             display = Display(visible=0, size=VIRTUAL_DISPLAY_SIZE, backend="xvfb")
             display.start()
             logger.info("Virtual display started successfully!")
+        else:
+            display = None
+            logger.info("Running on Windows - no virtual display needed")
         
         # Get user-specific profile directory
         profile_dir = get_profile_directory(phone_number)
         logger.info(f"Using Firefox profile directory: {profile_dir}")
         
-        # Set directory permissions
-        chmod_recursive(profile_dir)
+        # Set directory permissions (only on Linux/Mac)
+        if platform.system() != "Windows":
+            chmod_recursive(profile_dir)
         
         # Set up Firefox options
         firefox_options = FirefoxOptions()
         firefox_options.add_argument(f"--width={VIRTUAL_DISPLAY_SIZE[0]}")
         firefox_options.add_argument(f"--height={VIRTUAL_DISPLAY_SIZE[1]}")
+        
+        # Set profile directory
         firefox_options.add_argument("-profile")
         firefox_options.add_argument(profile_dir)
         
+        # Enable headless mode on Windows if needed
         if HEADLESS_MODE:
-            firefox_options.add_argument("-headless")
+            firefox_options.add_argument("--headless")
+            logger.info("Running in headless mode")
         
         # Configure preferences
         firefox_options.set_preference("dom.webnotifications.enabled", False)
@@ -235,20 +244,12 @@ def setup_firefox_driver(phone_number):
         firefox_options.set_preference("browser.startup.page", 3)  # Restore previous session
         firefox_options.set_preference("browser.startup.homepage", "about:blank")
         
-        # Find geckodriver
-        geckodriver_path = find_geckodriver()
-        if not geckodriver_path:
-            logger.error("geckodriver not found. Please install it first.")
-            logger.info("You can install it with: brew install geckodriver")
-            return None, None
+        logger.info("Using webdriver-manager to get geckodriver...")
         
-        logger.info(f"Using geckodriver at: {geckodriver_path}")
+        # Create Firefox service using webdriver-manager
+        service = Service(GeckoDriverManager().install())
         
-        # Create Firefox service
-        log_path = os.path.join(os.getcwd(), "geckodriver.log")
-        service = FirefoxService(executable_path=geckodriver_path, log_path=log_path)
-        
-        # Start Firefox
+        # Start Firefox with options
         logger.info("Creating Firefox driver instance...")
         driver = webdriver.Firefox(service=service, options=firefox_options)
         logger.info("Firefox started successfully!")
@@ -264,10 +265,10 @@ def setup_firefox_driver(phone_number):
         logger.debug(traceback.format_exc())
         if driver:
             driver.quit()
-        if display:
+        if 'display' in locals() and display:
             display.stop()
         return None, None
-
+    
 def save_cookies(driver, phone_number):
     """Save cookies to a user-specific file"""
     cookies_file = get_cookies_file_path(phone_number)
@@ -1411,7 +1412,8 @@ def test_webdriver():
     # Set up Firefox driver with user-specific profile
     driver, display = setup_firefox_driver(phone_number)
     
-    if driver is None or display is None:
+    # Check if driver setup failed (display can be None on Windows)
+    if driver is None:
         logger.error("Failed to set up WebDriver")
         return 1
     
@@ -1489,9 +1491,10 @@ def test_webdriver():
         logger.info("Cleaning up...")
         if driver:
             driver.quit()
+        # Only stop display if it exists (Linux only)
         if display:
             display.stop()
-
+            
 if __name__ == "__main__":
     exit_code = test_webdriver()
     sys.exit(exit_code)
