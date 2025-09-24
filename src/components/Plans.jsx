@@ -267,67 +267,7 @@ const Plans = () => {
         </div>
         
         <div className="plans-grid">
-          {/* Three Month Plan */}
-          <div className="plan-card">
-            <div className="plan-header">
-              <h3>Three Month Plan</h3>
-              <p className="plan-subtitle">Features :</p>
-              <p className="plan-description">Perfect for getting started with comprehensive AI automation</p>
-            </div>
-            
-            <div className="features-list">
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited Automatic AI Lead Captures</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Lead reply automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI WhatsApp Reply Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Business Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Full Encryption & Authenticated System</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Free Updates for AI</span>
-              </div>
-            </div>
-            
-            <div className="coupon-section">
-              <p className="coupon-text">Coupon Auto Applied (38% saved)</p>
-              <p className="coupon-code">QUARTER38</p>
-            </div>
-            
-            <div className="price-section">
-              <span className="original-price">119997</span>
-              <span className="discounted-price">7999</span>
-              <div className="price-details">
-                <span>INCL of GST</span>
-                <span>FOR 3 Months</span>
-              </div>
-            </div>
-            
-            <button 
-              className="select-plan-btn" 
-              onClick={() => {
-                handlePlanSelect("three-month", "7999", "Three Month Plan");
-                handleNextClick();
-              }}
-            >
-              <span>→</span>
-            </button>
-          </div>
-
-          {/* One Month Plan */}
+          {/* One Month Plan - Now First */}
           <div className="plan-card">
             <div className="plan-header">
               <h3>One Month Plan</h3>
@@ -363,15 +303,13 @@ const Plans = () => {
             </div>
             
             <div className="coupon-section">
-              <p className="coupon-text">Coupon Auto Applied (32% saved)</p>
-              <p className="coupon-code">EARLY62</p>
+              <p className="coupon-text">Coupon Auto Applied at Checkout</p>
             </div>
             
             <div className="price-section">
-              <span className="original-price">99999</span>
               <span className="discounted-price">2999</span>
               <div className="price-details">
-                <span>INCL of GST</span>
+                <span>EXCL of GST</span>
                 <span>PER / Month</span>
               </div>
             </div>
@@ -380,6 +318,64 @@ const Plans = () => {
               className="select-plan-btn" 
               onClick={() => {
                 handlePlanSelect("one-month", "2999", "One Month Plan");
+                handleNextClick();
+              }}
+            >
+              <span>→</span>
+            </button>
+          </div>
+
+          {/* Three Month Plan - Now Second */}
+          <div className="plan-card">
+            <div className="plan-header">
+              <h3>Three Month Plan</h3>
+              <p className="plan-subtitle">Features :</p>
+              <p className="plan-description">Perfect for getting started with comprehensive AI automation</p>
+            </div>
+            
+            <div className="features-list">
+              <div className="feature-item">
+                <span className="checkmark">✓</span>
+                <span>Unlimited Automatic AI Lead Captures</span>
+              </div>
+              <div className="feature-item">
+                <span className="checkmark">✓</span>
+                <span>Unlimited AI Lead reply automation</span>
+              </div>
+              <div className="feature-item">
+                <span className="checkmark">✓</span>
+              <span>Unlimited AI WhatsApp Reply Automation</span>
+              </div>
+              <div className="feature-item">
+                <span className="checkmark">✓</span>
+                <span>Unlimited AI Business Automation</span>
+              </div>
+              <div className="feature-item">
+                <span className="checkmark">✓</span>
+                <span>Full Encryption & Authenticated System</span>
+              </div>
+              <div className="feature-item">
+                <span className="checkmark">✓</span>
+                <span>Free Updates for AI</span>
+              </div>
+            </div>
+            
+            <div className="coupon-section">
+              <p className="coupon-text">Coupon Auto Applied at Checkout</p>
+            </div>
+            
+            <div className="price-section">
+              <span className="discounted-price">7999</span>
+              <div className="price-details">
+                <span>EXCL of GST</span>
+                <span>FOR 3 Months</span>
+              </div>
+            </div>
+            
+            <button 
+              className="select-plan-btn" 
+              onClick={() => {
+                handlePlanSelect("three-month", "7999", "Three Month Plan");
                 handleNextClick();
               }}
             >
@@ -431,15 +427,13 @@ const Plans = () => {
             </div>
             
             <div className="coupon-section">
-              <p className="coupon-text">Coupon Auto Applied (45% saved)</p>
-              <p className="coupon-code">SAVE6M</p>
+              <p className="coupon-text">Coupon Auto Applied at Checkout</p>
             </div>
             
             <div className="price-section">
-              <span className="original-price">179994</span>
               <span className="discounted-price">14999</span>
               <div className="price-details">
-                <span>INCL of GST</span>
+                <span>EXCL of GST</span>
                 <span>FOR 6 Months</span>
               </div>
             </div>
@@ -508,15 +502,13 @@ const Plans = () => {
             </div>
             
             <div className="coupon-section">
-              <p className="coupon-text">Coupon Auto Applied (58% saved)</p>
-              <p className="coupon-code">ANNUAL58</p>
+              <p className="coupon-text">Coupon Auto Applied at Checkout</p>
             </div>
             
             <div className="price-section">
-              <span className="original-price">359988</span>
               <span className="discounted-price">29999</span>
               <div className="price-details">
-                <span>INCL of GST</span>
+                <span>EXCL of GST</span>
                 <span>FOR 12 Months</span>
               </div>
             </div>

@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Dashboard.module.css";
 import demoLeads from "../data/demoLeads";
 import demoSettings from "../data/demoSettings";
-
+import * as XLSX from "xlsx";
 const LoadingScreen = () => (
   <div className="loading-overlay">
     <div className="loading-container">
@@ -862,53 +862,30 @@ const Sheets = () => {
 
   const metrics = calculateMetrics();
 
-  const downloadExcel = () => {
-    try {
-      // Prepare data for Excel export
-      const excelData = leads.map((lead, index) => ({
-        'No.': index + 1,
-        'Product Requested': lead.lead_bought || '',
-        'Address': lead.address || 'N/A',
-        'Name': lead.name || '',
-        'Email': lead.email || 'N/A',
-        'Mobile': lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile || '',
-        'Date': formatDate(lead.createdAt) || '',
-        'Status': isLeadRejected(lead.lead_bought) ? 'Rejected' : 'Active'
-      }));
+  const handleDownloadLeadsExcel = () => {
+  if (!leads || leads.length === 0) {
+    alert("No leads available to download.");
+    return;
+  }
 
-      // Create CSV content
-      const headers = Object.keys(excelData[0]);
-      const csvContent = [
-        headers.join(','), // Header row
-        ...excelData.map(row =>
-          headers.map(header => {
-            const value = row[header] || '';
-            // Escape commas and quotes in data
-            return value.toString().includes(',') || value.toString().includes('"')
-              ? `"${value.toString().replace(/"/g, '""')}"`
-              : value;
-          }).join(',')
-        )
-      ].join('\n');
+  const formattedData = leads.map((lead, index) => ({
+    "Sl. No": index + 1,
+    Name: lead.name || "N/A",
+    Email: lead.email || "N/A",
+    Phone: lead.mobile || lead.user_mobile_number || "N/A",
+    "Product(s)": lead.lead_bought || "N/A",
+    "Captured At": new Date(lead.createdAt).toLocaleString(),
+  }));
 
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "RecentLeads");
 
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `leads.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    } catch (error) {
-      console.error('Error downloading Excel file:', error);
-      alert('Error downloading file. Please try again.');
-    }
-  };
+  const today = new Date().toISOString().split("T")[0];
+  const filename = `Captured_${today}.xlsx`;
+
+  XLSX.writeFile(workbook, filename);
+};
 
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
@@ -1044,7 +1021,7 @@ const Sheets = () => {
       Settings
     </button>
     <button className={styles.buttonLarge} 
-    onClick={() => console.log("download")}  
+    onClick={handleDownloadLeadsExcel} 
     style={{ marginBottom: 0 }}
     >
       Download Reports From LeadsCruise
