@@ -264,14 +264,14 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
-        {/* <Route
+        { <Route
           path="/whatsapp"
           element={
             <ProtectedRoute>
               <Whatsapp />
             </ProtectedRoute>
           }
-        /> */}
+        /> }
         <Route
           path="/sheets"
           element={

@@ -1,7 +1,16 @@
 body {
   background-image: url('../images/background.jpg');
 }
+/* Settings page specific override */
+.settings-page-wrapper .table-container {
+  padding-top: 0px !important;
+}
 
+/* Ensure content has proper spacing from header */
+.settings-page-wrapper .table-container ul,
+.settings-page-wrapper .table-container p {
+  margin-top: 50px;
+}
 .settings-page-wrapper {
   display: flex;
   flex-direction: column;
@@ -722,9 +731,11 @@ body {
 .support-info {
   margin-top: 5px;
   /* background: linear-gradient(135deg, #f0f4ff 0%, #e0e8ff 100%); */
+  background-color: white;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   padding: 24px;
+  margin-left: 12px;
   border: 1px solid #cfd7ff;
   /* max-width: 400px; */
   /* margin: 0 auto; */
@@ -746,6 +757,7 @@ body {
 
 /* Content area */
 .support-info__content {
+  background-color: white;
   display: flex;
   flex-direction: column;
   gap: 16px;
