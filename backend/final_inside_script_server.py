@@ -182,6 +182,101 @@ def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, times
         print(f"Error sending data to backend: {e}", flush=True)
         skip_lead = False
 
+def close_scroll_popup_if_present(driver):
+    """Check and close the scroll popup if it appears"""
+    try:
+        # Wait briefly for popup to appear - try multiple selectors
+        popup_selectors = [
+            "//div[contains(@class, 'fs15') and contains(@class, 'txt_cntr') and contains(@class, 'pop_align')]",
+            "//div[contains(text(), 'Attention! It looks like')]",
+            "//span[contains(text(), 'Attention! It looks like')]/parent::div"
+        ]
+        
+        popup = None
+        for selector in popup_selectors:
+            try:
+                popup = WebDriverWait(driver, 2).until(
+                    EC.presence_of_element_located((By.XPATH, selector))
+                )
+                if popup.is_displayed():
+                    break
+            except TimeoutException:
+                continue
+        
+        if popup and popup.is_displayed():
+            print("Scroll warning popup detected. Closing it...", flush=True)
+            
+            # Method 1: Try clicking the close (X) button
+            close_selectors = [
+                ".//div[contains(@class, 'poa') and contains(@class, 'rgt10')]//svg",
+                ".//svg[@width='12px']",
+                ".//svg[contains(@class, 'fr')]",
+                ".//path[contains(@d, 'M 2.75 2.042969')]/parent::g/parent::svg"
+            ]
+            
+            for close_selector in close_selectors:
+                try:
+                    close_button = popup.find_element(By.XPATH, close_selector)
+                    if close_button.is_displayed():
+                        # Try both click methods
+                        try:
+                            close_button.click()
+                        except:
+                            driver.execute_script("arguments[0].click();", close_button)
+                        time.sleep(1)
+                        print("Popup closed using close button.", flush=True)
+                        return True
+                except:
+                    continue
+            
+            # Method 2: Try clicking OK button
+            ok_selectors = [
+                ".//button[contains(text(),'OK')]",
+                ".//button[contains(@class, 'bgmim')]"
+            ]
+            
+            for ok_selector in ok_selectors:
+                try:
+                    ok_button = popup.find_element(By.XPATH, ok_selector)
+                    if ok_button.is_displayed():
+                        try:
+                            ok_button.click()
+                        except:
+                            driver.execute_script("arguments[0].click();", ok_button)
+                        time.sleep(1)
+                        print("Popup closed using OK button.", flush=True)
+                        return True
+                except:
+                    continue
+            
+            # Method 3: Try pressing Escape key
+            try:
+                from selenium.webdriver.common.keys import Keys
+                driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
+                time.sleep(1)
+                print("Popup closed using Escape key.", flush=True)
+                return True
+            except:
+                pass
+            
+            # Method 4: Click outside the popup
+            try:
+                driver.execute_script("arguments[0].style.display = 'none';", popup)
+                print("Popup hidden using JavaScript.", flush=True)
+                return True
+            except:
+                pass
+            
+            print("Popup detected but could not close it automatically.", flush=True)
+            return False
+            
+    except Exception as e:
+        # Popup didn't show up or other error occurred
+        print(f"No popup detected or error occurred: {e}", flush=True)
+        return True
+    
+    return True
+
 def process_messages_incrementally(driver):
     """
     Simple approach: Process messages as they become available
@@ -192,7 +287,7 @@ def process_messages_incrementally(driver):
     print("Starting incremental message processing...", flush=True)
     
     third_url = "https://seller.indiamart.com/messagecentre/"
-    thirty_days_ago = datetime.now() - timedelta(days=10)
+    thirty_days_ago = datetime.now() - timedelta(days=100000)
     processed_messages = 0
     processed_identifiers = set()
     
@@ -217,12 +312,13 @@ def process_messages_incrementally(driver):
         return
     
     scroll_position = 0
-    max_scroll_attempts = 1000  # Prevent infinite loops
+    max_scroll_attempts = 100000  # Prevent infinite loops
     scroll_attempts = 0
     no_new_messages_count = 0
     
     while scroll_attempts < max_scroll_attempts:
         print(f"\n--- Scroll attempt {scroll_attempts + 1} ---", flush=True)
+        close_scroll_popup_if_present(driver)
         if skip_lead:
             print("Skipping this lead due to duplication...", flush=True)
             return
@@ -260,10 +356,10 @@ def process_messages_incrementally(driver):
                 print(f"Processing new message: {company_text} - {timestamp_text}", flush=True)
                 
                 # Check 30-day limit
-                if not is_within_30_days(timestamp_text, thirty_days_ago):
-                    print(f"Reached 30-day limit at: {timestamp_text}", flush=True)
-                    messages_to_stop = True
-                    break
+                # if not is_within_30_days(timestamp_text, thirty_days_ago):
+                #     print(f"Reached 30-day limit at: {timestamp_text}", flush=True)
+                #     messages_to_stop = True
+                #     break
                 
                 # Process this message
                 success = process_single_message(driver, msg, timestamp_text, company_text, third_url)
@@ -290,7 +386,7 @@ def process_messages_incrementally(driver):
             no_new_messages_count += 1
             print(f"No new messages processed (count: {no_new_messages_count})", flush=True)
             
-            if no_new_messages_count >= 5:  # If no new messages for 5 attempts
+            if no_new_messages_count >= 10:  # If no new messages for 5 attempts
                 print("No new messages found after multiple attempts. Ending process.", flush=True)
                 break
             
@@ -313,7 +409,7 @@ def process_messages_incrementally(driver):
         scroll_attempts += 1
         
         # Safety check - if we've processed a reasonable number, we might be done
-        if processed_messages >= 500:  # Adjust this number as needed
+        if processed_messages >= 500000:  # Adjust this number as needed
             print(f"Processed {processed_messages} messages. Stopping for safety.", flush=True)
             break
     
