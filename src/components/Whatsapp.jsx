@@ -57,23 +57,23 @@ const Whatsapp = () => {
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [newNumber, setNewNumber] = useState('');
 
-   const extractPhoneNumbers = (messages) => {
-  if (messages.length === 0) return [];
+  const extractPhoneNumbers = (messages) => {
+    if (messages.length === 0) return [];
 
-  const firstMessage = messages[0].text;
+    const firstMessage = messages[0].text;
 
-  // Extract the part between "You can contact" and "or send a mail"
-  const match = firstMessage.match(/You can contact(.*?)or send a mail/i);
-  if (!match) return [];
+    // Extract the part between "You can contact" and "or send a mail"
+    const match = firstMessage.match(/You can contact(.*?)or send a mail/i);
+    if (!match) return [];
 
-  // Extract only phone numbers (10-digit or +91XXXXXXXXXX)
-  const numbers = match[1]
-    .split(',')
-    .map(num => num.trim())
-    .filter(num => /^(\+91\d{10}|\d{10})$/.test(num)); // ✅ Validation
+    // Extract only phone numbers (10-digit or +91XXXXXXXXXX)
+    const numbers = match[1]
+      .split(',')
+      .map(num => num.trim())
+      .filter(num => /^(\+91\d{10}|\d{10})$/.test(num)); // ✅ Validation
 
-  return numbers;
-};
+    return numbers;
+  };
 
   const handleEditClick = () => {
     const extractedNumbers = extractPhoneNumbers(messages);
@@ -81,84 +81,84 @@ const Whatsapp = () => {
     setShowPopup(true);
   };
 
-const handleAddNumber = () => {
-  if (newNumber.trim()) {
-    const trimmedNumber = newNumber.trim();
+  const handleAddNumber = () => {
+    if (newNumber.trim()) {
+      const trimmedNumber = newNumber.trim();
 
-    // ✅ Validate number: allow 10-digit or +91XXXXXXXXXX
-    const isValid = /^(\+91\d{10}|\d{10})$/.test(trimmedNumber);
-    if (!isValid) {
-      alert("Please enter a valid phone number (10 digits or +91XXXXXXXXXX).");
-      return;
+      // ✅ Validate number: allow 10-digit or +91XXXXXXXXXX
+      const isValid = /^(\+91\d{10}|\d{10})$/.test(trimmedNumber);
+      if (!isValid) {
+        alert("Please enter a valid phone number (10 digits or +91XXXXXXXXXX).");
+        return;
+      }
+
+      // Prevent adding duplicates
+      if (phoneNumbers.some(p => p.number === trimmedNumber)) {
+        alert("This number is already added.");
+        return;
+      }
+
+      const newId = phoneNumbers.length > 0 ? Math.max(...phoneNumbers.map(p => p.id)) + 1 : 1;
+      setPhoneNumbers([...phoneNumbers, { id: newId, number: trimmedNumber }]);
+      setNewNumber('');
     }
-
-    // Prevent adding duplicates
-    if (phoneNumbers.some(p => p.number === trimmedNumber)) {
-      alert("This number is already added.");
-      return;
-    }
-
-    const newId = phoneNumbers.length > 0 ? Math.max(...phoneNumbers.map(p => p.id)) + 1 : 1;
-    setPhoneNumbers([...phoneNumbers, { id: newId, number: trimmedNumber }]);
-    setNewNumber('');
-  }
-};
+  };
 
   const handleDeleteNumber = (id) => {
     setPhoneNumbers(phoneNumbers.filter(phone => phone.id !== id));
   };
 
   const handleEditNumber = (id, newValue) => {
-    setPhoneNumbers(phoneNumbers.map(phone => 
+    setPhoneNumbers(phoneNumbers.map(phone =>
       phone.id === id ? { ...phone, number: newValue } : phone
     ));
   };
 
-const handleSave = async () => {
-  const mobileNumber = localStorage.getItem("mobileNumber");
-  try {
-    if (messages.length === 0) {
-      alert("No messages to update");
-      return;
+  const handleSave = async () => {
+    const mobileNumber = localStorage.getItem("mobileNumber");
+    try {
+      if (messages.length === 0) {
+        alert("No messages to update");
+        return;
+      }
+
+      // Join all phone numbers into a comma-separated string
+      const newNumbersString = phoneNumbers.map(p => p.number).join(", ");
+
+      // Replace numbers inside each message where applicable
+      const updatedMessages = messages.map(m => {
+        return {
+          ...m,
+          text: m.text.replace(
+            /(You can contact)(.*?)(or send a mail)/i,
+            `$1 ${newNumbersString} $3`
+          )
+        };
+      });
+
+      const response = await fetch('https://api.leadscruise.com/api/whatsapp-settings/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mobileNumber,
+          messages: updatedMessages.map(m => m.text)
+        })
+      });
+
+      if (response.ok) {
+        alert('Phone numbers and messages updated successfully!');
+        setShowPopup(false);
+        window.location.reload();
+      } else {
+        alert('Failed to update settings');
+      }
+    } catch (error) {
+      console.error('Error saving WhatsApp settings:', error);
+      alert('Error saving WhatsApp settings');
     }
-
-    // Join all phone numbers into a comma-separated string
-    const newNumbersString = phoneNumbers.map(p => p.number).join(", ");
-
-    // Replace numbers inside each message where applicable
-    const updatedMessages = messages.map(m => {
-      return {
-        ...m,
-        text: m.text.replace(
-          /(You can contact)(.*?)(or send a mail)/i,
-          `$1 ${newNumbersString} $3`
-        )
-      };
-    });
-
-    const response = await fetch('https://api.leadscruise.com/api/whatsapp-settings/save', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        mobileNumber,
-        messages: updatedMessages.map(m => m.text)
-      })
-    });
-
-    if (response.ok) {
-      alert('Phone numbers and messages updated successfully!');
-      setShowPopup(false);
-      window.location.reload();
-    } else {
-      alert('Failed to update settings');
-    }
-  } catch (error) {
-    console.error('Error saving WhatsApp settings:', error);
-    alert('Error saving WhatsApp settings');
-  }
-};
+  };
 
   const updateLoadingState = (newLoadingState) => {
     setIsLoading(newLoadingState);
@@ -195,7 +195,7 @@ const handleSave = async () => {
         // If it's been loading for more than 10 minutes (600000ms), reset it
         // Adjust this timeout as needed based on your verification process
         if (loadingDuration > 600000) {
-          console.log("Loading state timed out after 10 minutes");
+          // console.log("Loading state timed out after 10 minutes");
           updateLoadingState(false);
           setIsLoading(false);
           localStorage.removeItem("whatsappLoadingStartTime");
@@ -235,6 +235,7 @@ const handleSave = async () => {
 
         // Updated to access messages correctly from data.data
         if (data.data.messages && data.data.messages.length > 0) {
+          // console.log("Fetched messages:", data.data.messages);
           setMessages(
             data.data.messages.map((text, index) => ({
               id: Date.now() + index,
@@ -259,12 +260,12 @@ const handleSave = async () => {
   const fetchVerificationCode = async () => {
     const mobileNumber = localStorage.getItem("mobileNumber");
     if (!mobileNumber) {
-      console.log("No mobile number found in localStorage");
+      // console.log("No mobile number found in localStorage");
       return;
     }
 
     try {
-      console.log("Fetching verification code for:", mobileNumber);
+      // console.log("Fetching verification code for:", mobileNumber);
 
       // Using native fetch API
       const response = await fetch(
@@ -277,12 +278,12 @@ const handleSave = async () => {
       }
 
       const data = await response.json();
-      console.log("API Response:", data);
+      // console.log("API Response:", data);
 
       // Check if the response contains a verification code
       if (data && data.verificationCode) {
         const code = data.verificationCode;
-        console.log("Received verification code:", code);
+        // console.log("Received verification code:", code);
 
         // Update state with the verification code
         setVerificationCode(code);
@@ -293,7 +294,7 @@ const handleSave = async () => {
           localStorage.setItem("whatsappVerificationLoading", "false");
         }
       } else {
-        console.log("No verification code in response data:", data);
+        // console.log("No verification code in response data:", data);
       }
     } catch (error) {
       console.error("Error fetching verification code:", error);
@@ -301,27 +302,27 @@ const handleSave = async () => {
   };
 
   useEffect(() => {
-    console.log(
-      "Component updated with isLoading:",
-      isLoading,
-      "verificationCode:",
-      verificationCode
-    );
+    // console.log(
+    //   "Component updated with isLoading:",
+    //   isLoading,
+    //   "verificationCode:",
+    //   verificationCode
+    // );
   }, [isLoading, verificationCode]);
 
   // Simplified polling with fewer dependencies
-  useEffect(() => {
-    // Initial fetch
-    fetchVerificationCode();
+  // useEffect(() => {
+  //   // Initial fetch
+  //   fetchVerificationCode();
 
-    // Set up polling interval
-    const interval = setInterval(() => {
-      fetchVerificationCode();
-    }, 3000);
+  //   // Set up polling interval
+  //   const interval = setInterval(() => {
+  //     fetchVerificationCode();
+  //   }, 3000);
 
-    // Clean up on unmount or when isLoading changes
-    return () => clearInterval(interval);
-  }, []); // Only depend on isLoading // Add dependencies to re-establish interval if these change
+  //   // Clean up on unmount or when isLoading changes
+  //   return () => clearInterval(interval);
+  // }, []); // Only depend on isLoading // Add dependencies to re-establish interval if these change
 
   useEffect(() => {
     fetchSettings();
@@ -352,52 +353,48 @@ const handleSave = async () => {
   }, []);
 
   const updateWhatsappNumber = async () => {
-    if (!newWhatsappNumber) {
-      alert("WhatsApp number cannot be empty!");
-      return;
-    }
-    updateLoadingState(true);
-    setIsLoading(true);
-    setVerificationCode("");
-    setError(null);
-    setJustUpdated(true);
-    try {
-      const mobileNumber = localStorage.getItem("mobileNumber");
+  if (!newWhatsappNumber) {
+    alert("WhatsApp number cannot be empty!");
+    return;
+  }
+  
+  updateLoadingState(true);
+  setIsLoading(true);
+  setError(null);
+  
+  try {
+    const mobileNumber = localStorage.getItem("mobileNumber");
 
-      const res = await fetch(
-        "https://api.leadscruise.com/api/whatsapp-settings/update-whatsapp-number",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
-        }
-      );
-      const lockUntil = Date.now() + 15 * 60 * 1000;
-      localStorage.setItem("editLockedUntil", lockUntil);
-      setEditLockedUntil(lockUntil);
-      const data = await res.json();
-      if (res.ok) {
-        alert(
-          "WhatsApp number updated successfully! Please wait a few minutes for a verification code. Enter it in WhatsApp to enable messaging buyers."
-        );
-        setWhatsappNumber(newWhatsappNumber);
-        setIsEditingWhatsapp(false);
-      } else {
-        alert(data.error || "Failed to update WhatsApp number.");
-        setError("Failed to update WhatsApp number");
-        setIsLoading(false);
-        updateLoadingState(false);
+    const res = await fetch(
+      "https://api.leadscruise.com/api/whatsapp-settings/update-whatsapp-number",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
       }
-    } catch (error) {
-      console.error("Update error:", error);
-      alert("Server error during update.");
+    );
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      alert("WhatsApp number linked successfully!");
+      setWhatsappNumber(newWhatsappNumber);
+      setIsEditingWhatsapp(false);
+      // Set verification code to "111" to indicate successful linking
+      setVerificationCode("111");
+    } else {
+      alert(data.error || "Failed to update WhatsApp number.");
       setError("Failed to update WhatsApp number");
-      setIsLoading(false);
-      setEditLockedUntil(null);
-      localStorage.removeItem("editLockedUntil");
-      updateLoadingState(false);
     }
-  };
+  } catch (error) {
+    console.error("Update error:", error);
+    alert("Server error during update.");
+    setError("Failed to update WhatsApp number");
+  } finally {
+    setIsLoading(false);
+    updateLoadingState(false);
+  }
+};
 
   useEffect(() => {
     if (justUpdated && verificationCode && verificationCode !== "111") {
@@ -407,16 +404,16 @@ const handleSave = async () => {
     }
   }, [verificationCode, justUpdated]);
 
-  useEffect(() => {
-    if (editLockedUntil && Date.now() < editLockedUntil) {
-      const timeout = setTimeout(() => {
-        setEditLockedUntil(null);
-        localStorage.removeItem("editLockedUntil");
-      }, editLockedUntil - Date.now());
+  // useEffect(() => {
+  //   if (editLockedUntil && Date.now() < editLockedUntil) {
+  //     const timeout = setTimeout(() => {
+  //       setEditLockedUntil(null);
+  //       localStorage.removeItem("editLockedUntil");
+  //     }, editLockedUntil - Date.now());
 
-      return () => clearTimeout(timeout);
-    }
-  }, [editLockedUntil]);
+  //     return () => clearTimeout(timeout);
+  //   }
+  // }, [editLockedUntil]);
 
   useEffect(() => {
     // Find all auto-expanding textareas and set their height
@@ -447,6 +444,7 @@ const handleSave = async () => {
   }, [newItem]);
 
   return (
+    
     <div
       className="settings-page-wrapper"
       style={windowWidth <= 768 ? { marginLeft: 0 } : {}}
@@ -487,7 +485,7 @@ const handleSave = async () => {
                   cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
                   color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                 }}
-                 onClick={handleEditClick}
+                onClick={handleEditClick}
               >
                 Edit
               </button>
@@ -537,7 +535,7 @@ const handleSave = async () => {
             <h3 style={{ marginBottom: '20px', color: '#333' }}>
               Edit Phone Numbers
             </h3>
-            
+
             {/* Existing phone numbers */}
             <div style={{ marginBottom: '20px' }}>
               <h4 style={{ color: '#555', marginBottom: '10px' }}>
@@ -545,8 +543,8 @@ const handleSave = async () => {
               </h4>
               {phoneNumbers.length > 0 ? (
                 phoneNumbers.map((phone) => (
-                  <div key={phone.id} style={{ 
-                    display: 'flex', 
+                  <div key={phone.id} style={{
+                    display: 'flex',
                     alignItems: 'center',
                     marginBottom: '10px',
                     padding: '8px',
@@ -588,7 +586,7 @@ const handleSave = async () => {
                 </p>
               )}
             </div>
-            
+
             {/* Add new phone number */}
             <div style={{ marginBottom: '20px' }}>
               <h4 style={{ color: '#555', marginBottom: '10px' }}>
@@ -625,10 +623,10 @@ const handleSave = async () => {
                 </button>
               </div>
             </div>
-            
+
             {/* Action buttons */}
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               justifyContent: 'flex-end',
               gap: '10px',
               marginTop: '20px'

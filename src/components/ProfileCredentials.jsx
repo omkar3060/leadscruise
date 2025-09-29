@@ -45,7 +45,7 @@ const StatesDropdown = ({ userEmail }) => {
       alert("Failed to update states.");
     }
   };
-  
+
   const handleStateChange = (state, isChecked) => {
     if (isChecked) {
       setTempStates(prev => [...prev, state]);
@@ -71,66 +71,66 @@ const StatesDropdown = ({ userEmail }) => {
             <span className="credential-value">
               {
                 selectedStates.length === 0 ? "None selected" :
-                selectedStates.length === indianStates.length ? "ALL INDIA" :
-                selectedStates.length <= 3 ? selectedStates.join(", ") : // <-- Show names if 3 or less
-                `${selectedStates.length} states selected` // <-- Show count if more than 3
+                  selectedStates.length === indianStates.length ? "ALL INDIA" :
+                    selectedStates.length <= 3 ? selectedStates.join(", ") : // <-- Show names if 3 or less
+                      `${selectedStates.length} states selected` // <-- Show count if more than 3
               }
             </span>
             <button
-  type="button"
-  className="edit-max-captures"
-  onClick={() => setIsOpen(!isOpen)}
->
-  <FaChevronDown
-    style={{
-      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-      transition: "transform 0.2s"
-    }}
-  />
-</button>
+              type="button"
+              className="edit-max-captures"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              <FaChevronDown
+                style={{
+                  transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s"
+                }}
+              />
+            </button>
 
           </div>
           {isOpen && (
-           <div className="dropdown-menu">
+            <div className="dropdown-menu">
+              <input
+                type="text"
+                placeholder="Search for a state..."
+                className="dropdown-search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className="dropdown-list">
+                <label className="checkbox-label styled-checkbox">
                   <input
-                    type="text"
-                    placeholder="Search for a state..."
-                    className="dropdown-search"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    type="checkbox"
+                    checked={tempStates.length === indianStates.length}
+                    onChange={(e) => handleAllIndiaChange(e.target.checked)}
                   />
-                  <div className="dropdown-list">
-                    <label className="checkbox-label styled-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={tempStates.length === indianStates.length}
-                        onChange={(e) => handleAllIndiaChange(e.target.checked)}
-                      />
-                      <span className="checkmark" />
-                      <strong>ALL INDIA</strong>
-                    </label>
-                    {filteredStates.map(state => (
-                      <label key={state} className="checkbox-label styled-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={tempStates.includes(state)}
-                          onChange={(e) => handleStateChange(state, e.target.checked)}
-                        />
-                        <span className="checkmark" />
-                        {state}
-                      </label>
-                    ))}
-                  </div>
-                  <div className="dropdown-actions">
-                    <button className="edit-max-captures save-btn" onClick={(e) => {
-                      e.preventDefault();
-                      handleSave();
-                      // Save changes
-                    }}>
-                      Save
-                    </button>
-                  </div>
-                </div>
+                  <span className="checkmark" />
+                  <strong>ALL INDIA</strong>
+                </label>
+                {filteredStates.map(state => (
+                  <label key={state} className="checkbox-label styled-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={tempStates.includes(state)}
+                      onChange={(e) => handleStateChange(state, e.target.checked)}
+                    />
+                    <span className="checkmark" />
+                    {state}
+                  </label>
+                ))}
+              </div>
+              <div className="dropdown-actions">
+                <button className="edit-max-captures save-btn" onClick={(e) => {
+                  e.preventDefault();
+                  handleSave();
+                  // Save changes
+                }}>
+                  Save
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -167,13 +167,15 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   // Separate validation states for each password field
   const [showLeadsCruiseValidation, setShowLeadsCruiseValidation] = useState(false);
   const [showIndiaMartValidation, setShowIndiaMartValidation] = useState(false);
-
+  const [latestRelease, setLatestRelease] = useState(null);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
   // Input focus states
   const [isLeadsCruisePasswordFocused, setIsLeadsCruisePasswordFocused] = useState(false);
   const [isIndiaMartPasswordFocused, setIsIndiaMartPasswordFocused] = useState(false);
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
- // const [now, setNow] = useState(Date.now());
+  // const [now, setNow] = useState(Date.now());
   const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
@@ -316,9 +318,9 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
 
     fetchMinOrder();
   }, []);
-// --- Handler Functions for States ---734961(start) to line 248 maybe
+  // --- Handler Functions for States ---734961(start) to line 248 maybe
   // Fetch saved states when the component loads
-//734961(end)
+  //734961(end)
   // Function to handle password update for LeadsCruise
   const handlePasswordUpdate = async () => {
     try {
@@ -397,8 +399,11 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       const data = await res.json();
       if (res.ok) {
         alert("WhatsApp unlinked successfully");
+        // Clear both verification code and WhatsApp number in UI
         setVerificationCode(null);
-        const lockUntil = Date.now() + 1 * 60 * 1000; // 1 minutes
+        setNewWhatsappNumber(""); // Also clear the input field
+
+        const lockUntil = Date.now() + 1 * 60 * 1000; // 1 minute
         localStorage.setItem("editLockedUntil", lockUntil);
         setEditLockedUntil(lockUntil);
       } else {
@@ -409,6 +414,55 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       alert("Something went wrong while unlinking WhatsApp");
     }
   };
+
+  const downloadLatestRelease = () => {
+    if (!latestRelease || !latestRelease.assets || latestRelease.assets.length === 0) {
+      setDownloadError("No download available for this release");
+      return;
+    }
+
+    // Find the Windows ZIP asset
+    const windowsAsset = latestRelease.assets.find(
+      asset =>
+        asset.name.toLowerCase().includes("windows") ||
+        asset.name.toLowerCase().endsWith(".zip") ||
+        asset.name.toLowerCase().endsWith(".exe")
+    );
+
+    if (windowsAsset) {
+      // Open download in new tab
+      window.open(windowsAsset.browser_download_url, "_blank");
+    } else {
+      // Fallback to first asset
+      window.open(latestRelease.assets[0].browser_download_url, "_blank");
+    }
+  };
+
+  const viewReleaseNotes = () => {
+    if (latestRelease) {
+      window.open(latestRelease.html_url, "_blank");
+    }
+  };
+
+  useEffect(() => {
+    const fetchLatestRelease = async () => {
+      try {
+        const response = await fetch(
+          "https://api.github.com/repos/omkar3060/Lead-Fetcher/releases/latest"
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setLatestRelease(data);
+        }
+      } catch (error) {
+        console.error("Error fetching latest release:", error);
+      }
+    };
+
+    fetchLatestRelease();
+
+  }, []);
 
   useEffect(() => {
     if (editLockedUntil && Date.now() < editLockedUntil) {
@@ -576,7 +630,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
           </div>
         </div>
       )}
-{/* --- Use the new self-contained dropdown component --- */}
+      {/* --- Use the new self-contained dropdown component --- */}
       {isSettingsPage && !isWhatsAppPage && (
         //<StatesDropdown userEmail={email} />
         <StatesDropdown userEmail={localStorage.getItem("userEmail")} />
@@ -743,26 +797,104 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
             {error && <div className="error-message">{error}</div>}
 
             <div className="verification-code-container">
-              <label className="verification-code-label">Verification Code:</label>
+              <label className="verification-code-label">Linking Status:</label>
               {isLoading ? (
                 <div className="loading-spinner">
                   <div className="spinner1"></div>
-                  <span>Waiting for verification code...</span>
+                  <span></span>
                 </div>
               ) : verificationCode ? (
                 verificationCode === "111" ? (
                   <div className="already-logged-in-message">
-                    <p>Login successful!</p>
+                    <p>Successful!</p>
                   </div>
                 ) : (
                   <span className="verification-code">{verificationCode}</span>
                 )
               ) : (
-                <span className="no-code">No verification code available</span>
+                <span className="no-code">Edit and update your number to link</span>
               )}
             </div>
           </div>
         </div>
+      )}
+
+      {isWhatsAppPage && (
+        <>
+
+
+          {/* Download Latest Release section */}
+          <div className="credentials-section">
+            <h3 className="credentials-header">Desktop Application</h3>
+            <div className="credentials-content">
+              <div className="credential-group">
+                {/* <label>Lead Fetcher Desktop App</label> */}
+                <div className="whatsapp-number-container">
+                  {downloadLoading ? (
+                    <div className="loading-spinner">
+                      <div className="spinner1"></div>
+                      <span>Checking for updates...</span>
+                    </div>
+                  ) : latestRelease ? (
+                    <>
+                      <span className="mobile-text">
+                        Version {latestRelease.tag_name || "N/A"}
+                        {latestRelease.published_at && (
+                          <span style={{ fontSize: "0.85em", color: "#666", marginLeft: "8px" }}>
+                            (Released: {new Date(latestRelease.published_at).toLocaleDateString()})
+                          </span>
+                        )}
+                      </span>
+                      <div className="edit-button-container">
+                        <button
+                          className="update-api-btn"
+                          onClick={downloadLatestRelease}
+                          disabled={countdown > 0}
+                          title={getButtonTitle("Download")}
+                        >
+                          Download {countdown > 0 && `(${countdown}s)`}
+                        </button>
+                        <button
+                          className="cancel-button"
+                          onClick={viewReleaseNotes}
+                          disabled={countdown > 0}
+                          title={getButtonTitle("View Details")}
+                        >
+                          Release Notes {countdown > 0 && `(${countdown}s)`}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <span className="mobile-text">Unable to fetch release information</span>
+                  )}
+                </div>
+              </div>
+
+              {downloadError && <div className="error-message">{downloadError}</div>}
+
+              {latestRelease?.body && (
+                <div className="verification-code-container" style={{ marginTop: "16px" }}>
+                  <label className="verification-code-label">What's New:</label>
+                  <div style={{
+                    fontSize: "0.9em",
+                    color: "#666",
+                    marginTop: "8px",
+                    maxHeight: "150px",
+                    overflowY: "auto",
+                    whiteSpace: "pre-wrap",
+                    lineHeight: "1.6",
+                    padding: "8px",
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "4px"
+                  }}>
+                    {latestRelease.body.split('\n').slice(0, 10).join('\n')}
+                    {latestRelease.body.split('\n').length > 10 && '...'}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       {/* IndiaMart Account Credentials */}

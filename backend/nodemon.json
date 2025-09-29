@@ -1,5 +1,0 @@
-{
-  "watch": ["."],
-  "ignore": ["confirmations.json"],
-  "ext": "js,json"
-}

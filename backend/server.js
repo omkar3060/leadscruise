@@ -33,6 +33,7 @@ const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
 const teammateRoutes = require('./routes/teammates');
 const path = require("path");
+const os=require("os");
 const server = createServer(app); // ✅ Create HTTP server
 server.setTimeout(15 * 60 * 1000);
 const io = new Server(server, {
@@ -1914,6 +1915,130 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
   }
 });
 
+// Function to get the LeadFetcher application directory
+function getLeadFetcherDirectory() {
+  if (os.platform() === 'win32') {
+    const localAppData = process.env.LOCALAPPDATA || 
+                         path.join(os.homedir(), 'AppData', 'Local');
+    return path.join(localAppData, 'LeadFetcher');
+  } else {
+    return path.join(os.homedir(), '.leadfetcher');
+  }
+}
+
+// Function to ensure directory exists
+function ensureDirectoryExists(dirPath) {
+  try {
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+      console.log(`Created directory: ${dirPath}`);
+    }
+    return true;
+  } catch (error) {
+    console.error(`Failed to create directory ${dirPath}:`, error);
+    return false;
+  }
+}
+
+// Function to safely write file with fallback
+function safeWriteFile(filePath, data, fallbackDir = null) {
+  try {
+    // Ensure directory exists
+    const dir = path.dirname(filePath);
+    ensureDirectoryExists(dir);
+    
+    // Write file
+    fs.writeFileSync(filePath, data);
+    console.log(`✅ File saved successfully: ${filePath}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to write file ${filePath}:`, error);
+    
+    // Try fallback location if provided
+    if (fallbackDir) {
+      try {
+        ensureDirectoryExists(fallbackDir);
+        const fallbackPath = path.join(fallbackDir, path.basename(filePath));
+        fs.writeFileSync(fallbackPath, data);
+        console.log(`✅ File saved to fallback location: ${fallbackPath}`);
+        return true;
+      } catch (fallbackError) {
+        console.error(`❌ Fallback write also failed:`, fallbackError);
+      }
+    }
+    return false;
+  }
+}
+
+app.post("/api/data-received-confirmation", async (req, res) => {
+  try {
+    const {
+      status,
+      message,
+      mobile_number,
+      timestamp,
+      client_info,
+      received_data_summary
+    } = req.body;
+
+    console.log("📨 Data Received Confirmation:");
+    console.log("================================");
+    console.log(`Status: ${status}`);
+    console.log(`Message: ${message}`);
+    console.log(`Mobile Number: ${mobile_number}`);
+    console.log(`Timestamp: ${timestamp}`);
+    console.log(`Client: ${client_info?.application} v${client_info?.version}`);
+    console.log(`Total Leads: ${received_data_summary?.total_leads}`);
+    console.log(`Leads Retrieved: ${received_data_summary?.leads_count}`);
+    console.log("================================");
+
+    // Prepare data object (overwrite each time)
+    const confirmationData = {
+      status,
+      message,
+      mobile_number,
+      timestamp,
+      client_info,
+      received_data_summary,
+      received_at: new Date().toISOString()
+    };
+
+    // Get LeadFetcher application directory
+    const leadFetcherDir = getLeadFetcherDirectory();
+    const filePath = path.join(leadFetcherDir, "confirmations.json");
+    
+    // Fallback directory (current working directory)
+    const fallbackDir = process.cwd();
+
+    // Write confirmations.json to LeadFetcher directory
+    const writeSuccess = safeWriteFile(
+      filePath, 
+      JSON.stringify(confirmationData, null, 2),
+      fallbackDir
+    );
+
+    console.log(`📁 Target directory: ${leadFetcherDir}`);
+    console.log(`📄 Confirmation file: ${filePath}`);
+
+    // Send success response back to client
+    res.status(200).json({
+      success: true,
+      message: "Confirmation received successfully",
+      received_at: confirmationData.received_at,
+      confirmation_id: `conf_${Date.now()}_${mobile_number}`,
+      file_location: writeSuccess ? filePath : path.join(fallbackDir, "confirmations.json")
+    });
+
+  } catch (error) {
+    console.error("Error processing data received confirmation:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to process confirmation",
+      message: error.message
+    });
+  }
+});
+
 app.get("/api/get-user-leads-with-message/:userMobile", async (req, res) => {
   try {
     const { userMobile } = req.params;
@@ -1963,72 +2088,37 @@ app.get("/api/get-user-leads-with-message/:userMobile", async (req, res) => {
       generated_at: new Date().toISOString()
     };
 
-    // Save response to api_response.json
-    const filePath = path.join(process.cwd(), "api_response.json");
-    fs.writeFileSync(filePath, JSON.stringify(responsePayload, null, 2));
+    // Get LeadFetcher application directory
+    const leadFetcherDir = getLeadFetcherDirectory();
+    const filePath = path.join(leadFetcherDir, "api_response.json");
+    
+    // Fallback directory (current working directory)
+    const fallbackDir = process.cwd();
 
-    res.status(200).json(responsePayload);
+    // Save response to api_response.json in LeadFetcher directory
+    const writeSuccess = safeWriteFile(
+      filePath,
+      JSON.stringify(responsePayload, null, 2),
+      fallbackDir
+    );
+
+    console.log(`📁 Target directory: ${leadFetcherDir}`);
+    console.log(`📄 API response file: ${filePath}`);
+    console.log(`📊 Total leads processed: ${leadsWithMessages.length}`);
+
+    // Add file location to response
+    const responseWithLocation = {
+      ...responsePayload,
+      file_location: writeSuccess ? filePath : path.join(fallbackDir, "api_response.json")
+    };
+
+    res.status(200).json(responseWithLocation);
 
   } catch (error) {
     console.error("Error fetching user leads with message:", error);
     res.status(500).json({
       success: false,
       error: "Internal server error",
-      message: error.message
-    });
-  }
-});
-
-app.post("/api/data-received-confirmation", async (req, res) => {
-  try {
-    const {
-      status,
-      message,
-      mobile_number,
-      timestamp,
-      client_info,
-      received_data_summary
-    } = req.body;
-
-    console.log("📨 Data Received Confirmation:");
-    console.log("================================");
-    console.log(`Status: ${status}`);
-    console.log(`Message: ${message}`);
-    console.log(`Mobile Number: ${mobile_number}`);
-    console.log(`Timestamp: ${timestamp}`);
-    console.log(`Client: ${client_info?.application} v${client_info?.version}`);
-    console.log(`Total Leads: ${received_data_summary?.total_leads}`);
-    console.log(`Leads Retrieved: ${received_data_summary?.leads_count}`);
-    console.log("================================");
-
-    // Prepare data object (overwrite each time)
-    const confirmationData = {
-      status,
-      message,
-      mobile_number,
-      timestamp,
-      client_info,
-      received_data_summary,
-      received_at: new Date().toISOString()
-    };
-
-    // Overwrite confirmations.json
-    const filePath = path.join(process.cwd(), "confirmations.json");
-    fs.writeFileSync(filePath, JSON.stringify(confirmationData, null, 2));
-
-    // Send success response back to client
-    res.status(200).json({
-      success: true,
-      message: "Confirmation received successfully",
-      received_at: confirmationData.received_at,
-      confirmation_id: `conf_${Date.now()}_${mobile_number}`
-    });
-
-  } catch (error) {
-    console.error("Error processing data received confirmation:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to process confirmation",
       message: error.message
     });
   }

@@ -31,4 +31,5 @@ whatsapp_automation.log
 lead_fetcher.spec
 api_response.json
 confirmations.json
-
+feedback.json
+test_closing.spec

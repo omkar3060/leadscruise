@@ -506,15 +506,15 @@ def click_new_chat_button(driver):
     
     try:
         # Method 1: Try using ActionChains
-        try:
-            logger.info("Trying Method 1: ActionChains")
-            actions = ActionChains(driver)
-            actions.move_to_element(new_chat_button).click().perform()
-            logger.info("Successfully clicked new chat button using ActionChains!")
-            time.sleep(3)
-            return True
-        except Exception as e:
-            logger.error(f"Method 1 failed with error: {e}")
+        # try:
+        #     logger.info("Trying Method 1: ActionChains")
+        #     actions = ActionChains(driver)
+        #     actions.move_to_element(new_chat_button).click().perform()
+        #     logger.info("Successfully clicked new chat button using ActionChains!")
+        #     time.sleep(3)
+        #     return True
+        # except Exception as e:
+        #     logger.error(f"Method 1 failed with error: {e}")
         
         # Method 2: Try using JavaScript
         try:
