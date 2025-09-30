@@ -421,17 +421,21 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       return;
     }
 
-    // Find the Windows ZIP asset
-    const windowsAsset = latestRelease.assets.find(
+    // Get all .exe or Windows assets
+    const windowsAssets = latestRelease.assets.filter(
       asset =>
         asset.name.toLowerCase().includes("windows") ||
-        asset.name.toLowerCase().endsWith(".zip") ||
-        asset.name.toLowerCase().endsWith(".exe")
+        asset.name.toLowerCase().endsWith(".exe") ||
+        asset.name.toLowerCase().endsWith(".zip")
     );
 
-    if (windowsAsset) {
-      // Open download in new tab
-      window.open(windowsAsset.browser_download_url, "_blank");
+    if (windowsAssets.length > 1) {
+      // If multiple matches, show a list or let user pick
+      windowsAssets.forEach(asset => {
+        window.open(asset.browser_download_url, "_blank");
+      });
+    } else if (windowsAssets.length === 1) {
+      window.open(windowsAssets[0].browser_download_url, "_blank");
     } else {
       // Fallback to first asset
       window.open(latestRelease.assets[0].browser_download_url, "_blank");
@@ -635,7 +639,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         //<StatesDropdown userEmail={email} />
         <StatesDropdown userEmail={localStorage.getItem("userEmail")} />
       )}
-      {/*isSettingsPage && !isWhatsAppPage && (
+      {isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">
           <div className="credentials-header">Minimum order value</div>
           <div className="max-captures-content">
@@ -669,15 +673,15 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
             )}
           </div>
         </div>
-      )*/}
+      )}
 
-      {/*isSettingsPage && !isWhatsAppPage && (
+      {isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section enhanced-lead-types">
           <div className="credentials-header">Lead Types</div>
 
-          <p className="lead-types-description">
+          {/* <p className="lead-types-description">
             Select the type of leads you want to capture. This helps the system filter incoming leads based on your business requirements.
-          </p>
+          </p> */}
 
           <div className="max-captures-content lead-types">
             <span className="credential-value">
@@ -733,7 +737,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
             )}
           </div>
         </div>
-      )*/}
+      )}
 
       {isWhatsAppPage && (
         <div className="credentials-section">
@@ -821,8 +825,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
 
       {isWhatsAppPage && (
         <>
-
-
           {/* Download Latest Release section */}
           <div className="credentials-section">
             <h3 className="credentials-header">Desktop Application</h3>
@@ -871,27 +873,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               </div>
 
               {downloadError && <div className="error-message">{downloadError}</div>}
-
-              {latestRelease?.body && (
-                <div className="verification-code-container" style={{ marginTop: "16px" }}>
-                  <label className="verification-code-label">What's New:</label>
-                  <div style={{
-                    fontSize: "0.9em",
-                    color: "#666",
-                    marginTop: "8px",
-                    maxHeight: "150px",
-                    overflowY: "auto",
-                    whiteSpace: "pre-wrap",
-                    lineHeight: "1.6",
-                    padding: "8px",
-                    backgroundColor: "#f8f9fa",
-                    borderRadius: "4px"
-                  }}>
-                    {latestRelease.body.split('\n').slice(0, 10).join('\n')}
-                    {latestRelease.body.split('\n').length > 10 && '...'}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </>
@@ -912,7 +893,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                 </div>
               </div>
             </div>
-            <div className="credential-group">
+            {/* <div className="credential-group">
               <label>Password</label>
               <div className="password-field">
                 {isEditingSavedPassword ? (
@@ -952,7 +933,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   </button>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       )}

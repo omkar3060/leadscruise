@@ -10,7 +10,7 @@ import { MdOutlineRecommend } from "react-icons/md"; // Import referral icon
 import axios from "axios";
 import AIIcon from '../images/AI.png';
 import { HiUserGroup } from "react-icons/hi";
-
+import { FaYoutube } from "react-icons/fa";
 const Sidebar = ({ status }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -104,13 +104,13 @@ const Sidebar = ({ status }) => {
               <BiBarChartSquare className={styles.icon} />
               <span className={styles.tooltipText}>Analytics</span>
             </div>
-            <div
+            {/* <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/whatsapp")}
             >
               <FaWhatsapp className={styles.icon} />
               <span className={styles.tooltipText}>WhatsApp</span>
-            </div>
+            </div> */}
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip} ${status === "Running" ? styles.disabled : ""
                 }`}
@@ -198,6 +198,16 @@ const Sidebar = ({ status }) => {
                 }}
               />
               <span className={styles.tooltipText}>Just Dial</span>
+            </div>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => window.open("https://www.youtube.com/@FocusEngineeringProducts", "_blank")}
+            >
+              <FaYoutube className={styles.icon} style={{
+                color: "#FF0000", // YouTube red color
+                fontSize: "32px"
+              }} />
+              <span className={styles.tooltipText}>YouTube</span>
             </div>
           </>
         )}

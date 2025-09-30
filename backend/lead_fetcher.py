@@ -3,7 +3,7 @@ import json
 import time
 from datetime import datetime
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, scrolledtext, messagebox, simpledialog
 import threading
 import base64
 import sys
@@ -42,6 +42,10 @@ import re
 import webbrowser
 import tempfile
 import zipfile
+import platform
+import atexit
+import win32con
+import winreg
 
 try:
     import pystray
@@ -463,83 +467,94 @@ def check_if_already_logged_in(driver):
         logger.info("Settings icon not found. Not logged in yet.")
         return False
 
-def extract_verification_code(driver, wait):
-        """Extract the verification code from the page with enhanced debugging"""
-        logger.info("Looking for verification code...")
-        
-        # Try multiple selectors for the verification code
-        code_selectors = [
-            (By.XPATH, "//span[contains(@class, 'xzwifym')]"),
-            (By.XPATH, "//div[contains(@class, 'verification-code')]/span"),
-            (By.XPATH, "//div[contains(text(), 'code')]/following-sibling::div//span"),
-            (By.XPATH, "//div[contains(@class, 'x1c4vz4f') and contains(text(), 'Your code is')]/following-sibling::div//span"),
-            (By.XPATH, "//div[contains(text(), 'code')]/..//span"),
-            (By.XPATH, "//div[contains(text(), 'verification code')]//span"),
-            (By.XPATH, "//div[contains(text(), 'Your code')]//span"),
-            (By.XPATH, "//span[contains(text(), 'Your code is')]"),
-            (By.XPATH, "//div[contains(text(), 'verification code')]"),
-            (By.XPATH, "//div[contains(text(), 'Your code')]"),
-            (By.XPATH, "//span[contains(@class, 'x1c4vz4f') and contains(text(), 'code')]"),
-            (By.XPATH, "//span[contains(@class, 'x1c4vz4f') and contains(text(), 'verification')]"),
-            (By.XPATH, "//span[contains(@class, 'x1c4vz4f') and contains(text(), 'Your')]"),
-            (By.XPATH, "//div[contains(text(), 'Enter this code')]"),
-            (By.XPATH, "//div[contains(text(), 'code to verify')]"),
-            (By.XPATH, "//div[contains(text(), '6-digit code')]"),
-            (By.XPATH, "//div[contains(text(), 'verification code')]//following-sibling::div"),
-            (By.XPATH, "//div[contains(text(), 'Your code')]//following-sibling::div"),
-            (By.XPATH, "//div[contains(text(), 'Enter this code')]//following-sibling::div"),
-            (By.XPATH, "//div[contains(text(), 'code to verify')]//following-sibling::div"),
-            (By.XPATH, "//div[contains(text(), '6-digit code')]//following-sibling::div")
-        ]
-        
-        code = None
-        for selector_type, selector in code_selectors:
-            try:
-                logger.debug(f"Trying selector: {selector}")
-                code_elements = wait.until(
-                    EC.presence_of_all_elements_located((selector_type, selector))
-                )
-                code = "".join([elem.text for elem in code_elements if elem.text.strip()])
-                if code:
-                    logger.info(f"Found verification code using selector: {selector}")
-                    break
-            except Exception as e:
-                logger.debug(f"Selector failed: {selector} - {e}")
-        
-        if code:
-            logger.info(f"Verification code found: {code}")
-            return code
-        else:
-            logger.warning("Verification code not found with any selector.")
-            
-            # Save page source for debugging
-            try:
-                page_source_path = os.path.join(os.getcwd(), "page_source.html")
-                with open(page_source_path, "w") as f:
-                    f.write(driver.page_source)
-                logger.info(f"Page source saved to {page_source_path}")
-            except Exception as e:
-                logger.error(f"Failed to save page source: {e}")
-            
-            # Try to find any elements that might contain the code
-            try:
-                logger.info("Looking for any elements that might contain the code...")
-                all_spans = driver.find_elements(By.TAG_NAME, "span")
-                for span in all_spans:
-                    text = span.text.strip()
-                    if text and len(text) >= 4 and text.isdigit():
-                        logger.info(f"Potential code found in span: {text}")
+def extract_verification_code(driver, wait, app_instance=None):
+    """Extract the verification code from the page with enhanced debugging
+    
+    Args:
+        driver: WebDriver instance
+        wait: WebDriverWait instance
+        app_instance: Optional LeadFetcherApp instance for UI updates
+    """
+    logger.info("Looking for verification code...")
+    
+    # Try multiple selectors for the verification code
+    code_selectors = [
+        (By.XPATH, "//span[contains(@class, 'xzwifym')]"),
+        (By.XPATH, "//div[contains(@class, 'verification-code')]/span"),
+        (By.XPATH, "//div[contains(text(), 'code')]/following-sibling::div//span"),
+        (By.XPATH, "//div[contains(@class, 'x1c4vz4f') and contains(text(), 'Your code is')]/following-sibling::div//span"),
+        (By.XPATH, "//div[contains(text(), 'code')]/..//span"),
+        (By.XPATH, "//div[contains(text(), 'verification code')]//span"),
+        (By.XPATH, "//div[contains(text(), 'Your code')]//span"),
+        (By.XPATH, "//span[contains(text(), 'Your code is')]"),
+        (By.XPATH, "//div[contains(text(), 'verification code')]"),
+        (By.XPATH, "//div[contains(text(), 'Your code')]"),
+        (By.XPATH, "//span[contains(@class, 'x1c4vz4f') and contains(text(), 'code')]"),
+        (By.XPATH, "//span[contains(@class, 'x1c4vz4f') and contains(text(), 'verification')]"),
+        (By.XPATH, "//span[contains(@class, 'x1c4vz4f') and contains(text(), 'Your')]"),
+        (By.XPATH, "//div[contains(text(), 'Enter this code')]"),
+        (By.XPATH, "//div[contains(text(), 'code to verify')]"),
+        (By.XPATH, "//div[contains(text(), '6-digit code')]"),
+        (By.XPATH, "//div[contains(text(), 'verification code')]//following-sibling::div"),
+        (By.XPATH, "//div[contains(text(), 'Your code')]//following-sibling::div"),
+        (By.XPATH, "//div[contains(text(), 'Enter this code')]//following-sibling::div"),
+        (By.XPATH, "//div[contains(text(), 'code to verify')]//following-sibling::div"),
+        (By.XPATH, "//div[contains(text(), '6-digit code')]//following-sibling::div")
+    ]
+    
+    code = None
+    for selector_type, selector in code_selectors:
+        try:
+            logger.debug(f"Trying selector: {selector}")
+            code_elements = wait.until(
+                EC.presence_of_all_elements_located((selector_type, selector))
+            )
+            code = "".join([elem.text for elem in code_elements if elem.text.strip()])
+            if code:
+                logger.info(f"Found verification code using selector: {selector}")
                 
-                all_divs = driver.find_elements(By.TAG_NAME, "div")
-                for div in all_divs:
-                    text = div.text.strip()
-                    if text and len(text) >= 4 and text.isdigit():
-                        logger.info(f"Potential code found in div: {text}")
-            except Exception as e:
-                logger.error(f"Error searching for potential codes: {e}")
+                # Display in UI if app_instance is provided
+                if app_instance:
+                    app_instance.root.after(0, lambda c=code: app_instance.show_verification_code(c))
+                
+                break
+        except Exception as e:
+            logger.debug(f"Selector failed: {selector} - {e}")
+    
+    if code:
+        logger.info(f"Verification code found: {code}")
+        return code
+    else:
+        logger.warning("Verification code not found with any selector.")
+        
+        # Save page source for debugging
+        try:
+            page_source_path = os.path.join(os.getcwd(), "page_source.html")
+            with open(page_source_path, "w") as f:
+                f.write(driver.page_source)
+            logger.info(f"Page source saved to {page_source_path}")
+        except Exception as e:
+            logger.error(f"Failed to save page source: {e}")
+        
+        # Try to find any elements that might contain the code
+        try:
+            logger.info("Looking for any elements that might contain the code...")
+            all_spans = driver.find_elements(By.TAG_NAME, "span")
+            for span in all_spans:
+                text = span.text.strip()
+                if text and len(text) >= 4 and text.isdigit():
+                    logger.info(f"Potential code found in span: {text}")
             
-            return None
-
+            all_divs = driver.find_elements(By.TAG_NAME, "div")
+            for div in all_divs:
+                text = div.text.strip()
+                if text and len(text) >= 4 and text.isdigit():
+                    logger.info(f"Potential code found in div: {text}")
+        except Exception as e:
+            logger.error(f"Error searching for potential codes: {e}")
+        
+        return None
+    
 def check_for_login_success(driver):
         """Check for the settings icon that indicates successful login"""
         logger.info("Checking for login success (looking for settings icon)...")
@@ -1908,11 +1923,11 @@ class LoginApp:
         self.password_entry.pack(fill=tk.X, pady=5)
         
         # Show Password Checkbox
-        self.show_password_var = tk.BooleanVar()
-        show_password_cb = ttk.Checkbutton(password_frame, text="Show Password", 
-                                          variable=self.show_password_var,
-                                          command=self.toggle_password_visibility)
-        show_password_cb.pack(anchor=tk.W, pady=5)
+        # self.show_password_var = tk.BooleanVar()
+        # show_password_cb = ttk.Checkbutton(password_frame, text="Show Password", 
+        #                                   variable=self.show_password_var,
+        #                                   command=self.toggle_password_visibility)
+        # show_password_cb.pack(anchor=tk.W, pady=5)
         
         # Remember Me Checkbox
         self.remember_me_var = tk.BooleanVar(value=True)  # Default to True
@@ -2009,7 +2024,7 @@ class LoginApp:
         """Authenticate user with the LeadsCruise API"""
         email = self.email_var.get().strip()
         password = self.password_var.get()
-        
+        print(f"DEBUG Email: '{email}' Password: '{password}'")
         if not email or not password:
             self.update_status("Error: Email and password are required!")
             messagebox.showerror("Error", "Please enter both email and password!")
@@ -2237,6 +2252,29 @@ class LeadFetcherApp:
         # Auto-fetch timer
         self.auto_fetch_timer = None
         
+        # NEW: Log visibility and authentication
+        self.logs_visible = False
+        self.logs_authenticated = False
+        self.LOG_PASSWORD = "admin123"  # Change this to your desired password
+        
+        # NEW: Verification code tracking
+        self.current_verification_code = None
+        
+        self.conditional_autostart = ConditionalAutoStart(app_name="LeadFetcher")
+        
+        # Check if we should be running (were we running during last shutdown?)
+        if self.conditional_autostart.should_autostart():
+            print("App was running during system shutdown - auto-starting now")
+            self.log_to_response("Auto-started: App was running when system shut down")
+        else:
+            print("App was not running during last shutdown - normal start")
+        
+        # Mark app as currently running
+        self.conditional_autostart.mark_app_running()
+        
+        # Register cleanup handlers for normal shutdown
+        self._register_shutdown_handlers()
+
         # Setup GUI first
         self.setup_gui()
         
@@ -2250,39 +2288,7 @@ class LeadFetcherApp:
             logger.addHandler(gui_handler)
         except:
             pass
-        
-        # Show initial message
-        self.log_to_response("🔄 Application starting...")
-        if TRAY_AVAILABLE:
-            self.log_to_response("✅ Tray functionality available:")
-            self.log_to_response("   • Click X to minimize to tray")
-            self.log_to_response("   • Double-click tray icon to restore")
-            self.log_to_response("   • Right-click tray for menu")
-            self.log_to_response("   • Ctrl+Alt+L to restore from anywhere")
-        else:
-            self.log_to_response("⚠️ Tray functionality not available")
-        
-        # Override destroy method
-        self._original_destroy = self.root.destroy
-        self.root.destroy = self.custom_destroy
-        
-        # Set up close protocol
-        self.root.protocol("WM_DELETE_WINDOW", self.on_window_close)
-        
-        # Add keyboard shortcut
-        self.root.bind_all('<Control-Alt-KeyPress-l>', self.keyboard_restore)
-        
-        # NEW: Start message queue processor
-        self.process_messages()
-        
-        print("✅ All handlers set up")
-
-        # Start auto-fetch by default since checkbox is enabled
-        if self.auto_fetch_var.get():
-            self.start_auto_fetch()
-
-        self.init_update_manager()
-
+    
     def init_update_manager(self):
         """Initialize the update manager - call this in your __init__ method"""
         self.update_manager = GitHubUpdateManager(self)
@@ -2669,53 +2675,77 @@ class LeadFetcherApp:
             print(f"❌ Error in confirm_quit: {e}")
             self.is_closing = False
 
-    def quit_app(self, icon=None, item=None):
-        """Quit application"""
-        print("🔄 quit_app called")
+    def _register_shutdown_handlers(self):
+        """Register handlers to detect when app closes normally vs system shutdown"""
         
-        try:
-            self.force_quit = True
-            
-            # Stop auto-fetch
-            if hasattr(self, 'auto_fetch_timer') and self.auto_fetch_timer:
-                self.root.after_cancel(self.auto_fetch_timer)
-                
-            # Stop tray
-            if self.tray_icon:
-                try:
-                    self.tray_icon.stop()
-                except:
-                    pass
-                self.tray_icon = None
-                
-            self.is_minimized_to_tray = False
-            
+        # Handler for normal Python exit
+        atexit.register(self._on_normal_exit)
+        
+        # Handler for SIGTERM (system shutdown on Unix)
+        if hasattr(signal, 'SIGTERM'):
+            signal.signal(signal.SIGTERM, self._on_system_shutdown)
+        
+        # Handler for SIGINT (Ctrl+C)
+        if hasattr(signal, 'SIGINT'):
+            signal.signal(signal.SIGINT, self._on_normal_exit)
+        
+        # Windows shutdown detection
+        if platform.system() == "Windows":
+            import win32api
+            import win32con
             try:
-                self.log_to_response("❌ Application closing...")
+                win32api.SetConsoleCtrlHandler(self._on_windows_shutdown, True)
             except:
-                pass
-            
-            # Restore original destroy and quit
-            self.root.destroy = self._original_destroy
-            self.root.quit()
-            self.root.destroy()
-            
-        except Exception as e:
-            print(f"❌ Error during quit: {e}")
-        finally:
-            sys.exit(0)
-
-    def log_to_response(self, message):
-        """Log to GUI"""
+                pass  # If win32api not available, graceful fallback
+    
+    def _on_normal_exit(self, *args):
+        """Called when app exits normally (user closes it)"""
+        print("Normal exit detected - marking app as stopped")
+        self.conditional_autostart.mark_app_stopped()
+    
+    def _on_system_shutdown(self, signum, frame):
+        """Called when system is shutting down (Unix)"""
+        print("System shutdown detected - keeping app marked as running")
+        # Don't call mark_app_stopped() - leave it marked as running
+        # so it will auto-start on next boot
+        sys.exit(0)
+    
+    def _on_windows_shutdown(self, ctrl_type):
+        """Called when Windows system is shutting down"""
+        if ctrl_type in (win32con.CTRL_SHUTDOWN_EVENT, win32con.CTRL_LOGOFF_EVENT):
+            print("Windows shutdown detected - keeping app marked as running")
+            # Don't call mark_app_stopped()
+            return True
+        return False
+    
+    def quit_app(self):
+        """Modified quit_app to mark as stopped on normal exit"""
+        self.force_quit = True
+        self.is_closing = True
+        
+        # Mark app as stopped (normal user exit)
+        self.conditional_autostart.mark_app_stopped()
+        
+        # Stop progress bar to prevent "after" script errors
         try:
-            if hasattr(self, 'response_text') and self.response_text:
-                self.response_text.insert(tk.END, f"{message}\n")
-                self.response_text.see(tk.END)
-                self.root.update_idletasks()
+            self.progress.stop()
         except:
             pass
-        print(f"LOG: {message}")
         
+        # Cancel any pending timers
+        if self.auto_fetch_timer:
+            try:
+                self.root.after_cancel(self.auto_fetch_timer)
+            except:
+                pass
+        
+        # Destroy the window
+        try:
+            self.root.quit()
+            self.root.destroy()
+        except:
+            pass
+
     def setup_gui(self):
         # Main frame
         main_frame = ttk.Frame(self.root, padding="10")
@@ -2771,19 +2801,63 @@ class LeadFetcherApp:
         self.progress = ttk.Progressbar(main_frame, mode='indeterminate')
         self.progress.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
-        # Response display
-        ttk.Label(main_frame, text="API Response:").grid(row=6, column=0, sticky=(tk.W, tk.N), pady=(20, 5))
+        # ===== NEW: WhatsApp Verification Code Display (Compact) =====
+        self.verification_frame = tk.Frame(main_frame, bg="#1e3a8a", relief=tk.RIDGE, borderwidth=1)
+        self.verification_frame.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        self.verification_frame.grid_remove()  # Hidden by default
         
-        # Text area for response
-        self.response_text = scrolledtext.ScrolledText(main_frame, height=20, width=80)
-        self.response_text.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        # Single row layout
+        compact_frame = tk.Frame(self.verification_frame, bg="#1e3a8a")
+        compact_frame.pack(fill=tk.X, padx=10, pady=6)
+        
+        # Header (left side)
+        tk.Label(compact_frame, 
+                text="WhatsApp Code:",
+                font=("Arial", 9, "bold"),
+                bg="#1e3a8a", fg="white").pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Verification code display (center, inline)
+        self.verification_code_label = tk.Label(compact_frame,
+                                                text="------",
+                                                font=("Courier New", 20, "bold"),
+                                                bg="#3b82f6", fg="white",
+                                                relief=tk.FLAT,
+                                                borderwidth=1,
+                                                padx=12, pady=4)
+        self.verification_code_label.pack(side=tk.LEFT, padx=5)
+        
+        # Copy button (right side)
+        self.copy_code_button = ttk.Button(compact_frame,
+                                          text="Copy",
+                                          command=self.copy_verification_code,
+                                          width=8)
+        self.copy_code_button.pack(side=tk.LEFT, padx=5)
+        
+        # ===== End Verification Code Display =====
+        
+        # Log section header with toggle button
+        log_header_frame = ttk.Frame(main_frame)
+        log_header_frame.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(20, 5))
+        log_header_frame.columnconfigure(1, weight=1)
+        
+        self.log_label = ttk.Label(log_header_frame, text="API Response:")
+        self.log_label.grid(row=0, column=0, sticky=tk.W)
+        
+        self.toggle_logs_button = ttk.Button(log_header_frame, text="Show Logs", 
+                                            command=self.toggle_logs)
+        self.toggle_logs_button.grid(row=0, column=2, sticky=tk.E)
+        
+        # Text area for response (initially hidden)
+        self.response_text = scrolledtext.ScrolledText(main_frame, height=15, width=80)
+        self.response_text.grid(row=8, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        self.response_text.grid_remove()  # Hide initially
         
         # Configure grid weights for resizing
-        main_frame.rowconfigure(7, weight=1)
+        main_frame.rowconfigure(8, weight=1)
         
         # Button frame
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=8, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
+        button_frame.grid(row=9, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         button_frame.columnconfigure(1, weight=1)
         
         # Clear button
@@ -2809,10 +2883,15 @@ class LeadFetcherApp:
                 command=self.minimize_to_tray).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(control_frame, text="Test Restore", 
                 command=lambda: self.send_message("restore_window")).pack(side=tk.LEFT, padx=(0, 5))
+        
+        # NEW: Test Verification Code Display
+        ttk.Button(control_frame, text="Test Code Display", 
+                command=lambda: self.show_verification_code("123-456")).pack(side=tk.LEFT, padx=(0, 5))
+        
         ttk.Button(control_frame, text="Debug State", 
                 command=self.debug_protocol_state).pack(side=tk.LEFT, padx=(0, 5))
 
-        # NEW: Check Updates button
+        # Check Updates button
         ttk.Button(control_frame, text="Check Updates", 
                 command=self.check_for_updates_clicked).pack(side=tk.LEFT, padx=(0, 5))
 
@@ -2821,13 +2900,135 @@ class LeadFetcherApp:
         ttk.Button(control_frame, text="Force Quit", 
                 command=self.quit_app).pack(side=tk.LEFT)
 
-    def clear_response(self):
-        """Clear response area"""
+    def show_verification_code(self, code):
+        """Display the verification code prominently in the UI"""
+        print(f"DEBUG: show_verification_code called with code: {code}")  # Debug print
+        
         try:
-            self.response_text.delete(1.0, tk.END)
-            self.log_to_response("✅ Cleared")
+            self.current_verification_code = code
+            self.verification_code_label.config(text=code)
+            self.verification_frame.grid()  # Show the frame
+            
+            # Force update the display
+            self.root.update_idletasks()
+            
+            print(f"DEBUG: Verification frame grid() called, should be visible now")  # Debug print
+            
+            # Also log to response
+            self.response_text.insert(tk.END, f"\n{'='*60}\n")
+            self.response_text.insert(tk.END, f"🔔 VERIFICATION CODE DETECTED: {code}\n")
+            self.response_text.insert(tk.END, f"{'='*60}\n\n")
+            self.response_text.see(tk.END)
+            
+            # Flash effect - animate the background color
+            def flash(count=0):
+                if count < 6:  # Flash 3 times
+                    bg_color = "#10b981" if count % 2 == 0 else "#3b82f6"
+                    self.verification_code_label.config(bg=bg_color)
+                    self.root.after(300, lambda: flash(count + 1))
+            
+            flash()
+            
         except Exception as e:
-            print(f"Error clearing: {e}")
+            print(f"ERROR in show_verification_code: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def hide_verification_code(self):
+        """Hide the verification code display"""
+        self.verification_frame.grid_remove()
+        self.current_verification_code = None
+        self.verification_code_label.config(text="------", bg="#3b82f6")
+
+    def copy_verification_code(self):
+        """Copy the verification code to clipboard"""
+        if self.current_verification_code:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(self.current_verification_code)
+            self.root.update()
+            
+            # Show feedback
+            original_text = self.copy_code_button.config('text')[-1]
+            self.copy_code_button.config(text="✅ Copied!")
+            self.root.after(2000, lambda: self.copy_code_button.config(text=original_text))
+            
+            self.log_to_response(f"✅ Verification code {self.current_verification_code} copied to clipboard")
+
+    def toggle_logs(self):
+        """Toggle log visibility with password protection"""
+        if not self.logs_visible:
+            # Trying to show logs - check authentication
+            if not self.logs_authenticated:
+                password = simpledialog.askstring(
+                    "Password Required", 
+                    "Enter password to view logs:",
+                    show='*',
+                    parent=self.root
+                )
+                
+                if password != self.LOG_PASSWORD:
+                    self.status_var.set("Incorrect password. Access denied.")
+                    return
+                
+                self.logs_authenticated = True
+            
+            # Show logs
+            self.response_text.grid()
+            self.logs_visible = True
+            self.toggle_logs_button.config(text="Hide Logs")
+            self.log_label.config(text="API Response (Logs Visible):")
+        else:
+            # Hide logs
+            self.response_text.grid_remove()
+            self.logs_visible = False
+            self.toggle_logs_button.config(text="Show Logs")
+            self.log_label.config(text="API Response:")
+
+    def clear_response(self):
+        """Clear the response text area"""
+        if self.logs_visible:
+            self.response_text.delete(1.0, tk.END)
+
+    def detect_and_show_verification_code(self, message):
+        """Detect verification code in log messages and display it"""
+        print(f"DEBUG: Checking message for verification code: {message[:100]}")  # Debug print
+        
+        # Pattern 1: "Verification code found: XXXX-XXXX" (alphanumeric)
+        pattern1 = r'Verification code found:\s*([A-Z0-9]{4}[-\s]?[A-Z0-9]{4})'
+        # Pattern 2: "SUCCESS! Verification code: XXXX-XXXX" (alphanumeric)
+        pattern2 = r'Verification code:\s*([A-Z0-9]{4}[-\s]?[A-Z0-9]{4})'
+        
+        patterns = [pattern1, pattern2]
+        
+        for i, pattern in enumerate(patterns):
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                print(f"DEBUG: Pattern {i+1} matched!")  # Debug print
+                code = match.group(1).replace(' ', '')  # Keep the dash, just remove spaces
+                print(f"DEBUG: Extracted code: {code}")  # Debug print
+                
+                # Validate code format (either 8 alphanumeric or 6 digits)
+                code_no_dash = code.replace('-', '')
+                if ((len(code_no_dash) == 8 and code_no_dash.isalnum()) or 
+                    (len(code_no_dash) == 6 and code_no_dash.isdigit())):
+                    
+                    # Format as XXXX-XXXX or XXX-XXX for display
+                    if len(code_no_dash) == 8:
+                        formatted_code = f"{code_no_dash[:4]}-{code_no_dash[4:]}"
+                    else:
+                        formatted_code = f"{code_no_dash[:3]}-{code_no_dash[3:]}"
+                    
+                    print(f"DEBUG: Showing formatted code: {formatted_code}")  # Debug print
+                    
+                    # Use root.after to ensure thread safety
+                    if hasattr(self, 'root') and self.root:
+                        self.root.after(0, lambda c=formatted_code: self.show_verification_code(c))
+                    else:
+                        self.show_verification_code(formatted_code)
+                    return
+        
+        print("DEBUG: No verification code pattern matched")  # Debug print
+
 
     def debug_protocol_state(self):
         """Debug method to check protocol state"""
@@ -2860,7 +3061,7 @@ class LeadFetcherApp:
         # Ask for confirmation since this will stop background processes
         result = messagebox.askyesno(
             "Logout Confirmation",
-            "Logging out will stop all background processes.\n\n"
+            "Logging out will stop all background processes and clear saved session.\n\n"
             "Are you sure you want to logout?"
         )
         
@@ -2872,15 +3073,24 @@ class LeadFetcherApp:
             # Stop any auto-fetch
             if self.auto_fetch_timer:
                 self.root.after_cancel(self.auto_fetch_timer)
-                
+            
+            # 🗑️ Delete saved session/config directory
+            config_dir = os.path.join(os.path.expanduser("~"), ".leadscruise")
+            if os.path.exists(config_dir):
+                try:
+                    shutil.rmtree(config_dir)   # deletes whole folder
+                    print(f"🗑️ Deleted config directory: {config_dir}")
+                except Exception as e:
+                    print(f"⚠️ Could not delete config directory: {e}")
+            
             # Close current window
             self.root.destroy()
             through_logout = True
-            # Reopen login window - You'll need to import LoginApp
+            self.conditional_autostart.mark_app_stopped()
+            # Reopen login window
             login_root = tk.Tk()
             login_app = LoginApp(login_root)
             login_root.mainloop()
-
 
     def fetch_data_threaded(self, is_auto_fetch=False):
         """Run fetch_data in a separate thread to prevent GUI freezing"""
@@ -3296,8 +3506,29 @@ class LeadFetcherApp:
         self.log_to_response(f"📱 WhatsApp automation started in background thread (Total active: {len(self.whatsapp_threads)})...")
 
     def log_to_response(self, message):
-        """Add message to response text area (thread-safe)"""
-        self.root.after(0, lambda: self._append_to_text(message))
+        """Thread-safe method to append log messages and detect verification codes"""
+        def _do_log():
+            try:
+                if hasattr(self, 'response_text') and self.response_text:
+                    self.response_text.insert(tk.END, message + '\n')
+                    self.response_text.see(tk.END)
+                    self.root.update_idletasks()
+                    
+                    # Check if message contains a verification code
+                    self.detect_and_show_verification_code(message)
+            except Exception as e:
+                print(f"Error in log_to_response: {e}")
+        
+        # Always print to console as backup
+        print(f"LOG: {message}")
+        
+        # Schedule UI update on main thread
+        if hasattr(self, 'root') and self.root:
+            try:
+                self.root.after(0, _do_log)
+            except:
+                # If root is destroyed, just print
+                pass
         
     def _append_to_text(self, message):
         """Append text to response area and scroll to bottom"""
@@ -3338,6 +3569,351 @@ class LeadFetcherApp:
         if self.auto_fetch_var.get():
             self.fetch_data_threaded(is_auto_fetch=True)  # Pass auto-fetch flag
             self.auto_fetch_timer = self.root.after(300000, self.schedule_auto_fetch)  # 300000ms = 5 minutes
+
+class AutoStartManager:
+    """Manage application auto-start on system boot"""
+    
+    def __init__(self, app_name="LeadFetcher", app_path=None):
+        self.app_name = app_name
+        self.app_path = app_path or sys.executable
+        self.system = platform.system()
+    
+    def enable_autostart(self):
+        """Enable auto-start for the application"""
+        try:
+            if self.system == "Windows":
+                return self._enable_windows_autostart()
+            elif self.system == "Linux":
+                return self._enable_linux_autostart()
+            elif self.system == "Darwin":  # macOS
+                return self._enable_macos_autostart()
+            else:
+                print(f"Unsupported operating system: {self.system}")
+                return False
+        except Exception as e:
+            print(f"Error enabling auto-start: {e}")
+            return False
+    
+    def disable_autostart(self):
+        """Disable auto-start for the application"""
+        try:
+            if self.system == "Windows":
+                return self._disable_windows_autostart()
+            elif self.system == "Linux":
+                return self._disable_linux_autostart()
+            elif self.system == "Darwin":
+                return self._disable_macos_autostart()
+            else:
+                return False
+        except Exception as e:
+            print(f"Error disabling auto-start: {e}")
+            return False
+    
+    def is_autostart_enabled(self):
+        """Check if auto-start is currently enabled"""
+        try:
+            if self.system == "Windows":
+                return self._check_windows_autostart()
+            elif self.system == "Linux":
+                return self._check_linux_autostart()
+            elif self.system == "Darwin":
+                return self._check_macos_autostart()
+            else:
+                return False
+        except Exception as e:
+            print(f"Error checking auto-start status: {e}")
+            return False
+    
+    # ===== WINDOWS IMPLEMENTATION =====
+    
+    def _enable_windows_autostart(self):
+        """Add to Windows Registry Run key"""
+        try:
+            # Get the path to the executable (works for both .py and .exe)
+            if getattr(sys, 'frozen', False):
+                # Running as compiled executable
+                exe_path = sys.executable
+            else:
+                # Running as Python script
+                script_path = os.path.abspath(sys.argv[0])
+                exe_path = f'"{sys.executable}" "{script_path}"'
+            
+            # Open the registry key
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0,
+                winreg.KEY_SET_VALUE
+            )
+            
+            # Set the value
+            winreg.SetValueEx(key, self.app_name, 0, winreg.REG_SZ, exe_path)
+            winreg.CloseKey(key)
+            
+            print(f"Auto-start enabled for Windows: {exe_path}")
+            return True
+            
+        except Exception as e:
+            print(f"Failed to enable Windows auto-start: {e}")
+            return False
+    
+    def _disable_windows_autostart(self):
+        """Remove from Windows Registry Run key"""
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0,
+                winreg.KEY_SET_VALUE
+            )
+            
+            winreg.DeleteValue(key, self.app_name)
+            winreg.CloseKey(key)
+            
+            print("Auto-start disabled for Windows")
+            return True
+            
+        except FileNotFoundError:
+            # Key doesn't exist, already disabled
+            return True
+        except Exception as e:
+            print(f"Failed to disable Windows auto-start: {e}")
+            return False
+    
+    def _check_windows_autostart(self):
+        """Check if entry exists in Windows Registry"""
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0,
+                winreg.KEY_READ
+            )
+            
+            value, _ = winreg.QueryValueEx(key, self.app_name)
+            winreg.CloseKey(key)
+            return True
+            
+        except FileNotFoundError:
+            return False
+    
+    # ===== LINUX IMPLEMENTATION =====
+    
+    def _enable_linux_autostart(self):
+        """Create .desktop file in autostart directory"""
+        try:
+            autostart_dir = Path.home() / ".config" / "autostart"
+            autostart_dir.mkdir(parents=True, exist_ok=True)
+            
+            desktop_file = autostart_dir / f"{self.app_name}.desktop"
+            
+            # Get executable path
+            if getattr(sys, 'frozen', False):
+                exe_path = sys.executable
+            else:
+                script_path = os.path.abspath(sys.argv[0])
+                exe_path = f"{sys.executable} {script_path}"
+            
+            # Create .desktop file content
+            content = f"""[Desktop Entry]
+Type=Application
+Name={self.app_name}
+Exec={exe_path}
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Comment=Auto-start {self.app_name} on login
+"""
+            
+            desktop_file.write_text(content)
+            os.chmod(desktop_file, 0o755)
+            
+            print(f"Auto-start enabled for Linux: {desktop_file}")
+            return True
+            
+        except Exception as e:
+            print(f"Failed to enable Linux auto-start: {e}")
+            return False
+    
+    def _disable_linux_autostart(self):
+        """Remove .desktop file from autostart directory"""
+        try:
+            autostart_dir = Path.home() / ".config" / "autostart"
+            desktop_file = autostart_dir / f"{self.app_name}.desktop"
+            
+            if desktop_file.exists():
+                desktop_file.unlink()
+                print("Auto-start disabled for Linux")
+            
+            return True
+            
+        except Exception as e:
+            print(f"Failed to disable Linux auto-start: {e}")
+            return False
+    
+    def _check_linux_autostart(self):
+        """Check if .desktop file exists"""
+        autostart_dir = Path.home() / ".config" / "autostart"
+        desktop_file = autostart_dir / f"{self.app_name}.desktop"
+        return desktop_file.exists()
+    
+    # ===== macOS IMPLEMENTATION =====
+    
+    def _enable_macos_autostart(self):
+        """Create LaunchAgent plist file"""
+        try:
+            launch_agents_dir = Path.home() / "Library" / "LaunchAgents"
+            launch_agents_dir.mkdir(parents=True, exist_ok=True)
+            
+            plist_file = launch_agents_dir / f"com.{self.app_name}.plist"
+            
+            # Get executable path
+            if getattr(sys, 'frozen', False):
+                exe_path = sys.executable
+            else:
+                script_path = os.path.abspath(sys.argv[0])
+                program_args = [sys.executable, script_path]
+            
+            # Create plist content
+            if getattr(sys, 'frozen', False):
+                program_args = [exe_path]
+            
+            content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.{self.app_name}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>{program_args[0]}</string>
+"""
+            if len(program_args) > 1:
+                content += f"        <string>{program_args[1]}</string>\n"
+            
+            content += """    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+"""
+            
+            plist_file.write_text(content)
+            
+            print(f"Auto-start enabled for macOS: {plist_file}")
+            return True
+            
+        except Exception as e:
+            print(f"Failed to enable macOS auto-start: {e}")
+            return False
+    
+    def _disable_macos_autostart(self):
+        """Remove LaunchAgent plist file"""
+        try:
+            launch_agents_dir = Path.home() / "Library" / "LaunchAgents"
+            plist_file = launch_agents_dir / f"com.{self.app_name}.plist"
+            
+            if plist_file.exists():
+                plist_file.unlink()
+                print("Auto-start disabled for macOS")
+            
+            return True
+            
+        except Exception as e:
+            print(f"Failed to disable macOS auto-start: {e}")
+            return False
+    
+    def _check_macos_autostart(self):
+        """Check if plist file exists"""
+        launch_agents_dir = Path.home() / "Library" / "LaunchAgents"
+        plist_file = launch_agents_dir / f"com.{self.app_name}.plist"
+        return plist_file.exists()
+
+class ConditionalAutoStart:
+    """Manages auto-start only if app was running when system shut down"""
+    
+    def __init__(self, app_name="LeadFetcher"):
+        self.app_name = app_name
+        self.state_file = self._get_state_file_path()
+        self.autostart_manager = AutoStartManager(app_name=app_name)
+        
+    def _get_state_file_path(self):
+        """Get path to state file based on OS"""
+        if platform.system() == "Windows":
+            app_data = os.getenv('APPDATA')
+            state_dir = Path(app_data) / self.app_name
+        else:
+            state_dir = Path.home() / ".config" / self.app_name
+        
+        state_dir.mkdir(parents=True, exist_ok=True)
+        return state_dir / "app_state.json"
+    
+    def mark_app_running(self):
+        """Mark that the app is currently running"""
+        state = {
+            "is_running": True,
+            "should_autostart": True
+        }
+        try:
+            with open(self.state_file, 'w') as f:
+                json.dump(state, f)
+            print(f"App state marked as running: {self.state_file}")
+        except Exception as e:
+            print(f"Failed to mark app as running: {e}")
+    
+    def mark_app_stopped(self):
+        """Mark that the app has been properly closed"""
+        state = {
+            "is_running": False,
+            "should_autostart": False
+        }
+        try:
+            with open(self.state_file, 'w') as f:
+                json.dump(state, f)
+            print(f"App state marked as stopped: {self.state_file}")
+        except Exception as e:
+            print(f"Failed to mark app as stopped: {e}")
+    
+    def should_autostart(self):
+        """Check if app should auto-start (was running during last shutdown)"""
+        try:
+            if not self.state_file.exists():
+                return False
+            
+            with open(self.state_file, 'r') as f:
+                state = json.load(f)
+            
+            # If app was marked as running, it means system shut down while app was active
+            return state.get("should_autostart", False) and state.get("is_running", False)
+        
+        except Exception as e:
+            print(f"Failed to check autostart state: {e}")
+            return False
+    
+    def setup_autostart(self):
+        """Enable auto-start in system and mark app as running"""
+        # Enable system auto-start
+        success = self.autostart_manager.enable_autostart()
+        if success:
+            # Mark app as running so it will restart after reboot
+            self.mark_app_running()
+        return success
+    
+    def remove_autostart(self):
+        """Disable auto-start and mark app as stopped"""
+        # Mark as stopped first
+        self.mark_app_stopped()
+        # Then disable system auto-start
+        return self.autostart_manager.disable_autostart()
+    
+    def cleanup_on_exit(self):
+        """Called when app exits normally - disables auto-start"""
+        print("App closing normally - disabling auto-start")
+        self.mark_app_stopped()
+        # Don't disable system autostart entry, just mark as stopped
+        # This way the app will check on next boot and not start
 
 def check_firefox_installed():
     """Check if Firefox is installed on the system"""

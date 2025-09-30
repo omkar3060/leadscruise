@@ -11,12 +11,14 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isUploading, setIsUploading] = useState(false); // New state for upload loading
+  
   const socket = io("https://api.leadscruise.com", {
     path: "/socket.io/", // ✅ Ensure correct path
     transports: ["websocket"], // ✅ Force WebSocket
     secure: true,
     reconnection: true,
-});
+  });
 
   useEffect(() => {
     // Listen for errors
@@ -80,23 +82,68 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
     setSelectedFile(e.target.files[0]);
   };
 
+  // Function to send email notification
+  const sendInvoiceEmail = async (email, orderId) => {
+    try {
+      const response = await axios.post("https://api.leadscruise.com/api/send-invoice-email", {
+        email: email,
+        unique_id: orderId,
+      });
+      
+      if (response.data.success) {
+        console.log("✅ Invoice email sent successfully to:", email);
+      }
+    } catch (error) {
+      console.error("❌ Error sending invoice email:", error);
+      // Don't throw error - email failure shouldn't stop the upload process
+    }
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) {
       alert("Please attach a file before uploading.");
       return;
     }
 
+    // Validate file type
+    if (selectedFile.type !== "application/pdf") {
+      alert("Please upload a PDF file only.");
+      return;
+    }
+
+    setIsUploading(true); // Start upload loading state
+
     const formData = new FormData();
     formData.append("invoice", selectedFile);
 
     try {
-      await axios.post(`https://api.leadscruise.com/api/upload-invoice/${unique_id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert("Invoice uploaded successfully!");
-      handleClose(); // Reset state and close modal
+      const uploadResponse = await axios.post(
+        `https://api.leadscruise.com/api/upload-invoice/${unique_id}`, 
+        formData, 
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      if (uploadResponse.status === 200 || uploadResponse.data.success) {
+        // Send email to customer after successful upload
+        await sendInvoiceEmail(userEmail, unique_id);
+        
+        alert("Invoice uploaded successfully! Email notification sent to customer.");
+        
+        // Reset and close modal
+        handleClose();
+        
+        // Refresh the page to update the invoice status
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
     } catch (error) {
-      alert("Failed to upload invoice.");
+      console.error("Error uploading invoice:", error);
+      alert("Failed to upload invoice. Please try again.");
+    } finally {
+      setIsUploading(false); // Stop upload loading state
     }
   };
 
@@ -157,6 +204,7 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
       alert("Error stopping AI.");
     }
   };
+  
   if (!isOpen) return null;
 
   return (
@@ -187,49 +235,43 @@ const BillingModal = ({ isOpen, onClose, userEmail, unique_id }) => {
             <p><strong>Address:</strong> {billingDetails.address}</p>
             <p><strong>Billing Email ID:</strong> {billingDetails.email}</p>
 
-            {/* Display API Key */}
-            {/* <p><strong>API Key:</strong> {apiKey}</p> */}
-
-            {/* New Sheets ID Input Field */}
-            {/* <div className={styles.inputGroup}>
-              <strong>
-                <label htmlFor="sheetsId">Google Sheets ID:</label>
-              </strong>
-              <input
-                type="text"
-                id="sheetsId"
-                value={sheetsId}
-                onChange={(e) => setSheetsId(e.target.value)}
-                placeholder="Enter Google Sheets ID"
-              />
-              <button
-                onClick={isRunning ? handleStop : handleUpdate}
-                className={`${styles.attachBillLabel} ${isRunning ? styles.running : ""}`}
-                disabled={loading}
-                title={isRunning ? "AI already started, click to stop" : ""}
-              >
-                {loading ? (
-                  <div className={styles.spinner}></div>
-                ) : isRunning ? (
-                  "Stop"
-                ) : (
-                  "Update"
-                )}
-              </button>
-            </div> */}
             {/* File Upload Section */}
             <div className={styles.fileUploadSection}>
               <label htmlFor="fileUpload" className={styles.attachBillLabel}>
                 Attach Bill
               </label>
-              <input id="fileUpload" type="file" accept="application/pdf" onChange={handleFileChange} />
+              <input 
+                id="fileUpload" 
+                type="file" 
+                accept="application/pdf" 
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
               {selectedFile && <span className={styles.uploadedFileName}>📎 {selectedFile.name}</span>}
             </div>
 
             {/* Buttons */}
             <div className={styles.buttonGroup}>
-              <button onClick={handleUpload} className={styles.uploadButton}>Save & Upload</button>
-              <button onClick={handleClose} className={styles.closeButton}>Close</button>
+              <button 
+                onClick={handleUpload} 
+                className={styles.uploadButton}
+                disabled={isUploading || !selectedFile}
+              >
+                {isUploading ? (
+                  <>
+                    <span className={styles.spinner}></span> Uploading...
+                  </>
+                ) : (
+                  "Save & Upload"
+                )}
+              </button>
+              <button 
+                onClick={handleClose} 
+                className={styles.closeButton}
+                disabled={isUploading}
+              >
+                Close
+              </button>
             </div>
           </>
         ) : (

@@ -237,6 +237,239 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/support", supportRoutes);
 app.use('/api/teammates', teammateRoutes);
 
+// Add this after your other route definitions (after line ~200)
+
+const nodemailer = require('nodemailer');
+
+// Configure email transporter
+const emailTransporter = nodemailer.createTransport({
+  service: 'gmail', // Change to your email service
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+// Email sending route for invoice notifications
+app.post('/api/send-invoice-email', async (req, res) => {
+  try {
+    const { email, unique_id } = req.body;
+
+    if (!email || !unique_id) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email and Order ID are required' 
+      });
+    }
+
+    console.log(`Sending invoice email to ${email} for order ${unique_id}`);
+
+    // Fetch payment details to get more info
+    const payment = await Payment.findOne({ unique_id });
+    let subscriptionType = "Subscription";
+    let orderAmount = "";
+
+    if (payment) {
+      subscriptionType = payment.subscription_type || "Subscription";
+      orderAmount = payment.order_amount ? `₹${payment.order_amount / 100}` : "";
+    }
+
+    // Email content
+    const mailOptions = {
+      from: `"Leadscruise" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `Invoice Ready - Order #${unique_id}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              background-color: #f4f4f4;
+              margin: 0;
+              padding: 0;
+            }
+            .container {
+              max-width: 600px;
+              margin: 20px auto;
+              background-color: #ffffff;
+              border-radius: 10px;
+              overflow: hidden;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px 20px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 28px;
+              font-weight: 600;
+            }
+            .content {
+              padding: 30px 25px;
+            }
+            .content h2 {
+              color: #667eea;
+              font-size: 22px;
+              margin-bottom: 15px;
+            }
+            .content p {
+              margin-bottom: 15px;
+              font-size: 15px;
+            }
+            .order-details {
+              background-color: #f8f9fa;
+              padding: 20px;
+              border-left: 4px solid #667eea;
+              margin: 20px 0;
+              border-radius: 5px;
+            }
+            .order-details h3 {
+              margin-top: 0;
+              color: #667eea;
+              font-size: 16px;
+            }
+            .order-details p {
+              margin: 8px 0;
+              font-size: 14px;
+            }
+            .order-details strong {
+              color: #333;
+            }
+            .cta-button {
+              display: inline-block;
+              padding: 12px 30px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              text-decoration: none;
+              border-radius: 5px;
+              font-weight: 600;
+              margin: 20px 0;
+              text-align: center;
+            }
+            .cta-button:hover {
+              opacity: 0.9;
+            }
+            .steps {
+              background-color: #f8f9fa;
+              padding: 20px;
+              border-radius: 5px;
+              margin: 20px 0;
+            }
+            .steps h3 {
+              color: #667eea;
+              margin-top: 0;
+              font-size: 16px;
+            }
+            .steps ul {
+              margin: 10px 0;
+              padding-left: 20px;
+            }
+            .steps li {
+              margin: 8px 0;
+              font-size: 14px;
+            }
+            .footer {
+              background-color: #f8f9fa;
+              padding: 20px;
+              text-align: center;
+              border-top: 1px solid #e0e0e0;
+            }
+            .footer p {
+              margin: 5px 0;
+              font-size: 12px;
+              color: #666;
+            }
+            .footer .social-links {
+              margin-top: 15px;
+            }
+            .footer .social-links a {
+              color: #667eea;
+              text-decoration: none;
+              margin: 0 10px;
+              font-size: 13px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>📄 Invoice Generated</h1>
+            </div>
+            <div class="content">
+              <h2>Dear Customer,</h2>
+              <p>Great news! Your invoice has been successfully generated and is now ready for download.</p>
+              
+              <div class="order-details">
+                <h3>Order Details</h3>
+                <p><strong>Order ID:</strong> ${unique_id}</p>
+                ${subscriptionType ? `<p><strong>Subscription:</strong> ${subscriptionType}</p>` : ''}
+                ${orderAmount ? `<p><strong>Amount:</strong> ${orderAmount}</p>` : ''}
+                <p><strong>Status:</strong> <span style="color: #28a745;">✓ Invoice Ready</span></p>
+              </div>
+              
+              <div class="steps">
+                <h3>How to Access Your Invoice:</h3>
+                <ul>
+                  <li>Log in to your Leadscruise account</li>
+                  <li>Navigate to your Dashboard</li>
+                  <li>Click on "Subscriptions" or "Billing"</li>
+                  <li>Find your order and download the invoice</li>
+                </ul>
+              </div>
+              
+              <center>
+                <a href="https://app.leadscruise.com/login" class="cta-button">Access Your Account</a>
+              </center>
+              
+              <p style="margin-top: 25px;">If you have any questions about your invoice or subscription, our support team is here to help.</p>
+              
+              <p style="margin-top: 20px;">Thank you for choosing Leadscruise!</p>
+              
+              <p style="margin-top: 15px; color: #666;">Best regards,<br>
+              <strong style="color: #667eea;">The Leadscruise Team</strong></p>
+            </div>
+            <div class="footer">
+              <p>This is an automated email notification. Please do not reply to this message.</p>
+              <p>&copy; ${new Date().getFullYear()} Leadscruise. All rights reserved.</p>
+              <div class="social-links">
+                <a href="https://app.leadscruise.com">Visit Website</a> | 
+                <a href="mailto:support@leadscruise.com">Contact Support</a>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    // Send email
+    const info = await emailTransporter.sendMail(mailOptions);
+    
+    console.log(`✅ Invoice email sent successfully to ${email}:`, info.messageId);
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Email sent successfully',
+      messageId: info.messageId
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending invoice email:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to send email', 
+      error: error.message 
+    });
+  }
+});
+
 app.post("/api/check-number", async (req, res) => {
   try {
     const { mobileNumber } = req.body;

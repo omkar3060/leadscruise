@@ -966,26 +966,60 @@ useEffect(() => {
 
             {/* Attention Required Card */}
             <div className={styles.attentionColumn}>
-              <div className={styles.attentionCard}>
-                <div className={styles.attentionHeader}>
-                  <Target size={20} className={styles.icon} />
-                  <h3 className={styles.cardTitle}>
-                    System Status
-                  </h3>
-                </div>
+              
 
-                <div className={styles.systemStatus}>
-                  <CheckCircle size={35} className={styles.greenIcon} />
-                  <div className={styles.systemStatusTextContainer}>
-                    <div className={styles.systemStatusText}>
-                      All systems are
-                    </div>
-                    <div className={styles.systemStatusText}>
-                      fully operational
-                    </div>
-                  </div>
-                </div>
-              </div>
+<div className={styles.attentionCard}>
+  <div className={styles.attentionHeader}>
+    <BarChart3 size={20} className={styles.icon} />
+    <div className={styles.tutorialText}>
+      Key Metrics
+    </div>
+  </div>
+
+  {/* 4 Quadrants for Metrics */}
+  <div className={styles.metricsQuadrants}>
+    <div className={styles.quadrant}>
+      <div className={styles.quadrantNumber}>
+        {metrics.totalLeadsToday}
+      </div>
+      <div className={styles.quadrantLabel}>
+        Leads Today
+      </div>
+    </div>
+    
+    <div className={styles.quadrant}>
+      <div className={styles.quadrantNumber}>
+        {metrics.totalLeadsCaptured}
+      </div>
+      <div className={styles.quadrantLabel}>
+        Total Leads
+      </div>
+    </div>
+    
+    <div className={styles.quadrant}>
+      <div className={styles.quadrantNumber}>
+        {messageCount * metrics.totalLeadsToday || 0}
+      </div>
+      <div className={styles.quadrantLabel}>
+        WhatsApp Sent
+      </div>
+    </div>
+    
+    <div className={styles.quadrant}>
+      <div className={styles.quadrantNumber}>
+        {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
+      </div>
+      <div className={styles.quadrantLabel}>
+        Replies Sent
+      </div>
+    </div>
+  </div>
+   
+  {/* <button className={styles.linkButton} onClick={() => window.open("https://www.youtube.com/@FocusEngineeringProducts", "_blank")}>
+    Go to Youtube Page
+    <span className={styles.linkArrow}>→</span>
+  </button> */}
+</div>
 
               <div className={styles.attentionCard}>
                 <div className={styles.attentionHeader}>

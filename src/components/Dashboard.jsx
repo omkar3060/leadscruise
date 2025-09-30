@@ -933,7 +933,7 @@ const Dashboard = () => {
               onClick={handleDownloadLeadsExcel}
               style={{ marginBottom: 0 }}
             >
-              Download Reports From LeadsCruise
+              Download Reports
             </button>
           </div>
         </div>
