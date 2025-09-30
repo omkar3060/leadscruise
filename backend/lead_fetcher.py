@@ -2226,7 +2226,8 @@ class LeadFetcherApp:
         self.is_minimized_to_tray = False
         self.is_closing = False
         self.force_quit = False
-        
+        # NEW: Flag for tray restoration request
+        self.restore_from_tray_requested = False
         # NEW: Message queue for thread communication
         self.message_queue = queue.Queue()
         
@@ -2277,6 +2278,17 @@ class LeadFetcherApp:
 
         # Setup GUI first
         self.setup_gui()
+        
+        self._original_destroy = self.root.destroy
+        self.root.destroy = self.custom_destroy
+       
+        # Set up close protocol
+        self.root.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
+       
+        # Add keyboard shortcut
+        self.root.bind_all('<Control-Alt-KeyPress-l>', self.keyboard_restore)
+        # NEW: Start checking for tray restoration requests
+        self._check_tray_restore()
         
         # Setup logging (with error handling)
         try:
@@ -2369,6 +2381,7 @@ class LeadFetcherApp:
         
         if self.force_quit:
             print("✅ Force quit enabled, allowing close")
+            self.conditional_autostart.mark_app_stopped()  # Mark as stopped only on force quit
             return True
         
         if self.is_closing:
@@ -2388,8 +2401,10 @@ class LeadFetcherApp:
             if TRAY_AVAILABLE:
                 print("✅ Tray available, attempting minimize")
                 self.log_to_response("🔄 Minimizing to tray...")
-                # Don't reset is_closing here since minimize_to_tray will handle it
                 self.minimize_to_tray()
+                # Reset is_closing after successful minimize - app is still running!
+                self.is_closing = False
+                # DO NOT mark as stopped - app is running in tray
                 return "break"
             else:
                 print("❌ Tray not available, showing confirmation")
@@ -2398,6 +2413,7 @@ class LeadFetcherApp:
         except Exception as e:
             print(f"❌ Error in on_window_close: {e}")
             self.log_to_response(f"❌ Error: {e}")
+            self.is_closing = False  # Reset on error
             self.confirm_quit()
             return "break"
 
@@ -2438,85 +2454,137 @@ class LeadFetcherApp:
             return False
 
     def minimize_to_tray(self):
-        """Minimize to tray - improved version"""
-        print("🔄 minimize_to_tray called")
+        """Hide the window and show a tray icon"""
+        print("minimize_to_tray called")  # Debug print
+        
+        # Always log to response first
+        self.log_to_response("🔄 Attempting to minimize to tray...")
         
         if not TRAY_AVAILABLE:
-            print("❌ Tray not available")
-            self.confirm_quit()
-            return
-        
-        if self.is_minimized_to_tray:
-            print("⚠️ Already minimized to tray")
+            self.log_to_response("⚠️ Tray functionality not available, minimizing to taskbar")
+            self.root.iconify()
             return
             
         try:
-            if not self.tray_icon and not self.create_tray_icon():
-                print("❌ Failed to create tray icon")
-                self.confirm_quit()
-                return
-            
-            # Set the flag BEFORE hiding the window
+            # Create tray icon if it doesn't exist
+            if not self.tray_icon:
+                self.log_to_response("🔧 Creating tray icon...")
+                if not self.create_tray_icon():
+                    self.log_to_response("❌ Failed to create tray icon, using taskbar minimize")
+                    self.root.iconify()
+                    return
+                    
+            # Hide the window first
+            self.root.withdraw()
             self.is_minimized_to_tray = True
-            self.is_closing = False  # Reset this flag since we're not actually closing
+            self.log_to_response("🟡 Window hidden, starting tray icon...")
             
-            print("🔄 Hiding window...")
-            self.root.withdraw()  # Hide from taskbar
-            
-            # Start tray in a way that doesn't interfere with main loop
+            # Start tray icon in a separate thread
             def run_tray():
                 try:
-                    print("🔄 Starting tray icon...")
-                    # Try run_detached first (newer pystray)
-                    if hasattr(self.tray_icon, 'run_detached'):
-                        self.tray_icon.run_detached()
-                        print("✅ Tray started in detached mode")
-                    else:
-                        # Fallback for older pystray versions
-                        self.tray_icon.run()
-                        print("✅ Tray started in normal mode")
+                    print("Starting tray icon...")  # Debug print
+                    self.tray_icon.run()  # This blocks until tray is stopped
+                    print("Tray icon stopped")  # Debug print
                 except Exception as e:
-                    print(f"❌ Tray error: {e}")
-                    # If tray fails, restore the window
-                    self.send_message("log:❌ Tray failed, restoring window")
-                    self.send_message("restore_window")
+                    print(f"Tray icon error: {e}")
+                    # Restore window if tray fails - use after() to run on main thread
+                    if self.root and self.root.winfo_exists():
+                        self.root.after(0, self._restore_from_failed_tray)
             
-            # Stop existing tray thread
-            if self.tray_thread and self.tray_thread.is_alive():
-                if self.tray_icon:
-                    try:
-                        self.tray_icon.stop()
-                    except:
-                        pass
-            
+            # Start the tray thread
             self.tray_thread = threading.Thread(target=run_tray, daemon=True)
             self.tray_thread.start()
             
-            self.log_to_response("✅ Minimized to tray! Double-click or right-click tray icon.")
-            print("✅ Successfully minimized to tray")
+            self.log_to_response("✅ App minimized to system tray successfully!")
             
         except Exception as e:
-            print(f"❌ Minimize failed: {e}")
-            # Reset flags if minimize fails
+            error_msg = f"Tray minimization failed: {e}"
+            print(error_msg)  # Debug print
+            self.log_to_response(f"❌ {error_msg}")
+            self.log_to_response("📱 Falling back to taskbar minimize")
+            
+            # Restore window and minimize normally
+            try:
+                self.root.deiconify()
+            except:
+                pass
+            self.root.iconify()
+
+    def _restore_from_failed_tray(self):
+        """Helper method to restore window when tray fails"""
+        try:
+            self.tray_icon = None  # Clear failed tray icon
             self.is_minimized_to_tray = False
+            
+            # Reset close flags
             self.is_closing = False
-            self.log_to_response(f"❌ Tray failed: {e}")
-            self.confirm_quit()
+            self.force_quit = False
+            
+            self.root.deiconify()
+            self.root.lift()
+            self.log_to_response("🔄 Restored window due to tray failure")
+        except Exception as e:
+            print(f"Failed to restore window: {e}")
+
+    def _check_tray_restore(self):
+        """Periodically check if restoration from tray was requested"""
+        try:
+            if self.restore_from_tray_requested:
+                self.restore_from_tray_requested = False
+                self._restore_window_main_thread()
+        except Exception as e:
+            print(f"Error in _check_tray_restore: {e}")
+        
+        # Check again in 100ms
+        if self.root and self.root.winfo_exists():
+            self.root.after(100, self._check_tray_restore)
 
     def show_window(self, icon=None, item=None):
-        """Show window from tray - simplified version"""
-        print("🔄 show_window called")
+        """Restore the window from tray - THREAD SAFE"""
+        print("show_window called")  # Debug print
         
-        if not self.is_minimized_to_tray:
-            return
+        # Stop the tray icon (this is safe to do from tray thread)
+        if self.tray_icon:
+            print("Stopping tray icon...")
+            try:
+                self.tray_icon.stop()
+            except Exception as e:
+                print(f"Error stopping tray: {e}")
         
+        # Set flag for main thread to pick up
+        print("Setting restore flag...")
+        self.restore_from_tray_requested = True
+
+    def _restore_window_main_thread(self):
+        """Restore window - called on main thread via periodic check"""
         try:
-            # Send message to main thread to restore
-            self.send_message("restore_window")
-            print("✅ Restore message sent to main thread")
+            print("Restoring window on main thread...")
+            
+            # Check if window still exists
+            if not self.root.winfo_exists():
+                print("Window no longer exists!")
+                return
+                
+            self.tray_icon = None
+            self.is_minimized_to_tray = False
+            
+            # CRITICAL: Reset close flags when restoring
+            self.is_closing = False
+            self.force_quit = False
+            
+            self.root.deiconify()
+            self.root.lift()
+            self.root.focus_force()
+            self.log_to_response("🟢 App restored from tray")
             
         except Exception as e:
-            print(f"❌ Error in show_window: {e}")
+            print(f"Error in _restore_window_main_thread: {e}")
+            # Only log if root still exists
+            try:
+                if self.root and self.root.winfo_exists():
+                    self.log_to_response(f"❌ Error restoring from tray: {e}")
+            except:
+                pass    
 
     def force_show_window(self, icon=None, item=None):
         """Force show window - backup method"""
@@ -2718,33 +2786,35 @@ class LeadFetcherApp:
             return True
         return False
     
-    def quit_app(self):
-        """Modified quit_app to mark as stopped on normal exit"""
-        self.force_quit = True
-        self.is_closing = True
-        
-        # Mark app as stopped (normal user exit)
-        self.conditional_autostart.mark_app_stopped()
-        
-        # Stop progress bar to prevent "after" script errors
+    def quit_app(self, icon=None, item=None):
+        """Completely exit the application"""
+        print("quit_app called")  # Debug print
         try:
-            self.progress.stop()
-        except:
-            pass
-        
-        # Cancel any pending timers
-        if self.auto_fetch_timer:
-            try:
+            # Stop any auto-fetch
+            if hasattr(self, 'auto_fetch_timer') and self.auto_fetch_timer:
                 self.root.after_cancel(self.auto_fetch_timer)
-            except:
-                pass
-        
-        # Destroy the window
-        try:
-            self.root.quit()
-            self.root.destroy()
-        except:
-            pass
+                
+            # Stop tray icon
+            if self.tray_icon:
+                print("Stopping tray icon before quit...")
+                self.tray_icon.stop()
+                self.tray_icon = None
+                
+            self.log_to_response("❌ Application closing...")
+            
+            # Quit and destroy the application
+            if self.root and self.root.winfo_exists():
+                self.root.quit()
+                self.root.destroy()
+            
+            # Force exit if needed
+            import sys
+            sys.exit(0)
+            
+        except Exception as e:
+            print(f"Error during quit: {e}")
+            import sys
+            sys.exit(0)    
 
     def setup_gui(self):
         # Main frame

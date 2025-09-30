@@ -4,7 +4,7 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = [('version.txt', '.')]
 binaries = []
-hiddenimports = ['selenium.webdriver.common.by', 'webdriver_manager.firefox']
+hiddenimports = ['selenium.webdriver.common.by', 'webdriver_manager.firefox', 'win32con', 'winreg']
 hiddenimports += collect_submodules('selenium')
 hiddenimports += collect_submodules('webdriver_manager')
 tmp_ret = collect_all('requests')
@@ -22,6 +22,8 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('cryptography')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('psutil')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('pywin32')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
