@@ -409,7 +409,7 @@ def process_messages_incrementally(driver):
         scroll_attempts += 1
         
         # Safety check - if we've processed a reasonable number, we might be done
-        if processed_messages >= 500000:  # Adjust this number as needed
+        if processed_messages >= 300:  # Adjust this number as needed
             print(f"Processed {processed_messages} messages. Stopping for safety.", flush=True)
             break
     
