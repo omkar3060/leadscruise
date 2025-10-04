@@ -127,7 +127,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('whatsapp_automation.log')
+        logging.FileHandler(LOG_FILE)  # ✅ Now uses AppData directory
     ]
 )
 logger = logging.getLogger(__name__)
@@ -200,7 +200,7 @@ def load_contacts_from_json():
             return None
 
         logger.info(f"Loaded {len(contacts)} contacts from JSON file")
-        logger.info(contacts)
+        # logger.info(contacts)
         return contacts
     except Exception as e:
         logger.error(f"Error loading contacts from JSON: {e}")
@@ -1203,7 +1203,7 @@ def send_messages_to_contacts(driver, contacts):
         failure_count = 0
         last_successful_contact = None
         logger.info(f"Starting to send messages to {len(contacts)} contacts...")
-        logger.info(contacts)
+        # logger.info(contacts)
         for i, contact in enumerate(contacts):
             phone_number = contact.get("mobile")
             message = contact.get("whatsappMessage")
@@ -1288,7 +1288,7 @@ def send_messages_to_contacts(driver, contacts):
             "status": "received",
             "message": "Data has been successfully received by client application",
             "mobile_number": mobile_number,
-            "timestamp": timestamp,
+            "timestamp": current_time,
             "client_info": {
                 "application": "LeadFetcher-Client",
                 "version": "1.0"
@@ -1316,8 +1316,15 @@ def send_messages_to_contacts(driver, contacts):
         
         return success_count, failure_count
 
-def perform_login_steps(driver, wait, phone_number):
-    """Perform the login steps if not already logged in"""
+def perform_login_steps(driver, wait, phone_number, ui_callback=None):
+    """Perform the login steps if not already logged in
+    
+    Args:
+        driver: Selenium WebDriver instance
+        wait: WebDriverWait instance
+        phone_number: Phone number for login
+        ui_callback: Optional callback object with hide_verification_code() method
+    """
     try:
         # Wait for and click the "Log in with phone number" button
         logger.info("Looking for 'Log in with phone number' button...")
@@ -1446,7 +1453,6 @@ def perform_login_steps(driver, wait, phone_number):
             logger.error("❌ Phone number validation failed - error message persists")
             # Take screenshot to debug
             error_screenshot = f"screenshots/validation_error_{int(time.time())}.png"
-            # driver.save_screenshot(error_screenshot)
             logger.info(f"📸 Error screenshot: {error_screenshot}")
             return False
 
@@ -1466,7 +1472,6 @@ def perform_login_steps(driver, wait, phone_number):
         # Take screenshot for debugging
         screenshot_path = f"screenshots/phone_validated_{int(time.time())}.png"
         os.makedirs("screenshots", exist_ok=True)
-        # driver.save_screenshot(screenshot_path)
         logger.info(f"📸 Screenshot saved: {screenshot_path}")
         
         # Now find and click the "Next" button
@@ -1505,7 +1510,6 @@ def perform_login_steps(driver, wait, phone_number):
         time.sleep(5)
         screenshot_path = f"screenshots/next_{int(time.time())}.png"
         os.makedirs("screenshots", exist_ok=True)
-        # driver.save_screenshot(screenshot_path)
         logger.info(f"📸 Screenshot saved: {screenshot_path}")
         
         # Now wait for the verification code to appear
@@ -1532,6 +1536,14 @@ def perform_login_steps(driver, wait, phone_number):
             # If we get here, login was successful
             logger.info("Login successful")
             
+            # ✅ HIDE VERIFICATION CODE ON SUCCESSFUL LOGIN
+            if ui_callback and hasattr(ui_callback, 'hide_verification_code'):
+                logger.info("Hiding verification code display...")
+                if hasattr(ui_callback, 'root') and ui_callback.root:
+                    ui_callback.root.after(0, ui_callback.hide_verification_code)
+                else:
+                    ui_callback.hide_verification_code()
+            
             # Save cookies for future sessions
             save_cookies(driver, phone_number)
             
@@ -1546,8 +1558,7 @@ def perform_login_steps(driver, wait, phone_number):
     except Exception as e:
         logger.error(f"Error during login or input handling: {e}")
         logger.debug(traceback.format_exc())
-        return False
-        
+        return False      
 
 class SessionManager:
     """Helper class to manage session validation across the app"""
@@ -1619,7 +1630,13 @@ class LoginApp:
         
         # Setup Login GUI
         self.setup_login_gui()
+        self.conditional_autostart = ConditionalAutoStart(app_name="LeadFetcher")
         
+        # ADD THIS: Enable autostart in registry
+        self.conditional_autostart.enable_autostart()
+        
+        # ADD THIS: Mark app as running
+        self.conditional_autostart.mark_app_running()
         # Try auto-login after a short delay to ensure GUI is ready
         self.root.after(100, self.try_auto_login)
         
@@ -1808,9 +1825,13 @@ class LoginApp:
                 print("🗑️ Clearing corrupted session data...")
                 self.clear_saved_login()
                 self.update_status("Please log in")
+                self.show_login_form()  # ADD THIS
         else:
-            print("❌ No saved login data found")
+            print("❌ No saved login data found or logged out manually")
             self.update_status("Please log in")
+            # Make sure form is visible
+            self.show_login_form()  # ADD THIS
+            through_logout = False  # Reset the flag
 
     def _verify_and_login(self, saved_data):
         """Verify session and auto-login in background thread"""
@@ -1884,6 +1905,8 @@ class LoginApp:
 
     def quit_app(self, icon=None, item=None):
         """Completely exit the application"""
+        if hasattr(self, 'conditional_autostart'):
+            self.conditional_autostart.mark_app_stopped()
         if self.tray_icon:
             self.tray_icon.stop()
         self.root.destroy()
@@ -1899,11 +1922,11 @@ class LoginApp:
         
         # Logo/Title
         title_label = ttk.Label(main_frame, text="LeadsCruise", 
-                               font=("Arial", 20, "bold"))
+                            font=("Arial", 20, "bold"))
         title_label.pack(pady=(0, 10))
         
         subtitle_label = ttk.Label(main_frame, text="Lead Management System", 
-                                  font=("Arial", 12))
+                                font=("Arial", 12))
         subtitle_label.pack(pady=(0, 20))
         
         # Email
@@ -1919,15 +1942,17 @@ class LoginApp:
         password_frame.pack(fill=tk.X, pady=5)
         ttk.Label(password_frame, text="Password:").pack(anchor=tk.W)
         self.password_var = tk.StringVar()
-        self.password_entry = ttk.Entry(password_frame, textvariable=self.password_var, width=30, show="*")
+        # Change from ttk.Entry to tk.Entry for password field
+        self.password_entry = tk.Entry(password_frame, textvariable=self.password_var, 
+                                        width=30, show="*")
         self.password_entry.pack(fill=tk.X, pady=5)
-        
+
         # Show Password Checkbox
-        # self.show_password_var = tk.BooleanVar()
-        # show_password_cb = ttk.Checkbutton(password_frame, text="Show Password", 
-        #                                   variable=self.show_password_var,
-        #                                   command=self.toggle_password_visibility)
-        # show_password_cb.pack(anchor=tk.W, pady=5)
+        self.show_password_var = tk.BooleanVar()
+        self.show_password_cb = ttk.Checkbutton(password_frame, text="Show Password", 
+                                            variable=self.show_password_var,
+                                            command=self.toggle_password_visibility)
+        self.show_password_cb.pack(anchor=tk.W, pady=5)
         
         # Remember Me Checkbox
         self.remember_me_var = tk.BooleanVar(value=True)  # Default to True
@@ -1937,12 +1962,12 @@ class LoginApp:
         
         # Login Button
         self.login_button = ttk.Button(main_frame, text="Login", 
-                                      command=self.login_threaded)
+                                    command=self.login_threaded)
         self.login_button.pack(pady=10)
         
         # Logout Button (initially hidden)
         self.logout_button = ttk.Button(main_frame, text="Logout & Clear Data", 
-                                       command=self.manual_logout)
+                                    command=self.manual_logout)
         
         # Status label
         self.status_var = tk.StringVar(value="Enter your credentials to login")
@@ -1994,24 +2019,92 @@ class LoginApp:
     def show_login_form(self):
         """Show login form if auto-login fails"""
         try:
+            print("=== SHOW_LOGIN_FORM CALLED ===")
+            
+            # Show other components
             self.email_frame.pack(fill=tk.X, pady=5)
-            self.password_frame.pack(fill=tk.X, pady=5)
             self.login_button.pack(pady=10)
             self.hint_frame.pack(pady=10)
-        except:
-            pass
+            
+            # List all widgets in password_frame BEFORE destruction
+            print(f"Widgets in password_frame BEFORE: {[w for w in self.password_frame.winfo_children()]}")
+            
+            # Destroy ALL widgets in password_frame
+            for widget in self.password_frame.winfo_children():
+                print(f"Destroying widget: {widget}")
+                widget.destroy()
+            
+            print(f"Widgets in password_frame AFTER destroy: {[w for w in self.password_frame.winfo_children()]}")
+            
+            # Recreate everything
+            ttk.Label(self.password_frame, text="Password:").pack(anchor=tk.W)
+            self.password_var = tk.StringVar()
+            self.password_entry = tk.Entry(self.password_frame, 
+                                            textvariable=self.password_var, 
+                                            width=30, show="*")
+            self.password_entry.pack(fill=tk.X, pady=5)
+            
+            # Create NEW BooleanVar
+            self.show_password_var = tk.BooleanVar(value=False)
+            print(f"Created new show_password_var: {id(self.show_password_var)}")
+            
+            # Create NEW Checkbutton
+            self.show_password_cb = ttk.Checkbutton(self.password_frame, 
+                                                    text="Show Password", 
+                                                    variable=self.show_password_var,
+                                                    command=self.toggle_password_visibility)
+            self.show_password_cb.pack(anchor=tk.W, pady=5)
+            print(f"Created new checkbox: {self.show_password_cb}")
+            
+            # Remember Me
+            self.remember_me_var = tk.BooleanVar(value=True)
+            self.remember_me_cb = ttk.Checkbutton(self.password_frame, 
+                                                text="Remember me", 
+                                                variable=self.remember_me_var)
+            self.remember_me_cb.pack(anchor=tk.W, pady=5)
+            
+            # Pack password frame
+            self.password_frame.pack(fill=tk.X, pady=5)
+            
+            # Clear fields
+            self.password_var.set('')
+            self.email_var.set('')
+            
+            print("=== SHOW_LOGIN_FORM COMPLETE ===")
+            
+        except Exception as e:
+            print(f"Error showing login form: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def toggle_password_visibility(self):
+        print(f"\n=== TOGGLE CALLED ===")
+        print(f"BooleanVar ID: {id(self.show_password_var)}")
+        print(f"BooleanVar value: {self.show_password_var.get()}")
+        print(f"Checkbox widget: {self.show_password_cb}")
+        print(f"Password entry: {self.password_entry}")
+        
+        if self.show_password_var.get():
+            print("Should SHOW password")
+            self.password_entry.config(show='')
+        else:
+            print("Should HIDE password")
+            self.password_entry.config(show='*')
+        
+        print(f"Final 'show' config: '{self.password_entry.cget('show')}'")
+        print(f"=== TOGGLE COMPLETE ===\n")
 
     def manual_logout(self):
         """Manual logout from the login screen"""
+        global through_logout
+        through_logout = True
+        
         self.clear_saved_login()
         self.logout_button.pack_forget()
         self.update_status("Logged out successfully. Please log in again.")
-
-    def toggle_password_visibility(self):
-        if self.show_password_var.get():
-            self.password_entry.config(show='')
-        else:
-            self.password_entry.config(show='*')
+        
+        # Reset the login form properly
+        self.show_login_form()   
     
     def login_threaded(self):
         """Run login in a separate thread to prevent GUI freezing"""
@@ -2019,12 +2112,34 @@ class LoginApp:
             self._login_thread = threading.Thread(target=self.login)
             self._login_thread.daemon = True
             self._login_thread.start()
-    
+
+    def generate_token(self,email, password):
+        """Generate a unique token based on email, password, and timestamp using Fernet"""
+        timestamp = str(time.time())
+        # Create a deterministic key from email and password
+        key_material = f"{email}:{password}".encode()
+        # Pad or truncate to 32 bytes for Fernet
+        key = base64.urlsafe_b64encode(key_material.ljust(32)[:32])
+        cipher = Fernet(key)
+        
+        # Create token data
+        token_data = f"{email}:{timestamp}".encode()
+        token = cipher.encrypt(token_data).decode()
+        return token
+
+    def generate_session_id(self):
+        """Generate a unique session ID using base64"""
+        # Use timestamp and base64 encoding for session ID
+        session_data = f"session_{time.time()}_{os.getpid()}".encode()
+        session_id = base64.urlsafe_b64encode(session_data).decode()
+        return session_id
+
     def login(self):
         """Authenticate user with the LeadsCruise API"""
         email = self.email_var.get().strip()
         password = self.password_var.get()
         print(f"DEBUG Email: '{email}' Password: '{password}'")
+        
         if not email or not password:
             self.update_status("Error: Email and password are required!")
             messagebox.showerror("Error", "Please enter both email and password!")
@@ -2073,18 +2188,30 @@ class LoginApp:
                         session_id = data.get('sessionId')
                         mobile_number = user_data.get('mobileNumber', '')
                         
+                        # Generate token and session ID if not provided by API
+                        if not token:
+                            print("⚠️ No token from API, generating local token...")
+                            token = self.generate_token(email, password)
+                            print(f"✅ Generated token: {token[:20]}...")
+                        
+                        if not session_id:
+                            print("⚠️ No session ID from API, generating local session ID...")
+                            session_id = self.generate_session_id()
+                            print(f"✅ Generated session ID: {session_id[:20]}...")
+                        
                         # Store user data for main app
                         self.user_data = {
-                            'email': user_data.get('email', ''),
-                            'role': user_data.get('role', ''),
+                            'email': user_data.get('email', email),
+                            'role': user_data.get('role', 'user'),
                             'mobileNumber': mobile_number,
                             'token': token,
                             'sessionId': session_id
                         }
                         
-                        # Debug: Check if token exists
-                        print(f"🔐 Token received: {token[:20] if token else 'None'}..." if token else "❌ No token received from API")
+                        # Debug: Check token
+                        print(f"🔐 Token stored: {token[:20]}..." if token else "❌ No token!")
                         print(f"📊 User data keys: {list(self.user_data.keys())}")
+                        print(f"📊 Token length: {len(token)}")
                         
                         # Save login data if "Remember me" is checked
                         if self.remember_me_var.get():
@@ -2278,6 +2405,7 @@ class LeadFetcherApp:
 
         # Setup GUI first
         self.setup_gui()
+        self.init_update_manager()
         
         self._original_destroy = self.root.destroy
         self.root.destroy = self.custom_destroy
@@ -3123,12 +3251,10 @@ class LeadFetcherApp:
             self.log_to_response(error_msg)
             print(error_msg)
 
-
-
     def logout(self):
         """Logout and return to login screen"""
         global through_logout
-        # Ask for confirmation since this will stop background processes
+        
         result = messagebox.askyesno(
             "Logout Confirmation",
             "Logging out will stop all background processes and clear saved session.\n\n"
@@ -3136,32 +3262,98 @@ class LeadFetcherApp:
         )
         
         if result:
-            # Stop tray icon if running
+            # CRITICAL: Set force_quit flag to allow clean shutdown
+            self.force_quit = True
+            
+            # Stop tray icon FIRST if running
             if self.tray_icon:
-                self.tray_icon.stop()
-                
+                try:
+                    self.tray_icon.stop()
+                except:
+                    pass
+                self.tray_icon = None
+            
+            # Wait a moment for tray to fully stop
+            time.sleep(0.5)
+            
             # Stop any auto-fetch
             if self.auto_fetch_timer:
                 self.root.after_cancel(self.auto_fetch_timer)
             
-            # 🗑️ Delete saved session/config directory
+            # Delete saved session/config directory
             config_dir = os.path.join(os.path.expanduser("~"), ".leadscruise")
             if os.path.exists(config_dir):
                 try:
-                    shutil.rmtree(config_dir)   # deletes whole folder
-                    print(f"🗑️ Deleted config directory: {config_dir}")
+                    shutil.rmtree(config_dir)
+                    print(f"Deleted config directory: {config_dir}")
                 except Exception as e:
-                    print(f"⚠️ Could not delete config directory: {e}")
+                    print(f"Could not delete config directory: {e}")
             
-            # Close current window
-            self.root.destroy()
-            through_logout = True
+            # Mark app as stopped
             self.conditional_autostart.mark_app_stopped()
-            # Reopen login window
+            
+            # Set logout flag
+            through_logout = True
+            
+            # Destroy the main window completely
+            try:
+                self.root.quit()
+                self.root.destroy()
+            except:
+                pass
+            
+            # Small delay to ensure clean shutdown
+            time.sleep(0.3)
+            
+            # Reset logout flag before creating new login window
+            through_logout = False
+            
+            # Create new login window
             login_root = tk.Tk()
             login_app = LoginApp(login_root)
             login_root.mainloop()
 
+
+    def get_leadfetcher_directory(self):
+        """Get the LeadFetcher application directory based on OS"""
+        if os.name == 'nt':  # Windows
+            local_appdata = os.environ.get('LOCALAPPDATA', 
+                                        os.path.join(os.path.expanduser('~'), 'AppData', 'Local'))
+            return os.path.join(local_appdata, 'LeadFetcher')
+        else:  # Linux/Mac
+            return os.path.join(os.path.expanduser('~'), '.leadfetcher')
+
+    def ensure_directory_exists(self, dir_path):
+        """Create directory if it doesn't exist"""
+        Path(dir_path).mkdir(parents=True, exist_ok=True)
+        return dir_path
+
+    def save_json_file(self, data, filename, directory=None):
+        """Save JSON data to a file"""
+        if directory is None:
+            directory = self.get_leadfetcher_directory()
+        
+        self.ensure_directory_exists(directory)
+        file_path = os.path.join(directory, filename)
+        
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            self.log_to_response(f"✅ File saved: {file_path}")
+            return file_path
+        except Exception as e:
+            self.log_to_response(f"❌ Save failed: {e}")
+            # Fallback to current directory
+            fallback_path = os.path.join(os.getcwd(), filename)
+            try:
+                with open(fallback_path, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                self.log_to_response(f"✅ File saved (fallback): {fallback_path}")
+                return fallback_path
+            except Exception as fallback_error:
+                self.log_to_response(f"❌ Fallback save failed: {fallback_error}")
+                return None
+    
     def fetch_data_threaded(self, is_auto_fetch=False):
         """Run fetch_data in a separate thread to prevent GUI freezing"""
         if not hasattr(self, '_fetch_thread') or not self._fetch_thread.is_alive():
@@ -3170,158 +3362,102 @@ class LeadFetcherApp:
             self._fetch_thread.start()
     
     def fetch_data(self, is_auto_fetch=False):
-        """Fetch data from the LeadsCruise API"""
+        """Fetch data from the LeadsCruise API - Optimized for large datasets"""
         global mobile_number
         mobile = self.mobile_var.get().strip()
         
         if not mobile:
             self.update_status("Error: Mobile number is required!")
-            if not is_auto_fetch:  # Only show error dialog for manual fetch
+            if not is_auto_fetch:
                 messagebox.showerror("Error", "Please enter a mobile number!")
             return
-        mobile_number = mobile  # Update global for logging
+        mobile_number = mobile
         
-        # Update GUI
-        self.root.after(0, lambda: self.fetch_button.config(state='disabled'))
-        self.root.after(0, lambda: self.progress.start())
+        # Update GUI - combine into single after() call
+        def start_fetch():
+            self.fetch_button.config(state='disabled')
+            self.progress.start()
+            status = f"Auto-fetching data for {mobile}..." if is_auto_fetch else f"Fetching data for {mobile}..."
+            self.update_status(status)
         
-        # Different status messages for auto-fetch vs manual fetch
-        if is_auto_fetch:
-            self.root.after(0, lambda: self.update_status(f"Auto-fetching data for mobile: {mobile}..."))
-        else:
-            self.root.after(0, lambda: self.update_status(f"Fetching data for mobile: {mobile}..."))
+        self.root.after(0, start_fetch)
         
         try:
-            # Make API request
             url = f"{self.base_url}{mobile}"
             
-            self.log_to_response(f"\n{'='*60}")
-            fetch_type = "AUTO-FETCHING" if is_auto_fetch else "FETCHING"
-            if is_auto_fetch and self.is_first_auto_fetch:
-                fetch_type = "FIRST AUTO-FETCH"
-            self.log_to_response(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {fetch_type} DATA")
-            self.log_to_response(f"{'='*60}")
-            self.log_to_response(f"URL: {url}")
-            self.log_to_response(f"Mobile Number: {mobile}")
-            self.log_to_response(f"User: {self.user_email} ({self.user_role})")
+            # Minimal logging during fetch
+            fetch_type = "FIRST AUTO-FETCH" if (is_auto_fetch and self.is_first_auto_fetch) else ("AUTO-FETCH" if is_auto_fetch else "MANUAL FETCH")
+            self.log_to_response(f"\n[{datetime.now().strftime('%H:%M:%S')}] {fetch_type} - Mobile: {mobile}")
             
             headers = {
                 'Content-Type': 'application/json',
-                'User-Agent': 'LeadFetcher-Client/1.0',
                 'Authorization': f'Bearer {self.token}',
                 'X-Session-ID': self.session_id
             }
             
             response = requests.get(url, headers=headers, timeout=30)
             
-            # Log response details
-            self.log_to_response(f"\nResponse Status Code: {response.status_code}")
-            self.log_to_response(f"Response Headers: {dict(response.headers)}")
-            
             if response.status_code == 200:
-                try:
-                    data = response.json()
-                    
-                    # Pretty print the JSON response
-                    formatted_response = json.dumps(data, indent=2, ensure_ascii=False)
-                    self.log_to_response(f"\nAPI Response Data:\n{formatted_response}")
-                    
-                    # Extract key information
-                    if 'success' in data and data['success']:
-                        total_leads = data.get('totalLeads', 0)
-                        leads_count = len(data.get('leads', []))
-                        
-                        self.log_to_response(f"\n{'='*40}")
-                        self.log_to_response(f"✅ DATA RECEIVED SUCCESSFULLY!")
-                        self.log_to_response(f"Total Leads in Database: {total_leads}")
-                        self.log_to_response(f"Leads Retrieved: {leads_count}")
-                        self.log_to_response(f"{'='*40}")
-                        
-                        # Send confirmation only for:
-                        # 1. Manual fetch with checkbox enabled
-                        # 2. First auto-fetch with checkbox enabled
-                        should_send_confirmation = (
-                            not is_auto_fetch and self.send_confirmation_var.get()
-                        ) or (
-                            is_auto_fetch and self.is_first_auto_fetch and self.send_confirmation_var.get()
-                        )
-                        
-                        if should_send_confirmation:
-                            if is_auto_fetch and self.is_first_auto_fetch:
-                                self.log_to_response("\n📋 FIRST AUTO-FETCH: Sending confirmation response")
-                            self.send_confirmation_response(mobile, data)
-                        elif is_auto_fetch and not self.is_first_auto_fetch:
-                            self.log_to_response("\n📋 AUTO-FETCH: Skipping confirmation response (not first auto-fetch)")
-                        
-                        # Mark that first auto-fetch is complete
-                        if is_auto_fetch and self.is_first_auto_fetch:
-                            self.is_first_auto_fetch = False
-                        
-                        # Update status
-                        if is_auto_fetch:
-                            if self.is_first_auto_fetch:
-                                self.root.after(0, lambda: self.update_status(
-                                    f"✅ FIRST AUTO-FETCH: Received {leads_count} leads for {mobile}"))
-                            else:
-                                self.root.after(0, lambda: self.update_status(
-                                    f"✅ AUTO-FETCH: Received {leads_count} leads for {mobile}"))
-                        else:
-                            self.root.after(0, lambda: self.update_status(
-                                f"✅ SUCCESS: Received {leads_count} leads for {mobile}"))
-                        
-                        # Show success message only for manual fetch
-                        if not is_auto_fetch:
-                            self.root.after(0, lambda: messagebox.showinfo(
-                                "Success", 
-                                f"Data received successfully!\n"
-                                f"Mobile: {mobile}\n"
-                                f"Total leads: {total_leads}\n"
-                                f"Retrieved: {leads_count} leads"
-                            ))
-                        
-                    else:
-                        error_msg = data.get('error', 'Unknown error')
-                        self.log_to_response(f"\n❌ API Error: {error_msg}")
-                        status_prefix = "AUTO-FETCH" if is_auto_fetch else ""
-                        self.root.after(0, lambda: self.update_status(f"❌ {status_prefix} API Error: {error_msg}"))
-                        
-                except json.JSONDecodeError as e:
-                    error_msg = f"Failed to parse JSON response: {str(e)}"
-                    self.log_to_response(f"\n❌ {error_msg}")
-                    self.log_to_response(f"Raw response: {response.text[:500]}...")
-                    status_prefix = "AUTO-FETCH" if is_auto_fetch else ""
-                    self.root.after(0, lambda: self.update_status(f"❌ {status_prefix} JSON Error: {str(e)}"))
-                    
-            else:
-                error_msg = f"HTTP {response.status_code}: {response.reason}"
-                self.log_to_response(f"\n❌ HTTP Error: {error_msg}")
-                self.log_to_response(f"Response content: {response.text[:500]}...")
-                status_prefix = "AUTO-FETCH" if is_auto_fetch else ""
-                self.root.after(0, lambda: self.update_status(f"❌ {status_prefix} HTTP Error: {error_msg}"))
+                data = response.json()
                 
-        except requests.exceptions.Timeout:
-            error_msg = "Request timeout (30 seconds)"
-            self.log_to_response(f"\n❌ Timeout Error: {error_msg}")
-            status_prefix = "AUTO-FETCH" if is_auto_fetch else ""
-            self.root.after(0, lambda: self.update_status(f"❌ {status_prefix} Timeout: {error_msg}"))
-            
-        except requests.exceptions.ConnectionError:
-            error_msg = "Connection error - check internet connection"
-            self.log_to_response(f"\n❌ Connection Error: {error_msg}")
-            status_prefix = "AUTO-FETCH" if is_auto_fetch else ""
-            self.root.after(0, lambda: self.update_status(f"❌ {status_prefix} Connection Error"))
-            
+                if data.get('success'):
+                    total_leads = data.get('totalLeads', 0)
+                    leads_count = len(data.get('leads', []))
+                    
+                    # Minimal logging - NO JSON dumps
+                    self.log_to_response(f"SUCCESS: {leads_count} leads received (Total: {total_leads})")
+
+                    # ===== SAVE API RESPONSE LOCALLY =====
+                    file_path = self.save_json_file(data, 'api_response.json')
+                    if file_path:
+                        self.log_to_response(f"📁 API response saved locally")
+                    # ===== END SAVE =====
+                    
+                    # Send confirmation
+                    should_send_confirmation = (
+                        (not is_auto_fetch and self.send_confirmation_var.get()) or
+                        (is_auto_fetch and self.is_first_auto_fetch and self.send_confirmation_var.get())
+                    )
+                    
+                    if should_send_confirmation:
+                        # Run confirmation in separate thread to not block
+                        threading.Thread(
+                            target=self.send_confirmation_response, 
+                            args=(mobile, data),
+                            daemon=True
+                        ).start()
+                    
+                    if is_auto_fetch and self.is_first_auto_fetch:
+                        self.is_first_auto_fetch = False
+                    
+                    # Single combined GUI update
+                    def update_success():
+                        self.update_status(f"Received {leads_count} leads for {mobile}")
+                        if not is_auto_fetch:
+                            messagebox.showinfo("Success", f"Received {leads_count} leads")
+                    
+                    self.root.after(0, update_success)
+                    
+                else:
+                    error_msg = data.get('error', 'Unknown error')
+                    self.log_to_response(f"API Error: {error_msg}")
+                    self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
+            else:
+                self.log_to_response(f"HTTP {response.status_code}")
+                self.root.after(0, lambda: self.update_status(f"HTTP Error {response.status_code}"))
+                
         except Exception as e:
-            error_msg = f"Unexpected error: {str(e)}"
-            self.log_to_response(f"\n❌ {error_msg}")
-            status_prefix = "AUTO-FETCH" if is_auto_fetch else ""
-            self.root.after(0, lambda: self.update_status(f"❌ {status_prefix} Error: {str(e)}"))
+            self.log_to_response(f"Error: {str(e)}")
+            self.root.after(0, lambda: self.update_status(f"Error: {str(e)}"))
             
         finally:
-            # Re-enable GUI
-            self.root.after(0, lambda: self.progress.stop())
-            self.root.after(0, lambda: self.fetch_button.config(state='normal'))
-    
+            # Single combined cleanup
+            def cleanup():
+                self.progress.stop()
+                self.fetch_button.config(state='normal')
+            
+            self.root.after(0, cleanup)
+
     def send_confirmation_response(self, mobile, received_data):
         """Send confirmation back to the server that data was received"""
         try:
@@ -3374,6 +3510,17 @@ class LeadFetcherApp:
                 try:
                     response_json = confirmation_response.json()
                     self.log_to_response(f"Server Response: {json.dumps(response_json, indent=2)}")
+                    # ===== SAVE CONFIRMATION LOCALLY =====
+                    # Save the confirmation we sent + server response
+                    confirmation_record = {
+                        "sent_data": confirmation_data,
+                        "server_response": response_json,
+                        "sent_at": datetime.now().isoformat()
+                    }
+                    file_path = self.save_json_file(confirmation_record, 'confirmations.json')
+                    if file_path:
+                        self.log_to_response(f"📁 Confirmation saved locally")
+                    # ===== END SAVE =====
                 except:
                     self.log_to_response(f"Server Response: {confirmation_response.text}")
             else:
@@ -3464,7 +3611,7 @@ class LeadFetcherApp:
                 wait = WebDriverWait(driver, 30)  # Wait up to 30 seconds
                 
                 # Perform the login steps
-                login_successful = perform_login_steps(driver, wait, phone_number)
+                login_successful = perform_login_steps(driver, wait, phone_number, ui_callback=self)
                 
                 if login_successful:
                     logger.info("Login process completed successfully!")
@@ -3901,90 +4048,6 @@ Comment=Auto-start {self.app_name} on login
         plist_file = launch_agents_dir / f"com.{self.app_name}.plist"
         return plist_file.exists()
 
-class ConditionalAutoStart:
-    """Manages auto-start only if app was running when system shut down"""
-    
-    def __init__(self, app_name="LeadFetcher"):
-        self.app_name = app_name
-        self.state_file = self._get_state_file_path()
-        self.autostart_manager = AutoStartManager(app_name=app_name)
-        
-    def _get_state_file_path(self):
-        """Get path to state file based on OS"""
-        if platform.system() == "Windows":
-            app_data = os.getenv('APPDATA')
-            state_dir = Path(app_data) / self.app_name
-        else:
-            state_dir = Path.home() / ".config" / self.app_name
-        
-        state_dir.mkdir(parents=True, exist_ok=True)
-        return state_dir / "app_state.json"
-    
-    def mark_app_running(self):
-        """Mark that the app is currently running"""
-        state = {
-            "is_running": True,
-            "should_autostart": True
-        }
-        try:
-            with open(self.state_file, 'w') as f:
-                json.dump(state, f)
-            print(f"App state marked as running: {self.state_file}")
-        except Exception as e:
-            print(f"Failed to mark app as running: {e}")
-    
-    def mark_app_stopped(self):
-        """Mark that the app has been properly closed"""
-        state = {
-            "is_running": False,
-            "should_autostart": False
-        }
-        try:
-            with open(self.state_file, 'w') as f:
-                json.dump(state, f)
-            print(f"App state marked as stopped: {self.state_file}")
-        except Exception as e:
-            print(f"Failed to mark app as stopped: {e}")
-    
-    def should_autostart(self):
-        """Check if app should auto-start (was running during last shutdown)"""
-        try:
-            if not self.state_file.exists():
-                return False
-            
-            with open(self.state_file, 'r') as f:
-                state = json.load(f)
-            
-            # If app was marked as running, it means system shut down while app was active
-            return state.get("should_autostart", False) and state.get("is_running", False)
-        
-        except Exception as e:
-            print(f"Failed to check autostart state: {e}")
-            return False
-    
-    def setup_autostart(self):
-        """Enable auto-start in system and mark app as running"""
-        # Enable system auto-start
-        success = self.autostart_manager.enable_autostart()
-        if success:
-            # Mark app as running so it will restart after reboot
-            self.mark_app_running()
-        return success
-    
-    def remove_autostart(self):
-        """Disable auto-start and mark app as stopped"""
-        # Mark as stopped first
-        self.mark_app_stopped()
-        # Then disable system auto-start
-        return self.autostart_manager.disable_autostart()
-    
-    def cleanup_on_exit(self):
-        """Called when app exits normally - disables auto-start"""
-        print("App closing normally - disabling auto-start")
-        self.mark_app_stopped()
-        # Don't disable system autostart entry, just mark as stopped
-        # This way the app will check on next boot and not start
-
 def check_firefox_installed():
     """Check if Firefox is installed on the system"""
     try:
@@ -4063,32 +4126,191 @@ def show_firefox_installation_message():
 
 def main():
     try:
-        # Enable debug mode
-        print("🚀 Starting LeadsCruise Login App...")
-        print(f"📁 Config directory: {os.path.join(os.path.expanduser('~'), '.leadscruise')}")
+        # Close PyInstaller splash screen as soon as possible
+        try:
+            import pyi_splash
+            pyi_splash.update_text("Initializing...")
+            pyi_splash.close()
+        except:
+            pass  # Not running as PyInstaller bundle or splash not enabled
+        
+        # Check if started with --startup flag
+        started_from_startup = "--startup" in sys.argv
+        
+        # Initialize autostart manager (needed regardless of startup method)
+        autostart = ConditionalAutoStart(app_name="LeadFetcher")
+        
+        if started_from_startup:
+            print("Started from Windows startup")
+            
+            # Check if app should actually run
+            if not autostart.should_autostart():
+                print("App was not running during last session. Exiting silently.")
+                sys.exit(0)
+            
+            print("App was running during last session. Proceeding with startup.")
         
         # Check Firefox installation first
-        print("🔍 Checking Firefox installation...")
+        print("Checking Firefox installation...")
         if not check_firefox_installed():
-            print("❌ Firefox not found!")
+            print("Firefox not found!")
             show_firefox_installation_message()
             input("Press Enter to exit...")
             return
             
-        print("✅ Firefox found!")
+        print("Firefox found!")
         
         # Create and run the login application
         login_root = tk.Tk()
         app = LoginApp(login_root)
         
-        print("🖼️ Login window created, starting mainloop...")
+        # Pass autostart manager to login app
+        app.conditional_autostart = autostart
+        
+        # Mark app as running AFTER successful initialization
+        autostart.mark_app_running()
+        
+        # Register shutdown handlers
+        def on_normal_exit(*args):
+            print("Normal exit - marking app as stopped")
+            autostart.mark_app_stopped()
+        
+        def on_system_shutdown(signum, frame):
+            print("System shutdown detected - keeping state as running")
+            sys.exit(0)
+        
+        atexit.register(on_normal_exit)
+        
+        if hasattr(signal, 'SIGTERM'):
+            signal.signal(signal.SIGTERM, on_system_shutdown)
+        
+        if hasattr(signal, 'SIGINT'):
+            signal.signal(signal.SIGINT, on_normal_exit)
+        
+        # Windows shutdown detection
+        if platform.system() == "Windows":
+            try:
+                import win32api
+                import win32con
+                
+                def on_windows_shutdown(ctrl_type):
+                    if ctrl_type in (win32con.CTRL_SHUTDOWN_EVENT, win32con.CTRL_LOGOFF_EVENT):
+                        print("Windows shutdown detected - keeping state as running")
+                        return True
+                    return False
+                
+                win32api.SetConsoleCtrlHandler(on_windows_shutdown, True)
+                print("Windows shutdown handler registered")
+            except ImportError:
+                print("pywin32 not installed - Windows shutdown detection unavailable")
+        
+        print("Login window created, starting mainloop...")
         login_root.mainloop()
         
     except Exception as e:
-        print(f"❌ Application error: {e}")
+        print(f"Application error: {e}")
         import traceback
         traceback.print_exc()
         input("Press Enter to exit...")
+
+class ConditionalAutoStart:
+    """Manages auto-start only if app was running when system shut down"""
+    
+    def __init__(self, app_name="LeadFetcher"):
+        self.app_name = app_name
+        self.state_file = self._get_state_file_path()
+        self.registry_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        
+    def _get_state_file_path(self):
+        """Get path to state file in AppData"""
+        app_data = os.getenv('LOCALAPPDATA', os.path.expanduser('~\\AppData\\Local'))
+        state_dir = Path(app_data) / self.app_name
+        state_dir.mkdir(parents=True, exist_ok=True)
+        return state_dir / "app_state.json"
+    
+    def mark_app_running(self):
+        """Mark that the app is currently running"""
+        state = {"is_running": True, "timestamp": datetime.now().isoformat()}
+        try:
+            with open(self.state_file, 'w') as f:
+                json.dump(state, f)
+            print(f"✅ App state marked as running: {self.state_file}")
+        except Exception as e:
+            print(f"❌ Failed to mark app as running: {e}")
+    
+    def mark_app_stopped(self):
+        """Mark that the app has been properly closed"""
+        state = {"is_running": False, "timestamp": datetime.now().isoformat()}
+        try:
+            with open(self.state_file, 'w') as f:
+                json.dump(state, f)
+            print(f"✅ App state marked as stopped: {self.state_file}")
+        except Exception as e:
+            print(f"❌ Failed to mark app as stopped: {e}")
+    
+    def should_autostart(self):
+        """Check if app should auto-start (was running during last shutdown)"""
+        try:
+            if not self.state_file.exists():
+                return False
+            
+            with open(self.state_file, 'r') as f:
+                state = json.load(f)
+            
+            return state.get("is_running", False)
+        
+        except Exception as e:
+            print(f"❌ Failed to check autostart state: {e}")
+            return False
+    
+    def enable_autostart(self):
+        """Add to Windows Registry startup with --startup flag"""
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                self.registry_path,
+                0,
+                winreg.KEY_SET_VALUE
+            )
+            
+            if getattr(sys, 'frozen', False):
+                exe_path = f'"{sys.executable}" --startup'
+            else:
+                script_path = os.path.abspath(sys.argv[0])
+                exe_path = f'"{sys.executable}" "{script_path}" --startup'
+            
+            winreg.SetValueEx(key, self.app_name, 0, winreg.REG_SZ, exe_path)
+            winreg.CloseKey(key)
+            
+            print(f"✅ Auto-start enabled: {exe_path}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to enable auto-start: {e}")
+            return False
+    
+    def disable_autostart(self):
+        """Remove from Windows Registry startup"""
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                self.registry_path,
+                0,
+                winreg.KEY_SET_VALUE
+            )
+            
+            try:
+                winreg.DeleteValue(key, self.app_name)
+                print("✅ Auto-start disabled")
+            except FileNotFoundError:
+                pass
+            
+            winreg.CloseKey(key)
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to disable auto-start: {e}")
+            return False
 
 class GitHubUpdateManager:
     def __init__(self, app_instance):

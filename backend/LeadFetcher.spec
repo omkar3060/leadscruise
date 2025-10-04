@@ -1,29 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_submodules
 from PyInstaller.utils.hooks import collect_all
 
 datas = [('version.txt', '.')]
 binaries = []
-hiddenimports = ['selenium.webdriver.common.by', 'webdriver_manager.firefox', 'win32con', 'winreg']
-hiddenimports += collect_submodules('selenium')
-hiddenimports += collect_submodules('webdriver_manager')
-tmp_ret = collect_all('requests')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+hiddenimports = ['win32con', 'win32api', 'winreg']
 tmp_ret = collect_all('selenium')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('webdriver_manager')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('PIL')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('pystray')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('keyring')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('cryptography')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('psutil')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('pywin32')
+tmp_ret = collect_all('PIL')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
@@ -41,12 +30,23 @@ a = Analysis(
     optimize=0,
 )
 pyz = PYZ(a.pure)
+splash = Splash(
+    'splash.png',
+    binaries=a.binaries,
+    datas=a.datas,
+    text_pos=None,
+    text_size=12,
+    minify_script=True,
+    always_on_top=True,
+)
 
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
     a.datas,
+    splash,
+    splash.binaries,
     [],
     name='LeadFetcher',
     debug=False,
