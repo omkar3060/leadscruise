@@ -262,7 +262,7 @@ const Sheets = () => {
 
     fetchSettings();
   }, [navigate]);
-  
+
   // Add OTP submission handler
   const handleOtpSubmit = async () => {
     if (!otpValue || otpValue.length !== 4) {
@@ -783,24 +783,30 @@ const Sheets = () => {
 
   const fetchLeads = async () => {
     try {
-
       const userMobile = localStorage.getItem("mobileNumber");
+      console.log("🔍 User mobile from localStorage:", userMobile);
       if (!userMobile) {
         alert("Kindly login to your account first!");
         navigate(-1);
         return;
       }
       setIsLoadingLeads(true);
+
       if (userMobile === "9999999999") {
         setLeads(demoLeads);
         return;
       }
 
+      // Change this endpoint to fetch from FetchedLead collection
       const response = await axios.get(
         `https://api.leadscruise.com/api/get-user-leads/${userMobile}`
       );
-
+      console.log("🔍 Raw API response:", response.data);
+      console.log("🔍 First lead from API:", response.data.leads[0]);
+      //const userMobile = localStorage.getItem("mobileNumber");
+      //console.log("🔍 User mobile from localStorage:", userMobile);
       if (response.status === 200) {
+        console.log("🔍 Sarfaraz lead:", response.data.leads.find(l => l.name === "Sarfaraz"));
         setLeads(response.data.leads);
         setTotalLeads(response.data.totalLeads);
       }
@@ -832,25 +838,31 @@ const Sheets = () => {
   }, []);
 
   const calculateMetrics = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get today's date in IST timezone
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+    const istNow = new Date(now.getTime() + istOffset);
 
-    // Get the start of the current week (Monday)
+    const today = new Date(istNow.toISOString().split('T')[0]);
+
+    // Get the start of the current week (Monday) in IST
     const startOfWeek = new Date(today);
-    const day = today.getDay(); // Sunday: 0, Monday: 1, ..., Saturday: 6
+    const day = today.getUTCDay(); // Use UTC day to avoid timezone issues
     const diff = day === 0 ? 6 : day - 1; // if Sunday, go back 6 days to get to Monday
-    startOfWeek.setDate(today.getDate() - diff);
-    startOfWeek.setHours(0, 0, 0, 0);
+    startOfWeek.setUTCDate(today.getUTCDate() - diff);
 
     const leadsToday = leads.filter((lead) => {
+      if (!lead.createdAt) return false;
       const leadDate = new Date(lead.createdAt);
-      leadDate.setHours(0, 0, 0, 0);
-      return leadDate.getTime() === today.getTime();
+      const leadDateOnly = new Date(leadDate.toISOString().split('T')[0]);
+      return leadDateOnly.getTime() === today.getTime();
     });
 
     const leadsThisWeek = leads.filter((lead) => {
+      if (!lead.createdAt) return false;
       const leadDate = new Date(lead.createdAt);
-      return leadDate >= startOfWeek;
+      const leadDateOnly = new Date(leadDate.toISOString().split('T')[0]);
+      return leadDateOnly >= startOfWeek;
     });
 
     return {
@@ -863,29 +875,29 @@ const Sheets = () => {
   const metrics = calculateMetrics();
 
   const handleDownloadLeadsExcel = () => {
-  if (!leads || leads.length === 0) {
-    alert("No leads available to download.");
-    return;
-  }
+    if (!leads || leads.length === 0) {
+      alert("No leads available to download.");
+      return;
+    }
 
-  const formattedData = leads.map((lead, index) => ({
-    "Sl. No": index + 1,
-    Name: lead.name || "N/A",
-    Email: lead.email || "N/A",
-    Phone: lead.mobile || lead.user_mobile_number || "N/A",
-    "Product(s)": lead.lead_bought || "N/A",
-    "Captured At": new Date(lead.createdAt).toLocaleString(),
-  }));
+    const formattedData = leads.map((lead, index) => ({
+      "Sl. No": index + 1,
+      Name: lead.name || "N/A",
+      Email: lead.email || "N/A",
+      Phone: lead.mobile || lead.user_mobile_number || "N/A",
+      "Product(s)": lead.lead_bought || "N/A",
+      "Captured At": new Date(lead.createdAt).toLocaleString(),
+    }));
 
-  const worksheet = XLSX.utils.json_to_sheet(formattedData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "RecentLeads");
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
 
-  const today = new Date().toISOString().split("T")[0];
-  const filename = `Captured_${today}.xlsx`;
+    const today = new Date().toISOString().split("T")[0];
+    const filename = `Total Leads Captured_${today}.xlsx`;
 
-  XLSX.writeFile(workbook, filename);
-};
+    XLSX.writeFile(workbook, filename);
+  };
 
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
@@ -967,73 +979,71 @@ const Sheets = () => {
       />
 
 
-<div style={{ 
-  background: "#fff", 
-  borderRadius: "8px", 
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)", 
-  padding: "20px 40px",
-  margin: "0px 20px 15px 20px",  // Reduced from 20px to 10px top margin
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center"
-}}>
+      <div style={{
+        background: "#fff",
+        borderRadius: "8px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        padding: "20px 40px",
+        margin: "0px 20px 15px 20px",  // Reduced from 20px to 10px top margin
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }}>
 
-  {/* Metrics Section */}
-  <div className={styles.metricsSection}>
-    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
-      <strong>{metrics.totalLeadsToday}</strong>
-      <span>Leads Purchased Today</span>
-    </div>
-    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsThisWeek")}>
-      <strong>{metrics.totalLeadsThisWeek}</strong>
-      <span>Leads Purchased This Week</span>
-    </div>
-    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
-      <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
-      <span>Lead Manager Replies Today</span>
-    </div>
-    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
-      <strong>{messageCount * metrics.totalLeadsToday || 0}</strong>
-      <span>Whatsapp Replies Today</span>
-    </div>
-    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
-      <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
-      <span>Emails Sent Today</span>
-    </div>
-    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
-      <strong>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}</strong>
-      <span>Total Emails Sent</span>
-    </div>
-    <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
-      <strong>{metrics.totalLeadsCaptured}</strong>
-      <span>Total Leads Captured</span>
-    </div>
-  </div>
+        {/* Metrics Section */}
+        <div className={styles.metricsSection}>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+            <strong>{metrics.totalLeadsToday}</strong>
+            <span>Leads Purchased Today</span>
+          </div>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsThisWeek")}>
+            <strong>{metrics.totalLeadsThisWeek}</strong>
+            <span>Leads Purchased This Week</span>
+          </div>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+            <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
+            <span>Lead Manager Replies Today</span>
+          </div>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+            <strong>{messageCount * metrics.totalLeadsToday || 0}</strong>
+            <span>Whatsapp Replies Today</span>
+          </div>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+            <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
+            <span>Emails Sent Today</span>
+          </div>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
+            <strong>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}</strong>
+            <span>Total Emails Sent</span>
+          </div>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
+            <strong>{metrics.totalLeadsCaptured}</strong>
+            <span>Total Leads Captured</span>
+          </div>
+        </div>
 
-  {/* Controls Section inside the same container */}
-  <div style={{ 
-    display: "flex", 
-    flexDirection: "column", 
-    gap: "4px",
-    marginLeft: "20px"
-  }}>
-    <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
-      Settings
-    </button>
-    <button className={styles.buttonLarge} 
-    onClick={handleDownloadLeadsExcel} 
-    style={{ marginBottom: 0 }}
-    >
-      Download Reports
-    </button>
-  </div>
+        {/* Controls Section inside the same container */}
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "4px",
+          marginLeft: "20px"
+        }}>
+          <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
+            Settings
+          </button>
+          <button className={styles.buttonLarge}
+            onClick={handleDownloadLeadsExcel}
+            style={{ marginBottom: 0 }}
+          >
+            Download Reports
+          </button>
+        </div>
 
-</div>
+      </div>
       <div className="settings-scroll-container">
         <div className="sheets-container">
           <div className="table-container table-container-height">
-
-            
             {isLoadingLeads ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
                 Loading leads...
@@ -1076,7 +1086,7 @@ const Sheets = () => {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table className={`${styles.leadsTable} ${styles.tablePadding}`}> 
+                <table className={`${styles.leadsTable} ${styles.tablePadding}`}>
                   <thead>
                     <tr>
                       <th style={{ width: '50px' }}>No.</th> {/* New column for row number */}
@@ -1089,18 +1099,36 @@ const Sheets = () => {
                       <th style={{ width: '100px' }}>Action</th>
                     </tr>
                   </thead>
-                  <tbody style={{  
-                   overflowY: 'auto',  
-                      }}>
+                  <tbody style={{ overflowY: 'auto' }}>
                     {leads.map((lead, index) => {
+                      console.log('Lead source:', lead.source); // Check console
                       const isRejected = isLeadRejected(lead.lead_bought);
                       return (
                         <tr
                           key={lead._id || index}
                           style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}
                         >
-                          <td>{index + 1}</td> {/* Row number */}
-                          <td>{lead.lead_bought}</td>
+                          <td>{index + 1}</td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {/* Tag first (on the left) */}
+                              <span style={{
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                backgroundColor: lead.source === 'AI' ? '#e3f2fd' : '#fff3e0',
+                                color: lead.source === 'AI' ? '#1976d2' : '#f57c00',
+                                border: `1px solid ${lead.source === 'AI' ? '#90caf9' : '#ffb74d'}`,
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0  // Prevents tag from shrinking
+                              }}>
+                                {lead.source || 'AI'}
+                              </span>
+                              {/* Product name second (on the right) */}
+                              <span>{lead.lead_bought}</span>
+                            </div>
+                          </td>
                           <td>{lead.address || 'N/A'}</td>
                           <td>{lead.name}</td>
                           <td>{lead.email || 'N/A'}</td>

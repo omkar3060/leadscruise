@@ -719,7 +719,7 @@ const Dashboard = () => {
     }
   });
 
-  const handleDownloadLeadsExcel = () => {
+const handleDownloadLeadsExcel = () => {
     if (!leads || leads.length === 0) {
       alert("No leads available to download.");
       return;
@@ -736,10 +736,10 @@ const Dashboard = () => {
 
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "RecentLeads");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
 
     const today = new Date().toISOString().split("T")[0];
-    const filename = `Captured_${today}.xlsx`;
+    const filename = `Total Leads Captured_${today}.xlsx`;
 
     XLSX.writeFile(workbook, filename);
   };

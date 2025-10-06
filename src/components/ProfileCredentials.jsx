@@ -827,7 +827,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         <>
           {/* Download Latest Release section */}
           <div className="credentials-section">
-            <h3 className="credentials-header">Desktop Application</h3>
+            <h3 className="credentials-header centered-header">Desktop Application</h3>
             <div className="credentials-content">
               <div className="credential-group">
                 {/* <label>Lead Fetcher Desktop App</label> */}
@@ -839,14 +839,14 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                     </div>
                   ) : latestRelease ? (
                     <>
-                      <span className="mobile-text">
+                      {/*<span className="mobile-text">
                         Version {latestRelease.tag_name || "N/A"}
                         {latestRelease.published_at && (
                           <span style={{ fontSize: "0.85em", color: "#666", marginLeft: "8px" }}>
                             (Released: {new Date(latestRelease.published_at).toLocaleDateString()})
                           </span>
                         )}
-                      </span>
+                      </span>*/}
                       <div className="edit-button-container">
                         <button
                           className="update-api-btn"

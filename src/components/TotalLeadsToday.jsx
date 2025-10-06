@@ -38,10 +38,11 @@ const TotalLeadsToday = () => {
     const cleanedLeads = todayLeads.map(({ _v, ...rest }) => rest);  // This removes the _v field
     const worksheet = XLSX.utils.json_to_sheet(cleanedLeads);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "TodayLeads");
-    XLSX.writeFile(workbook, "TotalLeadsToday.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Today");
+    const today = new Date().toISOString().split("T")[0];
+    const filename = `Total Leads Today_${today}.xlsx`;
+    XLSX.writeFile(workbook, filename);
   };
-
 
   return (
     <div className="leads-container">

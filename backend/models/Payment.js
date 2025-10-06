@@ -11,6 +11,7 @@ const paymentSchema = new mongoose.Schema({
   subscription_type: { type: String, required: true },
   created_at: { type: Date, default: Date.now },
   invoice_pdf: { data: Buffer, contentType: String }, // Store PDF as binary data
+  days_remaining: { type: Number, default: null },
 });
 
 module.exports = mongoose.model("Payment", paymentSchema);

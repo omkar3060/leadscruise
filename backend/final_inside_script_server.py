@@ -147,7 +147,8 @@ def send_data_to_sheets(name, mobile, email=None, user_mobile_number=None, times
         "user_mobile_number": user_mobile_number,
         "lead_bought": lead_bought if lead_bought else "Not Available",
         "timestamp_text": iso_timestamp,
-        "uniqueId": uniqueId  # Add uniqueId to identify the process
+        "uniqueId": uniqueId,  # Add uniqueId to identify the process
+        "source": "Manual" 
     }
     if email:
         data["email"] = email

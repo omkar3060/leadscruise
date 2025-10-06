@@ -32,12 +32,19 @@ h2 {
 }
 
 .table-container1 {
-  max-height: 500px;
+  position: fixed;
+  bottom: 80px; /* distance from bottom */
+  left: 0;
+  right: 0;
+  max-height: 75vh;
   border: 1px solid #ccc;
   border-radius: 6px;
-  padding-top: 0px;
   overflow-y: auto;
+  background-color: white;
+  margin: 0 auto;
+  width: 95%; /* optional */
 }
+
 
 table {
   width: 100%;

@@ -29,6 +29,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false); // Toggle edit mode
   const [daysLeft, setDaysLeft] = useState(null);
   const [availableInvoices, setAvailableInvoices] = useState({});
+  const [isEditDisabled, setIsEditDisabled] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -51,6 +52,19 @@ const Profile = () => {
             setDaysLeft(remainingDays);
           } catch (error) {
             console.error("Error parsing subscription data:", error);
+          }
+        }
+
+        // Check if edit should be disabled based on download timestamp
+        const firstDownloadTime = localStorage.getItem("firstInvoiceDownloadTime");
+        if (firstDownloadTime) {
+          const downloadDate = new Date(firstDownloadTime);
+          const currentDate = new Date();
+          // TESTING: Change to 10 seconds instead of 2 days
+          const secondsSinceDownload = Math.floor((currentDate - downloadDate) / 1000);
+
+          if (secondsSinceDownload >= 10) { // 10 seconds for testing (change back to: daysSinceDownload >= 2)
+            setIsEditDisabled(true);
           }
         }
 
@@ -174,6 +188,12 @@ const Profile = () => {
       link.click();
       document.body.removeChild(link); // Clean up after download
 
+      // Track first download timestamp
+      const firstDownloadTime = localStorage.getItem("firstInvoiceDownloadTime");
+      if (!firstDownloadTime) {
+        localStorage.setItem("firstInvoiceDownloadTime", new Date().toISOString());
+      }
+
     } catch (error) {
       console.error("Error downloading invoice:", error);
       alert("Invoice not found");
@@ -182,31 +202,41 @@ const Profile = () => {
     }
   };
 
-  const calculateEndDate = (startDate, subscriptionType) => {
-    const start = new Date(startDate);
-    console.log("Calculating end date from", startDate, "with type", subscriptionType);
+  const calculateEndDate = (createdAt, subscriptionType, daysRemaining) => {
+    const start = new Date(createdAt);
+    // console.log("Calculating end date with:", { createdAt, subscriptionType, daysRemaining });
+    // ✅ If admin manually changed days_remaining, use that
+    if (daysRemaining !== null && daysRemaining !== undefined) {
+      const end = new Date();
+      end.setDate(end.getDate() + Number(daysRemaining));
+      return end.toLocaleDateString();
+    }
+
+    // Otherwise, calculate based on subscription type
     switch (subscriptionType.toLowerCase()) {
       case "1-day":
         start.setDate(start.getDate() + 1);
         break;
-      case "7-days":
-        start.setDate(start.getDate() + 7);
-        break;
       case "3-days":
         start.setDate(start.getDate() + 3);
         break;
-      case "one month":
-        start.setDate(start.getDate() + 30); // Approximate month duration
+      case "7-days":
+        start.setDate(start.getDate() + 7);
         break;
-      case "6 months":
+      case "three-mo":
+        start.setDate(start.getDate() + 90);
+        break;
+      case "one-mo":
+        start.setDate(start.getDate() + 30);
+        break;
+      case "six-mo":
         start.setDate(start.getDate() + 180);
         break;
       case "year-mo":
         start.setDate(start.getDate() + 365);
         break;
       default:
-        // Fallback (assumed monthly if unknown)
-        start.setDate(start.getDate() + 30);
+        start.setDate(start.getDate() + 30); // fallback
     }
 
     return start.toLocaleDateString();
@@ -282,7 +312,7 @@ const Profile = () => {
                           <td>{index + 1}</td>
                           <td>{subscriptionMapping[item.subscription_type] || item.subscription_type}</td>
                           <td>{new Date(item.created_at).toLocaleDateString()}</td>
-                          <td>{calculateEndDate(item.created_at, item.subscription_type)}</td>
+                          <td>{calculateEndDate(item.created_at, item.subscription_type, item.days_remaining)}</td>
                           <td>{`INR ${item.order_amount / 100}`}</td>
                           <td>{item.unique_id}</td>
                           <td>
@@ -374,15 +404,19 @@ const Profile = () => {
                       </div>
                       <div className={styles["edit-button-container"]}>
                         <button className={styles["edit-button"]} style={{
-                          backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                          cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                          color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
+                          backgroundColor: (localStorage.getItem("userEmail") === "demo@leadscruise.com" || isEditDisabled) ? "#ccc" : "",
+                          cursor: (localStorage.getItem("userEmail") === "demo@leadscruise.com" || isEditDisabled) ? "not-allowed" : "pointer",
+                          color: (localStorage.getItem("userEmail") === "demo@leadscruise.com" || isEditDisabled) ? "#666" : ""
                         }}
                           onClick={() => {
                             if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
                               alert("You cannot edit in demo account");
                               return;
                             }
+                            // if (isEditDisabled) {
+                            //   alert("Editing is disabled. You have already downloaded a GST receipt more than 2 days ago.");
+                            //   return;
+                            // }
                             setIsEditing(true);
                           }}>Edit my Details</button>
                       </div>

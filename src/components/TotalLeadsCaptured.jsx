@@ -31,8 +31,12 @@ const TotalLeadsAllTime = () => {
     const cleanedLeads = allLeads.map(({ _v, ...rest }) => rest);  // Remove _v
     const worksheet = XLSX.utils.json_to_sheet(cleanedLeads);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "AllLeads");
-    XLSX.writeFile(workbook, "TotalLeadsAllTime.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured ");
+    
+    const today = new Date().toISOString().split("T")[0];
+    const filename = `Total Leads Captured _${today}.xlsx`;
+    
+    XLSX.writeFile(workbook, filename);
   };
 
   return (

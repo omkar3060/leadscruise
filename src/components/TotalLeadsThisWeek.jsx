@@ -41,8 +41,12 @@ const TotalLeadsThisWeek = () => {
     const cleanedLeads = weekLeads.map(({ _v, ...rest }) => rest);  // This removes the _v field
     const worksheet = XLSX.utils.json_to_sheet(cleanedLeads);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "WeeklyLeads");
-    XLSX.writeFile(workbook, "TotalLeadsThisWeek.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads This Week");
+    
+    const today = new Date().toISOString().split("T")[0];
+    const filename = `Total Leads This Week_${today}.xlsx`;
+    
+    XLSX.writeFile(workbook, filename);
   };
 
   return (

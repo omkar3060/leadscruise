@@ -78,6 +78,27 @@ exports.getAllSubscriptions = async (req, res) => {
   }
 };
 
+exports.updateDaysRemaining = async (req, res) => {
+  try {
+    const { unique_id, days_remaining } = req.body;
+
+    const updated = await Payment.findOneAndUpdate(
+      { unique_id },
+      { $set: { days_remaining } },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Subscription not found" });
+    }
+
+    res.status(200).json({ message: "Days remaining updated successfully", updated });
+  } catch (error) {
+    console.error("Error updating days remaining:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 const isWithinDays = (date, days) => {
   const now = new Date();

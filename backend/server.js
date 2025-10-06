@@ -33,7 +33,7 @@ const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
 const teammateRoutes = require('./routes/teammates');
 const path = require("path");
-const os=require("os");
+const os = require("os");
 const server = createServer(app); // ✅ Create HTTP server
 server.setTimeout(15 * 60 * 1000);
 const io = new Server(server, {
@@ -258,9 +258,9 @@ app.post('/api/send-invoice-email', async (req, res) => {
     const { email, unique_id } = req.body;
 
     if (!email || !unique_id) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email and Order ID are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Email and Order ID are required'
       });
     }
 
@@ -453,21 +453,21 @@ app.post('/api/send-invoice-email', async (req, res) => {
 
     // Send email
     const info = await emailTransporter.sendMail(mailOptions);
-    
+
     console.log(`✅ Invoice email sent successfully to ${email}:`, info.messageId);
-    
-    res.status(200).json({ 
-      success: true, 
+
+    res.status(200).json({
+      success: true,
       message: 'Email sent successfully',
       messageId: info.messageId
     });
 
   } catch (error) {
     console.error('❌ Error sending invoice email:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to send email', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send email',
+      error: error.message
     });
   }
 });
@@ -1555,6 +1555,11 @@ const leadSchema = new mongoose.Schema({
   lead_bought: { type: String },
   address: { type: String },
   createdAt: { type: Date, default: Date.now },
+  source: { type: String, enum: ['AI', 'Manual'], default: 'Manual' },
+  aiProcessed: { type: Boolean, default: false }
+}, {
+  strict: false,
+  versionKey: false
 });
 
 const Lead = mongoose.model("Lead", leadSchema);
@@ -1604,6 +1609,8 @@ app.post("/api/store-lead", async (req, res) => {
       lead_bought,
       createdAt: new Date(),
       address,
+      source: "AI",
+      aiProcessed: true
     });
     await newLead.save();
 
@@ -1664,8 +1671,8 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Check for duplicate leads     
-    const existingLead = await FetchedLead.findOne({
+    // Check for duplicate leads in FetchedLead collection
+    const existingFetchedLead = await FetchedLead.findOne({
       name,
       mobile,
       user_mobile_number,
@@ -1673,45 +1680,34 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       address,
     });
 
-    // If duplicate found, stop the Python script for this user
-    if (existingLead) {
-      console.log("Duplicate lead detected. Stopping script for user:", user_mobile_number);
+    // If duplicate found in FetchedLead, stop the Python script
+    if (existingFetchedLead) {
+      console.log("Duplicate lead detected in FetchedLead. Stopping script for user:", user_mobile_number);
 
       // Find and terminate the Python process for this user
       const processKey = uniqueId ? uniqueId + 100000 : null;
       if (processKey && activePythonProcesses.has(processKey)) {
         const pythonProcess = activePythonProcesses.get(processKey);
 
-        // Try graceful termination first
         try {
           pythonProcess.kill('SIGTERM');
-
-          // If graceful termination doesn't work after 2 seconds, force kill
           setTimeout(() => {
             if (activePythonProcesses.has(processKey)) {
               console.log(`Force killing Python process for uniqueId: ${uniqueId}`);
               pythonProcess.kill('SIGKILL');
             }
           }, 2000);
-
         } catch (error) {
           console.error("Error terminating Python process:", error);
-          // Force kill if SIGTERM fails
           pythonProcess.kill('SIGKILL');
         }
 
-        // Remove from active processes
         activePythonProcesses.delete(processKey);
-
-        // Clean up OTP requests
         if (uniqueId && otpRequests.has(uniqueId)) {
           otpRequests.delete(uniqueId);
           otpFailures.delete(uniqueId);
         }
-
-        // Cleanup display lock file
         cleanupDisplay(uniqueId);
-
         console.log(`Python process terminated for uniqueId: ${uniqueId}`);
       }
 
@@ -1722,7 +1718,23 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       });
     }
 
-    // Store the new lead     
+    // Check if this lead was already captured by AI in the Lead collection
+    const existingAILead = await Lead.findOne({
+      name,
+      mobile,
+      user_mobile_number,
+      lead_bought,
+      source: "AI",
+      aiProcessed: true
+    });
+
+    // Determine source and aiProcessed status
+    const leadSource = existingAILead ? "AI" : "Manual";
+    const isAIProcessed = !!existingAILead;
+
+    console.log(`Lead source determined: ${leadSource}, AI Processed: ${isAIProcessed}`);
+
+    // Store the new lead with correct source and aiProcessed fields
     const newLead = new FetchedLead({
       name,
       email,
@@ -1731,37 +1743,15 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       lead_bought,
       address,
       createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
+      source: leadSource,
+      aiProcessed: isAIProcessed
     });
+    console.log("About to save lead with source:", newLead.source, "aiProcessed:", newLead.aiProcessed);
     await newLead.save();
-
+    console.log("Lead saved successfully, ID:", newLead._id);
+    await newLead.save();
     console.log("Lead Data Stored:", newLead);
 
-    // Fetch WhatsApp settings
-    // const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
-    // const user = await User.findOne({ mobileNumber: user_mobile_number });
-    // if (!settings || !settings.whatsappNumber || !settings.messages) {
-    //   console.warn("No WhatsApp settings found for this user");
-    //   return res.json({ message: "Lead data stored successfully", lead: newLead });
-    // }
-    // const receiverNumber = mobile; // Use the mobile number from the lead
-    // let templateMessage = settings.messages[0];
-    // templateMessage = templateMessage
-    //   .replace("{lead_name}", name)
-    //   .replace("{lead_product_requested}", lead_bought)
-    //   .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
-    // // Instead of running WhatsApp script immediately, add to queue
-    // const whatsappQueueItem = new WhatsAppMessageQueue({
-    //   user_mobile_number,
-    //   whatsappNumber: settings.whatsappNumber,
-    //   receiverNumber,
-    //   templateMessage,
-    //   leadId: newLead._id,
-    //   status: 'pending',
-    //   scheduledAt: new Date() // Process immediately, but queue processor will handle timing
-    // });
-    // await whatsappQueueItem.save();
-    // console.log("WhatsApp message added to queue:", whatsappQueueItem._id);
-    // Return immediately after queuing
     return res.json({
       message: "Lead data stored successfully",
       lead: newLead,
@@ -2123,17 +2113,14 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
       return res.status(400).json({ error: "User mobile number is required" });
     }
 
-    // Get total count
-    const totalLeads = await FetchedLead.countDocuments({
-      user_mobile_number: userMobile
-    });
+    // Use native MongoDB driver instead of Mongoose
+    const leads = await mongoose.connection.db
+      .collection('fetchedleads')
+      .find({ user_mobile_number: userMobile })
+      .sort({ createdAt: -1 })
+      .toArray();
 
-    // Fetch all leads without pagination
-    const leads = await FetchedLead.find({
-      user_mobile_number: userMobile
-    })
-      .sort({ createdAt: -1 }) // Sort by newest first
-      .select('name email mobile lead_bought createdAt address'); // Select only needed fields
+    const totalLeads = leads.length;
 
     res.status(200).json({
       success: true,
@@ -2149,12 +2136,11 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
     });
   }
 });
-
 // Function to get the LeadFetcher application directory
 function getLeadFetcherDirectory() {
   if (os.platform() === 'win32') {
-    const localAppData = process.env.LOCALAPPDATA || 
-                         path.join(os.homedir(), 'AppData', 'Local');
+    const localAppData = process.env.LOCALAPPDATA ||
+      path.join(os.homedir(), 'AppData', 'Local');
     return path.join(localAppData, 'LeadFetcher');
   } else {
     return path.join(os.homedir(), '.leadfetcher');
@@ -2181,14 +2167,14 @@ function safeWriteFile(filePath, data, fallbackDir = null) {
     // Ensure directory exists
     const dir = path.dirname(filePath);
     ensureDirectoryExists(dir);
-    
+
     // Write file
     fs.writeFileSync(filePath, data);
     console.log(`✅ File saved successfully: ${filePath}`);
     return true;
   } catch (error) {
     console.error(`❌ Failed to write file ${filePath}:`, error);
-    
+
     // Try fallback location if provided
     if (fallbackDir) {
       try {
@@ -2241,13 +2227,13 @@ app.post("/api/data-received-confirmation", async (req, res) => {
     // Get LeadFetcher application directory
     const leadFetcherDir = getLeadFetcherDirectory();
     const filePath = path.join(leadFetcherDir, "confirmations.json");
-    
+
     // Fallback directory (current working directory)
     const fallbackDir = process.cwd();
 
     // Write confirmations.json to LeadFetcher directory
     const writeSuccess = safeWriteFile(
-      filePath, 
+      filePath,
       JSON.stringify(confirmationData, null, 2),
       fallbackDir
     );
@@ -2326,7 +2312,7 @@ app.get("/api/get-user-leads-with-message/:userMobile", async (req, res) => {
     // Get LeadFetcher application directory
     const leadFetcherDir = getLeadFetcherDirectory();
     const filePath = path.join(leadFetcherDir, "api_response.json");
-    
+
     // Fallback directory (current working directory)
     const fallbackDir = process.cwd();
 

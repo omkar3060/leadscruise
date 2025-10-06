@@ -10,6 +10,7 @@ body {
 .settings-page-wrapper .table-container ul,
 .settings-page-wrapper .table-container p {
   margin-top: 50px;
+  /* padding-left: 25px; */
 }
 .settings-page-wrapper {
   display: flex;

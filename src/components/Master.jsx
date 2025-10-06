@@ -30,6 +30,9 @@ const Master = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const [editingRow, setEditingRow] = useState(null);
+  const [editedDays, setEditedDays] = useState({});
+
   const subscriptionMapping = {
     "1-day": "1 Day",
     "7-days": "7 Days",
@@ -382,6 +385,40 @@ const Master = () => {
     }
   };
 
+  const handleSaveDaysRemaining = async (unique_id) => {
+    const newValue = editedDays[unique_id];
+    if (newValue < 0 || newValue === "" || isNaN(newValue)) {
+      alert("⚠️ Please enter a valid number");
+      return;
+    }
+
+    try {
+      await axios.patch("https://api.leadscruise.com/api/update-days-remaining", {
+        unique_id,
+        days_remaining: Number(newValue),
+      });
+
+      // Update UI
+      setSubscriptions((prevSubs) =>
+        prevSubs.map((sub) =>
+          sub.unique_id === unique_id
+            ? { ...sub, days_remaining: Number(newValue) }
+            : sub
+        )
+      );
+
+      // ✅ Show success alert
+      alert("✅ Days remaining updated successfully!");
+    } catch (error) {
+      console.error("Error updating days remaining:", error);
+      alert("❌ Failed to update days remaining. Please try again.");
+    } finally {
+      setEditingRow(null);
+    }
+  };
+
+
+
   const notifyMaintenance = async () => {
     try {
       const response = await fetch("https://api.leadscruise.com/api/notify-maintenance", {
@@ -597,11 +634,63 @@ const Master = () => {
 
                       <td>{new Date(sub.created_at).toLocaleDateString()}</td>
                       <td>
-                        {calculateRemainingDays(
-                          sub.created_at,
-                          sub.subscription_type
+                        {editingRow === sub.unique_id ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <input
+                              type="number"
+                              value={editedDays[sub.unique_id] || ""}
+                              onChange={(e) =>
+                                setEditedDays({ ...editedDays, [sub.unique_id]: e.target.value })
+                              }
+                              className={masterstyles.editableInput}
+                            />
+                            <button
+                              className={masterstyles.saveButton}
+                              onClick={() => handleSaveDaysRemaining(sub.unique_id)}
+                            >
+                              💾
+                            </button>
+                            <button
+                              className={masterstyles.cancelButton}
+                              onClick={() => setEditingRow(null)}
+                            >
+                              ✖
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            onClick={() => {
+                              setEditingRow(sub.unique_id);
+                              setEditedDays({
+                                ...editedDays,
+                                [sub.unique_id]:
+                                  sub.days_remaining ??
+                                  calculateRemainingDays(sub.created_at, sub.subscription_type),
+                              });
+                            }}
+                            style={{
+                              cursor: "pointer",
+                              color:
+                                (sub.days_remaining ?? calculateRemainingDays(sub.created_at, sub.subscription_type)) <= 0
+                                  ? "red"
+                                  : "white",
+                              fontWeight:
+                                (sub.days_remaining ?? calculateRemainingDays(sub.created_at, sub.subscription_type)) <= 0
+                                  ? "bold"
+                                  : "normal",
+                            }}
+                            title="Click to edit"
+                          >
+                            {(sub.days_remaining ??
+                              calculateRemainingDays(sub.created_at, sub.subscription_type)) <= 0
+                              ? "Expired"
+                              : sub.days_remaining ??
+                              calculateRemainingDays(sub.created_at, sub.subscription_type)}
+                          </span>
                         )}
                       </td>
+
+
                       <td>{sub.refId}</td>
                       <td>
                         {uploadedInvoices[sub.unique_id] !== undefined ? (
