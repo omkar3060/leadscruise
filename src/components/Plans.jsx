@@ -118,16 +118,17 @@ const Plans = () => {
 
     // ✅ Block if user already used demo
     if (selectedPlan === "1-day") {
+      const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
       try {
-        const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
+        
         if (res.data.used) {
-          alert("You have already used the demo subscription. Please choose another plan.");
+          alert(res.data.message || "You have already used the demo subscription. Please choose another plan.");
           setShowModal(false);
           return;
         }
       } catch (err) {
         console.error("Error checking demo usage:", err);
-        alert("Unable to validate demo subscription. Please try again.");
+        alert(res.data.message || "Unable to validate demo subscription. Please try again.");
         setShowModal(false);
         return;
       }
@@ -250,10 +251,10 @@ const Plans = () => {
     setShowModal(true); // you can later show your coupon popup here
   };
   const handleGoBack = () => {
-  navigate(-1); // Goes back to previous page
-  // OR if you want to go to a specific route:
-  // navigate('/specific-route');
-};
+    navigate(-1); // Goes back to previous page
+    // OR if you want to go to a specific route:
+    // navigate('/specific-route');
+  };
   const handleDemoClick = () => {
     handlePlanSelect("1-day", "0", "Demo Plan");
     setShowModal(true);
@@ -265,7 +266,7 @@ const Plans = () => {
         <div className="plans-header">
           <h2>Select Plan for subscription</h2>
         </div>
-        
+
         <div className="plans-grid">
           {/* One Month Plan - Now First */}
           <div className="plan-card">
@@ -274,7 +275,7 @@ const Plans = () => {
               <p className="plan-subtitle">Features :</p>
               <p className="plan-description">Dive into one month plan comes with everything your business needs</p>
             </div>
-            
+
             <div className="features-list">
               <div className="feature-item">
                 <span className="checkmark">✓</span>
@@ -301,11 +302,11 @@ const Plans = () => {
                 <span>Free Updates for AI</span>
               </div>
             </div>
-            
+
             <div className="coupon-section">
               <p className="coupon-text">Coupon Auto Applied at Checkout</p>
             </div>
-            
+
             <div className="price-section">
               <span className="discounted-price">2999</span>
               <div className="price-details">
@@ -313,11 +314,11 @@ const Plans = () => {
                 <span>PER / Month</span>
               </div>
             </div>
-            
-            <button 
-              className="select-plan-btn" 
+
+            <button
+              className="select-plan-btn"
               onClick={() => {
-                handlePlanSelect("one-month", "2999", "One Month Plan");
+                handlePlanSelect("one-mo", "2999", "One Month Plan");
                 handleNextClick();
               }}
             >
@@ -332,7 +333,7 @@ const Plans = () => {
               <p className="plan-subtitle">Features :</p>
               <p className="plan-description">Perfect for getting started with comprehensive AI automation</p>
             </div>
-            
+
             <div className="features-list">
               <div className="feature-item">
                 <span className="checkmark">✓</span>
@@ -344,7 +345,7 @@ const Plans = () => {
               </div>
               <div className="feature-item">
                 <span className="checkmark">✓</span>
-              <span>Unlimited AI WhatsApp Reply Automation</span>
+                <span>Unlimited AI WhatsApp Reply Automation</span>
               </div>
               <div className="feature-item">
                 <span className="checkmark">✓</span>
@@ -359,11 +360,11 @@ const Plans = () => {
                 <span>Free Updates for AI</span>
               </div>
             </div>
-            
+
             <div className="coupon-section">
               <p className="coupon-text">Coupon Auto Applied at Checkout</p>
             </div>
-            
+
             <div className="price-section">
               <span className="discounted-price">7999</span>
               <div className="price-details">
@@ -371,11 +372,11 @@ const Plans = () => {
                 <span>FOR 3 Months</span>
               </div>
             </div>
-            
-            <button 
-              className="select-plan-btn" 
+
+            <button
+              className="select-plan-btn"
               onClick={() => {
-                handlePlanSelect("three-month", "7999", "Three Month Plan");
+                handlePlanSelect("three-mo", "7999", "Three Month Plan");
                 handleNextClick();
               }}
             >
@@ -390,7 +391,7 @@ const Plans = () => {
               <p className="plan-subtitle">Features :</p>
               <p className="plan-description">Get the best value with our six month plan - perfect for growing businesses</p>
             </div>
-            
+
             <div className="features-list">
               <div className="feature-item">
                 <span className="checkmark">✓</span>
@@ -425,11 +426,11 @@ const Plans = () => {
                 <span>Advanced Analytics Dashboard</span>
               </div>
             </div>
-            
+
             <div className="coupon-section">
               <p className="coupon-text">Coupon Auto Applied at Checkout</p>
             </div>
-            
+
             <div className="price-section">
               <span className="discounted-price">14999</span>
               <div className="price-details">
@@ -437,11 +438,11 @@ const Plans = () => {
                 <span>FOR 6 Months</span>
               </div>
             </div>
-            
-            <button 
-              className="select-plan-btn" 
+
+            <button
+              className="select-plan-btn"
               onClick={() => {
-                handlePlanSelect("six-month", "14999", "Six Month Plan");
+                handlePlanSelect("six-mo", "14999", "Six Month Plan");
                 handleNextClick();
               }}
             >
@@ -457,7 +458,7 @@ const Plans = () => {
               <p className="plan-subtitle">Features :</p>
               <p className="plan-description">Maximum savings with our comprehensive yearly subscription for serious businesses</p>
             </div>
-            
+
             <div className="features-list">
               <div className="feature-item">
                 <span className="checkmark">✓</span>
@@ -500,11 +501,11 @@ const Plans = () => {
                 <span>Custom Integration Support</span>
               </div>
             </div>
-            
+
             <div className="coupon-section">
               <p className="coupon-text">Coupon Auto Applied at Checkout</p>
             </div>
-            
+
             <div className="price-section">
               <span className="discounted-price">29999</span>
               <div className="price-details">
@@ -512,11 +513,11 @@ const Plans = () => {
                 <span>FOR 12 Months</span>
               </div>
             </div>
-            
-            <button 
-              className="select-plan-btn select-plan-btn-popular" 
+
+            <button
+              className="select-plan-btn select-plan-btn-popular"
               onClick={() => {
-                handlePlanSelect("yearly", "29999", "Yearly Plan");
+                handlePlanSelect("year-mo", "29999", "Yearly Plan");
                 handleNextClick();
               }}
             >
@@ -525,7 +526,7 @@ const Plans = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="bottom-section">
         <div className="demo-section">
           <button className="demo-link" onClick={handleDemoClick}>Need a&nbsp;<span className="demo-bold">Demo?</span></button>

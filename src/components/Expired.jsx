@@ -20,7 +20,8 @@ const ExpiredSubscriptions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploadedInvoices, setUploadedInvoices] = useState({});
   const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState(null);
-    const subscriptionMapping = {
+  const subscriptionMapping = {
+    "1-day": "1 Day",
     "7-days": "7 Days",
     "3-days": "3 Days",
     "one-mo": "One Month",
@@ -46,6 +47,7 @@ const ExpiredSubscriptions = () => {
     const expiryDate = new Date(createdDate);
 
     const SUBSCRIPTION_DURATIONS = {
+      "1-day": 1,
       "7-days": 7,
       "3-days": 3,
       "One Month": 30,
@@ -65,26 +67,26 @@ const ExpiredSubscriptions = () => {
   const fetchSubscriptions = async () => {
     setIsLoading(true);
     try {
-        const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-        });
+      const response = await axios.get("https://api.leadscruise.com/api/get-all-subscriptions", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
 
-        // Filter subscriptions expiring in 3 days
-        const expiringSoonSubscriptions = response.data.filter(sub => {
-            const remainingDays = calculateRemainingDays(sub.created_at, sub.subscription_type);
-            return remainingDays === "Expired" ;
-        });
+      // Filter subscriptions expiring in 3 days
+      const expiringSoonSubscriptions = response.data.filter(sub => {
+        const remainingDays = calculateRemainingDays(sub.created_at, sub.subscription_type);
+        return remainingDays === "Expired";
+      });
 
-        setSubscriptions(expiringSoonSubscriptions);
-        fetchUploadedInvoices(expiringSoonSubscriptions);
+      setSubscriptions(expiringSoonSubscriptions);
+      fetchUploadedInvoices(expiringSoonSubscriptions);
     } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch subscriptions');
+      setError(err.response?.data?.message || 'Failed to fetch subscriptions');
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   const fetchUploadedInvoices = async (subs) => {
     try {
@@ -157,14 +159,14 @@ const ExpiredSubscriptions = () => {
 
     const worksheet = XLSX.utils.json_to_sheet(
       filteredSubscriptions.map(sub => ({
-      "Email": sub.email,
-      "Contact": sub.contact,
-      "Subscription Type": sub.subscription_type,
-      "Order ID": sub.unique_id,
-      "Order Amount (₹)": sub.order_amount / 100,
-      "Subscription Start": new Date(sub.created_at).toLocaleDateString(),
-      "Days Remaining": calculateRemainingDays(sub.created_at, sub.subscription_type),
-      "Reference ID": sub.refId || "N/A",
+        "Email": sub.email,
+        "Contact": sub.contact,
+        "Subscription Type": sub.subscription_type,
+        "Order ID": sub.unique_id,
+        "Order Amount (₹)": sub.order_amount / 100,
+        "Subscription Start": new Date(sub.created_at).toLocaleDateString(),
+        "Days Remaining": calculateRemainingDays(sub.created_at, sub.subscription_type),
+        "Reference ID": sub.refId || "N/A",
       }))
     );
 

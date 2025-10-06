@@ -192,11 +192,11 @@ app.get("/api/has-used-demo", async (req, res) => {
 
     const existingDemo = await Payment.findOne({
       contact,
-      subscription_type: "7-days",
+      subscription_type: "1-day",
     });
 
     if (existingDemo) {
-      return res.json({ used: true });
+      return res.json({ message: "Demo has been used already. Please buy a subscription to enjoy continued services.", used: true });
     } else {
       return res.json({ used: false });
     }
@@ -209,6 +209,8 @@ app.get("/api/has-used-demo", async (req, res) => {
 // Helper function to get subscription duration in days based on type
 function getSubscriptionDuration(subscription_type) {
   switch (subscription_type) {
+    case "1-day":
+      return 1;
     case "7-days":
       return 7;
     case "3-days":
