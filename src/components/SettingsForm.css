@@ -10,7 +10,7 @@ body {
 .settings-page-wrapper .table-container ul,
 .settings-page-wrapper .table-container p {
   margin-top: 50px;
-  /* padding-left: 25px; */
+  padding-left: 25px;
 }
 .settings-page-wrapper {
   display: flex;
@@ -837,20 +837,15 @@ body {
 }
 
 .update-api-btn {
-  background-color: #007bff;
+  background-color: #000;
   color: white;
   padding: 10px 15px;
-  font-size: 1rem;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   transition: 0.3s;
   width: fit-content;
   margin-bottom: 0;
-}
-
-.update-api-btn:hover {
-  background-color: #0056b3;
 }
 
 .api-key-text {

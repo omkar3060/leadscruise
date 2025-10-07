@@ -2974,10 +2974,10 @@ class LeadFetcherApp:
         mobile_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
         
         # Callback URL input
-        ttk.Label(main_frame, text="Callback URL:").grid(row=2, column=0, sticky=tk.W, pady=5)
-        self.callback_var = tk.StringVar(value=self.callback_url)
-        callback_entry = ttk.Entry(main_frame, textvariable=self.callback_var, width=50)
-        callback_entry.grid(row=2, column=1, columnspan=2, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        # ttk.Label(main_frame, text="Callback URL:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        # self.callback_var = tk.StringVar(value=self.callback_url)
+        # callback_entry = ttk.Entry(main_frame, textvariable=self.callback_var, width=50)
+        # callback_entry.grid(row=2, column=1, columnspan=2, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
         
         # Fetch button
         self.fetch_button = ttk.Button(main_frame, text="Fetch Leads Data", 
@@ -3077,17 +3077,17 @@ class LeadFetcherApp:
         self.control_frame = control_frame
 
         # Test buttons
-        ttk.Button(control_frame, text="Test Minimize", 
-                command=self.minimize_to_tray).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(control_frame, text="Test Restore", 
-                command=lambda: self.send_message("restore_window")).pack(side=tk.LEFT, padx=(0, 5))
+        # ttk.Button(control_frame, text="Test Minimize", 
+        #         command=self.minimize_to_tray).pack(side=tk.LEFT, padx=(0, 5))
+        # ttk.Button(control_frame, text="Test Restore", 
+        #         command=lambda: self.send_message("restore_window")).pack(side=tk.LEFT, padx=(0, 5))
         
-        # NEW: Test Verification Code Display
-        ttk.Button(control_frame, text="Test Code Display", 
-                command=lambda: self.show_verification_code("123-456")).pack(side=tk.LEFT, padx=(0, 5))
+        # # NEW: Test Verification Code Display
+        # ttk.Button(control_frame, text="Test Code Display", 
+        #         command=lambda: self.show_verification_code("123-456")).pack(side=tk.LEFT, padx=(0, 5))
         
-        ttk.Button(control_frame, text="Debug State", 
-                command=self.debug_protocol_state).pack(side=tk.LEFT, padx=(0, 5))
+        # ttk.Button(control_frame, text="Debug State", 
+        #         command=self.debug_protocol_state).pack(side=tk.LEFT, padx=(0, 5))
 
         # Check Updates button
         ttk.Button(control_frame, text="Check Updates", 

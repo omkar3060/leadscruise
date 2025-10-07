@@ -673,7 +673,7 @@ const Master = () => {
                               color:
                                 (sub.days_remaining ?? calculateRemainingDays(sub.created_at, sub.subscription_type)) <= 0
                                   ? "red"
-                                  : "white",
+                                  : "blue",
                               fontWeight:
                                 (sub.days_remaining ?? calculateRemainingDays(sub.created_at, sub.subscription_type)) <= 0
                                   ? "bold"

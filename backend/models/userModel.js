@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
     adminPassword: { type: String},
     autoStartEnabled: {type: Boolean,default: false},
     buyerBalance: { type: Number, default: null },
+    firstInvoiceDownloadTime: { type: Date, default: null },
   },
   { timestamps: true } // Adds createdAt and updatedAt fields
 );

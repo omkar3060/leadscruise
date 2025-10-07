@@ -56,18 +56,18 @@ const Profile = () => {
         }
 
         // Check if edit should be disabled based on download timestamp
-        const firstDownloadTime = localStorage.getItem("firstInvoiceDownloadTime");
+        /*const firstDownloadTime = localStorage.getItem("firstInvoiceDownloadTime");
         if (firstDownloadTime) {
           const downloadDate = new Date(firstDownloadTime);
           const currentDate = new Date();
           // TESTING: Change to 10 seconds instead of 2 days
           const secondsSinceDownload = Math.floor((currentDate - downloadDate) / 1000);
-
+          
           if (secondsSinceDownload >= 10) { // 10 seconds for testing (change back to: daysSinceDownload >= 2)
             setIsEditDisabled(true);
           }
         }
-
+        */
         // Fetch billing history
         const historyResponse = await fetch(`https://api.leadscruise.com/api/payments?email=${userEmail}`);
         if (!historyResponse.ok) throw new Error("Failed to fetch billing history");
@@ -166,77 +166,101 @@ const Profile = () => {
 
     if (billingHistory.length > 0) checkInvoices();
   }, [billingHistory]);
-
-  // Download Invoice
-  const handleDownloadInvoice = async (orderId) => {
+  useEffect(() => {
+  const checkEditEligibility = async () => {
     try {
-      setIsLoading(true); // Show loading while downloading
+      const response = await axios.get(
+        `https://api.leadscruise.com/api/check-edit-eligibility/${userEmail}`
+      );
 
-      const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${orderId}`, {
-        responseType: "blob", // Get binary data
-      });
-
-      if (response.status !== 200) {
-        throw new Error("Invoice download failed.");
+      if (response.data.success) {
+        // Set edit disabled if canEdit is false
+        setIsEditDisabled(!response.data.canEdit);
+        console.log("Edit eligibility check:", response.data);
       }
-
-      const fileURL = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = fileURL;
-      link.setAttribute("download", `invoice-${orderId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link); // Clean up after download
-
-      // Track first download timestamp
-      const firstDownloadTime = localStorage.getItem("firstInvoiceDownloadTime");
-      if (!firstDownloadTime) {
-        localStorage.setItem("firstInvoiceDownloadTime", new Date().toISOString());
-      }
-
     } catch (error) {
-      console.error("Error downloading invoice:", error);
-      alert("Invoice not found");
-    } finally {
-      setIsLoading(false); // Hide loading when done
+      console.error("Error checking edit eligibility:", error);
+      // Default to allowing edit if there's an error
+      setIsEditDisabled(false);
     }
   };
 
-  const calculateEndDate = (createdAt, subscriptionType, daysRemaining) => {
-    const start = new Date(createdAt);
-    // console.log("Calculating end date with:", { createdAt, subscriptionType, daysRemaining });
-    // ✅ If admin manually changed days_remaining, use that
-    if (daysRemaining !== null && daysRemaining !== undefined) {
-      const end = new Date();
-      end.setDate(end.getDate() + Number(daysRemaining));
-      return end.toLocaleDateString();
+  if (userEmail) {
+    checkEditEligibility();
+  }
+}, [userEmail]);
+  // Download Invoice
+  const handleDownloadInvoice = async (orderId) => {
+  try {
+    setIsLoading(true);
+
+    const response = await axios.get(`https://api.leadscruise.com/api/get-invoice/${orderId}`, {
+      responseType: "blob",
+    });
+
+    if (response.status !== 200) {
+      throw new Error("Invoice download failed.");
     }
 
-    // Otherwise, calculate based on subscription type
+    const fileURL = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = fileURL;
+    link.setAttribute("download", `invoice-${orderId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Track first download on SERVER (not localStorage)
+    try {
+      await axios.post("https://api.leadscruise.com/api/track-invoice-download", {
+        email: userEmail
+      });
+      console.log("First invoice download tracked successfully");
+      
+      // Re-check edit eligibility after download
+      const eligibilityResponse = await axios.get(
+        `https://api.leadscruise.com/api/check-edit-eligibility/${userEmail}`
+      );
+      if (eligibilityResponse.data.success) {
+        setIsEditDisabled(!eligibilityResponse.data.canEdit);
+      }
+    } catch (trackError) {
+      console.error("Error tracking invoice download:", trackError);
+    }
+
+  } catch (error) {
+    console.error("Error downloading invoice:", error);
+    alert("Invoice not found");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  const calculateEndDate = (startDate, subscriptionType) => {
+    const start = new Date(startDate);
+    console.log("Calculating end date from", startDate, "with type", subscriptionType);
     switch (subscriptionType.toLowerCase()) {
       case "1-day":
         start.setDate(start.getDate() + 1);
         break;
-      case "3-days":
-        start.setDate(start.getDate() + 3);
-        break;
       case "7-days":
         start.setDate(start.getDate() + 7);
         break;
-      case "three-mo":
-        start.setDate(start.getDate() + 90);
+      case "3-days":
+        start.setDate(start.getDate() + 3);
         break;
-      case "one-mo":
-        start.setDate(start.getDate() + 30);
+      case "one month":
+        start.setDate(start.getDate() + 30); // Approximate month duration
         break;
-      case "six-mo":
+      case "6 months":
         start.setDate(start.getDate() + 180);
         break;
       case "year-mo":
         start.setDate(start.getDate() + 365);
         break;
       default:
-        start.setDate(start.getDate() + 30); // fallback
+        // Fallback (assumed monthly if unknown)
+        start.setDate(start.getDate() + 30);
     }
 
     return start.toLocaleDateString();
@@ -312,7 +336,7 @@ const Profile = () => {
                           <td>{index + 1}</td>
                           <td>{subscriptionMapping[item.subscription_type] || item.subscription_type}</td>
                           <td>{new Date(item.created_at).toLocaleDateString()}</td>
-                          <td>{calculateEndDate(item.created_at, item.subscription_type, item.days_remaining)}</td>
+                          <td>{calculateEndDate(item.created_at, item.subscription_type)}</td>
                           <td>{`INR ${item.order_amount / 100}`}</td>
                           <td>{item.unique_id}</td>
                           <td>
@@ -413,10 +437,10 @@ const Profile = () => {
                               alert("You cannot edit in demo account");
                               return;
                             }
-                            // if (isEditDisabled) {
-                            //   alert("Editing is disabled. You have already downloaded a GST receipt more than 2 days ago.");
-                            //   return;
-                            // }
+                            if (isEditDisabled) {
+                              alert("Editing is disabled. You have already downloaded a GST receipt more than 2 days ago.");
+                              return;
+                            }
                             setIsEditing(true);
                           }}>Edit my Details</button>
                       </div>

@@ -761,7 +761,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   verificationCode === "111" ? (
                     <button
                       className="unlink-button"
-                      style={getButtonStyle("#dc3545")}
+                      style={getButtonStyle("#000")}
                       disabled={countdown > 0}
                       title={getButtonTitle("Unlink")}
                       onClick={unlinkWhatsappNumber}

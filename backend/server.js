@@ -33,7 +33,7 @@ const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
 const teammateRoutes = require('./routes/teammates');
 const path = require("path");
-const os = require("os");
+const os=require("os");
 const server = createServer(app); // ✅ Create HTTP server
 server.setTimeout(15 * 60 * 1000);
 const io = new Server(server, {
@@ -181,7 +181,137 @@ app.post("/api/save-payment", async (req, res) => {
     res.status(500).json({ success: false, error: "Database error" });
   }
 });
+// Track first invoice download
+app.post("/api/track-invoice-download", async (req, res) => {
+  try {
+    const { email } = req.body;
 
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    // Only set if it's the first time
+    if (!user.firstInvoiceDownloadTime) {
+      user.firstInvoiceDownloadTime = new Date();
+      await user.save();
+      
+      console.log(`First invoice download tracked for ${email} at ${user.firstInvoiceDownloadTime}`);
+      
+      return res.json({ 
+        success: true, 
+        message: "First download tracked",
+        firstDownloadTime: user.firstInvoiceDownloadTime
+      });
+    }
+
+    return res.json({ 
+      success: true, 
+      message: "Download already tracked",
+      firstDownloadTime: user.firstInvoiceDownloadTime
+    });
+
+  } catch (error) {
+    console.error("Error tracking invoice download:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
+
+// Get first download time for a user
+app.get("/api/get-first-download-time/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      firstDownloadTime: user.firstInvoiceDownloadTime,
+      hasDownloaded: !!user.firstInvoiceDownloadTime
+    });
+
+  } catch (error) {
+    console.error("Error fetching download time:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
+// Add this endpoint to your server.js file
+
+app.get("/api/check-edit-eligibility/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    // If no first download time, editing is allowed
+    if (!user.firstInvoiceDownloadTime) {
+      return res.json({
+        success: true,
+        canEdit: true,
+        reason: "no_download_yet"
+      });
+    }
+
+    // Calculate if 2 days (48 hours) have passed
+    const firstDownloadTime = new Date(user.firstInvoiceDownloadTime);
+    const now = new Date();
+    const hoursPassed = (now - firstDownloadTime) / (1000 * 60 * 60);
+    const twoDaysInHours = 48;
+
+    const canEdit = hoursPassed < twoDaysInHours;
+    const hoursRemaining = canEdit ? Math.ceil(twoDaysInHours - hoursPassed) : 0;
+
+    res.json({
+      success: true,
+      canEdit,
+      firstDownloadTime: user.firstInvoiceDownloadTime,
+      hoursPassed: Math.floor(hoursPassed),
+      hoursRemaining,
+      reason: canEdit ? "within_48_hours" : "exceeded_48_hours"
+    });
+
+  } catch (error) {
+    console.error("Error checking edit eligibility:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
 app.get("/api/has-used-demo", async (req, res) => {
   try {
     const { contact } = req.query;
@@ -192,11 +322,11 @@ app.get("/api/has-used-demo", async (req, res) => {
 
     const existingDemo = await Payment.findOne({
       contact,
-      subscription_type: "1-day",
+      subscription_type: "7-days",
     });
 
     if (existingDemo) {
-      return res.json({ message: "Demo has been used already. Please buy a subscription to enjoy continued services.", used: true });
+      return res.json({ used: true });
     } else {
       return res.json({ used: false });
     }
@@ -209,8 +339,6 @@ app.get("/api/has-used-demo", async (req, res) => {
 // Helper function to get subscription duration in days based on type
 function getSubscriptionDuration(subscription_type) {
   switch (subscription_type) {
-    case "1-day":
-      return 1;
     case "7-days":
       return 7;
     case "3-days":
@@ -258,9 +386,9 @@ app.post('/api/send-invoice-email', async (req, res) => {
     const { email, unique_id } = req.body;
 
     if (!email || !unique_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and Order ID are required'
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email and Order ID are required' 
       });
     }
 
@@ -453,21 +581,21 @@ app.post('/api/send-invoice-email', async (req, res) => {
 
     // Send email
     const info = await emailTransporter.sendMail(mailOptions);
-
+    
     console.log(`✅ Invoice email sent successfully to ${email}:`, info.messageId);
-
-    res.status(200).json({
-      success: true,
+    
+    res.status(200).json({ 
+      success: true, 
       message: 'Email sent successfully',
       messageId: info.messageId
     });
 
   } catch (error) {
     console.error('❌ Error sending invoice email:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to send email',
-      error: error.message
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to send email', 
+      error: error.message 
     });
   }
 });
@@ -1546,7 +1674,6 @@ app.get("/api/user/balance", async (req, res) => {
   }
 });
 
-// Define Schema
 const leadSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String },
@@ -1563,6 +1690,7 @@ const leadSchema = new mongoose.Schema({
 });
 
 const Lead = mongoose.model("Lead", leadSchema);
+
 const WhatsAppSettings = require("./models/WhatsAppSettings");
 // Endpoint to receive lead data from Selenium script and store in DB
 app.post("/api/store-lead", async (req, res) => {
@@ -1747,8 +1875,8 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       aiProcessed: isAIProcessed
     });
     console.log("About to save lead with source:", newLead.source, "aiProcessed:", newLead.aiProcessed);
-    await newLead.save();
-    console.log("Lead saved successfully, ID:", newLead._id);
+await newLead.save();
+console.log("Lead saved successfully, ID:", newLead._id);
     await newLead.save();
     console.log("Lead Data Stored:", newLead);
 
@@ -2136,11 +2264,12 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
     });
   }
 });
+
 // Function to get the LeadFetcher application directory
 function getLeadFetcherDirectory() {
   if (os.platform() === 'win32') {
-    const localAppData = process.env.LOCALAPPDATA ||
-      path.join(os.homedir(), 'AppData', 'Local');
+    const localAppData = process.env.LOCALAPPDATA || 
+                         path.join(os.homedir(), 'AppData', 'Local');
     return path.join(localAppData, 'LeadFetcher');
   } else {
     return path.join(os.homedir(), '.leadfetcher');
@@ -2167,14 +2296,14 @@ function safeWriteFile(filePath, data, fallbackDir = null) {
     // Ensure directory exists
     const dir = path.dirname(filePath);
     ensureDirectoryExists(dir);
-
+    
     // Write file
     fs.writeFileSync(filePath, data);
     console.log(`✅ File saved successfully: ${filePath}`);
     return true;
   } catch (error) {
     console.error(`❌ Failed to write file ${filePath}:`, error);
-
+    
     // Try fallback location if provided
     if (fallbackDir) {
       try {
@@ -2227,13 +2356,13 @@ app.post("/api/data-received-confirmation", async (req, res) => {
     // Get LeadFetcher application directory
     const leadFetcherDir = getLeadFetcherDirectory();
     const filePath = path.join(leadFetcherDir, "confirmations.json");
-
+    
     // Fallback directory (current working directory)
     const fallbackDir = process.cwd();
 
     // Write confirmations.json to LeadFetcher directory
     const writeSuccess = safeWriteFile(
-      filePath,
+      filePath, 
       JSON.stringify(confirmationData, null, 2),
       fallbackDir
     );
@@ -2312,7 +2441,7 @@ app.get("/api/get-user-leads-with-message/:userMobile", async (req, res) => {
     // Get LeadFetcher application directory
     const leadFetcherDir = getLeadFetcherDirectory();
     const filePath = path.join(leadFetcherDir, "api_response.json");
-
+    
     // Fallback directory (current working directory)
     const fallbackDir = process.cwd();
 
