@@ -1791,6 +1791,8 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
 
 const FetchedLead = mongoose.model("FetchedLead", leadSchema, "fetchedleads");
 
+// Replace this section in your server.js file (around line 1200-1250)
+
 app.post("/api/store-fetched-lead", async (req, res) => {
   try {
     const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text, uniqueId, address } = req.body;
@@ -1856,11 +1858,15 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       aiProcessed: true
     });
 
-    // Determine source and aiProcessed status
-    const leadSource = existingAILead ? "AI" : "Manual";
-    const isAIProcessed = !!existingAILead;
+    // FIX: Swap the logic - it was backwards!
+    // If the lead exists in the Lead collection (AI-captured), mark as "Manual" 
+    // because it means the lead was manually fetched AFTER AI already got it
+    // If it doesn't exist in Lead collection, it means this IS the AI capturing it
+    const leadSource = existingAILead ? "Manual" : "AI";
+    const isAIProcessed = !existingAILead;
 
     console.log(`Lead source determined: ${leadSource}, AI Processed: ${isAIProcessed}`);
+    console.log(`Existing AI Lead found: ${!!existingAILead}`);
 
     // Store the new lead with correct source and aiProcessed fields
     const newLead = new FetchedLead({
@@ -1874,11 +1880,10 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       source: leadSource,
       aiProcessed: isAIProcessed
     });
+    
     console.log("About to save lead with source:", newLead.source, "aiProcessed:", newLead.aiProcessed);
-await newLead.save();
-console.log("Lead saved successfully, ID:", newLead._id);
     await newLead.save();
-    console.log("Lead Data Stored:", newLead);
+    console.log("Lead saved successfully, ID:", newLead._id);
 
     return res.json({
       message: "Lead data stored successfully",

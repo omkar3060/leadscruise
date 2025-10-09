@@ -32,17 +32,19 @@ h2 {
 }
 
 .table-container1 {
-  position: fixed;
+  /*position: fixed;*/
+  min-height: 0; /* Important for flex children to scroll */
+  max-height: calc(100vh - 200px); /* Adjust based on header/button heights */
   bottom: 80px; /* distance from bottom */
   left: 0;
   right: 0;
-  max-height: 75vh;
+  min-height: 75vh;
   border: 1px solid #ccc;
   border-radius: 6px;
   overflow-y: auto;
   background-color: white;
   margin: 0 auto;
-  width: 95%; /* optional */
+  width: 95%; /* optional */
 }
 
 

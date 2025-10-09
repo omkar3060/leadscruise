@@ -719,7 +719,7 @@ const Dashboard = () => {
     }
   });
 
-const handleDownloadLeadsExcel = () => {
+  const handleDownloadLeadsExcel = () => {
     if (!leads || leads.length === 0) {
       alert("No leads available to download.");
       return;
@@ -949,23 +949,31 @@ const handleDownloadLeadsExcel = () => {
             <table className={styles.leadsTable}>
               <thead>
                 <tr>
-                  {[
-                    { label: "Product", field: "lead_bought" },
-                    { label: "Address", field: "address" },
-                    { label: "Name", field: "name" },
-                    { label: "Mobile Number", field: "mobile" },
-                    { label: "Email", field: "email" },
-                    { label: "Purchase Date", field: "createdAt" },
-                  ].map(({ label, field }) => (
-                    <th
-                      key={field}
-                      onClick={() => handleSort(field)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {label}
-                      {sortField === field && (sortOrder === "asc" ? "🔼" : "🔽")}
-                    </th>
-                  ))}
+                  <th style={{ width: "5%" }}>S.No</th>
+                  <th onClick={() => handleSort("lead_bought")} style={{ cursor: "pointer" }}>
+                    Product
+                    {sortField === "lead_bought" && (sortOrder === "asc" ? "🔼" : "🔽")}
+                  </th>
+                  <th onClick={() => handleSort("address")} style={{ cursor: "pointer" }}>
+                    Address
+                    {sortField === "address" && (sortOrder === "asc" ? "🔼" : "🔽")}
+                  </th>
+                  <th onClick={() => handleSort("name")} style={{ cursor: "pointer" }}>
+                    Name
+                    {sortField === "name" && (sortOrder === "asc" ? "🔼" : "🔽")}
+                  </th>
+                  <th onClick={() => handleSort("mobile")} style={{ cursor: "pointer" }}>
+                    Mobile Number
+                    {sortField === "mobile" && (sortOrder === "asc" ? "🔼" : "🔽")}
+                  </th>
+                  <th onClick={() => handleSort("email")} style={{ cursor: "pointer" }}>
+                    Email
+                    {sortField === "email" && (sortOrder === "asc" ? "🔼" : "🔽")}
+                  </th>
+                  <th onClick={() => handleSort("createdAt")} style={{ cursor: "pointer" }}>
+                    Purchase Date
+                    {sortField === "createdAt" && (sortOrder === "asc" ? "🔼" : "🔽")}
+                  </th>
                   <th style={{ width: "6%" }}>Action</th>
                 </tr>
               </thead>
@@ -978,6 +986,7 @@ const handleDownloadLeadsExcel = () => {
 
                     return (
                       <tr key={index}>
+                        <td>{index + 1}</td>
                         <td>{keyword || "N/A"}</td>
                         <td>{lead.address || "N/A"}</td>
                         <td>{lead.name || "N/A"}</td>
@@ -1013,7 +1022,7 @@ const handleDownloadLeadsExcel = () => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: "center" }}>
+                    <td colSpan="8" style={{ textAlign: "center" }}>
                       No leads available
                     </td>
                   </tr>

@@ -9,6 +9,7 @@ import styles from "./Dashboard.module.css";
 import demoLeads from "../data/demoLeads";
 import demoSettings from "../data/demoSettings";
 import * as XLSX from "xlsx";
+
 const LoadingScreen = () => (
   <div className="loading-overlay">
     <div className="loading-container">
@@ -91,17 +92,15 @@ const Sheets = () => {
   }, []);
 
   useEffect(() => {
-    // If status changes, check balance immediately
     fetchBuyerBalance();
 
     const balanceInterval = setInterval(() => {
       fetchBuyerBalance();
-    }, 60000); // Check every 60 seconds
+    }, 60000);
 
     return () => clearInterval(balanceInterval);
-  }, [status]); // Remove fetchBuyerBalance from dependency
+  }, [status]);
 
-  // Add zero balance alert component
   const ZeroBalanceAlert = () => (
     <div className="maintenance-banner">
       <div className="maintenance-container">
@@ -182,7 +181,7 @@ const Sheets = () => {
         if (response.data.startTime) {
           const startTime = new Date(response.data.startTime);
           const currentTime = new Date();
-          const timeElapsed = Math.floor((currentTime - startTime) / 1000); // Time elapsed in seconds
+          const timeElapsed = Math.floor((currentTime - startTime) / 1000);
 
           if (timeElapsed < 300) {
             setIsDisabled(true);
@@ -196,12 +195,12 @@ const Sheets = () => {
       } catch (error) {
         console.error("Error fetching script status:", error);
       } finally {
-        setIsLoading(false); // Set loading to false after status is fetched
+        setIsLoading(false);
       }
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Refresh status every 5 seconds
+    const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -209,7 +208,6 @@ const Sheets = () => {
     localStorage.setItem("isDisabled", JSON.stringify(isDisabled));
   }, [isDisabled]);
 
-  // Countdown Timer Effect
   useEffect(() => {
     if (timer > 0) {
       const countdown = setInterval(() => {
@@ -229,7 +227,7 @@ const Sheets = () => {
     } else {
       localStorage.setItem("cancelled", "false");
     }
-  }, []);  // Reacts to status changes in localStorage
+  }, []);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -243,7 +241,7 @@ const Sheets = () => {
         const response = await axios.get(
           `https://api.leadscruise.com/api/get-settings/${userEmail}`
         );
-        const userSettings = response.data; // Extracting 'settings' from response
+        const userSettings = response.data;
 
         if (!userSettings) {
           alert("No settings found, please configure them first.");
@@ -262,8 +260,7 @@ const Sheets = () => {
 
     fetchSettings();
   }, [navigate]);
-
-  // Add OTP submission handler
+  
   const handleOtpSubmit = async () => {
     if (!otpValue || otpValue.length !== 4) {
       alert("Please enter a valid 4-digit OTP");
@@ -287,7 +284,6 @@ const Sheets = () => {
       setShowOtpPopup(false);
       localStorage.setItem("showOtpPopup", "false");
       setOtpValue('');
-      // setOtpRequestId(null);
       alert("OTP submitted successfully!");
       localStorage.setItem("cancelled", "true");
       setCancelled(true);
@@ -305,15 +301,10 @@ const Sheets = () => {
       const isCancelled = localStorage.getItem("cancelled") === "true";
       const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
 
-      // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
-
       try {
         const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
-        // console.log("API Response:", response.data);
 
         if (response.data.otpFailed) {
-          // console.log("OTP Failed detected! About to show alert...");
-
           setCancelled(true);
           localStorage.setItem("cancelled", "true");
           localStorage.setItem("showOtpPopup", "true");
@@ -322,11 +313,8 @@ const Sheets = () => {
           setShowOtpWaitPopup(false);
 
           if (!isAlertShown) {
-            // console.log("Showing alert now...");
             alert("The OTP you entered is incorrect. Please try again.");
             localStorage.setItem("otp_alert_shown", "true");
-          } else {
-            // console.log("Alert already shown, skipping...");
           }
         }
       } catch (err) {
@@ -351,7 +339,7 @@ const Sheets = () => {
     }
 
     const otpCheckInterval = setInterval(async () => {
-      const cancelled = localStorage.getItem("cancelled") === "true"; // ✅ moved inside
+      const cancelled = localStorage.getItem("cancelled") === "true";
       if (cancelled || status !== "Running") return;
 
       try {
@@ -373,7 +361,6 @@ const Sheets = () => {
 
   const handleStartScript = async () => {
     try {
-      // Set a "Starting" state
       setIsStarting(true);
       setCancelled(false);
       setShowOtpPopup(false);
@@ -392,7 +379,7 @@ const Sheets = () => {
         }
         else {
           alert("Demo mode is enabled. You can only view the dashboard.");
-          setIsStarting(false); // Reset starting state on error
+          setIsStarting(false);
           return;
         }
       }
@@ -418,13 +405,13 @@ const Sheets = () => {
       if (!mobileNumber) {
         alert("Please login to you leads provider account first.");
         navigate("/execute-task");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
       if (!userEmail) {
         alert("User email not found!");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
@@ -433,11 +420,10 @@ const Sheets = () => {
       );
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
-      // Fetch settings
       const response = await axios.get(
         `https://api.leadscruise.com/api/get-settings/${userEmail}`
       );
@@ -448,11 +434,10 @@ const Sheets = () => {
       if (!userSettings) {
         alert("No settings found, please configure them first.");
         navigate("/settings");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
-      // Check if all settings arrays are empty
       if (
         (!userSettings.sentences || userSettings.sentences.length < 1) &&
         (!userSettings.wordArray || userSettings.wordArray.length < 1) &&
@@ -460,13 +445,12 @@ const Sheets = () => {
       ) {
         alert("Please configure your settings first.");
         navigate("/settings");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
       console.log("Sending the following settings to backend:", userSettings);
 
-      // Send the fetched settings instead of using the state
       const cycleResponse = await axios.post(
         "https://api.leadscruise.com/api/cycle",
         {
@@ -487,30 +471,23 @@ const Sheets = () => {
           },
         }
       );
-      setIsStarting(false); // Reset starting state after process completes
-      // alert(
-      //   "AI started successfully!Please navigate to the whatsapp page to login and send messages to the buyers if you already have not done so."
-      // );
+      setIsStarting(false);
       setStatus("Running");
-      // Note: we don't reset isStarting here because the status is now "Running"
     } catch (error) {
       if (error.response?.status === 403) {
         alert("Lead limit reached. Cannot capture more leads today.");
       }
       console.error("Error:", error.response?.data?.message || error.message);
-      //alert(error.response?.data?.message || error.message);
-      setIsStarting(false); // Reset starting state on error
+      setIsStarting(false);
     } finally {
-      setIsLoading(false); // Hide loading after process completes or fails
+      setIsLoading(false);
     }
   };
 
   const [cooldownActive, setCooldownActive] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0);
 
-  // Add this useEffect to check the cooldown status when the component mounts
   useEffect(() => {
-    // Check if there's an active cooldown in localStorage
     const cooldownEnd = localStorage.getItem("cooldownEnd");
 
     if (cooldownEnd) {
@@ -518,21 +495,17 @@ const Sheets = () => {
       const currentTime = new Date().getTime();
 
       if (currentTime < endTime) {
-        // Cooldown is still active
         setCooldownActive(true);
 
-        // Calculate remaining time in seconds
         const remainingTime = Math.ceil((endTime - currentTime) / 1000);
         setCooldownTime(remainingTime);
         setIsDisabled(true);
 
-        // Set up interval to update the cooldown timer
         const interval = setInterval(() => {
           const newCurrentTime = new Date().getTime();
           const newRemainingTime = Math.ceil((endTime - newCurrentTime) / 1000);
 
           if (newRemainingTime <= 0) {
-            // Cooldown finished
             clearInterval(interval);
             setCooldownActive(false);
             setCooldownTime(0);
@@ -545,16 +518,14 @@ const Sheets = () => {
 
         return () => clearInterval(interval);
       } else {
-        // Cooldown has expired
         localStorage.removeItem("cooldownEnd");
       }
     }
   }, []);
 
-  // Modify your handleStop function
   const handleStop = async () => {
     if (window.confirm("Are you sure you want to stop the AI?")) {
-      setIsLoading(true); // Show loading when stopping
+      setIsLoading(true);
 
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
@@ -572,23 +543,18 @@ const Sheets = () => {
         );
         alert(response.data.message);
 
-        // Update the status in localStorage
         localStorage.setItem("status", "Stopped");
         setStatus("Stopped");
 
-        // Set cooldown for 1 minute (60 seconds)
-        const cooldownDuration = 60 * 1000; // 1 minute in milliseconds
+        const cooldownDuration = 60 * 1000;
         const cooldownEnd = new Date().getTime() + cooldownDuration;
 
-        // Store the cooldown end time in localStorage
         localStorage.setItem("cooldownEnd", cooldownEnd.toString());
 
-        // Update component state
         setCooldownActive(true);
         setCooldownTime(60);
         setIsDisabled(true);
 
-        // Set up interval to update the cooldown timer
         const interval = setInterval(() => {
           setCooldownTime((prevTime) => {
             if (prevTime <= 1) {
@@ -660,9 +626,8 @@ const Sheets = () => {
       );
     } catch (error) {
       console.error("Error:", error.response?.data?.message || error.message);
-      //alert(error.response?.data?.message || error.message);
     } finally {
-      setIsLoading(false); // Hide loading after process completes or fails
+      setIsLoading(false);
     }
   };
 
@@ -698,7 +663,6 @@ const Sheets = () => {
     }
   };
 
-  // Function to update settings in localStorage
   const updateSettingsInStorage = (updatedSettings) => {
     try {
       localStorage.setItem('settings', JSON.stringify(updatedSettings));
@@ -707,13 +671,12 @@ const Sheets = () => {
     }
   };
 
-  // Function to handle toggle action
   const handleToggleRejected = async (leadProduct, isCurrentlyRejected) => {
     const action = isCurrentlyRejected ? 'remove from' : 'add to';
     const confirmMessage = `Are you sure you want to ${action} the rejected list?\n\nProduct: ${leadProduct}`;
 
     if (!window.confirm(confirmMessage)) {
-      return; // User cancelled the action
+      return;
     }
     try {
       const settings = getSettingsFromStorage();
@@ -725,25 +688,20 @@ const Sheets = () => {
       let updatedH2WordArray = [...(settings.h2WordArray || [])];
 
       if (isCurrentlyRejected) {
-        // Remove from rejected list
         updatedH2WordArray = updatedH2WordArray.filter(item => item !== leadProduct);
       } else {
-        // Add to rejected list
         if (!updatedH2WordArray.includes(leadProduct)) {
           updatedH2WordArray.push(leadProduct);
         }
       }
 
-      // Update settings object
       const updatedSettings = {
         ...settings,
         h2WordArray: updatedH2WordArray
       };
 
-      // Update localStorage
       updateSettingsInStorage(updatedSettings);
 
-      // Make API call to update database
       const response = await fetch('https://api.leadscruise.com/api/settings/toggle-rejected-lead', {
         method: 'POST',
         headers: {
@@ -760,11 +718,8 @@ const Sheets = () => {
         console.log('Lead status updated successfully');
         alert(`Lead ${isCurrentlyRejected ? 'removed from' : 'added to'} rejected list successfully!`);
         setRefreshTrigger(prev => prev + 1);
-        // Force re-render by updating a state variable if needed
-        // You might want to call a function to refresh the component
       } else {
         console.error('Failed to update lead status in database');
-        // Revert localStorage changes if API call fails
         updateSettingsInStorage(settings);
       }
     } catch (error) {
@@ -772,7 +727,6 @@ const Sheets = () => {
     }
   };
 
-  // Check if a lead is in the rejected list by comparing product text
   const isLeadRejected = (leadProduct) => {
     const settings = getSettingsFromStorage();
     if (!settings || !settings.h2WordArray) {
@@ -791,20 +745,18 @@ const Sheets = () => {
         return;
       }
       setIsLoadingLeads(true);
-
+      
       if (userMobile === "9999999999") {
         setLeads(demoLeads);
         return;
       }
 
-      // Change this endpoint to fetch from FetchedLead collection
       const response = await axios.get(
         `https://api.leadscruise.com/api/get-user-leads/${userMobile}`
       );
       console.log("🔍 Raw API response:", response.data);
       console.log("🔍 First lead from API:", response.data.leads[0]);
-      //const userMobile = localStorage.getItem("mobileNumber");
-      //console.log("🔍 User mobile from localStorage:", userMobile);
+
       if (response.status === 200) {
         console.log("🔍 Sarfaraz lead:", response.data.leads.find(l => l.name === "Sarfaraz"));
         setLeads(response.data.leads);
@@ -838,17 +790,15 @@ const Sheets = () => {
   }, []);
 
   const calculateMetrics = () => {
-    // Get today's date in IST timezone
     const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+    const istOffset = 5.5 * 60 * 60 * 1000;
     const istNow = new Date(now.getTime() + istOffset);
-
+    
     const today = new Date(istNow.toISOString().split('T')[0]);
-
-    // Get the start of the current week (Monday) in IST
+    
     const startOfWeek = new Date(today);
-    const day = today.getUTCDay(); // Use UTC day to avoid timezone issues
-    const diff = day === 0 ? 6 : day - 1; // if Sunday, go back 6 days to get to Monday
+    const day = today.getUTCDay();
+    const diff = day === 0 ? 6 : day - 1;
     startOfWeek.setUTCDate(today.getUTCDate() - diff);
 
     const leadsToday = leads.filter((lead) => {
@@ -901,7 +851,6 @@ const Sheets = () => {
 
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
-      {/* {isLoading && <LoadingScreen />} */}
       {showOtpWaitPopup && !showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
@@ -961,9 +910,7 @@ const Sheets = () => {
       )}
 
       {zeroBalanceAlertMemo}
-      {/* <ZeroBalanceAlert/> */}
 
-      {/* Loading Screen */}
       {isLoading && <LoadingScreen />}
 
       {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
@@ -978,19 +925,17 @@ const Sheets = () => {
         cooldownTime={cooldownTime}
       />
 
-
-      <div style={{
-        background: "#fff",
-        borderRadius: "8px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+      <div style={{ 
+        background: "#fff", 
+        borderRadius: "8px", 
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)", 
         padding: "20px 40px",
-        margin: "0px 20px 15px 20px",  // Reduced from 20px to 10px top margin
+        margin: "0px 20px 15px 20px",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center"
       }}>
 
-        {/* Metrics Section */}
         <div className={styles.metricsSection}>
           <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday}</strong>
@@ -1022,18 +967,17 @@ const Sheets = () => {
           </div>
         </div>
 
-        {/* Controls Section inside the same container */}
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
+        <div style={{ 
+          display: "flex", 
+          flexDirection: "column", 
           gap: "4px",
           marginLeft: "20px"
         }}>
           <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
             Settings
           </button>
-          <button className={styles.buttonLarge}
-            onClick={handleDownloadLeadsExcel}
+          <button className={styles.buttonLarge} 
+            onClick={handleDownloadLeadsExcel} 
             style={{ marginBottom: 0 }}
           >
             Download Reports
@@ -1041,6 +985,7 @@ const Sheets = () => {
         </div>
 
       </div>
+
       <div className="settings-scroll-container">
         <div className="sheets-container">
           <div className="table-container table-container-height">
@@ -1056,7 +1001,7 @@ const Sheets = () => {
                   border: '1px solid #e0e0e0',
                   borderRadius: '12px',
                   backgroundColor: '#fefefe',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                  boxShadow: '0 4px 12px rgba(49, 13, 13, 0.05)',
                   maxWidth: '500px',
                   margin: '40px auto',
                 }}
@@ -1086,10 +1031,11 @@ const Sheets = () => {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table className={`${styles.leadsTable} ${styles.tablePadding}`}>
+                <table className={`${styles.leadsTable} ${styles.tablePadding}`}> 
                   <thead>
                     <tr>
-                      <th style={{ width: '50px' }}>No.</th> {/* New column for row number */}
+                      <th style={{ width: '50px' }}>No.</th>
+                      <th style={{ width: '80px' }}>Tag</th>
                       <th>Product Requested</th>
                       <th>Address</th>
                       <th>Name</th>
@@ -1101,7 +1047,6 @@ const Sheets = () => {
                   </thead>
                   <tbody style={{ overflowY: 'auto' }}>
                     {leads.map((lead, index) => {
-                      console.log('Lead source:', lead.source); // Check console
                       const isRejected = isLeadRejected(lead.lead_bought);
                       return (
                         <tr
@@ -1109,26 +1054,22 @@ const Sheets = () => {
                           style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}
                         >
                           <td>{index + 1}</td>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              {/* Tag first (on the left) */}
-                              <span style={{
-                                padding: '2px 8px',
-                                borderRadius: '12px',
-                                fontSize: '11px',
-                                fontWeight: 'bold',
-                                backgroundColor: lead.source === 'AI' ? '#e3f2fd' : '#fff3e0',
-                                color: lead.source === 'AI' ? '#1976d2' : '#f57c00',
-                                border: `1px solid ${lead.source === 'AI' ? '#90caf9' : '#ffb74d'}`,
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0  // Prevents tag from shrinking
-                              }}>
-                                {lead.source || 'AI'}
-                              </span>
-                              {/* Product name second (on the right) */}
-                              <span>{lead.lead_bought}</span>
-                            </div>
+                          <td style={{ textAlign: 'center' }}>
+                            <span style={{
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 'bold',
+                              backgroundColor: lead.source === 'AI' ? '#e3f2fd' : '#fff3e0',
+                              color: lead.source === 'AI' ? '#1976d2' : '#f57c00',
+                              border: `1px solid ${lead.source === 'AI' ? '#90caf9' : '#ffb74d'}`,
+                              whiteSpace: 'nowrap',
+                              display: 'inline-block'
+                            }}>
+                              {lead.source || 'Normal'}
+                            </span>
                           </td>
+                          <td>{lead.lead_bought}</td>
                           <td>{lead.address || 'N/A'}</td>
                           <td>{lead.name}</td>
                           <td>{lead.email || 'N/A'}</td>
@@ -1174,7 +1115,6 @@ const Sheets = () => {
                   </tbody>
                 </table>
               </div>
-
             )}
           </div>
         </div>
