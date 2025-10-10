@@ -1316,7 +1316,7 @@ app.post("/api/cycle", async (req, res) => {
           message: "User not found in database.",
         });
       }
-      password = userFromDb.savedPassword; // use saved plain password
+      password = userFromDb.savedPassword;
       console.log(`Password taken from DB for ${userEmail}`);
     } catch (err) {
       console.error("Error fetching password from DB:", err);
@@ -1327,10 +1327,8 @@ app.post("/api/cycle", async (req, res) => {
     }
   }
 
-  // Get current time
   const startTime = new Date();
 
-  // Update user status to "Running" and store the start time
   await User.findOneAndUpdate(
     { email: userEmail },
     { status: "Running", startTime },
@@ -1364,14 +1362,15 @@ app.post("/api/cycle", async (req, res) => {
     maxCaptures,
   });
 
-  console.log("Spawning Python process for 'final_inside_script_server.py'...");
+  console.log("Spawning Python LOGIN process...");
 
-  const pythonProcess = spawn("python3", ["-u", "final_inside_script_server.py"]);
+  // Spawn the login script instead of the monolithic script
+  const pythonProcess = spawn("python3", ["-u", "login_script.py"]);
 
   // Store the Python process reference using `uniqueId`
   activePythonProcesses.set(uniqueId, pythonProcess);
 
-  console.log("Sending data to Python script:", inputData);
+  console.log("Sending data to Python login script:", inputData);
   pythonProcess.stdin.write(inputData + "\n");
 
   let result = "";
@@ -1379,15 +1378,15 @@ app.post("/api/cycle", async (req, res) => {
 
   pythonProcess.stdout.on("data", (data) => {
     const dataString = data.toString();
-    console.log("Python script stdout:", data.toString());
-    result += data.toString();
+    console.log("Python script stdout:", dataString);
+    result += dataString;
+    
     // Check for buyer balance information
     if (dataString.includes("BUYER_BALANCE:")) {
       const balanceMatch = dataString.match(/BUYER_BALANCE:(\d+)/);
       if (balanceMatch && balanceMatch[1]) {
         const balance = parseInt(balanceMatch[1], 10);
 
-        // Update user's balance in the database
         User.findOneAndUpdate(
           { email: userEmail },
           { buyerBalance: balance },
@@ -1400,16 +1399,13 @@ app.post("/api/cycle", async (req, res) => {
       }
     }
 
-    // Check for zero balance alert
     if (dataString.includes("ZERO_BALANCE_DETECTED")) {
-      // Just log this for now, the balance update above will handle setting to 0
       console.log("Zero balance detected for user:", userEmail);
     }
 
-    // Check for OTP request from Python script
     if (dataString.includes("OTP_REQUEST_INITIATED")) {
       console.log("OTP request detected for uniqueId:", uniqueId);
-      const requestId = Date.now().toString(); // Generate unique request ID
+      const requestId = Date.now().toString();
       otpRequests.set(uniqueId, {
         requestId,
         timestamp: new Date(),
@@ -1423,16 +1419,13 @@ app.post("/api/cycle", async (req, res) => {
       otpFailures.set(uniqueId, true);
     }
 
-    // Check for routing instructions from Python script
     if (dataString.includes("ROUTE_TO:")) {
       const routeMatch = dataString.match(/ROUTE_TO:(.+)/);
       if (routeMatch && routeMatch[1]) {
         const route = routeMatch[1].trim();
         console.log(`Python script requests routing to: ${route}`);
 
-        // Store the route information for the frontend to handle
         if (route === "/execute-task") {
-          // Update user status to indicate login issue
           (async () => {
             await User.findOneAndUpdate(
               { email: userEmail },
@@ -1440,7 +1433,6 @@ app.post("/api/cycle", async (req, res) => {
               { new: true }
             );
 
-            // Send specific response for login issue
             if (!responseSent) {
               res.status(400).json({
                 status: "error",
@@ -1450,7 +1442,6 @@ app.post("/api/cycle", async (req, res) => {
               responseSent = true;
             }
 
-            // Kill the Python process since we're handling the response
             pythonProcess.kill("SIGINT");
             activePythonProcesses.delete(uniqueId);
             cleanupDisplay(uniqueId);
@@ -1459,29 +1450,25 @@ app.post("/api/cycle", async (req, res) => {
         }
       }
     }
-
   });
 
   pythonProcess.stderr.on("data", (data) => {
     console.error("Python script stderr:", data.toString());
     error += data.toString();
   });
-  let killedDueToLimit = false;
-  // Periodically check if lead limit is exceeded
 
-  let responseSent = false; // Flag to track if response has been sent
+  let killedDueToLimit = false;
+  let responseSent = false;
 
   pythonProcess.on("close", async (code) => {
     pythonProcess.stdin.end();
-    activePythonProcesses.delete(uniqueId); // Remove from tracking
+    activePythonProcesses.delete(uniqueId);
     otpRequests.delete(uniqueId);
     otpFailures.delete(uniqueId);
-    console.log(`Python script exited with code: ${code}`);
+    console.log(`Python login script exited with code: ${code}`);
 
-    // Cleanup display lock file
     cleanupDisplay(uniqueId);
 
-    // Reset user status and remove startTime when the script stops
     if (!killedDueToLimit) {
       await User.findOneAndUpdate(
         { email: userEmail },
@@ -1490,7 +1477,6 @@ app.post("/api/cycle", async (req, res) => {
       );
     }
 
-    // Only send response if one hasn't been sent already
     if (!responseSent) {
       if (code === 0) {
         res.json({ status: "success", message: "Successfully executed!!" });
@@ -1502,6 +1488,71 @@ app.post("/api/cycle", async (req, res) => {
       }
       responseSent = true;
     }
+  });
+});
+
+// New endpoint to restart worker script without disrupting login
+app.post("/api/restart-worker", async (req, res) => {
+  const { uniqueId } = req.body;
+
+  if (!uniqueId) {
+    return res.status(400).json({
+      status: "error",
+      message: "uniqueId is required",
+    });
+  }
+
+  const pythonProcess = activePythonProcesses.get(uniqueId);
+
+  if (!pythonProcess) {
+    return res.status(404).json({
+      status: "error",
+      message: "No active process found for this uniqueId",
+    });
+  }
+
+  try {
+    // Send restart signal to login script which will restart the worker
+    pythonProcess.stdin.write(JSON.stringify({ command: "RESTART_WORKER" }) + "\n");
+    
+    res.json({
+      status: "success",
+      message: "Worker restart signal sent",
+    });
+  } catch (error) {
+    console.error("Error restarting worker:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to restart worker",
+    });
+  }
+});
+
+// Endpoint to check if login session is still active
+app.get("/api/session-status/:uniqueId", async (req, res) => {
+  const { uniqueId } = req.params;
+  
+  const pythonProcess = activePythonProcesses.get(uniqueId);
+  
+  if (!pythonProcess) {
+    return res.json({
+      status: "inactive",
+      message: "No active session found",
+    });
+  }
+
+  // Check if the process is still running
+  if (pythonProcess.killed) {
+    activePythonProcesses.delete(uniqueId);
+    return res.json({
+      status: "inactive",
+      message: "Session has been terminated",
+    });
+  }
+
+  res.json({
+    status: "active",
+    message: "Session is active",
   });
 });
 
