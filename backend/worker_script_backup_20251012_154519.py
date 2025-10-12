@@ -691,7 +691,7 @@ def set_browser_zoom(driver, zoom_level=0.75):
     #print(f"Browser zoom set to {zoom_level * 100}% using Chrome DevTools Protocol.")
 
 def go_to_message_center_and_click(driver, first_h2_text):
-    global lead_bought
+
     print("Waiting for 3 seconds before going to the message center...", flush=True)
     time.sleep(3)
 
@@ -701,38 +701,28 @@ def go_to_message_center_and_click(driver, first_h2_text):
     time.sleep(3)
 
     try:
-        # Hide tooltip that might block the first message
+        # Force remove tooltip that might block the first message
         try:
             driver.execute_script("""
                 const tooltip = document.querySelector('.Headertooltip');
-                if (tooltip) tooltip.style.display = 'none';
+                if (tooltip) {
+                    tooltip.style.display = 'none';
+                }
             """)
             print("Forcefully hid the tooltip using JavaScript.", flush=True)
         except Exception as js_error:
             print(f"JS error while hiding tooltip: {js_error}", flush=True)
 
-        # Wait for the first message to load
+        # Click the first message element
         message_element = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//div[@class='fl lh150 w100 hgt20']//div[@class='wrd_elip fl fs14 fwb maxwidth100m200']"))
         )
-
-        # 🟢 Fetch the product name BEFORE clicking
-        try:
-            product_name_element = driver.find_element(
-                By.XPATH,
-                "(//span[contains(@class, 'prod-name')])[1]"
-            )
-            lead_bought = product_name_element.text.strip()
-            print(f"Lead product extracted: {lead_bought}", flush=True)
-        except Exception as fetch_error:
-            print(f"Could not fetch product name: {fetch_error}", flush=True)
-
-        # Click the first message
         message_element.click()
         print("Clicked the first element with the specified class parameters.", flush=True)
         time.sleep(2)
 
-        # WhatsApp flow detection
+        # Check if WhatsApp text is found
+        whatsapp_found = False
         try:
             print("Looking for WhatsApp-related elements...", flush=True)
             whatsapp_elements = driver.find_elements(
@@ -742,6 +732,7 @@ def go_to_message_center_and_click(driver, first_h2_text):
 
             if whatsapp_elements:
                 print("WhatsApp message template found - proceeding with WhatsApp flow", flush=True)
+                whatsapp_found = True
                 execute_whatsapp_flow(driver, first_h2_text)
             else:
                 print("WhatsApp message not found - proceeding with regular flow", flush=True)
@@ -752,6 +743,7 @@ def go_to_message_center_and_click(driver, first_h2_text):
             print("Fallback: proceeding with regular flow", flush=True)
             execute_regular_flow(driver, first_h2_text)
 
+        
     except Exception as e:
         print(f"An error occurred while interacting with the message center: {e}", flush=True)
 
@@ -1974,7 +1966,6 @@ def redirect_and_refresh(driver, wait):
     except Exception as e:
         print(f"Error while checking buyer balance: {e}", flush=True)
         return
-    
 def send_to_node_api(expert_details):
     url = "https://api.leadscruise.com/api/support/bulk"
 
@@ -2334,6 +2325,7 @@ def store_analytics_data(analytics_data):
         print(f"Error storing analytics data: {e}", flush=True)
         print("Attempting to save analytics data locally...", flush=True)
         return save_analytics_data_locally(analytics_data)
+
 
 def save_analytics_data_locally(analytics_data):
     """

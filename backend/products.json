@@ -1,1322 +1,1260 @@
 [
   {
-    "id": "265023552",
-    "name": "Panel Build MS Residential Car Shed",
-    "price": "275",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/12/368173479/EQ/LY/DT/99007784/panel-build-ms-residential-car-shed-250x250.jpg",
-    "group": "Tensile Structure",
+    "id": "251249508",
+    "name": "Hdpe Channel Drain with HDPE Grating",
+    "price": "1800",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489836528/QV/LM/LG/6089141/hdpe-channel-drain-with-hdpe-grating-250x250.jpg",
+    "group": "HDPE Channel",
     "categories": [
-      "Car Sheds"
+      "Channel Drain",
+      "Standard Drainage Channel"
     ],
-    "description": "Balaji Awning is the best manufacturer and supplier of tensile car parking shed in Pune. We manufacture a variety of high-quality tensile car parking sheds that are durable and long-lasting. With cutting-edge technology and consistent innovation, we are able to achieve 8 years of customer satisfaction and trust. Being made of high-quality material, our car parking structures protect your car from external weather conditions and helps them look brand new for years.Known for quality car parking structures manufacturers we deal in all types of car parking shed such as Double Parking Shed, PVC Car Parking Shed, and tensile car parking shed in Pune. We believe that the best products are ones that suit to needs of the customers, that’s why we provide a wide range of customization when it comes to car parking shed. Right from the shape, size, and colours, we provide the car parking sheds that protect your car and beautify the ambiance of your parking.Being the customer preferred manufacturer",
+    "description": "We are engaged in offering a wide range of Hdpe Channel Drain with HDPE Grating to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Size": "20x10 Feet",
-      "Material": "PVC",
-      "Color": "White",
-      "Usage/Application": "Commercial",
-      "Brand": "GK"
+      "Material": "HDPE",
+      "Color": "Gray",
+      "Usage/Application": "Floor",
+      "Country of Origin": "Made in India",
+      "Brand": "Gutterman Drain"
     }
   },
   {
-    "id": "204325959",
-    "name": "Polyester Shade Awning",
-    "price": "189",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/RO/TF/YX/99007784/polyester-shade-awning-250x250.jpeg",
-    "group": "Shade Awning",
+    "id": "268565176",
+    "name": "FRP Manhole Cover",
+    "price": "2000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/3/400581177/XV/TV/EQ/6089141/frp-manhole-cover-250x250.jpeg",
+    "group": "Manhole Cover",
     "categories": [
-      "Shade Awnings",
-      "Vertical Awnings",
-      "Waterproof Awnings"
+      "FRP Manhole Cover",
+      "FRP Products",
+      "Manhole Chamber"
     ],
-    "description": "One place solution for your roofing requirements best quality with all-time support and Best designs with suitable color combinations to enhance presence of your premises.",
+    "description": "We are engaged in offering a wide range of Recessed manhole Cover to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "Polyester",
-      "Brand": "GK",
+      "Load Capacity(Missing)": "Add",
+      "Size": "600*600 mm",
+      "Shape": "Full Floor (Rectangular)",
+      "Usage/Application": "Construction",
+      "Brand": "Gutterman"
+    }
+  },
+  {
+    "id": "251248406",
+    "name": "Gutterman GI  Hot Dipped 1000mm Length Grating",
+    "price": "1800",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328008827/ZG/UT/LH/6089141/gutterman-gi-hot-dipped-1000mm-length-grating-250x250.jpeg",
+    "group": "Heavy Duty Grating",
+    "categories": [
+      "GI Grating"
+    ],
+    "description": "Gutterman GI Hot Dipped Grating for Human Load & Heavy LoadWe are engaged in offering a wide range of Modular HDPE Drain Channel to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Thickness": "2-4mm",
+      "Sheet Size (W X L)": "1220mm X 2440mm",
+      "Mesh size": "20mm X 20mm",
+      "Surface Finish": "Hot rolled Galvanized",
+      "Usage/Applications": "Walkways"
+    }
+  },
+  {
+    "id": "251248046",
+    "name": "MS Channel Drain",
+    "price": "4000",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/321626128/DD/BH/HZ/6089141/channel-drain-250x250.jpg",
+    "group": "Channel Drain",
+    "categories": [
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of MS Channel Drain to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Color": "Gray",
+      "Usage/Application": "Floor",
+      "Brand": "Gutterman Drain",
+      "Country of Origin": "Made in India"
+    }
+  },
+  {
+    "id": "246838591",
+    "name": "Composite Inbuilt Slope Drain Channel",
+    "price": "1100",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328021806/SI/AO/UI/6089141/composite-inbuilt-slope-drain-channel-250x250.jpeg",
+    "group": "FRP Protruded Grating",
+    "categories": [
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Composite Inbuilt Slope Drain Channel to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "FRP",
+      "Color": "Gray",
+      "Thickness": "5 mm",
+      "Width": "6 To 24 Inch",
+      "Usage": "For Water Drain Application Like Podium Peripheral And Basement Area"
+    }
+  },
+  {
+    "id": "251248864",
+    "name": "HDPE Drainage Channel",
+    "price": "1900",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328009045/SZ/UN/LZ/6089141/hdpe-drainage-channel-250x250.jpg",
+    "group": "Channel Drain",
+    "categories": [
+      "Standard Drainage Channel"
+    ],
+    "description": "We are engaged in offering a wide range of HDPE Drainage Channel to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "HDPE",
+      "Shape": "Rectangle",
+      "Usage": "Industrial",
+      "Color": "Black & Red",
+      "Country of Origin": "Made in India"
+    }
+  },
+  {
+    "id": "251247995",
+    "name": "Modular HDPE Drain Channel",
+    "price": "4800",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489836397/HV/EN/MI/6089141/modular-hdpe-drain-channel-250x250.jpg",
+    "group": "Frp Gratings",
+    "categories": [
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Modular HDPE Drain Channel to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "HDPE",
+      "Usage/Application": "Floor",
+      "Color": "Gray",
+      "Surface Treatment": "Polished",
+      "Country of Origin": "Made in India"
+    }
+  },
+  {
+    "id": "251247950",
+    "name": "Sleek Channel With Grating",
+    "price": "1000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489834746/NT/RW/QY/6089141/sleek-channel-with-grating-250x250.jpg",
+    "group": "HDPE Channel",
+    "categories": [
+      "Gratings",
+      "Channel Grating"
+    ],
+    "description": "We are engaged in offering a wide range of Sleek Channel With Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Load Capacity": "Heavy Duty",
+      "Sheet Size (W X L)": "1220mm X 3660mm",
+      "Thickness": "6-10 mm",
+      "Usage/Applications": "Drainage",
+      "Material": "MS"
+    }
+  },
+  {
+    "id": "251249458",
+    "name": "Grating Heel Safe",
+    "price": "1200",
+    "unit": "/Kg",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/322421325/OF/SS/UP/6089141/grating-heel-safe-250x250.jpeg",
+    "group": "GI Gratings",
+    "categories": [
+      "Safety Gratings",
+      "Steel Gratings"
+    ],
+    "description": "We are engaged in offering a wide range of Grating Heel Safe to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material(Missing)": "Add",
+      "Load Capacity": "Heavy Duty",
+      "Thickness": "6-10 mm",
+      "Sheet Size (W X L)": "1220mm X 3660mm",
+      "Usage/Applications": "Drainage"
+    }
+  },
+  {
+    "id": "251247823",
+    "name": "Double Slot Ss Grating With Channel",
+    "price": "5000",
+    "unit": "/Kg",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489747479/WI/LL/GM/6089141/double-slot-ss-grating-with-channel-250x250.jpg",
+    "group": "Slot Drain",
+    "categories": [
+      "Stainless Steel Gratings",
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Double Slot Ss Grating With Channel to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material Grades(Missing)": "Add",
+      "Material": "Stainless Steel",
+      "Shape": "C Channel",
+      "Design": "Standard",
+      "Usage/Application": "Industrial"
+    }
+  },
+  {
+    "id": "251160722",
+    "name": "Stainless Steel Sink Filter Set",
+    "price": "1000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/6/321183778/XW/RH/BM/6089141/tile-insert-floor-trap-for-bathroom-250x250.jpg",
+    "group": "Bathroom Floor Drain",
+    "categories": [
+      "Stainless Steel Sink Filter"
+    ],
+    "description": "We are engaged in offering a wide range of Stainless Steel Sink Filter Set to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material Grade": "SS 304",
+      "Material": "Stainless Steel",
+      "Set Contain": "4 Pieces",
+      "Size/Dimension": "10 X 10inch (LXW)",
+      "Finishing Type": "Chrome"
+    }
+  },
+  {
+    "id": "268565205",
+    "name": "MS Trench Covers",
+    "price": "300",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/7/437974373/CF/FA/VC/6089141/trench-covers-250x250.jpeg",
+    "group": "Floor Drain",
+    "categories": [
+      "Trench Covers"
+    ],
+    "description": "We are engaged in offering a wide range of Composite Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Mild Steel",
+      "Country of Origin": "Made in India",
+      "Brand": "Gutterman Drain",
+      "Color": "Silver",
+      "Packaging Type": "Box"
+    }
+  },
+  {
+    "id": "251068396",
+    "name": "6 Inch Zinc Hot Dipped Grating",
+    "price": "1000",
+    "unit": "/Kg",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/327998663/QD/VI/LE/6089141/6-inch-zinc-hot-dipped-grating-250x250.jpeg",
+    "group": "Metal Grating",
+    "categories": [
+      "Floor Gratings",
+      "Metal Gratings"
+    ],
+    "description": "We are engaged in offering a wide range of 6 Inch Zinc Hot Dipped Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Load Capacity": "Medium Duty",
+      "Material": "Zinc",
+      "Surface Finish": "Hot Dipped Galvanized",
+      "Width": "6 Inch",
+      "Product Thickness": "8mm"
+    }
+  },
+  {
+    "id": "251248081",
+    "name": "HDPE Channel Drain",
+    "price": "1000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328014242/JX/FY/SZ/6089141/hdpe-channel-drain-in-pune-250x250.jpeg",
+    "group": "Channel Drain",
+    "categories": [
+      "Floor Drains"
+    ],
+    "description": "We are engaged in offering a wide range of HDPE Channel Drain in Pune to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "HDPE",
+      "Usage/Application": "Floor",
+      "Color": "Black",
+      "Surface Treatment": "Polished",
+      "Country of Origin": "Made in India"
+    }
+  },
+  {
+    "id": "251247289",
+    "name": "Bathroom Shower Drain",
+    "price": "1200",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489836218/GE/EK/KA/6089141/bathroom-shower-drain-250x250.jpg",
+    "group": "Shower Drain",
+    "categories": [
+      "Shower Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Bathroom Shower Drain to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Mounting": "Wall Mounting",
+      "Color": "Grey",
+      "Packaging Type": "Box",
+      "Usage/Application": "Industrial"
+    }
+  },
+  {
+    "id": "251069106",
+    "name": "10 Inch Stainless Steel Mesh Channel Drain",
+    "price": "1000",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/6/320834171/TH/JY/BE/6089141/ss-304-kitchen-drain-channel-with-top-anti-skid-grating-1--250x250.jpg",
+    "group": "Metal Grating",
+    "categories": [
+      "Channel Drain",
+      "Stainless Steel Floor Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Modular HDPE Drain Channel to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Color": "Silver",
+      "Usage/Application": "Sed To Transfer Water Through An Underground Drainage System",
+      "Thickness": "15mm",
+      "Width": "10 Inch"
+    }
+  },
+  {
+    "id": "251248843",
+    "name": "HDPE Drainage Channel With DI Grating",
+    "price": "4500",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489836116/VX/ZO/VI/6089141/hdpe-drainage-channel-with-di-grating-250x250.jpg",
+    "group": "Channel Drain",
+    "categories": [
+      "Channel Drain",
+      "Standard Drainage Channel"
+    ],
+    "description": "We are engaged in offering a wide range of HDPE Drainage Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "HDPE",
+      "Color": "Gray",
+      "Usage/Application": "Floor",
+      "Country of Origin": "Made in India",
+      "Brand": "Gutterman Drain"
+    }
+  },
+  {
+    "id": "251249673",
+    "name": "60 Ton HDPE Drain Channel",
+    "price": "2000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/321643911/GI/DD/BQ/6089141/60-ton-hdpe-drain-channel-250x250.jpeg",
+    "group": "HDPE Channel",
+    "categories": [
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of 60 Ton HDPE Drain Channel to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "HDPE",
+      "Color": "Mirror Finish",
+      "Usage/Application": "Floor",
+      "Brand": "Gutterman Drain",
+      "Country of Origin": "Made in India"
+    }
+  },
+  {
+    "id": "251249046",
+    "name": "Ductile Iron Grating",
+    "price": "2000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/321630502/GO/SL/XP/6089141/product-jpeg-98--250x250.jpg",
+    "group": "Metal Grating",
+    "categories": [],
+    "description": "We are engaged in offering a wide range of Ductile Iron Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Load Capacity": "Heavy Duty",
+      "Thickness": "Upto 10mm",
+      "Shape": "Rectangle",
+      "Sheet Size (W X L)": "1220mm X 2440mm",
+      "Surface Finish": "Hot rolled Galvanized"
+    }
+  },
+  {
+    "id": "266938844",
+    "name": "24x24 Inch Frp Square Manhole Cover",
+    "price": "2975",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/7/437975179/QD/PR/GP/6089141/24x24-inch-frp-square-manhole-cover-250x250.jpeg",
+    "group": "Manhole Cover",
+    "categories": [
+      "FRP Square Manhole Cover"
+    ],
+    "description": "We are engaged in offering a wide range of Composite Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Shape": "Square",
+      "Size": "24x24 Inch",
+      "Load Capacity": "2.5 Ton",
+      "Country of Origin": "Made in India",
+      "Material": "FRP"
+    }
+  },
+  {
+    "id": "268565159",
+    "name": "Stainless Steel Manhole Cover",
+    "price": "6500",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/7/437977382/OA/RB/MK/6089141/stainless-steel-manhole-cover-250x250.jpg",
+    "group": "Manhole Cover",
+    "categories": [
+      "Stainless Steel Manhole Cover"
+    ],
+    "description": "We are engaged in offering a wide range of Composite Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Shape": "Square",
+      "Usage/Application": "Construction",
+      "Material": "SS",
+      "Country of Origin": "Made in India",
+      "Pack Type": "Box"
+    }
+  },
+  {
+    "id": "251068570",
+    "name": "Stainless Steel Kitchen Channel Drain With Square Tube",
+    "price": "8000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/6/321184520/JN/IM/OO/6089141/ss-304-kitchen-drain-channel-with-top-square-tube-grating-250x250.jpg",
+    "group": "Industrial and Commercial Kitchen Drain",
+    "categories": [
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Stainless Steel Kitchen Channel Drain With Square Tube to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Color": "Gray",
+      "Usage/Application": "For Kitchen, Hotels , Hospitals and Food Company",
+      "Thickness": "5mm",
+      "Width": "6 To 24 Inch"
+    }
+  },
+  {
+    "id": "251248571",
+    "name": "Recess Type Chamber Cover",
+    "price": "4000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489835945/RT/UT/HE/6089141/recess-type-chamber-cover-250x250.jpg",
+    "group": "Chamber Cover",
+    "categories": [
+      "Manhole Covers"
+    ],
+    "description": "We are engaged in offering a wide range of Recess Type Chamber Cover to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
       "Shape": "Rectangular",
-      "Usage/Application": "Commercial",
-      "Packaging Type": "Roll"
-    }
-  },
-  {
-    "id": "203553915",
-    "name": "Waterproof Shade Awning",
-    "price": "190",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/VV/AN/SN/99007784/shade-awnings-250x250.jpg",
-    "group": "Shade Awning",
-    "categories": [
-      "Shade Awnings",
-      "Window Retractable Awning",
-      "Waterproof Awnings"
-    ],
-    "description": "Backed by rich industrial experience we are offering waterproof shade awning to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Polyester",
-      "Brand": "BA",
-      "Shape": "Pyramid",
-      "Coated Type": "Powder Coated",
-      "Usage/Application": "Residential"
-    }
-  },
-  {
-    "id": "204843980",
-    "name": "PVC Tensile Membrane Structure",
-    "price": "280",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/GH/KS/KL/99007784/tensile-membrane-structure-250x250.jpg",
-    "group": "Tensile Membrane Structure",
-    "categories": [
-      "Tensile Membrane Structures",
-      "Modular Tensile Structure",
-      "Tensile Structures"
-    ],
-    "description": "Gazebo Tensile Strcucture are used for area from 10x10 ft to 80x80ft or more larger. it has more than 10+ years life with long durablity, Heat reflects from Fabric",
-    "specifications": {
+      "Brand": "Gutterman Drain",
       "Material": "PVC",
-      "Built Type": "Modular",
-      "Country of Origin": "Made in India",
-      "Is It Waterproof": "Waterproof",
-      "Fabric Finish": "Super finish"
-    }
-  },
-  {
-    "id": "265023075",
-    "name": "Retractable Awnings",
-    "price": "190",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/XW/UM/QD/99007784/terrace-awnings-250x250.png",
-    "group": "Retractable Awning",
-    "categories": [
-      "Retractable Awning",
-      "Terrace Awnings",
-      "Awnings"
-    ],
-    "description": "One place solution for your roofing requirements best quality with all-time support and Best designs with suitable color combinations to enhance presence of your premises.",
-    "specifications": {
-      "Material": "PVC",
-      "Color": "White",
-      "Usage/Application": "commercial and domestic",
-      "Operation Method": "Automatic",
-      "I Deal In": "New Only"
-    }
-  },
-  {
-    "id": "203553912",
-    "name": "Car Parking Tensile Structure",
-    "price": "349",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/DX/SP/NS/99007784/5cf3e191a4d9a6459942065a7f6a5356-jpg-250x250.jpg",
-    "group": "Tensile Structure",
-    "categories": [
-      "Car Parking Tensile Structure",
-      "Car Parking Tent",
-      "Tensile Structures"
-    ],
-    "description": "Balaji Awning is the best manufacturer and supplier of tensile car parking shed in Pune. We manufacture a variety of high-quality tensile car parking sheds that are durable and long-lasting. With cutting-edge technology and consistent innovation, we are able to achieve 8 years of customer satisfaction and trust. Being made of high-quality material, our car parking structures protect your car from external weather conditions and helps them look brand new for years.Known for quality car parking structures manufacturers we deal in all types of car parking shed such as Double Parking Shed, PVC Car Parking Shed, and tensile car parking shed in Pune. We believe that the best products are ones that suit to needs of the customers, that’s why we provide a wide range of customization when it comes to car parking shed. Right from the shape, size, and colours, we provide the car parking sheds that protect your car and beautify the ambiance of your parking.Being the customer preferred manufacturer",
-    "specifications": {
-      "Material": "PVC",
-      "Shape": "Tunnel",
-      "Frame Finishing": "Paint Coated",
-      "Usage/Application": "Commercial",
+      "Usage/Application": "Construction",
       "Country of Origin": "Made in India"
     }
   },
   {
-    "id": "204326831",
-    "name": "Modular Tensile Membrane Structure",
-    "price": "355",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/RA/NO/XN/99007784/cone-tensile-membrane-structure-250x250.jpg",
-    "group": "Tensile Membrane Structure",
+    "id": "251247572",
+    "name": "Slot/Line Grating with Channel Drain",
+    "price": "4000",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328008239/YM/JF/SW/6089141/slot-line-grating-with-channel-drain-250x250.jpeg",
+    "group": "Slot Drain",
     "categories": [
-      "Tensile Membrane Structures",
-      "Modular Tensile Structure",
-      "Tensile Structures"
+      "Channel Drain"
     ],
-    "description": "Backed by rich industrial experience we are offering modular tensile membrane structure to our customers providing the best services to our customers at reasonable rates",
+    "description": "Slot / Line Grating with Channel Drain for Human Load / Heavy Load, only top 12mm Slot will be Visible to drain out the water.",
     "specifications": {
+      "Material": "HDPE",
+      "Color": "Gray",
+      "Usage/Application": "Podium",
+      "Drain Capacity": "627 Liter/ Min.",
+      "Thickness": "5mm"
+    }
+  },
+  {
+    "id": "251068729",
+    "name": "Zinc Hot Dipped Heelsafe Grating",
+    "price": "1100",
+    "unit": "/Kg",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/321641970/JW/SW/ZX/6089141/zinc-hot-dipped-heelsafe-grating-250x250.jpeg",
+    "group": "Channel Drain",
+    "categories": [
+      "Gratings",
+      "Metal Gratings"
+    ],
+    "description": "We are engaged in offering a wide range of Zinc Hot Dipped Heelsafe Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Load Capacity": "Extra Heavy Duty",
+      "Thickness": "2mm",
+      "Material": "Zinc",
+      "Usage/Application": "Basement",
+      "Width": "4 To 24 Inch"
+    }
+  },
+  {
+    "id": "251248674",
+    "name": "Recessed Tile Insert Chamber Cover",
+    "price": "4000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489835987/WH/XP/MW/6089141/recessed-tile-insert-chamber-cover-250x250.jpg",
+    "group": "Chamber Cover",
+    "categories": [
+      "Manhole Covers",
+      "Stainless Steel Manhole Cover"
+    ],
+    "description": "We are engaged in offering a wide range of Recessed Tile Insert Chamber Cover to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Shape": "Square",
+      "Brand": "Gutterman Drain",
+      "Usage/Application": "Construction",
       "Material": "PVC",
-      "Built Type": "Modular",
-      "Surface Treatment": "Color Coated",
-      "Is It Waterproof": "Waterproof",
-      "Country of Origin": "Made in India"
+      "Color": "Grey"
     }
   },
   {
-    "id": "236315513",
-    "name": "Petrol Pump Canopy",
-    "price": "199",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/GY/RT/CU/99007784/canopies-250x250.jpg",
-    "group": "Petrol Pump Canopy",
+    "id": "251247210",
+    "name": "Tile Insert Shower Drain",
+    "price": "1200",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328015459/XS/KJ/VG/6089141/tile-insert-shower-drain-250x250.jpeg",
+    "group": "Shower Drain",
     "categories": [
-      "Canopies",
-      "Petrol Pump Canopy",
-      "Tensile Structures"
+      "Shower Drain"
     ],
-    "description": "Backed by rich industrial experience we are offering petrol pump canopy to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Tile Insert Shower Drain to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Type(Missing)": "Add",
-      "Size(Missing)": "Add",
-      "Material": "Acrylic Sheet",
-      "Shape": "Tunnel",
-      "Canopy Shape": "Square"
+      "Material": "PP",
+      "Mounting": "Floor Mounting",
+      "Brand": "Industrial",
+      "Usage/Application": "Industrial",
+      "Color": "Grey"
     }
   },
   {
-    "id": "265023200",
-    "name": "Swimming Pool Enclosures",
-    "price": "220",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/RB/RJ/JH/99007784/retractable-shade-awning-250x250.png",
-    "group": "Swimming Pool Cover",
+    "id": "251069165",
+    "name": "HDPE Channel With L Slot Grating",
+    "price": "3500",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328006910/EI/DX/UJ/6089141/hdpe-channel-with-l-slot-grating-250x250.jpeg",
+    "group": "HDPE Channel",
     "categories": [
-      "Swimming Pool Cover",
-      "Swimming Pool Accessories"
+      "Channel Drain",
+      "Floor Gratings"
     ],
-    "description": "Backed by rich industrial experience we are offering swimming pool cover to our customers providing the best services to our customers at reasonable rates FRP Swimming Pool Cover",
+    "description": "We are engaged in offering a wide range of HDPE Channel With L Slot Grating to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "PVC",
-      "Color": "White",
-      "Usage/Application": "Cleaning Purpose",
-      "Cover Thickness": "5 mm",
-      "Packaging Type": "rolled"
+      "Material": "HDPE, SS and Zinc",
+      "Size": "4 To 8 Inch (Width)",
+      "Usage/Application": "For Parking Area and Basement Area etc for heavy load",
+      "Color": "Silver",
+      "Brand": "Gutterman"
     }
   },
   {
-    "id": "204326429",
-    "name": "FRP Car Parking Shed",
-    "price": "275",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/VR/MO/QX/99007784/frp-car-parking-shed-250x250.jpg",
-    "group": "Car Parking Shed",
+    "id": "251248436",
+    "name": "Customized Metal Grating Length 1000mm",
+    "price": "1800",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/327998554/OI/PC/AQ/6089141/customized-metal-grating-length-1000mm-250x250.jpeg",
+    "group": "Metal Grating",
     "categories": [
-      "Car Sheds",
-      "FRP Shed"
+      "Gratings",
+      "Metal Gratings"
     ],
-    "description": "Balaji Awning is the best manufacturer and supplier of tensile car parking shed in Pune. We manufacture a variety of high-quality tensile car parking sheds that are durable and long-lasting. With cutting-edge technology and consistent innovation, we are able to achieve 8 years of customer satisfaction and trust. Being made of high-quality material, our car parking structures protect your car from external weather conditions and helps them look brand new for years.Known for quality car parking structures manufacturers we deal in all types of car parking shed such as Double Parking Shed, PVC Car Parking Shed, and tensile car parking shed in Pune. We believe that the best products are ones that suit to needs of the customers, that’s why we provide a wide range of customization when it comes to car parking shed. Right from the shape, size, and colours, we provide the car parking sheds that protect your car and beautify the ambiance of your parking.Being the customer preferred manufacturer",
+    "description": "Customized Metal Grating for Every Application...Width Start from 92mm to upto 800mm, We can make any width size, Standard Length 1000mm",
+    "specifications": {
+      "Load Capacity": "Medium Duty",
+      "Sheet Size (W X L)": "1220mm X 3660mm",
+      "Thickness": "6-10 mm",
+      "Usage/Applications": "Drainage"
+    }
+  },
+  {
+    "id": "251248162",
+    "name": "Kitchen Floor Drain",
+    "price": "6000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489743838/EG/YM/ZV/6089141/kitchen-floor-drain-250x250.png",
+    "group": "Industrial and Commercial Kitchen Drain",
+    "categories": [
+      "Stainless Steel Floor Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Kitchen Floor Drain to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
       "Size(Missing)": "Add",
-      "Material": "FRP",
-      "Color": "White",
-      "Usage/Application": "Commercial",
-      "Thickness": "10mm"
+      "Weight(Missing)": "Add",
+      "Material": "SS",
+      "Material Grade": "SS 304",
+      "Usage/Application": "Home"
     }
   },
   {
-    "id": "291892906",
-    "name": "Mild Steel Car Parking Shed",
-    "price": "200",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/486026341/RL/XJ/KT/99007784/mild-steel-car-parking-shed-250x250.jpg",
-    "group": "Car Parking Shed",
+    "id": "251247311",
+    "name": "Multiple Length Shower Drain",
+    "price": "1200",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489744413/PI/ZK/SF/6089141/multiple-length-shower-drain-250x250.jpg",
+    "group": "Shower Drain",
     "categories": [
-      "Mild Steel Parking Shed"
+      "Shower Drain"
     ],
-    "description": "Backed by rich industrial experience we are offering ms parking shed to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Multiple Length Shower Drain to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Frame Finishing": "Customised",
-      "Size/Dimension": "Customised",
-      "Built Type": "Modular",
-      "Material": "PVC",
+      "Material": "Mild Steel",
+      "Mounting": "Floor Mounting",
+      "Brand": "Gutterman Drain",
+      "Usage/Application": "Industrial",
+      "Packaging Type": "Box"
+    }
+  },
+  {
+    "id": "251247912",
+    "name": "Industrial And Hotel Kitchen Channel Drain",
+    "price": "5000",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/321637409/NC/MG/YZ/6089141/industrial-and-hotel-kitchen-channel-drain-250x250.jpeg",
+    "group": "Industrial and Commercial Kitchen Drain",
+    "categories": [
+      "Channel Drain"
+    ],
+    "description": "Anti-skid and Tube Grating",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Color": "Gray",
+      "Usage/Application": "Floor",
+      "Brand": "Gutterman Drain",
       "Country of Origin": "Made in India"
     }
   },
   {
-    "id": "204326189",
-    "name": "Modular Tensile Structure",
-    "price": "245",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/BG/TO/GV/99007784/modular-tensile-structure-250x250.jpg",
-    "group": "Tensile Structure",
+    "id": "280684125",
+    "name": "Frp Gratings With Chequered Plate",
+    "price": "2500",
+    "unit": "/Square Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/8/441097413/GL/DN/HN/6089141/frp-gratings-with-chequered-plate-250x250.jpeg",
+    "group": "Gratings",
     "categories": [
-      "Modular Tensile Structure",
-      "Tensile Structures",
-      "Car Parking Tensile Structure"
+      "FRP Gratings"
     ],
-    "description": "Balaji Awning is the best manufacturer and supplier of tensile car parking shed in Pune. We manufacture a variety of high-quality tensile car parking sheds that are durable and long-lasting. With cutting-edge technology and consistent innovation, we are able to achieve 8 years of customer satisfaction and trust. Being made of high-quality material, our car parking structures protect your car from external weather conditions and helps them look brand new for years.Known for quality car parking structures manufacturers we deal in all types of car parking shed such as Double Parking Shed, PVC Car Parking Shed, and tensile car parking shed in Pune. We believe that the best products are ones that suit to needs of the customers, that’s why we provide a wide range of customization when it comes to car parking shed. Right from the shape, size, and colours, we provide the car parking sheds that protect your car and beautify the ambiance of your parking.Being the customer preferred manufacturer",
+    "description": "Our mission is to enhance drainage solutions in a affordable and sustainable manner. We also build strong relationships with the community, industry, and worldwide counterparts. Commitment, teamwork, and customer satisfaction are the parameters on which we always focus upon",
     "specifications": {
-      "Material": "FRP",
-      "Surface Treatment": "Color Coated",
-      "Built Type": "Modular",
-      "Country of Origin": "Made in India",
+      "Grating Type(Missing)": "Add",
+      "Height(Missing)": "Add",
+      "Load Capacity": "Medium Duty",
+      "Sheet Size (W X L)": "1220mm X 2440mm",
+      "Type": "Moulded"
+    }
+  },
+  {
+    "id": "268564395",
+    "name": "Frp Mesh Type Gratings",
+    "price": "1200",
+    "unit": "/Square Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/7/432205704/OR/WN/TA/6089141/frp-gratings-250x250.jpeg",
+    "group": "Frp Gratings",
+    "categories": [
+      "FRP Gratings"
+    ],
+    "description": "We are engaged in offering a wide range of Composite Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Grating Type(Missing)": "Add",
+      "Height(Missing)": "Add",
+      "Thickness": "25 mm",
+      "Load Capacity": "Light Duty",
+      "Type": "Moulded"
+    }
+  },
+  {
+    "id": "251068510",
+    "name": "Stainless Steel Kitchen Channel Drain With Antiskid Grating",
+    "price": "1100",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/327994039/ID/BS/JJ/6089141/stainless-steel-kitchen-channel-drain-with-antiskid-grating-250x250.jpeg",
+    "group": "Industrial and Commercial Kitchen Drain",
+    "categories": [
+      "Stainless Steel Floor Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Stainless Steel Kitchen Channel Drain With Antiskid Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Size(Missing)": "Add",
+      "Weight(Missing)": "Add",
+      "Material Grades": "SS304",
+      "Load Capacity": "Heavy Duty",
+      "Material Grade": "SS 304"
+    }
+  },
+  {
+    "id": "268564407",
+    "name": "SS Floor Drains",
+    "price": "2000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/3/400581561/IT/IV/JO/6089141/floor-drains-250x250.png",
+    "group": "Metal Grating",
+    "categories": [
+      "Floor Drains",
+      "Stainless Steel Floor Drain",
+      "Shower Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Composite Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Design": "Square",
+      "Body Finish": "Glossy",
+      "Usage/Application": "Industrial",
+      "Country of Origin": "Made in India"
+    }
+  },
+  {
+    "id": "251248722",
+    "name": "GI Manhole Cover,GI Chamber Cover,Cheqeured Plate GI Cover, Galvanised Iron manhole cover",
+    "price": "2500",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489744625/KM/OA/JA/6089141/gi-manhole-cover-gi-chamber-cover-cheqeured-plate-gi-cover-galvanised-iron-manhole-cover-250x250.jpg",
+    "group": "Chamber Cover",
+    "categories": [
+      "GI Manhole Cover"
+    ],
+    "description": "We are engaged in offering a wide range of GI Manhole Cover,GI Chamber Cover,Cheqeured Plate GI Cover, Galvanised Iron manhole cover to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Shape": "Rectangular",
+      "Brand": "Gutterman Drain",
+      "Material": "Steel Fiber Reinforced Concrete",
+      "Usage/Application": "Construction",
+      "Color": "Gray"
+    }
+  },
+  {
+    "id": "251069672",
+    "name": "Composite Channel With DI Grating",
+    "price": "850",
+    "unit": "/Kg",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/321641142/JP/SO/KN/6089141/max-drain-di-grating-250x250.jpeg",
+    "group": "Channel Drain",
+    "categories": [
+      "Aluminium Channels",
+      "Galvanized Iron Channels"
+    ],
+    "description": "We are engaged in offering a wide range of Composite Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Length": "6 Meter",
+      "Usage/Application": "Basement",
+      "Color": "Black",
+      "Width": "4 To 14 Inch",
       "Thickness": "12mm"
     }
   },
   {
-    "id": "259499816",
-    "name": "Window Retractable Awning",
-    "price": "210",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/RJ/IB/CY/99007784/retractable-shade-awning-250x250.png",
-    "group": "Retractable Awning",
+    "id": "251248980",
+    "name": "SS304 Floor Trap",
+    "price": "400",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/321630179/UQ/LL/YN/6089141/ss304-floor-trap-250x250.jpg",
+    "group": "SS Floor Jali",
     "categories": [
-      "Window Retractable Awning"
+      "Stainless Steel Floor Drain",
+      "Multi Floor Trap"
     ],
-    "description": "One place solution for your roofing requirements best quality with all-time support and Best designs with suitable color combinations to enhance presence of your premises.",
+    "description": "We are engaged in offering a wide range of SS304 Floor Trap to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Frame Material(Missing)": "Add",
-      "Shape": "Dome",
-      "Usage/Application": "Windows",
-      "Color": "Customized",
-      "Material": "PVC"
+      "Size(Missing)": "Add",
+      "Weight(Missing)": "Add",
+      "Material Grade": "SS 304",
+      "Material": "SS",
+      "Usage/Application": "Home"
     }
   },
   {
-    "id": "226637372",
-    "name": "Mild Steel Parking Shed",
-    "price": "200",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/IF/VP/ZQ/99007784/mild-steel-parking-shed-250x250.jpg",
-    "group": "Car Parking Tensile Structure",
+    "id": "251249346",
+    "name": "PP Electrical Cable Trench / Trough",
+    "price": "4800",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489834803/VP/QG/YA/6089141/pp-electrical-cable-trench-trough-250x250.jpg",
+    "group": "Cable Tray",
     "categories": [
-      "Mild Steel Parking Shed",
-      "Walkway Covering Structure"
+      "Cable Trunking",
+      "Trench Covers"
     ],
-    "description": "Backed by rich industrial experience we are offering ms parking shed to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of PP Electrical Cable Trench / Trough to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Thickness": "customised",
-      "Color": "White",
-      "Usage/Application": "parking shed",
-      "Material": "PVC",
-      "Built Type": "Modular"
+      "Material": "Galvanized Iron",
+      "Usage/Application": "Industrial",
+      "Brand": "Gutterman Drain",
+      "Type": "PP Electrical Cable Trench",
+      "Country of Origin": "Made in India"
     }
   },
   {
-    "id": "291892990",
-    "name": "Sun Shade Sail",
-    "price": "195",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/486026642/QD/EB/BM/99007784/sun-shade-sail-250x250.jpg",
-    "group": "Tensile Structure",
+    "id": "251247439",
+    "name": "Channel With Single Slot Grating",
+    "price": "2500",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489835004/FY/ME/JQ/6089141/channel-with-single-slot-grating-250x250.jpg",
+    "group": "Slot Drain",
     "categories": [
-      "Shade Sail"
+      "Floor Gratings"
     ],
-    "description": "The sail tensile structures are a condensate of design and charm. Their look evokes the sea and giving a sense of summer, vacation and freedom. Despite their ethereal appearance, the sail tensile structurescan be an efficient covering for medium and large surfaces",
+    "description": "We are engaged in offering a wide range of Channel With Single Slot Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Sheet Size (W X L)": "1220mm X 3660mm",
+      "Load Capacity": "Heavy Duty",
+      "Material": "Mild Steel",
+      "Thickness": "6-10 mm",
+      "Surface Finish": "Polished"
+    }
+  },
+  {
+    "id": "251249257",
+    "name": "Balcony Drain Channel with Grating",
+    "price": "1000",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489835218/NK/JO/JO/6089141/balcony-drain-channel-with-grating-250x250.jpg",
+    "group": "Floor Drain",
+    "categories": [
+      "Channel Drain",
+      "Floor Drains",
+      "Standard Drainage Channel"
+    ],
+    "description": "Balcony Drain Channel with Grating good for All Human Load Applicatins Like Gaden , Ameneties Area, Swimming Pool Area Etc.",
     "specifications": {
       "Material": "HDPE",
-      "Color": "there are multiple colour option available for decoration purpose",
-      "Shape": "Pyramid",
-      "Country of Origin": "Made in India",
-      "Is it Waterproof": "No"
+      "Color": "Gray",
+      "Usage/Application": "Floor",
+      "Drain Capacity": "270 Liter/ min.",
+      "Brand": "Gutterman"
     }
   },
   {
-    "id": "265021279",
-    "name": "Outdoor Awning Canopy",
-    "price": "350",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/GLADMIN/Default/2022/12/UB/VK/HQ/99007784/retractable-shade-awning-250x250.jpg",
-    "group": "Window Awning",
+    "id": "251247499",
+    "name": "Slot/Line Gratings With HDPE Channel",
+    "price": "4500",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489835502/SI/SD/NV/6089141/slot-line-gratings-with-hdpe-channel-250x250.jpg",
+    "group": "Slot Drain",
     "categories": [
-      "Outdoor Canopies"
+      "Floor Gratings"
     ],
-    "description": "Backed by rich industrial experience Awning Canopy with we are offering tensile fabric structure to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Slot/Line Gratings With HDPE Channel to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "PVC",
-      "Brand": "GK",
-      "Color": "White",
-      "Shape": "customized",
-      "Country of Origin": "Made in India"
-    }
-  },
-  {
-    "id": "204843931",
-    "name": "Swimming Pool Tensile Cover",
-    "price": "290",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/AX/EU/OL/99007784/swimming-pool-tensile-cover-250x250.png",
-    "group": "Swimming Pool Cover",
-    "categories": [
-      "Swimming Pool Tensile Cover"
-    ],
-    "description": "Backed by rich industrial experience we are offering swimming pool tensile cover to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Built Type": "Modular",
-      "Material": "FRP",
-      "Thickness": "12mm",
-      "Country of Origin": "Made in India",
-      "Brand": "GK"
-    }
-  },
-  {
-    "id": "306533347",
-    "name": "Stadium Tensile Structures",
-    "price": "480",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2025/9/547088985/TS/KP/TD/99007784/angled-shot-three-yellow-curved-roofs-city-with-lights-dark-sky-250x250.jpg",
-    "group": "Tensile Structure",
-    "categories": [
-      "Tensile Structures",
-      "Stadium Construction"
-    ],
-    "description": "Stadium Tensile Structure\nProduct Description: We specialize in designing and supplying premium-quality Stadium Tensile Structures that combine strength, durability, and modern aesthetics. Engineered with advanced tensile membrane technology, these structures are ideal for large-span coverage, providing shade, comfort, and a striking architectural appeal.\nKey Features: High-strength PVC / PTFE / HDPE fabric Lightweight yet robust steel framework UV, rain, and wind resistant Modern & innovative design options Low maintenance with long service life Custom sizes, shapes & colors available Applications: Sports Stadiums Athletic Grounds Cricket & Football Arenas Event & Exhibition Areas Public Gathering Spaces Specifications: Fabric: PVC Coated / PTFE / HDPE Membrane Structure: Mild Steel / Galvanized Steel Span: Large clear-span coverage (customizable) Finish: Powder coated / Painted frame Lifespan: 15–30 years depending on fabric choice Advantages: ✔ Provides wide-area coverage with minim",
-    "specifications": {
-      "Application": "Swimming Pool Cover",
-      "Fabric Type": "Premium Grade (e.g.; European - Serge Ferrari; Mehler)",
-      "Material": "Tensile Fabric",
-      "Fabric GSM": "900 GSM",
-      "Frame Material": "Mild Steel (MS)"
-    }
-  },
-  {
-    "id": "226637096",
-    "name": "Tensile Shade Sail",
-    "price": "195",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/BY/MU/BI/99007784/tensile-shade-sail-250x250.jpg",
-    "group": "Tensile Structure",
-    "categories": [
-      "Sun Shade",
-      "Shade Sail"
-    ],
-    "description": "The sail tensile structures are a condensate of design and charm. Their look evokes the sea and giving a sense of summer, vacation and freedom. Despite their ethereal appearance, the sail tensile structurescan be an efficient covering for medium and large surfaces",
-    "specifications": {
-      "Material": "Polycarbonate",
-      "Type Of Truss": "Fabricated",
-      "Color": "there are multiple colour option for decoration purpose",
-      "Is It Waterproof": "Non Waterproof",
-      "Free Standing": "No"
-    }
-  },
-  {
-    "id": "226637095",
-    "name": "Residential Polycarbonate Awnings",
-    "price": "240",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/KC/AK/YX/99007784/ploycarbonate-awning-250x250.jpg",
-    "group": "Shade Awning",
-    "categories": [
-      "Polycarbonate Awning"
-    ],
-    "description": "Backed by rich industrial experience we are offering residential polycarbonate structure to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Thickness": "Varry",
-      "Color": "Transparent",
-      "Material": "Polyester",
-      "Brand": "Canopy Style",
-      "Usage/Application": "residential"
-    }
-  },
-  {
-    "id": "269417099",
-    "name": "Outdoor Pergola Structure",
-    "price": "1800",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/486028664/GD/NR/CP/99007784/outdoor-pergola-structure-250x250.jpg",
-    "group": "Prefabricated Structure",
-    "categories": [
-      "Wooden Pergola"
-    ],
-    "description": "Product Description: We provide stylish and durable Garden Pergolas that add elegance and functionality to outdoor spaces. Crafted from premium materials, our pergolas are designed to withstand all weather conditions while enhancing the aesthetics of gardens, terraces, and patios.\nKey Features: Made from high-quality aluminium / steel / wood (customizable) Rust & corrosion-resistant finish Modern, elegant, and long-lasting design Easy to install and low maintenance Available in different sizes, shapes, and colors Applications: Residential gardens & backyards Hotels & Resorts Rooftop terraces Cafés & Restaurants Outdoor lounges Specifications: Material: Aluminium / Steel / Wood (as per requirement) Size: Customizable Finish: Powder coated / Wooden / Anodized Style Options: Open-top, Retractable Roof, Decorative Designs Advantages: ✔ Enhances outdoor beauty & functionality ✔ Provides partial shade & comfort ✔ Long life with minimal maintenance ✔ Custom designs to match landscaping",
-    "specifications": {
-      "Size": "Customizable",
-      "Color": "Brown",
-      "Material": "Wooden",
-      "Free Standing": "Yes",
-      "Is It Waterproof": "Waterproof"
-    }
-  },
-  {
-    "id": "203553914",
-    "name": "Retractable Shade Awning",
-    "price": "190",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/UP/MU/NU/99007784/retractable-awning-250x250.jpg",
-    "group": "Shade Awning",
-    "categories": [
-      "Retractable Awning",
-      "Motorized Awning",
-      "Shade Awnings"
-    ],
-    "description": "One place solution for your roofing requirements best quality with all-time support and Best designs with suitable color combinations to enhance presence of your premises.",
-    "specifications": {
-      "Material": "PVC",
-      "Brand": "GK",
-      "Usage/Application": "Residential",
-      "Color": "Green And White",
-      "Shape": "Tunnel"
-    }
-  },
-  {
-    "id": "236315511",
-    "name": "Waterproof Retractable Awnings",
-    "price": "190",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/ML/QA/XR/99007784/retractable-shade-awning-250x250.jpg",
-    "group": "Shade Awning",
-    "categories": [
-      "Retractable Awning",
-      "Awnings",
-      "Sun Shade"
-    ],
-    "description": "Backed by rich industrial experience we are offering waterproof retractable awnings to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Polyester",
-      "Usage/Application": "Home",
-      "Color": "White",
-      "Brand": "Canopy Style",
-      "Shape": "Tunnel"
-    }
-  },
-  {
-    "id": "306533350",
-    "name": "Aluminum Facade Works",
-    "price": "480",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2025/9/547087725/TH/SC/LF/99007784/pexels-hikaique-65438-250x250.jpg",
-    "group": "New Items",
-    "categories": [],
-    "description": "Product Description: We offer premium quality Aluminium Facade Systems that enhance the aesthetics and durability of modern buildings. Designed with precision, our facades provide a sleek, contemporary look while ensuring excellent performance against weather conditions.\nKey Features: High-grade aluminium for long-lasting durability Corrosion and rust-resistant finish Lightweight yet strong structure Modern and elegant design options Easy installation & low maintenance Customizable in sizes, colors, and finishes Applications: Commercial Buildings Corporate Offices Shopping Malls Residential Apartments Hotels & Institutions Specifications: Material: Aluminium Thickness: As per requirement (customizable) Finish: Powder coated / Anodized Design Options: Panel, Curtain Wall, Cladding, Custom",
-    "specifications": {
-      "Color": "ANY",
-      "Material": "Aluminium and resine wood",
-      "Shape": "Any",
-      "Usage/Application": "Outdoor",
-      "Country of Origin": "Made in India"
-    }
-  },
-  {
-    "id": "265021379",
-    "name": "Gazebo Canopy Tent",
-    "price": "250",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/12/368192852/WQ/QC/RD/99007784/gazebo-250x250.jpg",
-    "group": "Gazebo",
-    "categories": [
-      "Gazebo"
-    ],
-    "description": "The entire frame of a gazebo is heavier to ensure that it can solidly support the entire roof and stand on the ground.",
-    "specifications": {
-      "Size": "10x10 Feet",
-      "Material": "PVC",
-      "Usage/Application": "Outdoor",
-      "Color": "customized",
-      "Shape": "Pyramid"
-    }
-  },
-  {
-    "id": "309220000",
-    "name": "Polycarbonate Sheet",
-    "price": "400",
-    "unit": "/sq ft",
-    "image": null,
-    "group": "New Items",
-    "categories": [
-      "Polycarbonate Sheet"
-    ],
-    "description": null,
-    "specifications": {
-      "Sheet Type(Important)": "",
-      "Thickness(Important)": "",
-      "Width": "",
-      "Length": "",
-      "Appearance": ""
-    }
-  },
-  {
-    "id": "226637394",
-    "name": "Auditorium Tensile Structure",
-    "price": "380",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/ANDROID/Default/2023/3/295946088/DS/BK/QF/99007784/product-jpeg-250x250.jpg",
-    "group": "Canopy Tent",
-    "categories": [
-      "Auditorium Tensile Structure",
-      "Tensile Structures"
-    ],
-    "description": "Backed by rich industrial experience we are offering auditorium tensile structure to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "PVC",
-      "Surface Treatment": "Color Coated",
-      "Service Location/City": "Pune",
-      "Country of Origin": "Made in India",
-      "Built Type": "Modular"
-    }
-  },
-  {
-    "id": "265022694",
-    "name": "Retractable Awning",
-    "price": "180",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/12/368169276/HN/IE/JW/99007784/retractable-awning-250x250.jpg",
-    "group": "Car Parking Tensile Structure",
-    "categories": [
-      "Walkway Covering Structure"
-    ],
-    "description": "One place solution for your roofing requirements best quality with all-time support and Best designs with suitable color combinations to enhance presence of your premises.",
-    "specifications": {
-      "Thickness": "2mm",
-      "Color": "All",
-      "Material": "pvc",
-      "Is It Waterproof": "Waterproof",
-      "Free Standing": "Yes"
-    }
-  },
-  {
-    "id": "236315505",
-    "name": "Walkway Covering Structure",
-    "price": "240",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/GX/PE/IL/99007784/walkway-covering-structure-250x250.jpg",
-    "group": "Prefabricated Structure",
-    "categories": [
-      "Walkway Covering Structure"
-    ],
-    "description": "We are one of the best Tensile Walkway Structure and Manufacturer Companies in India. We have an expert tensile manufacturing team. with plenty of colours and suitable designs. custmised sizes and patterns",
-    "specifications": {
-      "Shape": "Tunnel",
-      "Thickness": "customised",
-      "Color": "brown",
-      "Is It Waterproof": "Waterproof",
-      "Dimension": "customised"
-    }
-  },
-  {
-    "id": "204326022",
-    "name": "PVC Motorized Awning",
-    "price": "200",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/ZY/DM/LF/99007784/pvc-motorized-awning-250x250.jpg",
-    "group": "Shade Awning",
-    "categories": [
-      "Motorized Awning",
-      "Commercial Awnings"
-    ],
-    "description": "Backed by rich industrial experience we are offering pvc motorized awning to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Frame Material": "Steel",
-      "Width": "Customizable",
-      "Thickness": "6.5mm",
-      "Is It Waterproof": "Waterproof",
-      "Usage/Application": "Commercial"
-    }
-  },
-  {
-    "id": "291892742",
-    "name": "Outdoor Resort Tent",
-    "price": "250",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/486025847/UY/OB/RT/99007784/outdoor-resort-tent-250x250.jpg",
-    "group": "Resort Tent",
-    "categories": [
-      "Outdoor Tents",
-      "Resort Tents"
-    ],
-    "description": "Luxury resort tents designed for comfort and durability. Ideal for glamping, eco-resorts, and outdoor retreats with weather-resistant and stylish designs",
-    "specifications": {
-      "Tent Type(Missing)": "Add",
-      "Frame Material(Missing)": "Add",
-      "Material": "Polyester",
-      "Size": "Customised",
-      "Usage/Application": "Resort"
-    }
-  },
-  {
-    "id": "306533369",
-    "name": "Terrace Awnings",
-    "price": "220",
-    "unit": "/sq ft",
-    "image": null,
-    "group": "New Items",
-    "categories": [
-      "Terrace Awnings"
-    ],
-    "description": null,
-    "specifications": {
-      "Frame Material(Important)": "",
-      "Usage/Application": "",
-      "Shape": "",
-      "Design/Pattern": "",
-      "Brand": ""
-    }
-  },
-  {
-    "id": "306533348",
-    "name": "Tensile Fabric Facade",
-    "price": "350",
-    "unit": "/sq ft",
-    "image": null,
-    "group": "New Items",
-    "categories": [
-      "Tensile Fabric"
-    ],
-    "description": null,
-    "specifications": {
-      "Color": "",
-      "Pattern": "",
-      "Usage/Application": "",
-      "Country of Origin": ""
-    }
-  },
-  {
-    "id": "226637088",
-    "name": "Stadium Tensile Structure",
-    "price": "300",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/TY/TI/CX/99007784/stadium-tensile-structure-250x250.png",
-    "group": "Tensile Membrane Structure",
-    "categories": [
-      "Tensile Structures"
-    ],
-    "description": "Backed by rich industrial experience we are offering stadium tensile structure to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Application(Missing)": "Add",
-      "Fabric Type(Missing)": "Add",
-      "Material": "Polyester",
-      "Built Type": "Modular",
-      "Shape": "Pyramid"
-    }
-  },
-  {
-    "id": "306533349",
-    "name": "Metal Facade",
-    "price": "410",
-    "unit": "/sq ft",
-    "image": null,
-    "group": "New Items",
-    "categories": [
-      "Metal Claddings"
-    ],
-    "description": null,
-    "specifications": {
-      "Usage/Application": "",
-      "Material": "",
-      "Design/Pattern": "",
-      "Thickness": "",
-      "Built Type": ""
-    }
-  },
-  {
-    "id": "226637092",
-    "name": "Balcony Roof Shed",
-    "price": "180",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/DO/VN/DR/99007784/balcony-shed-250x250.jpg",
-    "group": "Metal Shed",
-    "categories": [
-      "Industrial Sheds",
-      "Outdoor Shade",
-      "Acrylic Awnings"
-    ],
-    "description": "Backed by rich industrial experience we are offering balcony roof shed to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "PVC",
-      "Built Type": "Modular",
-      "Size/Dimension": "customised",
-      "Thickness": "customised",
-      "Usage/Application": "House"
-    }
-  },
-  {
-    "id": "226637091",
-    "name": "Window Awning Canopy",
-    "price": "190",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/NR/ZX/NY/99007784/window-awning-canopy-250x250.jpg",
-    "group": "Window Awning",
-    "categories": [
-      "Window Awning"
-    ],
-    "description": "Backed by rich industrial experience we are offering window awning canopy to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Materials": "Stainless Steel",
-      "Pattern": "Plain",
-      "Position": "Outdoor",
-      "Brand": "Canopy Style",
-      "Open Style": "yes"
-    }
-  },
-  {
-    "id": "265023665",
-    "name": "Stripes Multi Colour Acrylic Lengthy Projection Motorised Awning For Shops House Villa",
-    "price": "200",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/12/368165994/VH/EH/ZV/99007784/stripes-multi-colour-acrylic-lengthy-projection-motorised-awning-for-shops-house-villa-250x250.jpg",
-    "group": "Commercial Awnings",
-    "categories": [
-      "Commercial Awnings"
-    ],
-    "description": "Backed by rich industrial experience we are offering Stripes Multi Colour Acrylic Lengthy Projection Motorised Awning For Shops House Villa to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Frame Material": "Steel",
-      "Shape": "Slant",
-      "Color": "Blue",
-      "Material": "PVC",
-      "Free Standing": "Yes"
-    }
-  },
-  {
-    "id": "265023369",
-    "name": "Square Multicolor Commercial Awning",
-    "price": "200",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/NG/RB/GO/99007784/polyester-shade-awning-250x250.jpg",
-    "group": "Commercial Awnings",
-    "categories": [
-      "Commercial Awnings"
-    ],
-    "description": "Backed by rich industrial experience we are offeringSquare Multicolor Commercial Awning to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Frame Material": "Steel",
-      "Shape": "All",
-      "Color": "White",
-      "Material": "PVC",
-      "Country of Origin": "Made in India"
-    }
-  },
-  {
-    "id": "265023307",
-    "name": "Luxury Garden Tent",
-    "price": "256",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/KV/OR/JG/99007784/garden-pergola-tent-250x250.jpg",
-    "group": "Pergola Tent",
-    "categories": [
-      "Garden Tents",
-      "Luxury Tent"
-    ],
-    "description": "Backed by rich industrial experience we are offering pergola garden to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Usage/Application": "Garden",
-      "Color": "white",
-      "Material": "Polyster",
-      "Shape": "Pyramid",
-      "Country of Origin": "Made in India"
-    }
-  },
-  {
-    "id": "236315507",
-    "name": "Car Parking Canopi",
-    "price": "250",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/ANDROID/Default/2023/3/295945897/ZM/AF/JY/99007784/product-jpeg-250x250.jpg",
-    "group": "Car Parking Shed",
-    "categories": [
-      "Car Canopy",
-      "Car Sheds"
-    ],
-    "description": "Backed by rich industrial experience we are offering car parking canopy to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Polyester",
-      "Shape": "Tunnel",
-      "Color": "White",
-      "Is It Waterproof": "Waterproof",
-      "Usage/Application": "car parking"
-    }
-  },
-  {
-    "id": "204844083",
-    "name": "Tensile Car Parking Shed",
-    "price": "250",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/US/EZ/TU/99007784/car-parking-roofing-shed-250x250.jpeg",
-    "group": "Car Parking Shed",
-    "categories": [
-      "Car Parking Tensile Structure",
-      "Tensile Structures"
-    ],
-    "description": "Backed by rich industrial experience we are offering tensile car parking shed to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "PVC",
-      "Frame Finishing": "Polished",
-      "Shape": "Dome",
-      "Is It Waterproof": "Waterproof",
-      "Thickness": "6mm"
-    }
-  },
-  {
-    "id": "236315504",
-    "name": "Gazebo Tensile Structure",
-    "price": "290",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/ANDROID/Default/2023/3/295945362/LW/CX/JH/99007784/prod-20230328-1108073049085157458853442-jpg-250x250.jpg",
-    "group": "Car Parking Tensile Structure",
-    "categories": [
-      "Gazebo Tensile Structure",
-      "Tensile Structures"
-    ],
-    "description": "Backed by rich industrial experience we are offering gazebo tensile structure to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Polyester",
-      "Surface Treatment": "Color Coated",
-      "Service Location/City": "Pune",
-      "Country of Origin": "Made in India",
-      "Built Type": "Modular"
-    }
-  },
-  {
-    "id": "226637090",
-    "name": "Gazebo Tensile Structure",
-    "price": "210",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/IW/MJ/MV/99007784/gazebo-250x250.jpg",
-    "group": "Gazebo",
-    "categories": [
-      "Gazebo Tensile Structure",
-      "Gazebo",
-      "Tensile Structures"
-    ],
-    "description": "Backed by rich industrial experience we are offering gazebo tensile structure to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Polyester",
-      "Country of Origin": "Made in India",
-      "Surface Treatment": "Color Coated",
-      "Service Location/City": "Pune",
-      "Built Type": "Modular"
-    }
-  },
-  {
-    "id": "265023885",
-    "name": "Structural Roofing Shed",
-    "price": "285",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/12/368164124/VP/IN/OE/99007784/roofing-structures-250x250.jpg",
-    "group": "Tensile Structure",
-    "categories": [
-      "Roofing Structures"
-    ],
-    "description": "Backed by rich industrial experience we are offering structural roofing shed to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Aluminium",
-      "Brand": "Vrs Roofing Engineering",
-      "Usage/Application": "Warehouse",
-      "Structure Type": "Eaves Tile",
-      "Technique": "Cold rolled"
-    }
-  },
-  {
-    "id": "236315512",
-    "name": "Outdoor Canopy Tent",
-    "price": "180",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/GLADMIN/Default/2022/12/YE/TF/XT/99007784/modular-tensile-membrane-structure-250x250.jpg",
-    "group": "Tensile Structure",
-    "categories": [
-      "Outdoor Canopies",
-      "Canopies",
-      "Outdoor Tents"
-    ],
-    "description": "Backed by rich industrial experience we are offering outdoor canopy tent to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "PVC",
-      "Shape": "Pyramid",
-      "Color": "White",
-      "Country of Origin": "Made in India",
-      "Size": "customised"
-    }
-  },
-  {
-    "id": "204326078",
-    "name": "Outdoor Shade Awning",
-    "price": "195",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/OQ/BU/JN/99007784/outdoor-shade-awning-250x250.jpg",
-    "group": "Shade Awning",
-    "categories": [
-      "Outdoor Shade",
-      "Shade Awnings",
-      "Waterproof Awnings"
-    ],
-    "description": "Backed by rich industrial experience we are offering outdoor shade awning to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
+      "Sheet Size (W X L)": "1220mm X 3660mm",
       "Material": "Mild Steel",
-      "Brand": "GK",
-      "Shape": "Tunnel",
-      "Color": "Cream",
-      "Coated Type": "PU Coated"
+      "Load Capacity": "Heavy Duty",
+      "Thickness": "6-10 mm",
+      "Surface Finish": "Galvanized"
     }
   },
   {
-    "id": "204326755",
-    "name": "Polyester Drop Vertical Awnings",
-    "price": "180",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/FV/ZX/SH/99007784/polyester-drop-vertical-awnings-250x250.jpg",
-    "group": "Shade Awning",
+    "id": "251248632",
+    "name": "Recessed manhole Cover",
+    "price": "4000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/7/438305714/GF/HY/YL/6089141/frp-manhole-cover-250x250.jpg",
+    "group": "Chamber Cover",
     "categories": [
-      "Awnings",
-      "Vertical Awnings"
+      "Recessed Chamber Plates",
+      "Iron Manhole Cover",
+      "GI Manhole Cover"
     ],
-    "description": "Backed by rich industrial experience we are offering polyster drop vertical awning to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Recessed manhole Cover to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "Polyester",
-      "Brand": "GK",
-      "Is It Waterproof": "Waterproof",
-      "Usage/Application": "Commercial",
-      "Country of Origin": "Made in India"
+      "Size": "460 mm",
+      "Shape": "Rectangle",
+      "Usage/Application": "Construction",
+      "Brand": "Gutterman Drain",
+      "Color": "Grey"
     }
   },
   {
-    "id": "265023337",
-    "name": "Commercial Pyramid Awnings",
-    "price": "200",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/12/368165460/FP/IU/DC/99007784/commercial-awnings-250x250.jpg",
-    "group": "Commercial Awnings",
+    "id": "266938833",
+    "name": "Frp Drain Cover",
+    "price": "900",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2024/7/437975311/IO/ER/UV/6089141/frp-drain-cover-250x250.jpeg",
+    "group": "Channel Drain",
     "categories": [
-      "Commercial Awnings"
+      "Drain Covers"
     ],
-    "description": "Backed by rich industrial experience we are offering Commercial Awnings to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Composite Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Frame Material": "Steel",
-      "Material": "PVC",
-      "Shape": "Pyramid",
-      "Color": "Blue",
-      "Country of Origin": "Made in India"
-    }
-  },
-  {
-    "id": "265021232",
-    "name": "Retractable Terrace Awning",
-    "price": "190",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/MI/OI/PX/99007784/retractable-shade-awning-250x250.png",
-    "group": "Tensile Membrane Structure",
-    "categories": [
-      "Terrace Awnings"
-    ],
-    "description": "Backed by rich industrial experience we are offering tensile fabric structure to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Frame Material": "Steel",
-      "Usage/Application": "commercial",
-      "Color": "White",
-      "Shape": "rectangular",
-      "Country of Origin": "Made in India"
-    }
-  },
-  {
-    "id": "204326611",
-    "name": "Swimming Pool Cover",
-    "price": "245",
-    "unit": "/Square Feet",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/VB/US/LJ/99007784/swimming-pool-cover-250x250.jpg",
-    "group": "Swimming Pool Cover",
-    "categories": [
-      "Swimming Pool Cover"
-    ],
-    "description": "Backed by rich industrial experience we are offering swimming pool cover to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Plastic",
-      "Size": "Customised",
-      "Color": "Green",
-      "Fabric": "Plastic",
-      "Usage/Application": "Swimming Pool"
-    }
-  },
-  {
-    "id": "265023153",
-    "name": "FRP Swimming Pool Cover",
-    "price": "190",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/UQ/CZ/IZ/99007784/modular-tensile-structure-250x250.jpeg",
-    "group": "Swimming Pool Cover",
-    "categories": [
-      "Swimming Pool Cover",
-      "Swimming Pool Tensile Cover"
-    ],
-    "description": "Backed by rich industrial experience we are offering swimming pool cover to our customers providing the best services to our customers at reasonable rates FRP Swimming Pool Cover",
-    "specifications": {
-      "Material": "Plastic",
-      "Color": "Green",
-      "Usage/Application": "Cover",
-      "Brand": "GK",
-      "Cover Thickness": "10 mm"
-    }
-  },
-  {
-    "id": "204844640",
-    "name": "Polycarbonate Car Parking Shed",
-    "price": "220",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/XJ/SE/GL/99007784/polycarbonate-car-parking-shed-250x250.jpg",
-    "group": "Car Parking Shed",
-    "categories": [
-      "Polycarbonate Parking Shed",
-      "Polycarbonate Sheds",
-      "Car Canopy"
-    ],
-    "description": "Backed by rich industrial experience we are offering polycarbonate car parking shed to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Color": "White",
-      "Shape": "Tunnel",
-      "Is It Waterproof": "Waterproof",
+      "Material": "Steel/Stainless Steel",
       "Country of Origin": "Made in India",
-      "Usage/Application": "Commercial"
+      "Usage/Application": "Drainage Cover",
+      "Load Capacity": "4 Ton",
+      "Customization": "Customized"
     }
   },
   {
-    "id": "226637089",
-    "name": "Tensile Car Parking",
-    "price": "200",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/UI/SP/SG/99007784/tensile-car-parking-250x250.png",
-    "group": "Tensile Structure",
+    "id": "251548943",
+    "name": "Tile Insert Shower Drain",
+    "price": "2500",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/322674878/WQ/TO/DB/6089141/whatsapp-image-2022-02-17-at-12-19-32-pm-3--250x250.jpeg",
+    "group": "Floor Drain",
     "categories": [
-      "Car Parking Tensile Structure",
-      "Tensile Structures"
+      "Shower Drain"
     ],
-    "description": "Backed by rich industrial experience we are offering tensile car parking to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Tile Insert Shower Drain to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "PVC",
-      "Shape": "Tunnel",
-      "Frame Finishing": "Polished",
-      "Color": "white",
-      "Is It Waterproof": "Waterproof"
+      "Material": "Stainless Steel",
+      "Usage/Application": "bathroom, balcony",
+      "Packaging Type": "rectangular",
+      "Country of Origin": "Made in India",
+      "Dimension": "we make any size"
     }
   },
   {
-    "id": "265021556",
-    "name": "FRP Car Sheds",
-    "price": "349",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/GLADMIN/Default/2022/12/JS/VW/ZG/99007784/car-parking-tensile-structure-250x250.jpg",
-    "group": "Car Parking Shed",
+    "id": "251248475",
+    "name": "HeelSafe Anti Slip Trench Grate 1000mm Length",
+    "price": "2000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489835768/IH/HU/KB/6089141/heelsafe-anti-slip-trench-grate-1000mm-length-250x250.jpg",
+    "group": "Heavy Duty Grating",
     "categories": [
-      "Car Sheds",
-      "FRP Shed"
+      "Mild Steel Grating"
     ],
-    "description": "Balaji Awning is the best manufacturer and supplier of tensile car parking shed in Pune. We manufacture a variety of high-quality tensile car parking sheds that are durable and long-lasting. With cutting-edge technology and consistent innovation, we are able to achieve 8 years of customer satisfaction and trust. Being made of high-quality material, our car parking structures protect your car from external weather conditions and helps them look brand new for years.Known for quality car parking structures manufacturers we deal in all types of car parking shed such as Double Parking Shed, PVC Car Parking Shed, and tensile car parking shed in Pune. We believe that the best products are ones that suit to needs of the customers, that’s why we provide a wide range of customization when it comes to car parking shed. Right from the shape, size, and colours, we provide the car parking sheds that protect your car and beautify the ambiance of your parking.Being the customer preferred manufacturer",
+    "description": "Heel Safe Grating is Specially Designed for Females Sandel pencil heel, Good for Malls & Hospitals.",
     "specifications": {
-      "Size": "12x16 Feet",
-      "Color": "White",
-      "Material": "PVC",
-      "Shape": "Tunnel",
+      "Thickness": "6-10 mm",
+      "Usage/Applications": "Walkways",
+      "Surface Finish": "Galvanized"
+    }
+  },
+  {
+    "id": "268565196",
+    "name": "Stainless Steel Gratings",
+    "price": "1500",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489835337/YE/NO/IM/6089141/stainless-steel-gratings-250x250.jpg",
+    "group": "Mild Steel Grating",
+    "categories": [
+      "Stainless Steel Gratings",
+      "Gratings",
+      "304 SS Sheet"
+    ],
+    "description": "We are engaged in offering a wide range of Composite Channel With DI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material Grades": "SS304",
+      "Shape": "Rectangle",
+      "Sheet Size (W X L)": "1220mm X 3660mm",
+      "Load Capacity": "Light Duty",
       "Thickness": "10 mm"
     }
   },
   {
-    "id": "265023925",
-    "name": "Roofing Solution low cost structure",
-    "price": "285",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/12/368163919/LN/YZ/IV/99007784/roofing-solution-low-cost-structure-250x250.jpg",
-    "group": "Tensile Structure",
+    "id": "251248955",
+    "name": "SS Tile Insert Square Floor Trap",
+    "price": "800",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489765903/RH/TD/FA/6089141/ss-tile-insert-square-floor-trap-250x250.jpg",
+    "group": "SS Floor Jali",
     "categories": [
-      "Roofing Structures"
+      "Stainless Steel Floor Drain"
     ],
-    "description": "Typically one of the most affordable types of roofing, rolled roofing is quite popular with homeowners and builders on a budget. All of the installation materials are affordable, and the labor is cost-effective, too.",
+    "description": "We are engaged in offering a wide range of SS Tile Insert Square Floor Trap to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "Aluminium",
-      "Structure Type": "Eaves Tile",
-      "Brand": "Vrs Roofing Engineering",
-      "Usage/Application": "Warehouse",
-      "Position": "Exterior"
+      "Size(Missing)": "Add",
+      "Weight(Missing)": "Add",
+      "Material": "SS",
+      "Material Grade": "SS 304",
+      "Shape": "Rectangle"
     }
   },
   {
-    "id": "204844299",
-    "name": "Pergola Garden Tea Tent",
-    "price": "250",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/YO/BJ/QY/99007784/pergola-garden-tea-tent-250x250.jpg",
-    "group": "Pergola Tent",
+    "id": "251545192",
+    "name": "Manhole Cover & Frames",
+    "price": "3000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/327993678/OG/SU/FY/6089141/manhole-cover-frames-250x250.jpeg",
+    "group": "Manhole Cover",
     "categories": [
-      "Garden Tents",
-      "Pergola Tents"
+      "Manhole Cover & Frames"
     ],
-    "description": "Backed by rich industrial experience we are offering pergola garden to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Manhole Cover & Frames to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Usage/Application": "Garden",
-      "Material": "Polyester",
-      "Color": "White",
-      "Shape": "Pyramid",
-      "Brand": "GK"
-    }
-  },
-  {
-    "id": "226637094",
-    "name": "Luxury Pergola Tent",
-    "price": "250",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/LR/VC/CV/99007784/pergola-250x250.jpg",
-    "group": "Gazebo",
-    "categories": [
-      "Pergola Tents"
-    ],
-    "description": "Backed by rich industrial experience we are offering pergola tent to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Polyester",
-      "Color": "White",
-      "Free Standing": "No",
-      "Dimension": "customised",
-      "Shape": "Tunnel"
-    }
-  },
-  {
-    "id": "204327025",
-    "name": "Garden Pergola Tent",
-    "price": "250",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/OU/WR/UC/99007784/garden-pergola-tent-250x250.jpg",
-    "group": "Pergola Tent",
-    "categories": [
-      "Garden Tents",
-      "Pergola Tents"
-    ],
-    "description": "Backed by rich industrial experience we are offering garden pergola tent to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Usage/Application": "Garden",
-      "Color": "White",
-      "Material": "Polyester",
-      "Shape": "Pyramid",
-      "Brand": "GK"
-    }
-  },
-  {
-    "id": "226637395",
-    "name": "Structural Roofing Shed",
-    "price": "285",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/CW/IQ/QK/99007784/roofing-structures-250x250.jpg",
-    "group": "Tensile Structure",
-    "categories": [
-      "Roofing Structures"
-    ],
-    "description": "Backed by rich industrial experience we are offering structural roofing shed to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material": "Aluminium",
-      "Structure Type": "Eaves Tile",
-      "Brand": "Vrs Roofing Engineering",
-      "Usage/Application": "Warehouse",
-      "Position": "Exterior"
-    }
-  },
-  {
-    "id": "226637371",
-    "name": "Fixed Frame Awnings",
-    "price": "185",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/QI/XU/HC/99007784/fixed-awnings-250x250.jpg",
-    "group": "Window Awning",
-    "categories": [
-      "Fixed Awnings"
-    ],
-    "description": "Backed by rich industrial experience we are offering fixed frame awning to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Frame Material(Missing)": "Add",
-      "Pattern": "Plain",
-      "Shape": "Rectangular",
-      "Usage/Application": "residential",
-      "Material": "Polyester"
-    }
-  },
-  {
-    "id": "226637370",
-    "name": "Retractable Roof System",
-    "price": "195",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/TD/LG/QY/99007784/retractable-roof-250x250.jpg",
-    "group": "Retractable Roof",
-    "categories": [
-      "Retractable Roof"
-    ],
-    "description": "Backed by rich industrial experience we are offering retractable roof system to our customers providing the best services to our customers at reasonable rates",
-    "specifications": {
-      "Material(Missing)": "Add",
+      "Material": "Steel",
+      "Brand": "Gutterman Drain",
+      "Shape": "Full Floor (Rectangular)",
       "Usage/Application": "Industrial",
-      "Surface Treatment": "Coated",
-      "Dimensions": "customised",
-      "Is It Waterproof": "yes"
+      "Surface Finishing": "Polished"
     }
   },
   {
-    "id": "236315506",
-    "name": "Petrol Pump Awning",
+    "id": "251068334",
+    "name": "Bathroom SS Tile Insert Floor Drain",
     "price": "300",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/DE/HQ/PQ/99007784/petrol-pump-awning-250x250.jpg",
-    "group": "Petrol Pump Canopy",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328011591/HB/TL/QZ/6089141/ss304-floor-trap-250x250.jpeg",
+    "group": "Bathroom Floor Drain",
     "categories": [
-      "Petrol Pump Canopy"
+      "Stainless Steel Floor Drain",
+      "Floor Drains"
     ],
-    "description": "Awnings used for covering machines at Fuel Stations. two way opening cantiliver foldable awnings are available with us with wide range of cusmazied colours",
+    "description": "We are engaged in offering a wide range of Bathroom SS Tile Insert Floor Drain to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "Acrylic Sheet",
-      "Usage/Application": "petrol pump",
-      "Color": "White",
-      "Shape": "Pyramid",
-      "Is It Waterproof": "Waterproof"
+      "Size(Missing)": "Add",
+      "Weight(Missing)": "Add",
+      "Material": "Stainless Steel",
+      "Material Grade": "SS 304",
+      "Finishing Type": "Chrome"
     }
   },
   {
-    "id": "226637093",
-    "name": "Tensile Membrane Structures",
-    "price": "220",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/12/FL/SD/MF/99007784/tensile-structure-250x250.jpg",
-    "group": "Tensile Structure",
+    "id": "251069723",
+    "name": "PP/ HDPE Inbuilt Slope Channel With Zinc Hot Dipped Hole Design Grating for Heavy Load",
+    "price": "900",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328003128/MX/OB/MG/6089141/pp-hdpe-inbuilt-slope-channel-with-zinc-hot-dipped-hole-design-grating-for-heavy-load-250x250.jpeg",
+    "group": "Channel Drain",
     "categories": [
-      "Tensile Membrane Structures",
-      "Tensile Structures"
+      "Channel Drain"
     ],
-    "description": "Backed by rich industrial experience we are offering tensile membrane structure to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of PP/ HDPE Inbuilt Slope Channel With Zinc Hot Dipped Hole Design Grating for Heavy Load to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "Polyester",
-      "Built Type": "Modular",
-      "Is It Waterproof": "yes",
-      "Frame Finishing": "yes",
-      "Fabric Finish": "finished"
+      "Material": "HDPE",
+      "Usage/Application": "For Outer Area ,Rod Side Drain Application",
+      "Color": "Silver",
+      "Width": "10 To 24 Inch",
+      "Drain Capacity": "70 Kg"
     }
   },
   {
-    "id": "236315510",
-    "name": "Residential Terrace Awning",
-    "price": "190",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/CO/IM/KI/99007784/terrace-awnings-250x250.jpg",
-    "group": "Shade Awning",
+    "id": "251069313",
+    "name": "Ductile iron DI Grating E600 (60 Ton Load)",
+    "price": "900",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/327996012/ZK/JC/GP/6089141/ductile-iron-di-grating-e600-60-ton-load-250x250.jpg",
+    "group": "Channel Drain",
     "categories": [
-      "Terrace Awnings"
+      "Ductile Iron"
     ],
-    "description": "Backed by rich industrial experience we are offering residential terrace awning to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Ductile iron DI Grating E600 (60 Ton Load) to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Frame Material(Missing)": "Add",
-      "Material": "Polyester",
-      "Brand": "Canopy Style",
-      "Color": "white",
-      "Usage/Application": "residential canopy"
+      "Form": "Plates",
+      "Usage/Application": "For Heavy Load ,Built For Mole Hospital Building Entry Gate",
+      "Material": "Ductile Iron",
+      "Thickness": "8mm",
+      "Color": "Black"
     }
   },
   {
-    "id": "236315509",
-    "name": "Tensile Fabric Structures",
-    "price": "90",
-    "unit": "/Sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2022/11/MD/EF/YZ/99007784/factory-manufacturing-250x250.jpg",
-    "group": "Tensile Structure",
+    "id": "251068623",
+    "name": "Recessed Tile Insert Chamber Cover",
+    "price": "8000",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/6/321181707/DG/SL/XB/6089141/tile-insert-chamber-cover-250x250.jpg",
+    "group": "Recessed Chamber Plates",
     "categories": [
-      "Tensile Structures",
-      "Tensile Fabric"
+      "Recessed Chamber Plates",
+      "Manhole Covers"
     ],
-    "description": "Backed by rich industrial experience we are offering tensile fabric structure to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of Recessed Tile Insert Chamber Cover to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Application(Missing)": "Add",
-      "Fabric Type(Missing)": "Add",
-      "Material": "Polyester",
-      "Built Type": "Modular",
-      "Shape": "Pyramid"
+      "Size": "460 mm",
+      "Thickness": "20 mm",
+      "Shape": "Square",
+      "Material": "Cast Iron",
+      "Filtration Capacity": "500 Ltr/ Hr"
     }
   },
   {
-    "id": "236315508",
-    "name": "Luxury Resort Tent",
-    "price": "250",
-    "unit": "/sq ft",
-    "image": "https://5.imimg.com/data5/SELLER/Default/2023/2/GJ/VS/UG/99007784/resort-tents-250x250.png",
-    "group": "Tensile Structure",
+    "id": "251247605",
+    "name": "ABS Channel Outer -WXD-130x60mm With HDPE Grating",
+    "price": "1000",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/327995085/EE/SP/FI/6089141/abs-channel-outer-wxd-130x60mm-with-hdpe-grating-250x250.jpeg",
+    "group": "Slot Drain",
     "categories": [
-      "Resort Tents"
+      "Channel Drain"
     ],
-    "description": "Backed by rich industrial experience we are offering luxury resort tent to our customers providing the best services to our customers at reasonable rates",
+    "description": "We are engaged in offering a wide range of ABS Channel Outer -WXD-130x60mm With HDPE Grating to our clients. Our range of all products is widely appreciated by our clients.",
     "specifications": {
-      "Material": "Polyester",
-      "Color": "White",
-      "Size": "customised",
-      "Usage/Application": "Resort",
-      "Thickness": "customised"
+      "Material": "HDPE",
+      "Color": "Gray",
+      "Usage/Application": "Floor",
+      "Country of Origin": "Made in India",
+      "Brand": "Gutterman Drain"
+    }
+  },
+  {
+    "id": "251248809",
+    "name": "HDPE Drainage Channel With HDPE Grating",
+    "price": "1500",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328005122/QM/HJ/UG/6089141/hdpe-drainage-channel-250x250.jpeg",
+    "group": "HDPE Channel",
+    "categories": [
+      "Standard Drainage Channel"
+    ],
+    "description": "We are engaged in offering a wide range of HDPE Drainage Channel With HDPE Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Shape": "Rectangular",
+      "Materials": "HDPE",
+      "Country of Origin": "Made in India",
+      "Usage": "Industrial"
+    }
+  },
+  {
+    "id": "280682903",
+    "name": "Frp Moulded Grating",
+    "price": "1800",
+    "unit": "/Square Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489765576/JH/IT/KU/6089141/frp-moulded-grating-250x250.jpg",
+    "group": "Frp Gratings",
+    "categories": [
+      "FRP Gratings"
+    ],
+    "description": "Our mission is to enhance drainage solutions in a affordable and sustainable manner. We also build strong relationships with the community, industry, and worldwide counterparts. Commitment, teamwork, and customer satisfaction are the parameters on which we always focus upon",
+    "specifications": {
+      "Grating Type(Missing)": "Add",
+      "Height(Missing)": "Add",
+      "Load Capacity": "Light Duty",
+      "Sheet Size (W X L)": "1220mm X 3660mm",
+      "Type": "Moulded"
+    }
+  },
+  {
+    "id": "251247463",
+    "name": "Scupper Roof Drain",
+    "price": "2500",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2025/2/489744118/MB/PJ/WX/6089141/scupper-roof-drain-250x250.jpg",
+    "group": "Slot Drain",
+    "categories": [
+      "Roof Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Scupper Roof Drain to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Usage/Application": "Industrial",
+      "Design": "Rectangle",
+      "Country of Origin": "Made in India",
+      "Packaging Type": "Box"
+    }
+  },
+  {
+    "id": "251249744",
+    "name": "Roof Drain System",
+    "price": "2500",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/321633497/JI/AU/CV/6089141/product-jpeg-2023-07-01t184754-177-250x250.jpg",
+    "group": "Roof Drain",
+    "categories": [
+      "Roof Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Roof Drain System to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "Stainless Steel",
+      "Usage/Application": "Industrial",
+      "Design": "Round",
+      "Country of Origin": "Made in India",
+      "Color": "Black"
+    }
+  },
+  {
+    "id": "251069367",
+    "name": "HDPE Drain Channel With SS Double Slot Grating",
+    "price": "1000",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/6/321385610/XJ/EQ/MV/6089141/hdpe-drain-channel-with-ss-double-slot-grating-250x250.jpeg",
+    "group": "HDPE Channel",
+    "categories": [
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of HDPE Drain Channel With SS Double Slot Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Size": "4 To 8 Inch (Width)",
+      "Material": "HPDE and SS",
+      "Usage/Application": "Used To Balcony Area and Garden Area",
+      "Color": "Black",
+      "Brand": "Gutterman"
+    }
+  },
+  {
+    "id": "251249123",
+    "name": "Ductile Iron Grating",
+    "price": "200",
+    "unit": "/Kg",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328014794/VN/RU/AR/6089141/ductile-iron-grating-250x250.jpg",
+    "group": "Metal Grating",
+    "categories": [
+      "Cast Iron Grate"
+    ],
+    "description": "Ductile iron Grating 60 Ton Load for Heavy LoadWe are engaged in offering a wide range of Modular HDPE Drain Channel to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Thickness": "21-30mm",
+      "Shape": "Rectangle",
+      "Surface Finish": "Epoxy Painted",
+      "Load Capacity": "Extra Heavy Duty",
+      "Usage/Applications": "Drainage"
+    }
+  },
+  {
+    "id": "251068920",
+    "name": "PP/HPDE Channel With Grating",
+    "price": "1000",
+    "unit": "/Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/328003810/XB/IC/TK/6089141/pp-hpde-channel-with-grating-250x250.jpeg",
+    "group": "Channel Drain",
+    "categories": [
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of PP/HPDE Channel With Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material": "PP/HDPE",
+      "Usage/Application": "For Balcony ( Human and Application)",
+      "Color": "Black",
+      "Thickness": "6mm",
+      "Width": "4 To 8  Inch"
+    }
+  },
+  {
+    "id": "246838588",
+    "name": "Zinc Hot Dipped GI Grating",
+    "price": "900",
+    "unit": "/Piece",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/7/327999660/XF/FJ/VP/6089141/7-inch-zinc-hot-dipped-grating-250x250.jpeg",
+    "group": "Metal Grating",
+    "categories": [
+      "GI Grating"
+    ],
+    "description": "We are engaged in offering a wide range of Zinc Hot Dipped GI Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Thickness(Missing)": "Add",
+      "Load Capacity": "Medium Duty",
+      "Surface Finish": "Hot Dipped Galvanized",
+      "Width": "7 Inch",
+      "Product Thickness": "6mm"
+    }
+  },
+  {
+    "id": "251069958",
+    "name": "Zinc Hot Dipped Car Load Grating",
+    "price": "1100",
+    "unit": "/Kg",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/6/320838069/YX/OK/TG/6089141/channel-with-hot-dipped-car-load-grating-3--250x250.jpg",
+    "group": "GI Gratings",
+    "categories": [
+      "Metal Gratings",
+      "Floor Gratings",
+      "Channel Drain"
+    ],
+    "description": "We are engaged in offering a wide range of Zinc Hot Dipped Car Load Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Load Capacity": "Heavy Duty",
+      "Surface Finish": "Hot dip galvanised",
+      "Width": "4 To 8  Inch",
+      "Product Thickness": "2mm",
+      "Usage": "Top Grating For Car Load and Truck Load"
+    }
+  },
+  {
+    "id": "251069053",
+    "name": "100mm Zinc Hot Dipped Car Load Grating",
+    "price": "500",
+    "unit": "/Square Meter",
+    "image": "https://5.imimg.com/data5/SELLER/Default/2023/6/321183051/GJ/PX/EC/6089141/pp-channel-100x-50-with-zin-hot-dipped-car-load-grating-250x250.jpg",
+    "group": "Mild Steel Grating",
+    "categories": [
+      "Hot Dip Galvanizing"
+    ],
+    "description": "We are engaged in offering a wide range of 100mm Zinc Hot Dipped Car Load Grating to our clients. Our range of all products is widely appreciated by our clients.",
+    "specifications": {
+      "Material Type(Missing)": "Add",
+      "Load Capacity": "Heavy Duty",
+      "Surface Finish": "Hot dip Galvanized",
+      "Usage": "For Car Load Gating",
+      "Material": "Zinc"
     }
   }
 ]

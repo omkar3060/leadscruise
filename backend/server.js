@@ -1528,6 +1528,21 @@ app.post("/api/restart-worker", async (req, res) => {
   }
 });
 
+// Endpoint to get all active sessions
+app.get("/api/active-sessions", async (req, res) => {
+  try {
+    const activeSessionIds = Array.from(activePythonProcesses.keys());
+    
+    res.json(activeSessionIds);
+  } catch (error) {
+    console.error("Error fetching active sessions:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch active sessions",
+    });
+  }
+});
+
 // Endpoint to check if login session is still active
 app.get("/api/session-status/:uniqueId", async (req, res) => {
   const { uniqueId } = req.params;

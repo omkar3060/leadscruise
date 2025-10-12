@@ -33,3 +33,4 @@ api_response.json
 confirmations.json
 feedback.json
 test_closing.spec
+session_*.pkl
