@@ -284,80 +284,180 @@ def compare_contacts_and_feedback(contacts, feedback):
         logger.info(f"Found {len(new_contacts)} new contacts to send messages to")
         return new_contacts
 
+def kill_firefox_processes():
+    """Kill all Firefox and geckodriver processes before starting new driver"""
+    import subprocess
+    import platform
+    try:
+        if platform.system() == "Windows":
+            subprocess.run(["taskkill", "/F", "/IM", "firefox.exe"], 
+                          stdout=subprocess.DEVNULL, 
+                          stderr=subprocess.DEVNULL)
+            subprocess.run(["taskkill", "/F", "/IM", "geckodriver.exe"], 
+                          stdout=subprocess.DEVNULL, 
+                          stderr=subprocess.DEVNULL)
+            logger.info("✅ Killed all existing Firefox and geckodriver processes")
+        else:
+            subprocess.run(["pkill", "-9", "firefox"], 
+                          stdout=subprocess.DEVNULL, 
+                          stderr=subprocess.DEVNULL)
+            subprocess.run(["pkill", "-9", "geckodriver"], 
+                          stdout=subprocess.DEVNULL, 
+                          stderr=subprocess.DEVNULL)
+            logger.info("✅ Killed all existing Firefox and geckodriver processes")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not kill Firefox processes: {e}")
+
 def setup_firefox_driver(phone_number):
-        """Set up Firefox WebDriver with headless mode and user-specific profile"""
-        import platform
-        driver = None
+    """Set up Firefox WebDriver with correct window resolution on Windows"""
+    import platform
+    import time
+    driver = None
+    
+    try:
+        # Kill all existing Firefox processes
+        kill_firefox_processes()
+        time.sleep(1)  # Wait for processes to fully terminate
         
+        # Windows-only setup (no Linux/virtual display needed)
+        if platform.system() != "Windows":
+            logger.warning("This setup is optimized for Windows. Running on non-Windows system.")
+        
+        # Get user-specific profile directory
+        profile_dir = get_profile_directory(phone_number)
+        logger.info(f"Using Firefox profile directory: {profile_dir}")
+        
+        # Set up Firefox options
+        firefox_options = FirefoxOptions()
+        
+        # Set profile directory
+        firefox_options.add_argument("-profile")
+        firefox_options.add_argument(profile_dir)
+        
+        # Enable headless mode if needed
+        if HEADLESS_MODE:
+            firefox_options.add_argument("--headless")
+            logger.info("Running in headless mode")
+        
+        # Configure preferences
+        firefox_options.set_preference("dom.webnotifications.enabled", False)
+        firefox_options.set_preference("media.volume_scale", "0.0")
+        firefox_options.set_preference("webdriver.log.level", "trace")
+        
+        # Set preferences to preserve session data
+        firefox_options.set_preference("browser.sessionstore.resume_from_crash", True)
+        firefox_options.set_preference("browser.sessionstore.restore_on_demand", False)
+        firefox_options.set_preference("browser.startup.page", 3)
+        firefox_options.set_preference("browser.startup.homepage", "about:blank")
+        
+        # IMPORTANT: Disable DPI scaling awareness for consistent resolution across all Windows PCs
+        # This prevents Windows from scaling the browser window
+        firefox_options.set_preference("layout.css.devPixelRatioOverride", "1.0")
+        firefox_options.set_preference("browser.tabs.drawInTitlebar", True)
+        
+        logger.info("Using webdriver-manager to get geckodriver...")
+        service = Service(GeckoDriverManager().install())
+        
+        logger.info("Creating Firefox driver instance...")
+        driver = webdriver.Firefox(service=service, options=firefox_options)
+        logger.info("Firefox started successfully!")
+        
+        # CRITICAL: Wait for browser to fully load before setting window size
+        time.sleep(2)
+        
+        # Set window size - use maximize_window first, then set specific size
         try:
-            # Virtual display is only needed on Linux, not Windows
-            if platform.system() == "Linux" and HEADLESS_MODE:
-                logger.info("Starting virtual display...")
-                display = Display(visible=0, size=VIRTUAL_DISPLAY_SIZE, backend="xvfb")
-                display.start()
-                logger.info("Virtual display started successfully!")
-            else:
-                display = None
-                logger.info("Running on Windows - no virtual display needed")
-            
-            # Get user-specific profile directory
-            profile_dir = get_profile_directory(phone_number)
-            logger.info(f"Using Firefox profile directory: {profile_dir}")
-            
-            # Set directory permissions (only on Linux/Mac)
-            if platform.system() != "Windows":
-                chmod_recursive(profile_dir)
-            
-            # Set up Firefox options
-            firefox_options = FirefoxOptions()
-            firefox_options.add_argument(f"--width={VIRTUAL_DISPLAY_SIZE[0]}")
-            firefox_options.add_argument(f"--height={VIRTUAL_DISPLAY_SIZE[1]}")
-            
-            # Set profile directory
-            firefox_options.add_argument("-profile")
-            firefox_options.add_argument(profile_dir)
-            
-            # Enable headless mode on Windows if needed
-            if HEADLESS_MODE:
-                firefox_options.add_argument("--headless")
-                logger.info("Running in headless mode")
-            
-            # Configure preferences
-            firefox_options.set_preference("dom.webnotifications.enabled", False)
-            firefox_options.set_preference("media.volume_scale", "0.0")
-            firefox_options.set_preference("webdriver.log.level", "trace")
-            
-            # Set preferences to preserve session data
-            firefox_options.set_preference("browser.sessionstore.resume_from_crash", True)
-            firefox_options.set_preference("browser.sessionstore.restore_on_demand", False)
-            firefox_options.set_preference("browser.startup.page", 3)  # Restore previous session
-            firefox_options.set_preference("browser.startup.homepage", "about:blank")
-            
-            logger.info("Using webdriver-manager to get geckodriver...")
-            
-            # Create Firefox service using webdriver-manager
-            service = Service(GeckoDriverManager().install())
-            
-            # Start Firefox with options
-            logger.info("Creating Firefox driver instance...")
-            driver = webdriver.Firefox(service=service, options=firefox_options)
-            logger.info("Firefox started successfully!")
-            
-            # Set window size and timeouts
-            driver.set_window_size(*VIRTUAL_DISPLAY_SIZE)
-            driver.set_page_load_timeout(120)
-            
-            return driver, display
-            
+            driver.maximize_window()
+            time.sleep(0.5)
         except Exception as e:
-            logger.error(f"Error setting up Firefox driver: {e}")
-            logger.debug(traceback.format_exc())
-            if driver:
-                driver.quit()
-            if 'display' in locals() and display:
-                display.stop()
-            return None, None
+            logger.warning(f"Could not maximize window: {e}")
         
+        # Now set the specific resolution
+        target_width = VIRTUAL_DISPLAY_SIZE[0]
+        target_height = VIRTUAL_DISPLAY_SIZE[1]
+        
+        driver.set_window_size(target_width, target_height)
+        logger.info(f"Set window size to {target_width}x{target_height}")
+        
+        # Verify the resolution was actually set
+        time.sleep(1)
+        actual_size = driver.get_window_size()
+        actual_width = actual_size.get('width', 0)
+        actual_height = actual_size.get('height', 0)
+        
+        if actual_width != target_width or actual_height != target_height:
+            logger.warning(f"Window size mismatch! Target: {target_width}x{target_height}, Actual: {actual_width}x{actual_height}")
+            # Try alternative method using JavaScript
+            driver.execute_script(f"window.resizeTo({target_width}, {target_height});")
+            time.sleep(0.5)
+            actual_size = driver.get_window_size()
+            logger.info(f"After JS resize: {actual_size.get('width')}x{actual_size.get('height')}")
+        else:
+            logger.info(f"Window resolution verified: {actual_width}x{actual_height}")
+        
+        # Set page load timeout
+        driver.set_page_load_timeout(120)
+        
+        logger.info("Firefox driver setup completed successfully!")
+        return driver
+        
+    except Exception as e:
+        logger.error(f"Error setting up Firefox driver: {e}")
+        logger.debug(traceback.format_exc())
+        if driver:
+            try:
+                driver.quit()
+            except:
+                pass
+        return None
+
+def verify_firefox_resolution(driver, expected_width=1920, expected_height=1080):
+    """Verify and fix Firefox window resolution if needed"""
+    import time
+    try:
+        actual_size = driver.get_window_size()
+        actual_width = actual_size.get('width', 0)
+        actual_height = actual_size.get('height', 0)
+        
+        logger.info(f"Expected resolution: {expected_width}x{expected_height}")
+        logger.info(f"Actual resolution: {actual_width}x{actual_height}")
+        
+        if actual_width != expected_width or actual_height != expected_height:
+            logger.warning("Resolution mismatch detected! Attempting to correct...")
+            
+            # Try multiple methods to set resolution
+            methods = [
+                lambda: driver.set_window_size(expected_width, expected_height),
+                lambda: driver.execute_script(f"window.resizeTo({expected_width}, {expected_height});"),
+                lambda: driver.execute_script(f"window.outerWidth = {expected_width}; window.outerHeight = {expected_height};")
+            ]
+            
+            for i, method in enumerate(methods):
+                try:
+                    method()
+                    time.sleep(0.5)
+                    actual_size = driver.get_window_size()
+                    actual_width = actual_size.get('width', 0)
+                    actual_height = actual_size.get('height', 0)
+                    logger.info(f"Method {i+1} result: {actual_width}x{actual_height}")
+                    
+                    if actual_width == expected_width and actual_height == expected_height:
+                        logger.info("Resolution corrected successfully!")
+                        return True
+                except Exception as e:
+                    logger.warning(f"Method {i+1} failed: {e}")
+                    continue
+            
+            logger.error("Could not set resolution to expected values after multiple attempts")
+            return False
+        else:
+            logger.info("Resolution is correct!")
+            return True
+            
+    except Exception as e:
+        logger.error(f"Error verifying Firefox resolution: {e}")
+        return False
+
 def save_cookies(driver, phone_number):
         """Save cookies to a user-specific file"""
         cookies_file = get_cookies_file_path(phone_number)
@@ -1914,7 +2014,7 @@ class LoginApp:
     def log_to_response(self, message):
         """Helper method for logging (if you have a response area)"""
         print(message)  # For now, just print. You can connect this to your GUI if needed
-        
+
     def setup_login_gui(self):
         # Main frame
         main_frame = ttk.Frame(self.root, padding="20")
@@ -2074,7 +2174,6 @@ class LoginApp:
             
         except Exception as e:
             print(f"Error showing login form: {e}")
-            import traceback
             traceback.print_exc()
 
     def toggle_password_visibility(self):
@@ -2326,22 +2425,40 @@ class LoginApp:
         self.status_var.set(message)
 
 class TextboxLogHandler(logging.Handler):
-    """Custom logging handler that outputs to the GUI textbox"""
+    """Custom logging handler that outputs to the GUI textbox - Thread Safe"""
     def __init__(self, app):
         super().__init__()
         self.app = app
         
     def emit(self, record):
         msg = self.format(record)
-        # Use thread-safe method to append to GUI
-        if hasattr(self.app, 'root') and self.app.root:
+        # Use GUI update queue instead of root.after() directly
+        if hasattr(self.app, 'gui_update_queue'):
             try:
-                self.app.log_to_response(msg)
-            except:
-                pass  # Ignore errors if GUI is destroyed
+                # Add to queue instead of calling log_to_response
+                def log_update():
+                    try:
+                        if hasattr(self.app, 'response_text') and self.app.response_text:
+                            if self.app.response_text.winfo_exists():
+                                # Ensure widget is in NORMAL state
+                                self.app.response_text.config(state=tk.NORMAL)
+                                # Insert message
+                                self.app.response_text.insert(tk.END, msg + '\n')
+                                self.app.response_text.see(tk.END)
+                                # Check for verification codes
+                                self.app.detect_and_show_verification_code(msg)
+                    except Exception as e:
+                        print(f"Error in log_update: {e}")
+                
+                self.app.gui_update_queue.put(log_update)
+            except Exception as e:
+                print(f"Failed to queue log: {e}")
+                # Fallback to console
+                print(f"LOG: {msg}")
 
 class LeadFetcherApp:
     def __init__(self, root, user_data):
+        self.gui_update_queue = queue.Queue()
         self.root = root
         self.root.title("Lead Fetcher")
         self.root.geometry("800x600")
@@ -2405,6 +2522,7 @@ class LeadFetcherApp:
 
         # Setup GUI first
         self.setup_gui()
+        self.setup_logging_handler()
         self.init_update_manager()
         
         self._original_destroy = self.root.destroy
@@ -2417,18 +2535,56 @@ class LeadFetcherApp:
         self.root.bind_all('<Control-Alt-KeyPress-l>', self.keyboard_restore)
         # NEW: Start checking for tray restoration requests
         self._check_tray_restore()
-        
-        # Setup logging (with error handling)
+
+        self.process_gui_updates()  # Start GUI update processor
+        print("✅ GUI update processor started")
+
+    def setup_logging_handler(self):
+        """Setup GUI logging handler - call this AFTER setup_gui()"""
         try:
+            # Remove any existing TextboxLogHandler to avoid duplicates
+            for handler in logger.handlers[:]:
+                if isinstance(handler, TextboxLogHandler):
+                    logger.removeHandler(handler)
+            
+            # Add new GUI handler
             gui_handler = TextboxLogHandler(self)
             gui_handler.setLevel(logging.INFO)
             formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
             gui_handler.setFormatter(formatter)
-            # Get the logger (you'll need to define this globally in your main script)
             logger.addHandler(gui_handler)
-        except:
-            pass
-    
+            
+            print("✅ GUI logging handler installed")
+        except Exception as e:
+            print(f"❌ Failed to setup GUI logging: {e}")
+       
+    def process_gui_updates(self):
+        """Process GUI updates from background threads - runs on main thread"""
+        try:
+            # Process all pending updates
+            updates_processed = 0
+            while True:
+                try:
+                    update_func = self.gui_update_queue.get_nowait()
+                    update_func()  # Execute the function on main thread
+                    updates_processed += 1
+                except queue.Empty:
+                    break
+                except Exception as e:
+                    print(f"Error executing GUI update: {e}")
+            
+            if updates_processed > 0:
+                print(f"✅ Processed {updates_processed} GUI updates")
+        except Exception as e:
+            print(f"Error in process_gui_updates: {e}")
+        
+        # Schedule next check - store the ID so we can cancel if needed
+        try:
+            if self.root and self.root.winfo_exists():
+                self._gui_processor_id = self.root.after(100, self.process_gui_updates)
+        except Exception as e:
+            print(f"Failed to schedule next GUI update: {e}")
+
     def init_update_manager(self):
         """Initialize the update manager - call this in your __init__ method"""
         self.update_manager = GitHubUpdateManager(self)
@@ -2477,13 +2633,38 @@ class LeadFetcherApp:
         """Handle messages from other threads"""
         print(f"📨 Handling message: {message}")
         
-        if message == "restore_window":
-            self.restore_window_main_thread()
-        elif message == "force_restore_window":
-            self.force_restore_window_main_thread()
-        elif message.startswith("log:"):
-            _, text = message.split(":", 1)
-            self.log_to_response(text)
+        try:
+            if message == "restore_window":
+                self.restore_window_main_thread()
+            elif message == "force_restore_window":
+                self.force_restore_window_main_thread()
+            elif message.startswith("log:"):
+                _, text = message.split(":", 1)
+                self.log_to_response(text)
+            elif message.startswith("status:"):
+                _, text = message.split(":", 1)
+                self.update_status(text)
+            elif message.startswith("error:"):
+                _, text = message.split(":", 1)
+                messagebox.showerror("Error", text)
+            elif message.startswith("fetch_start:"):
+                _, status_text = message.split(":", 1)
+                self.fetch_button.config(state='disabled')
+                self.progress.start()
+                self.update_status(status_text)
+            elif message.startswith("fetch_success:"):
+                parts = message.split(":")
+                leads_count = parts[1]
+                mobile = parts[2]
+                is_auto = parts[3] == "True"
+                self.update_status(f"Received {leads_count} leads for {mobile}")
+                if not is_auto:
+                    messagebox.showinfo("Success", f"Received {leads_count} leads")
+            elif message == "fetch_end":
+                self.progress.stop()
+                self.fetch_button.config(state='normal')
+        except Exception as e:
+            print(f"Error handling message '{message}': {e}")
 
     def send_message(self, message):
         """Send message from any thread to main thread"""
@@ -2682,15 +2863,21 @@ class LeadFetcherApp:
         # Set flag for main thread to pick up
         print("Setting restore flag...")
         self.restore_from_tray_requested = True
+  
+    def force_show_window(self, icon=None, item=None):
+        """Force show window - backup method"""
+        print("🔄 force_show_window called")
+        self.send_message("force_restore_window")
 
     def _restore_window_main_thread(self):
         """Restore window - called on main thread via periodic check"""
         try:
-            print("Restoring window on main thread...")
+            print("=" * 60)
+            print("🔄 _restore_window_main_thread called")
             
             # Check if window still exists
             if not self.root.winfo_exists():
-                print("Window no longer exists!")
+                print("❌ Window no longer exists!")
                 return
                 
             self.tray_icon = None
@@ -2700,27 +2887,127 @@ class LeadFetcherApp:
             self.is_closing = False
             self.force_quit = False
             
+            print("📋 Restoring window state...")
             self.root.deiconify()
             self.root.lift()
             self.root.focus_force()
-            self.log_to_response("🟢 App restored from tray")
+            
+            # ===== FIX: Restore log visibility state =====
+            print(f"📊 Log state before restore: logs_visible={self.logs_visible}, authenticated={self.logs_authenticated}")
+            
+            if self.logs_visible:
+                try:
+                    print("📝 Attempting to restore log visibility...")
+                    
+                    # CRITICAL: First ensure the widget state is NORMAL so it can be edited/displayed
+                    self.response_text.config(state=tk.NORMAL)
+                    
+                    # Grid the widget
+                    self.response_text.grid(row=8, column=0, columnspan=3, 
+                                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                    
+                    # Update button text BEFORE forcing update
+                    self.toggle_logs_button.config(text="Hide Logs")
+                    self.log_label.config(text="API Response (Logs Visible):")
+                    
+                    # Force a complete update cycle
+                    self.root.update_idletasks()
+                    self.root.update()
+                    
+                    # Verify it's visible
+                    is_mapped = self.response_text.winfo_ismapped()
+                    print(f"✅ Logs restored - Widget mapped: {is_mapped}, State: {self.response_text.cget('state')}")
+                    
+                    if not is_mapped:
+                        print("⚠️ Widget not mapped, forcing grid again...")
+                        self.response_text.grid(row=8, column=0, columnspan=3, 
+                                            sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                        self.root.update_idletasks()
+                        self.root.update()
+                        print(f"✅ After force grid - Widget mapped: {self.response_text.winfo_ismapped()}")
+                    
+                    # Scroll to end
+                    try:
+                        self.response_text.see(tk.END)
+                    except:
+                        pass
+                    
+                except Exception as e:
+                    print(f"❌ Error restoring log visibility: {e}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                print("📝 Logs were hidden, keeping them hidden")
+            # ===== End Fix =====
+            
+            # ===== CRITICAL FIX: Restart GUI update processor =====
+            print("🔧 Restarting GUI update processor...")
+            # Cancel any existing processor
+            if hasattr(self, '_gui_processor_id'):
+                try:
+                    self.root.after_cancel(self._gui_processor_id)
+                except:
+                    pass
+            
+            # Clear the queue of any stale updates
+            while not self.gui_update_queue.empty():
+                try:
+                    self.gui_update_queue.get_nowait()
+                except:
+                    break
+            
+            # Restart the processor
+            def restart_processor():
+                try:
+                    # Verify main loop is responsive
+                    test_var = tk.IntVar()
+                    test_var.set(1)
+                    if test_var.get() == 1:
+                        print("✅ Main loop is responsive")
+                        # Start processing updates again
+                        self.process_gui_updates()
+                        print("✅ GUI update processor restarted")
+                    else:
+                        print("❌ Main loop not responsive")
+                except Exception as e:
+                    print(f"❌ Failed to verify main loop: {e}")
+            
+            self.root.after(100, restart_processor)
+            # ===== End Critical Fix =====
+            
+            # CRITICAL FIX: Give the widget time to fully render before logging
+            def delayed_log():
+                self.log_to_response("🟢 App restored from tray")
+            
+            self.root.after(500, delayed_log)  # Wait 500ms before first log
+            print("✅ Window restore complete")
+            print("=" * 60)
             
         except Exception as e:
-            print(f"Error in _restore_window_main_thread: {e}")
-            # Only log if root still exists
+            print(f"❌ Error in _restore_window_main_thread: {e}")
+            import traceback
+            traceback.print_exc()
             try:
                 if self.root and self.root.winfo_exists():
                     self.log_to_response(f"❌ Error restoring from tray: {e}")
             except:
-                pass    
+                pass
 
-    def force_show_window(self, icon=None, item=None):
-        """Force show window - backup method"""
-        print("🔄 force_show_window called")
-        self.send_message("force_restore_window")
+    def _restart_main_loop(self):
+        """Restart the main event loop if it stopped"""
+        try:
+            print("🔧 Attempting to restart main loop...")
+            # Process any pending events
+            self.root.update_idletasks()
+            self.root.update()
+            print("✅ Main loop restarted")
+        except Exception as e:
+            print(f"❌ Failed to restart main loop: {e}")
+
 
     def restore_window_main_thread(self):
         """Restore window - runs in main thread"""
+        print("=" * 60)
         print("🔄 restore_window_main_thread called")
         
         if not self.is_minimized_to_tray:
@@ -2741,8 +3028,8 @@ class LeadFetcherApp:
             
             # Reset flags
             self.is_minimized_to_tray = False
-            self.is_closing = False  # IMPORTANT: Reset this flag
-            self.force_quit = False   # IMPORTANT: Reset this flag too
+            self.is_closing = False
+            self.force_quit = False
             
             print("🔄 Restoring window in main thread...")
             
@@ -2763,12 +3050,64 @@ class LeadFetcherApp:
             current_protocol = self.root.protocol("WM_DELETE_WINDOW")
             print(f"✅ Close protocol verified: {current_protocol}")
             
-            self.log_to_response("✅ Window restored from tray!")
+            # ===== FIX: Restore log visibility state =====
+            print(f"📊 Log state: logs_visible={self.logs_visible}, authenticated={self.logs_authenticated}")
+            
+            if self.logs_visible:
+                try:
+                    print("📝 Restoring log visibility...")
+                    
+                    # CRITICAL: Ensure widget state is NORMAL
+                    self.response_text.config(state=tk.NORMAL)
+                    
+                    # Grid the widget
+                    self.response_text.grid(row=8, column=0, columnspan=3, 
+                                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                    
+                    # Update labels
+                    self.toggle_logs_button.config(text="Hide Logs")
+                    self.log_label.config(text="API Response (Logs Visible):")
+                    
+                    # Force complete update
+                    self.root.update_idletasks()
+                    self.root.update()
+                    
+                    # Scroll to end
+                    try:
+                        self.response_text.see(tk.END)
+                    except:
+                        pass
+                    
+                    print(f"✅ Logs restored - Widget mapped: {self.response_text.winfo_ismapped()}")
+                except Exception as e:
+                    print(f"❌ Error restoring log visibility: {e}")
+                    import traceback
+                    traceback.print_exc()
+            # ===== End Fix =====
+            
+            # CRITICAL FIX: Ensure main loop is running
+            print("🔧 Verifying main loop state...")
+            try:
+                self.root.after_idle(lambda: None)
+                print("✅ Main loop is active")
+            except Exception as e:
+                print(f"⚠️ Main loop may be broken: {e}")
+                self.root.after(100, self._restart_main_loop)
+            
+            # CRITICAL FIX: Give the widget time to fully render before logging
+            def delayed_log():
+                self.log_to_response("✅ Window restored from tray!")
+            
+            self.root.after(500, delayed_log)  # Wait 500ms before first log
             print("✅ Window restore successful")
+            print("=" * 60)
             
         except Exception as e:
             print(f"❌ Restore failed: {e}")
+            import traceback
+            traceback.print_exc()
             self.log_to_response(f"❌ Restore failed: {e}")
+
 
     def force_restore_window_main_thread(self):
         """Force restore - runs in main thread"""
@@ -2816,12 +3155,60 @@ class LeadFetcherApp:
                 self.root.protocol("WM_DELETE_WINDOW", self.on_window_close)
                 print(f"✅ Protocol re-established: {self.root.protocol('WM_DELETE_WINDOW')}")
                 
-                self.log_to_response("✅ Window force-restored!")
+                # ===== FIX: Restore log visibility state =====
+                if self.logs_visible:
+                    try:
+                        print("📝 Restoring log visibility after force restore...")
+                        
+                        # CRITICAL: Ensure widget state is NORMAL
+                        self.response_text.config(state=tk.NORMAL)
+                        
+                        # Grid the widget
+                        self.response_text.grid(row=8, column=0, columnspan=3, 
+                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                        
+                        # Update labels
+                        self.toggle_logs_button.config(text="Hide Logs")
+                        self.log_label.config(text="API Response (Logs Visible):")
+                        
+                        # Force complete update
+                        self.root.update_idletasks()
+                        self.root.update()
+                        
+                        # Scroll to end
+                        try:
+                            self.response_text.see(tk.END)
+                        except:
+                            pass
+                        
+                        print(f"✅ Logs restored after force - Widget mapped: {self.response_text.winfo_ismapped()}")
+                    except Exception as e:
+                        print(f"❌ Error restoring log visibility: {e}")
+                        import traceback
+                        traceback.print_exc()
+                # ===== End Fix =====
+                
+                # CRITICAL FIX: Ensure main loop is running
+                print("🔧 Verifying main loop state after force restore...")
+                try:
+                    self.root.after_idle(lambda: None)
+                    print("✅ Main loop is active")
+                except Exception as e:
+                    print(f"⚠️ Main loop may be broken: {e}")
+                    self.root.after(100, self._restart_main_loop)
+                
+                # CRITICAL FIX: Give the widget time to fully render before logging
+                def delayed_log():
+                    self.log_to_response("✅ Window force-restored!")
+                
+                self.root.after(500, delayed_log)  # Wait 500ms before first log
             else:
                 self.log_to_response("❌ All restore methods failed")
                 
         except Exception as e:
             print(f"❌ Force restore error: {e}")
+            import traceback
+            traceback.print_exc()
 
     def keyboard_restore(self, event=None):
         """Keyboard shortcut restore"""
@@ -2915,34 +3302,54 @@ class LeadFetcherApp:
         return False
     
     def quit_app(self, icon=None, item=None):
-        """Completely exit the application"""
+        """Completely exit the application and kill related processes"""
         print("quit_app called")  # Debug print
         try:
-            # Stop any auto-fetch
+            # Stop any auto-fetch timer
             if hasattr(self, 'auto_fetch_timer') and self.auto_fetch_timer:
                 self.root.after_cancel(self.auto_fetch_timer)
-                
-            # Stop tray icon
+
+            # Stop tray icon if running
             if self.tray_icon:
                 print("Stopping tray icon before quit...")
                 self.tray_icon.stop()
                 self.tray_icon = None
-                
+
             self.log_to_response("❌ Application closing...")
-            
-            # Quit and destroy the application
+
+            # Gracefully close Tkinter
             if self.root and self.root.winfo_exists():
                 self.root.quit()
                 self.root.destroy()
-            
-            # Force exit if needed
-            import sys
+
+            print("🔻 Killing firefox and leadfetcher processes...")
+
+            # ---- Force terminate related processes ----
+            if os.name == "nt":  # Windows
+                subprocess.call("taskkill /F /IM firefox.exe /T", shell=True)
+                subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True)
+            else:  # Linux / macOS
+                subprocess.call("pkill -f firefox", shell=True)
+                subprocess.call("pkill -f leadfetcher", shell=True)
+
+            print("✅ All related processes killed successfully.")
+
+            # Exit the app
             sys.exit(0)
-            
+
         except Exception as e:
             print(f"Error during quit: {e}")
-            import sys
-            sys.exit(0)    
+            try:
+                # Try to kill processes even if something failed
+                if os.name == "nt":
+                    subprocess.call("taskkill /F /IM firefox.exe /T", shell=True)
+                    subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True)
+                else:
+                    subprocess.call("pkill -f firefox", shell=True)
+                    subprocess.call("pkill -f leadfetcher", shell=True)
+            except Exception:
+                pass
+            sys.exit(0)
 
     def setup_gui(self):
         # Main frame
@@ -3129,7 +3536,6 @@ class LeadFetcherApp:
             
         except Exception as e:
             print(f"ERROR in show_verification_code: {e}")
-            import traceback
             traceback.print_exc()
     
     def hide_verification_code(self):
@@ -3154,6 +3560,8 @@ class LeadFetcherApp:
 
     def toggle_logs(self):
         """Toggle log visibility with password protection"""
+        print(f"🔄 toggle_logs called - Current state: logs_visible={self.logs_visible}, authenticated={self.logs_authenticated}")
+        
         if not self.logs_visible:
             # Trying to show logs - check authentication
             if not self.logs_authenticated:
@@ -3169,18 +3577,33 @@ class LeadFetcherApp:
                     return
                 
                 self.logs_authenticated = True
+                print("✅ Password authenticated")
             
             # Show logs
-            self.response_text.grid()
+            print("📝 Showing logs...")
+            self.response_text.grid(row=8, column=0, columnspan=3, 
+                       sticky=(tk.W, tk.E, tk.N, tk.S), pady=5) 
+            self.root.update_idletasks()
             self.logs_visible = True
             self.toggle_logs_button.config(text="Hide Logs")
             self.log_label.config(text="API Response (Logs Visible):")
+            
+            # Force the widget to update and scroll to end
+            self.root.update_idletasks()
+            try:
+                self.response_text.see(tk.END)
+            except:
+                pass
+            
+            print(f"✅ Logs shown - Widget visible: {self.response_text.winfo_ismapped()}")
         else:
             # Hide logs
+            print("📝 Hiding logs...")
             self.response_text.grid_remove()
             self.logs_visible = False
             self.toggle_logs_button.config(text="Show Logs")
             self.log_label.config(text="API Response:")
+            print("✅ Logs hidden")
 
     def clear_response(self):
         """Clear the response text area"""
@@ -3353,34 +3776,52 @@ class LeadFetcherApp:
             except Exception as fallback_error:
                 self.log_to_response(f"❌ Fallback save failed: {fallback_error}")
                 return None
-    
+
     def fetch_data_threaded(self, is_auto_fetch=False):
         """Run fetch_data in a separate thread to prevent GUI freezing"""
         if not hasattr(self, '_fetch_thread') or not self._fetch_thread.is_alive():
-            self._fetch_thread = threading.Thread(target=self.fetch_data, args=(is_auto_fetch,))
+            # Get ALL Tkinter variables in main thread BEFORE starting thread
+            mobile = self.mobile_var.get().strip()
+            send_confirmation = self.send_confirmation_var.get()
+            
+            # Pass values as arguments to avoid Tkinter access in thread
+            self._fetch_thread = threading.Thread(
+                target=self.fetch_data, 
+                args=(is_auto_fetch, mobile, send_confirmation)
+            )
             self._fetch_thread.daemon = True
             self._fetch_thread.start()
-    
-    def fetch_data(self, is_auto_fetch=False):
-        """Fetch data from the LeadsCruise API - Optimized for large datasets"""
+
+    def fetch_data(self, is_auto_fetch=False, mobile=None, send_confirmation=True):
+        """Fetch data from the LeadsCruise API - Optimized for large datasets
+        
+        Args:
+            is_auto_fetch: Whether this is an automatic fetch
+            mobile: Mobile number (passed from main thread)
+            send_confirmation: Whether to send confirmation (passed from main thread)
+        """
         global mobile_number
-        mobile = self.mobile_var.get().strip()
         
         if not mobile:
-            self.update_status("Error: Mobile number is required!")
+            # Queue GUI updates instead of calling directly
+            self.gui_update_queue.put(lambda: self.update_status("Error: Mobile number is required!"))
             if not is_auto_fetch:
-                messagebox.showerror("Error", "Please enter a mobile number!")
+                self.gui_update_queue.put(lambda: messagebox.showerror("Error", "Please enter a mobile number!"))
             return
+        
         mobile_number = mobile
         
-        # Update GUI - combine into single after() call
-        def start_fetch():
-            self.fetch_button.config(state='disabled')
-            self.progress.start()
-            status = f"Auto-fetching data for {mobile}..." if is_auto_fetch else f"Fetching data for {mobile}..."
-            self.update_status(status)
+        # Queue the start updates
+        def start_fetch_ui():
+            try:
+                self.fetch_button.config(state='disabled')
+                self.progress.start()
+                status = f"Auto-fetching data for {mobile}..." if is_auto_fetch else f"Fetching data for {mobile}..."
+                self.update_status(status)
+            except Exception as e:
+                print(f"Error in start_fetch_ui: {e}")
         
-        self.root.after(0, start_fetch)
+        self.gui_update_queue.put(start_fetch_ui)
         
         try:
             url = f"{self.base_url}{mobile}"
@@ -3407,19 +3848,18 @@ class LeadFetcherApp:
                     # Minimal logging - NO JSON dumps
                     self.log_to_response(f"SUCCESS: {leads_count} leads received (Total: {total_leads})")
 
-                    # ===== SAVE API RESPONSE LOCALLY =====
+                    # Save API response locally
                     file_path = self.save_json_file(data, 'api_response.json')
                     if file_path:
                         self.log_to_response(f"📁 API response saved locally")
-                    # ===== END SAVE =====
                     
-                    # Send confirmation
-                    should_send_confirmation = (
-                        (not is_auto_fetch and self.send_confirmation_var.get()) or
-                        (is_auto_fetch and self.is_first_auto_fetch and self.send_confirmation_var.get())
+                    # Determine if we should send confirmation
+                    should_send = (
+                        (not is_auto_fetch and send_confirmation) or
+                        (is_auto_fetch and self.is_first_auto_fetch and send_confirmation)
                     )
                     
-                    if should_send_confirmation:
+                    if should_send:
                         # Run confirmation in separate thread to not block
                         threading.Thread(
                             target=self.send_confirmation_response, 
@@ -3430,38 +3870,48 @@ class LeadFetcherApp:
                     if is_auto_fetch and self.is_first_auto_fetch:
                         self.is_first_auto_fetch = False
                     
-                    # Single combined GUI update
-                    def update_success():
-                        self.update_status(f"Received {leads_count} leads for {mobile}")
-                        if not is_auto_fetch:
-                            messagebox.showinfo("Success", f"Received {leads_count} leads")
+                    # Queue success update
+                    def success_update():
+                        try:
+                            self.update_status(f"Received {leads_count} leads for {mobile}")
+                            if not is_auto_fetch:
+                                messagebox.showinfo("Success", f"Received {leads_count} leads")
+                        except Exception as e:
+                            print(f"Error in success_update: {e}")
                     
-                    self.root.after(0, update_success)
+                    self.gui_update_queue.put(success_update)
                     
                 else:
                     error_msg = data.get('error', 'Unknown error')
                     self.log_to_response(f"API Error: {error_msg}")
-                    self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
+                    self.gui_update_queue.put(lambda: self.update_status(f"Error: {error_msg}"))
             else:
                 self.log_to_response(f"HTTP {response.status_code}")
-                self.root.after(0, lambda: self.update_status(f"HTTP Error {response.status_code}"))
+                self.gui_update_queue.put(lambda: self.update_status(f"HTTP Error {response.status_code}"))
                 
         except Exception as e:
-            self.log_to_response(f"Error: {str(e)}")
-            self.root.after(0, lambda: self.update_status(f"Error: {str(e)}"))
+            error_str = str(e)
+            self.log_to_response(f"Error: {error_str}")
+            self.gui_update_queue.put(lambda: self.update_status(f"Error: {error_str}"))
             
         finally:
-            # Single combined cleanup
-            def cleanup():
-                self.progress.stop()
-                self.fetch_button.config(state='normal')
+            # Queue cleanup
+            def cleanup_ui():
+                try:
+                    self.progress.stop()
+                    self.fetch_button.config(state='normal')
+                except Exception as e:
+                    print(f"Error in cleanup_ui: {e}")
             
-            self.root.after(0, cleanup)
+            self.gui_update_queue.put(cleanup_ui)
+
 
     def send_confirmation_response(self, mobile, received_data):
         """Send confirmation back to the server that data was received"""
         try:
-            callback_url = self.callback_var.get().strip()
+            # Use instance variable instead of StringVar
+            callback_url = self.callback_url
+            
             if not callback_url:
                 self.log_to_response("\n⚠️ No callback URL specified - skipping confirmation")
                 return
@@ -3511,7 +3961,6 @@ class LeadFetcherApp:
                     response_json = confirmation_response.json()
                     self.log_to_response(f"Server Response: {json.dumps(response_json, indent=2)}")
                     # ===== SAVE CONFIRMATION LOCALLY =====
-                    # Save the confirmation we sent + server response
                     confirmation_record = {
                         "sent_data": confirmation_data,
                         "server_response": response_json,
@@ -3534,9 +3983,9 @@ class LeadFetcherApp:
         except Exception as e:
             self.log_to_response(f"❌ Confirmation error: {str(e)}")
         finally:
-            # Run WhatsApp automation after confirmation is sent
-            if self.send_confirmation_var.get():
-                self.run_whatsapp_automation(mobile)
+            # Run WhatsApp automation after confirmation
+            self.run_whatsapp_automation(mobile)
+
 
     def test_webdriver_modified(self, phone_number=None):
         """Modified test_webdriver without infinite loop and sys.exit()"""
@@ -3565,9 +4014,10 @@ class LeadFetcherApp:
             return 0
         
         # Set up Firefox driver with user-specific profile
-        driver, display = setup_firefox_driver(phone_number)
+        # NOTE: Windows doesn't use virtual display, so only returns driver
+        driver = setup_firefox_driver(phone_number)
         
-        # Check if driver setup failed (display can be None on Windows)
+        # Check if driver setup failed
         if driver is None:
             logger.error("Failed to set up WebDriver")
             return 1
@@ -3637,11 +4087,14 @@ class LeadFetcherApp:
             # Always clean up
             logger.info("Cleaning up...")
             if driver:
-                driver.quit()
-            # Only stop display if it exists (Linux only)
-            if display:
-                display.stop()
+                try:
+                    driver.quit()
+                except:
+                    pass
+                logger.info("Driver quit successfully")
 
+
+        # REPLACE your run_whatsapp_automation method with this:
     def run_whatsapp_automation(self, mobile_number):
         """Run the WhatsApp automation in a separate thread, after fetching WhatsApp number from DB.
         If it finishes or exits abruptly, schedule another attempt after 10 minutes.
@@ -3650,11 +4103,16 @@ class LeadFetcherApp:
         def schedule_retry():
             """Schedules the next WhatsApp automation after 10 minutes"""
             retry_delay = 5 * 60 * 1000  # 10 minutes in milliseconds
-            self.root.after(
-                retry_delay,
-                lambda: self.run_whatsapp_automation(mobile_number)
-            )
-            self.root.after(0, lambda: self.log_to_response("⏳ Retrying WhatsApp automation in 10 minutes..."))
+            
+            # Use GUI update queue instead of calling root.after from thread
+            def schedule_on_main_thread():
+                self.root.after(
+                    retry_delay,
+                    lambda: self.run_whatsapp_automation(mobile_number)
+                )
+                self.log_to_response("⏳ Retrying WhatsApp automation in 10 minutes...")
+            
+            self.gui_update_queue.put(schedule_on_main_thread)
 
         def kill_firefox_processes():
             """Force kill all Firefox and geckodriver processes"""
@@ -3668,7 +4126,8 @@ class LeadFetcherApp:
 
         def whatsapp_thread():
             try:
-                self.root.after(0, lambda: self.log_to_response(f"🔄 Fetching WhatsApp number for {mobile_number}..."))
+                # Use log_to_response (which is already thread-safe)
+                self.log_to_response(f"🔄 Fetching WhatsApp number for {mobile_number}...")
 
                 try:
                     # Fetch WhatsApp number from backend API
@@ -3679,27 +4138,27 @@ class LeadFetcherApp:
                         data = response.json()
                         if data.get("success") and data.get("data"):
                             whatsapp_number = data["data"].get("whatsappNumber", mobile_number)
-                            self.root.after(0, lambda: self.log_to_response(f"✅ WhatsApp number fetched: {whatsapp_number}"))
+                            self.log_to_response(f"✅ WhatsApp number fetched: {whatsapp_number}")
                         else:
                             whatsapp_number = mobile_number
-                            self.root.after(0, lambda: self.log_to_response("⚠️ No WhatsApp number found in DB, using provided number"))
+                            self.log_to_response("⚠️ No WhatsApp number found in DB, using provided number")
                     else:
                         whatsapp_number = mobile_number
-                        self.root.after(0, lambda: self.log_to_response(f"⚠️ Failed to fetch from DB, using provided number. HTTP {response.status_code}"))
+                        self.log_to_response(f"⚠️ Failed to fetch from DB, using provided number. HTTP {response.status_code}")
 
                 except Exception as e:
                     whatsapp_number = mobile_number
-                    self.root.after(0, lambda: self.log_to_response(f"❌ Error fetching WhatsApp number: {e}"))
+                    self.log_to_response(f"❌ Error fetching WhatsApp number: {e}")
 
                 # Run the automation
-                self.root.after(0, lambda: self.log_to_response(f"🚀 Starting WhatsApp automation for {whatsapp_number}..."))
+                self.log_to_response(f"🚀 Starting WhatsApp automation for {whatsapp_number}...")
 
                 exit_code = self.test_webdriver_modified(whatsapp_number)
 
                 if exit_code == 0:
-                    self.root.after(0, lambda: self.log_to_response("✅ WhatsApp automation completed successfully"))
+                    self.log_to_response("✅ WhatsApp automation completed successfully")
                 else:
-                    self.root.after(0, lambda: self.log_to_response(f"⚠️ WhatsApp automation finished with exit code: {exit_code}"))
+                    self.log_to_response(f"⚠️ WhatsApp automation finished with exit code: {exit_code}")
 
                 kill_firefox_processes()
 
@@ -3708,45 +4167,67 @@ class LeadFetcherApp:
 
             except Exception as e:
                 error_msg = f"❌ WhatsApp automation error: {str(e)}"
-                self.root.after(0, lambda: self.log_to_response(error_msg))
-                self.root.after(0, lambda: self.log_to_response(f"Traceback: {traceback.format_exc()}"))
+                self.log_to_response(error_msg)
+                self.log_to_response(f"Traceback: {traceback.format_exc()}")
                 schedule_retry()  # Retry even after exceptions
 
         # Clean up finished threads
         self.whatsapp_threads = [t for t in self.whatsapp_threads if t.is_alive()]
 
         # Start WhatsApp automation in background thread
-        whatsapp_thread = threading.Thread(target=whatsapp_thread, daemon=True)
-        whatsapp_thread.start()
-        self.whatsapp_threads.append(whatsapp_thread)
+        thread = threading.Thread(target=whatsapp_thread, daemon=True)
+        thread.start()
+        self.whatsapp_threads.append(thread)
 
         self.log_to_response(f"📱 WhatsApp automation started in background thread (Total active: {len(self.whatsapp_threads)})...")
 
     def log_to_response(self, message):
         """Thread-safe method to append log messages and detect verification codes"""
-        def _do_log():
-            try:
-                if hasattr(self, 'response_text') and self.response_text:
-                    self.response_text.insert(tk.END, message + '\n')
-                    self.response_text.see(tk.END)
-                    self.root.update_idletasks()
-                    
-                    # Check if message contains a verification code
-                    self.detect_and_show_verification_code(message)
-            except Exception as e:
-                print(f"Error in log_to_response: {e}")
-        
         # Always print to console as backup
         print(f"LOG: {message}")
         
-        # Schedule UI update on main thread
-        if hasattr(self, 'root') and self.root:
+        # Use GUI update queue instead of root.after()
+        def _do_log():
             try:
-                self.root.after(0, _do_log)
-            except:
-                # If root is destroyed, just print
-                pass
+                # Check if widget exists and is valid
+                if not hasattr(self, 'response_text') or not self.response_text:
+                    print(f"DEBUG: response_text not available")
+                    return
+                
+                if not self.response_text.winfo_exists():
+                    print(f"DEBUG: Widget no longer exists!")
+                    return
+                
+                # CRITICAL: Always set to NORMAL before inserting
+                self.response_text.config(state=tk.NORMAL)
+                
+                # Insert the message
+                self.response_text.insert(tk.END, message + '\n')
+                
+                # Scroll to end
+                self.response_text.see(tk.END)
+                
+                # Check if message contains a verification code
+                self.detect_and_show_verification_code(message)
+                
+                print(f"DEBUG: Message logged successfully to GUI")
+                
+            except Exception as e:
+                print(f"ERROR in _do_log: {e}")
+                import traceback
+                traceback.print_exc()
         
+        # Add to GUI update queue instead of using root.after()
+        if hasattr(self, 'gui_update_queue'):
+            try:
+                self.gui_update_queue.put(_do_log)
+                print(f"DEBUG: Log queued for GUI update")
+            except Exception as e:
+                print(f"ERROR: Failed to queue log: {e}")
+        else:
+            print(f"ERROR: gui_update_queue not available")
+
+
     def _append_to_text(self, message):
         """Append text to response area and scroll to bottom"""
         self.response_text.insert(tk.END, message + "\n")
@@ -4209,7 +4690,6 @@ def main():
         
     except Exception as e:
         print(f"Application error: {e}")
-        import traceback
         traceback.print_exc()
         input("Press Enter to exit...")
 

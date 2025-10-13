@@ -937,31 +937,31 @@ const Sheets = () => {
       }}>
 
         <div className={styles.metricsSection}>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday}</strong>
             <span>Leads Purchased Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsThisWeek")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsThisWeek")}>
             <strong>{metrics.totalLeadsThisWeek}</strong>
             <span>Leads Purchased This Week</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
             <span>Lead Manager Replies Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
             <strong>{messageCount * metrics.totalLeadsToday || 0}</strong>
             <span>Whatsapp Replies Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
             <span>Emails Sent Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
             <strong>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}</strong>
             <span>Total Emails Sent</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
             <strong>{metrics.totalLeadsCaptured}</strong>
             <span>Total Leads Captured</span>
           </div>

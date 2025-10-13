@@ -1,0 +1,13 @@
+pyinstaller --onefile --windowed `
+    --splash "splash.png" `
+    --add-data "version.txt;." `
+    --collect-all selenium `
+    --collect-all webdriver_manager `
+    --collect-all pystray `
+    --collect-all keyring `
+    --collect-all PIL `
+    --hidden-import=win32con `
+    --hidden-import=win32api `
+    --hidden-import=winreg `
+    --name "LeadFetcher" `
+    lead_fetcher.py

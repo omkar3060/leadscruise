@@ -71,6 +71,13 @@ td {
   word-wrap: break-word;
 }
 
+.slno-col {
+  width: 60px;        /* adjust as needed (40px–80px works well) */
+  text-align: center; /* keeps numbers neatly centered */
+  white-space: nowrap;
+}
+
+
 .no-leads {
   margin: 10px;
 }

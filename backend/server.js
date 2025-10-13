@@ -33,7 +33,7 @@ const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
 const teammateRoutes = require('./routes/teammates');
 const path = require("path");
-const os=require("os");
+const os = require("os");
 const server = createServer(app); // ✅ Create HTTP server
 server.setTimeout(15 * 60 * 1000);
 const io = new Server(server, {
@@ -187,18 +187,18 @@ app.post("/api/track-invoice-download", async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email is required" 
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
       });
     }
 
     const user = await User.findOne({ email });
-    
+
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
       });
     }
 
@@ -206,26 +206,26 @@ app.post("/api/track-invoice-download", async (req, res) => {
     if (!user.firstInvoiceDownloadTime) {
       user.firstInvoiceDownloadTime = new Date();
       await user.save();
-      
+
       console.log(`First invoice download tracked for ${email} at ${user.firstInvoiceDownloadTime}`);
-      
-      return res.json({ 
-        success: true, 
+
+      return res.json({
+        success: true,
         message: "First download tracked",
         firstDownloadTime: user.firstInvoiceDownloadTime
       });
     }
 
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       message: "Download already tracked",
       firstDownloadTime: user.firstInvoiceDownloadTime
     });
 
   } catch (error) {
     console.error("Error tracking invoice download:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: "Server error",
       error: error.message
     });
@@ -238,24 +238,24 @@ app.get("/api/get-first-download-time/:email", async (req, res) => {
     const { email } = req.params;
 
     const user = await User.findOne({ email });
-    
+
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
       });
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       firstDownloadTime: user.firstInvoiceDownloadTime,
       hasDownloaded: !!user.firstInvoiceDownloadTime
     });
 
   } catch (error) {
     console.error("Error fetching download time:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: "Server error",
       error: error.message
     });
@@ -268,11 +268,11 @@ app.get("/api/check-edit-eligibility/:email", async (req, res) => {
     const { email } = req.params;
 
     const user = await User.findOne({ email });
-    
+
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
       });
     }
 
@@ -305,8 +305,8 @@ app.get("/api/check-edit-eligibility/:email", async (req, res) => {
 
   } catch (error) {
     console.error("Error checking edit eligibility:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: "Server error",
       error: error.message
     });
@@ -386,9 +386,9 @@ app.post('/api/send-invoice-email', async (req, res) => {
     const { email, unique_id } = req.body;
 
     if (!email || !unique_id) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email and Order ID are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Email and Order ID are required'
       });
     }
 
@@ -581,21 +581,21 @@ app.post('/api/send-invoice-email', async (req, res) => {
 
     // Send email
     const info = await emailTransporter.sendMail(mailOptions);
-    
+
     console.log(`✅ Invoice email sent successfully to ${email}:`, info.messageId);
-    
-    res.status(200).json({ 
-      success: true, 
+
+    res.status(200).json({
+      success: true,
       message: 'Email sent successfully',
       messageId: info.messageId
     });
 
   } catch (error) {
     console.error('❌ Error sending invoice email:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to send email', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send email',
+      error: error.message
     });
   }
 });
@@ -1020,18 +1020,22 @@ app.post("/api/update-max-captures", async (req, res) => {
         : null;
       const now = new Date();
 
-      if (lastUpdated && now - lastUpdated < 24 * 60 * 60 * 1000) {
+      // 🕒 Allow update only if 1 hour has passed since the last update
+      const ONE_HOUR = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      if (lastUpdated && now - lastUpdated < ONE_HOUR) {
+        const minutesLeft = Math.ceil((ONE_HOUR - (now - lastUpdated)) / 60000);
         return res.status(403).json({
-          message: "You can update Max Captures only once every 24 hours.",
+          message: `You can update Max Captures only once every hour. Try again in ${minutesLeft} minute(s).`,
         });
       }
 
       user.maxCaptures = maxCaptures;
       user.lastUpdatedMaxCaptures = now;
       user.markModified("maxCaptures");
-      await user.save({ validateBeforeSave: false }); // Force update
+      await user.save({ validateBeforeSave: false });
 
-      console.log("Updated User:", user); // Debugging
+      console.log("Updated User:", user);
       return res.json({ message: "Max captures updated successfully", user });
     } else {
       const newUser = new UserLeadCounter({
@@ -1040,8 +1044,8 @@ app.post("/api/update-max-captures", async (req, res) => {
         lastUpdatedMaxCaptures: new Date(),
       });
       await newUser.save();
-      console.log("New User Created:", newUser); // Debugging
 
+      console.log("New User Created:", newUser);
       return res.json({
         message: "Max captures set successfully",
         user: newUser,
@@ -1052,6 +1056,7 @@ app.post("/api/update-max-captures", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 // GET endpoint to fetch the user's selected states
 app.get("/api/get-states", async (req, res) => {
   try {
@@ -1380,7 +1385,7 @@ app.post("/api/cycle", async (req, res) => {
     const dataString = data.toString();
     console.log("Python script stdout:", dataString);
     result += dataString;
-    
+
     // Check for buyer balance information
     if (dataString.includes("BUYER_BALANCE:")) {
       const balanceMatch = dataString.match(/BUYER_BALANCE:(\d+)/);
@@ -1514,7 +1519,7 @@ app.post("/api/restart-worker", async (req, res) => {
   try {
     // Send restart signal to login script which will restart the worker
     pythonProcess.stdin.write(JSON.stringify({ command: "RESTART_WORKER" }) + "\n");
-    
+
     res.json({
       status: "success",
       message: "Worker restart signal sent",
@@ -1532,7 +1537,7 @@ app.post("/api/restart-worker", async (req, res) => {
 app.get("/api/active-sessions", async (req, res) => {
   try {
     const activeSessionIds = Array.from(activePythonProcesses.keys());
-    
+
     res.json(activeSessionIds);
   } catch (error) {
     console.error("Error fetching active sessions:", error);
@@ -1546,9 +1551,9 @@ app.get("/api/active-sessions", async (req, res) => {
 // Endpoint to check if login session is still active
 app.get("/api/session-status/:uniqueId", async (req, res) => {
   const { uniqueId } = req.params;
-  
+
   const pythonProcess = activePythonProcesses.get(uniqueId);
-  
+
   if (!pythonProcess) {
     return res.json({
       status: "inactive",
@@ -1924,17 +1929,11 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       aiProcessed: true
     });
 
-    // FIX: Swap the logic - it was backwards!
-    // If the lead exists in the Lead collection (AI-captured), mark as "Manual" 
-    // because it means the lead was manually fetched AFTER AI already got it
-    // If it doesn't exist in Lead collection, it means this IS the AI capturing it
-    const leadSource = existingAILead ? "Manual" : "AI";
+    // The source determination logic
+    const leadSource = existingAILead ? "AI" : "Manual"; // This is BACKWARDS!
     const isAIProcessed = !existingAILead;
 
-    console.log(`Lead source determined: ${leadSource}, AI Processed: ${isAIProcessed}`);
-    console.log(`Existing AI Lead found: ${!!existingAILead}`);
-
-    // Store the new lead with correct source and aiProcessed fields
+    // Store with the determined source
     const newLead = new FetchedLead({
       name,
       email,
@@ -1943,12 +1942,11 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       lead_bought,
       address,
       createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
-      source: leadSource,
-      aiProcessed: isAIProcessed
+      source: leadSource,        // ← SAVED TO DATABASE
+      aiProcessed: isAIProcessed // ← SAVED TO DATABASE
     });
-    
-    console.log("About to save lead with source:", newLead.source, "aiProcessed:", newLead.aiProcessed);
-    await newLead.save();
+
+    await newLead.save(); // ← Persisted to MongoDB
     console.log("Lead saved successfully, ID:", newLead._id);
 
     return res.json({
@@ -2339,8 +2337,8 @@ app.get("/api/get-user-leads/:userMobile", async (req, res) => {
 // Function to get the LeadFetcher application directory
 function getLeadFetcherDirectory() {
   if (os.platform() === 'win32') {
-    const localAppData = process.env.LOCALAPPDATA || 
-                         path.join(os.homedir(), 'AppData', 'Local');
+    const localAppData = process.env.LOCALAPPDATA ||
+      path.join(os.homedir(), 'AppData', 'Local');
     return path.join(localAppData, 'LeadFetcher');
   } else {
     return path.join(os.homedir(), '.leadfetcher');
@@ -2367,14 +2365,14 @@ function safeWriteFile(filePath, data, fallbackDir = null) {
     // Ensure directory exists
     const dir = path.dirname(filePath);
     ensureDirectoryExists(dir);
-    
+
     // Write file
     fs.writeFileSync(filePath, data);
     console.log(`✅ File saved successfully: ${filePath}`);
     return true;
   } catch (error) {
     console.error(`❌ Failed to write file ${filePath}:`, error);
-    
+
     // Try fallback location if provided
     if (fallbackDir) {
       try {
@@ -2427,13 +2425,13 @@ app.post("/api/data-received-confirmation", async (req, res) => {
     // Get LeadFetcher application directory
     const leadFetcherDir = getLeadFetcherDirectory();
     const filePath = path.join(leadFetcherDir, "confirmations.json");
-    
+
     // Fallback directory (current working directory)
     const fallbackDir = process.cwd();
 
     // Write confirmations.json to LeadFetcher directory
     const writeSuccess = safeWriteFile(
-      filePath, 
+      filePath,
       JSON.stringify(confirmationData, null, 2),
       fallbackDir
     );
@@ -2512,7 +2510,7 @@ app.get("/api/get-user-leads-with-message/:userMobile", async (req, res) => {
     // Get LeadFetcher application directory
     const leadFetcherDir = getLeadFetcherDirectory();
     const filePath = path.join(leadFetcherDir, "api_response.json");
-    
+
     // Fallback directory (current working directory)
     const fallbackDir = process.cwd();
 

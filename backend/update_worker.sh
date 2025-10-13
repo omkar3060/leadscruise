@@ -48,7 +48,7 @@ echo "$ACTIVE_SESSIONS" | jq -r '.[]' | while read uniqueId; do
     echo "Restarting worker for session: $uniqueId"
     
     # Make API call to restart worker
-    RESTART_URL="http://localhost:5000/api/restart-worker"
+    RESTART_URL="https://api.leadscruise.com/api/restart-worker"
     
     RESPONSE=$(curl -s -X POST "$RESTART_URL" \
         -H "Content-Type: application/json" \

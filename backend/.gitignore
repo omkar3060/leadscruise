@@ -34,3 +34,4 @@ confirmations.json
 feedback.json
 test_closing.spec
 session_*.pkl
+worker_script_backup_*.py
