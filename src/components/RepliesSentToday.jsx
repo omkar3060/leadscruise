@@ -35,13 +35,19 @@ const TotalLeadsToday = () => {
   }, []);
 
   const exportToExcel = () => {
-    const cleanedLeads = todayLeads.map(({ _v, ...rest }) => rest);  // This removes the _v field
+    const cleanedLeads = todayLeads.map(({ _v, ...rest }, index) => ({
+      "S.No": index + 1,
+      ...rest
+    }));
     const worksheet = XLSX.utils.json_to_sheet(cleanedLeads);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "TodayLeads");
-    XLSX.writeFile(workbook, "TotalLeadsToday.xlsx");
+    
+    const today = new Date().toISOString().split("T")[0];
+    const filename = `TotalLeadsToday_${today}.xlsx`;
+    
+    XLSX.writeFile(workbook, filename);
   };
-  
 
   return (
     <div className="leads-container">
@@ -49,7 +55,7 @@ const TotalLeadsToday = () => {
       <div className="download-and-back-div">
         <button className="excel-btn" onClick={exportToExcel}>Download</button>
         <button className="back-btn" onClick={() => window.history.back()}>
-            Back
+          Back
         </button>
       </div>
 
@@ -58,6 +64,7 @@ const TotalLeadsToday = () => {
           <table>
             <thead>
               <tr>
+                <th className="slno-col">Sl.No.</th>
                 <th>Product</th>
                 <th>Name</th>
                 <th>Mobile Number</th>
@@ -67,12 +74,19 @@ const TotalLeadsToday = () => {
             </thead>
             <tbody>
               {todayLeads.map((lead, index) => (
-                <tr key={index}>
+                <tr key={lead._id || index}>
+                  <td>{index + 1}</td>
                   <td>{lead.lead_bought || "N/A"}</td>
                   <td>{lead.name || "N/A"}</td>
                   <td>{lead.mobile || "N/A"}</td>
                   <td>{lead.email || "N/A"}</td>
-                  <td>{new Date(lead.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    {lead.createdAt
+                      ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                          timeZone: "Asia/Kolkata"
+                        })
+                      : "N/A"}
+                  </td>
                 </tr>
               ))}
             </tbody>
