@@ -62,7 +62,7 @@
   border-radius: 12px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid #ddd;
-  background: #ffffff;
+  /* background: #ffffff; */
 }
 
 /* Table Header */
@@ -88,13 +88,40 @@
   align-items: center;
   width: 100%;
 }
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  user-select: none;
+}
 
+.checkboxLabel:hover {
+  color: #007bff;
+}
+
+.checkbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #007bff;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 /* Table Styling */
 .leadsTable {
   width: 100%;
   border-collapse: collapse;
   border-radius: 12px;
   overflow: hidden;
+  background-color: white;
 }
 
 .leadsTable th,
@@ -104,7 +131,6 @@
   text-align: left;
   font-size: 14px;
 }
-
 .leadsTable th {
   /* background: linear-gradient(135deg, #ffffff, #ffffff); */
   color: black;
@@ -146,7 +172,6 @@
 .fileLabel:hover {
   background: #0056b3;
 }
-
 .leadsTable tr:hover {
   background: rgba(0, 123, 255, 0.1);
   transition: background 0.3s ease-in-out;
@@ -169,33 +194,27 @@
 
 /* Upload Button */
 .uploadButton {
-  background: #6c5ce7;
-  /* Modern purple */
+  background: #6c5ce7; /* Modern purple */
   color: white;
   border: none;
 }
 
 .uploadButton:hover {
-  background: #5849c4;
-  /* Darker purple on hover */
+  background: #5849c4; /* Darker purple on hover */
 }
 
 /* Upload Invoice button */
 .uploadButton:not(:has(+ .downloadButton)) {
-  background: #e74c3c;
-  /* Red for Upload Invoice */
+  background: #e74c3c; /* Red for Upload Invoice */
 }
 
 .uploadButton:not(:has(+ .downloadButton)):hover {
-  background: #c0392b;
-  /* Darker red on hover */
+  background: #c0392b; /* Darker red on hover */
 }
-
 /* Download Button */
 .downloadButton {
   padding: 14px 16px;
-  background: #00b894;
-  /* Fresh teal */
+  background: #00b894; /* Fresh teal */
   color: white;
   border: none;
   text-decoration: none;
@@ -203,8 +222,7 @@
 }
 
 .downloadButton:hover {
-  background: #00a886;
-  /* Darker teal on hover */
+  background: #00a886; /* Darker teal on hover */
 }
 
 /* Loading Text */
@@ -294,7 +312,6 @@
     padding: 5px;
   }
 }
-
 /* 
 @media (max-width: 480px){
     .downloadExcelButton {
@@ -407,26 +424,10 @@
 }
 
 .icon {
-  font-size: 1.2rem;
-  /* Increase icon size */
+  font-size: 1.2rem; /* Increase icon size */
   transition: transform 0.2s;
 }
 
 .icon:hover {
-  transform: scale(1.2);
-  /* Optional hover effect */
-}
-
-.editableInput {
-  width: 70px;
-  padding: 3px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.saveButton,.cancelButton{
-  margin-bottom: 0;
-  padding: 10px 8px;
-  height: fit-content;
+  transform: scale(1.2); /* Optional hover effect */
 }

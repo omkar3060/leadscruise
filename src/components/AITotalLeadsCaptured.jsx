@@ -28,11 +28,18 @@ const AITotalLeadsAllTime = () => {
   }, []);
 
   const exportToExcel = () => {
-    const cleanedLeads = allLeads.map(({ _v, ...rest }) => rest);  // Remove _v
+    const cleanedLeads = allLeads.map(({ _v, ...rest }, index) => ({
+      "S.No": index + 1,
+      ...rest
+    }));
     const worksheet = XLSX.utils.json_to_sheet(cleanedLeads);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "AllLeads");
-    XLSX.writeFile(workbook, "TotalLeadsAllTime.xlsx");
+    
+    const today = new Date().toISOString().split("T")[0];
+    const filename = `AITotalLeadsAllTime_${today}.xlsx`;
+    
+    XLSX.writeFile(workbook, filename);
   };
 
   return (
@@ -50,6 +57,7 @@ const AITotalLeadsAllTime = () => {
           <table>
             <thead>
               <tr>
+                <th className="slno-col">Sl.No.</th>
                 <th>Product</th>
                 <th>Address</th>
                 <th>Name</th>
@@ -60,17 +68,20 @@ const AITotalLeadsAllTime = () => {
             </thead>
             <tbody>
               {allLeads.map((lead, index) => (
-                <tr key={index}>
+                <tr key={lead._id || index}>
+                  <td>{index + 1}</td>
                   <td>{lead.lead_bought || "N/A"}</td>
                   <td>{lead.address || "N/A"}</td>
                   <td>{lead.name || "N/A"}</td>
                   <td>{lead.mobile || "N/A"}</td>
                   <td>{lead.email || "N/A"}</td>
-                  <td>{lead.createdAt
-                    ? new Date(lead.createdAt).toLocaleString("en-IN", {
-                      timeZone: "Asia/Kolkata"
-                    })
-                    : "N/A"}</td>
+                  <td>
+                    {lead.createdAt
+                      ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                          timeZone: "Asia/Kolkata"
+                        })
+                      : "N/A"}
+                  </td>
                 </tr>
               ))}
             </tbody>

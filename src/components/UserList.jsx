@@ -87,10 +87,29 @@ const UsersList = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user and all related data?")) return;
+    // First confirmation
+    if (!window.confirm("Are you sure you want to delete this user and all related data?")) {
+      return;
+    }
+
+    // Password prompt
+    const password = window.prompt("Enter password to confirm deletion:");
+    
+    // Check if user cancelled the prompt
+    if (password === null) {
+      return;
+    }
+
+    // Verify password
+    if (password !== "Focus@1972") {
+      alert("Incorrect password. User deletion cancelled.");
+      return;
+    }
 
     try {
-      const res = await fetch(`https://api.leadscruise.com/api/delete-user/${userId}`, { method: "DELETE" });
+      const res = await fetch(`https://api.leadscruise.com/api/delete-user/${userId}`, { 
+        method: "DELETE" 
+      });
       const data = await res.json();
       alert(data.message);
 
@@ -212,7 +231,7 @@ const UsersList = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className={styles.noResults}>No users found</td>
+                <td colSpan="7" className={styles.noResults}>No users found</td>
               </tr>
             )}
           </tbody>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
-import styles from "./Dashboard.module.css"; // Import CSS module
+import styles from "./Dashboard.module.css";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import redFlag from "../images/red_flag.png";
@@ -36,7 +36,7 @@ const Dashboard = () => {
   const [status, setStatus] = useState("Stopped");
   const [isDisabled, setIsDisabled] = useState(false);
   const [timer, setTimer] = useState(0);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const [settings, setSettings] = useState({
     sentences: [],
@@ -66,6 +66,7 @@ const Dashboard = () => {
     return localStorage.getItem("cancelled") === "true";
   });
   const [otpError, setOtpError] = useState('');
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
 
   useEffect(() => {
     const fetchMessageCount = async () => {
@@ -82,7 +83,6 @@ const Dashboard = () => {
     fetchMessageCount();
   }, []);
 
-  // Function to fetch balance
   const fetchBuyerBalance = useCallback(async () => {
     try {
       const userEmail = localStorage.getItem("userEmail");
@@ -105,17 +105,15 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    // If status changes, check balance immediately
     fetchBuyerBalance();
 
     const balanceInterval = setInterval(() => {
       fetchBuyerBalance();
-    }, 60000); // Check every 60 seconds
+    }, 60000);
 
     return () => clearInterval(balanceInterval);
-  }, [status]); // Remove fetchBuyerBalance from dependency
+  }, [status]);
 
-  // Add zero balance alert component
   const ZeroBalanceAlert = () => (
     <div className="maintenance-banner">
       <div className="maintenance-container">
@@ -179,7 +177,6 @@ const Dashboard = () => {
     return null;
   }, [buyerBalance, status, isVisible]);
 
-  // Fetch leads from backend
   const fetchLeads = async () => {
     try {
       const mobileNumber = localStorage.getItem("mobileNumber");
@@ -219,7 +216,7 @@ const Dashboard = () => {
         if (response.data.startTime) {
           const startTime = new Date(response.data.startTime);
           const currentTime = new Date();
-          const timeElapsed = Math.floor((currentTime - startTime) / 1000); // Time elapsed in seconds
+          const timeElapsed = Math.floor((currentTime - startTime) / 1000);
 
           if (timeElapsed < 300) {
             setIsDisabled(true);
@@ -233,12 +230,12 @@ const Dashboard = () => {
       } catch (error) {
         console.error("Error fetching script status:", error);
       } finally {
-        setIsLoading(false); // Set loading to false after status is fetched
+        setIsLoading(false);
       }
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Refresh status every 5 seconds
+    const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -247,15 +244,14 @@ const Dashboard = () => {
   }, [isDisabled]);
 
   useEffect(() => {
-    setIsLoading(true); // Set loading to true before fetching leads
+    setIsLoading(true);
     fetchLeads().finally(() => {
-      setIsLoading(false); // Set loading to false after leads are fetched
+      setIsLoading(false);
     });
     const interval = setInterval(fetchLeads, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  // Countdown Timer Effect
   useEffect(() => {
     if (timer > 0) {
       const countdown = setInterval(() => {
@@ -275,7 +271,7 @@ const Dashboard = () => {
     } else {
       localStorage.setItem("cancelled", "false");
     }
-  }, []);  // Reacts to status changes in localStorage
+  }, []);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -289,7 +285,7 @@ const Dashboard = () => {
         const response = await axios.get(
           `https://api.leadscruise.com/api/get-settings/${userEmail}`
         );
-        const userSettings = response.data; // Extracting 'settings' from response
+        const userSettings = response.data;
 
         if (!userSettings) {
           alert("No settings found, please configure them first.");
@@ -309,7 +305,6 @@ const Dashboard = () => {
     fetchSettings();
   }, [navigate]);
 
-  // Calculate metrics based on leads data
   const calculateMetrics = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -338,7 +333,6 @@ const Dashboard = () => {
 
   const metrics = calculateMetrics();
 
-  // Add OTP submission handler
   const handleOtpSubmit = async () => {
     if (!otpValue || otpValue.length !== 4) {
       alert("Please enter a valid 4-digit OTP");
@@ -362,7 +356,6 @@ const Dashboard = () => {
       setShowOtpPopup(false);
       localStorage.setItem("showOtpPopup", "false");
       setOtpValue('');
-      // setOtpRequestId(null);
       alert("OTP submitted successfully!");
       localStorage.setItem("cancelled", "true");
       setCancelled(true);
@@ -380,15 +373,10 @@ const Dashboard = () => {
       const isCancelled = localStorage.getItem("cancelled") === "true";
       const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
 
-      // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
-
       try {
         const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
-        // console.log("API Response:", response.data);
 
         if (response.data.otpFailed) {
-          // console.log("OTP Failed detected! About to show alert...");
-
           setCancelled(true);
           localStorage.setItem("cancelled", "true");
           localStorage.setItem("showOtpPopup", "true");
@@ -397,11 +385,8 @@ const Dashboard = () => {
           setShowOtpWaitPopup(false);
 
           if (!isAlertShown) {
-            // console.log("Showing alert now...");
             alert("The OTP you entered is incorrect. Please try again.");
             localStorage.setItem("otp_alert_shown", "true");
-          } else {
-            // console.log("Alert already shown, skipping...");
           }
         }
       } catch (err) {
@@ -426,7 +411,7 @@ const Dashboard = () => {
     }
 
     const otpCheckInterval = setInterval(async () => {
-      const cancelled = localStorage.getItem("cancelled") === "true"; // ✅ moved inside
+      const cancelled = localStorage.getItem("cancelled") === "true";
       if (cancelled || status !== "Running") return;
 
       try {
@@ -446,11 +431,8 @@ const Dashboard = () => {
     return () => clearInterval(otpCheckInterval);
   }, [status]);
 
-
-
   const handleStart = async () => {
     try {
-      // Set a "Starting" state
       setIsStarting(true);
       setCancelled(false);
       setShowOtpPopup(false);
@@ -470,7 +452,7 @@ const Dashboard = () => {
         }
         else {
           alert("Demo mode is enabled. You can only view the dashboard.");
-          setIsStarting(false); // Reset starting state on error
+          setIsStarting(false);
           return;
         }
       }
@@ -497,13 +479,13 @@ const Dashboard = () => {
       if (!mobileNumber) {
         alert("Please login to you leads provider account first.");
         navigate("/execute-task");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
       if (!userEmail) {
         alert("User email not found!");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
@@ -512,26 +494,23 @@ const Dashboard = () => {
       );
       if (!detailsResponse.ok) {
         alert("Please add your billing details first to start.");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
-      // Fetch settings
       const response = await axios.get(
         `https://api.leadscruise.com/api/get-settings/${userEmail}`
       );
       const userSettings = response.data;
-      // console.log("Fetched settings:", userSettings);
       setSettings(response.data);
 
       if (!userSettings) {
         alert("No settings found, please configure them first.");
         navigate("/settings");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
-      // Check if all settings arrays are empty
       if (
         (!userSettings.sentences || userSettings.sentences.length < 1) &&
         (!userSettings.wordArray || userSettings.wordArray.length < 1) &&
@@ -539,13 +518,10 @@ const Dashboard = () => {
       ) {
         alert("Please configure your settings first.");
         navigate("/settings");
-        setIsStarting(false); // Reset starting state on error
+        setIsStarting(false);
         return;
       }
 
-      // console.log("Sending the following settings to backend:", userSettings);
-
-      // Send the fetched settings instead of using the state
       const cycleResponse = await axios.post(
         "https://api.leadscruise.com/api/cycle",
         {
@@ -566,12 +542,8 @@ const Dashboard = () => {
           },
         }
       );
-      setIsStarting(false); // Reset starting state after process completes
-      // alert(
-      //   "AI started successfully!Please navigate to the whatsapp page to login and send messages to the buyers if you already have not done so."
-      // );
+      setIsStarting(false);
       setStatus("Running");
-      // Note: we don't reset isStarting here because the status is now "Running"
     } catch (error) {
       if (error.response?.status === 403) {
         alert("Lead limit reached. Cannot capture more leads today.");
@@ -580,20 +552,17 @@ const Dashboard = () => {
         navigate("/execute-task");
       } else {
         console.error("Error:", error.response?.data?.message || error.message);
-        //alert(error.response?.data?.message || error.message);
       }
-      setIsStarting(false); // Reset starting state on error
+      setIsStarting(false);
     } finally {
-      setIsLoading(false); // Hide loading after process completes or fails
+      setIsLoading(false);
     }
   };
 
   const [cooldownActive, setCooldownActive] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0);
 
-  // Add this useEffect to check the cooldown status when the component mounts
   useEffect(() => {
-    // Check if there's an active cooldown in localStorage
     const cooldownEnd = localStorage.getItem("cooldownEnd");
 
     if (cooldownEnd) {
@@ -601,21 +570,17 @@ const Dashboard = () => {
       const currentTime = new Date().getTime();
 
       if (currentTime < endTime) {
-        // Cooldown is still active
         setCooldownActive(true);
 
-        // Calculate remaining time in seconds
         const remainingTime = Math.ceil((endTime - currentTime) / 1000);
         setCooldownTime(remainingTime);
         setIsDisabled(true);
 
-        // Set up interval to update the cooldown timer
         const interval = setInterval(() => {
           const newCurrentTime = new Date().getTime();
           const newRemainingTime = Math.ceil((endTime - newCurrentTime) / 1000);
 
           if (newRemainingTime <= 0) {
-            // Cooldown finished
             clearInterval(interval);
             setCooldownActive(false);
             setCooldownTime(0);
@@ -628,16 +593,14 @@ const Dashboard = () => {
 
         return () => clearInterval(interval);
       } else {
-        // Cooldown has expired
         localStorage.removeItem("cooldownEnd");
       }
     }
   }, []);
 
-  // Modify your handleStop function
   const handleStop = async () => {
     if (window.confirm("Are you sure you want to stop the AI?")) {
-      setIsLoading(true); // Show loading when stopping
+      setIsLoading(true);
 
       const userEmail = localStorage.getItem("userEmail");
       const uniqueId = localStorage.getItem("unique_id");
@@ -655,23 +618,18 @@ const Dashboard = () => {
         );
         alert(response.data.message);
 
-        // Update the status in localStorage
         localStorage.setItem("status", "Stopped");
         setStatus("Stopped");
 
-        // Set cooldown for 1 minute (60 seconds)
-        const cooldownDuration = 60 * 1000; // 1 minute in milliseconds
+        const cooldownDuration = 60 * 1000;
         const cooldownEnd = new Date().getTime() + cooldownDuration;
 
-        // Store the cooldown end time in localStorage
         localStorage.setItem("cooldownEnd", cooldownEnd.toString());
 
-        // Update component state
         setCooldownActive(true);
         setCooldownTime(60);
         setIsDisabled(true);
 
-        // Set up interval to update the cooldown timer
         const interval = setInterval(() => {
           setCooldownTime((prevTime) => {
             if (prevTime <= 1) {
@@ -693,9 +651,8 @@ const Dashboard = () => {
   };
 
   const [sortField, setSortField] = useState(null);
-  const [sortOrder, setSortOrder] = useState("asc"); // "asc" | "desc"
+  const [sortOrder, setSortOrder] = useState("asc");
 
-  // Function to handle sorting
   const handleSort = (field) => {
     const newSortOrder =
       sortField === field && sortOrder === "asc" ? "desc" : "asc";
@@ -703,9 +660,8 @@ const Dashboard = () => {
     setSortOrder(newSortOrder);
   };
 
-  // Sorting logic
   const sortedLeads = [...leads].sort((a, b) => {
-    const valueA = a[sortField] || ""; // Handle empty values
+    const valueA = a[sortField] || "";
     const valueB = b[sortField] || "";
 
     if (sortField === "createdAt") {
@@ -719,13 +675,118 @@ const Dashboard = () => {
     }
   });
 
-  const handleDownloadLeadsExcel = () => {
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showDownloadDropdown && !event.target.closest('.download-reports-container')) {
+        setShowDownloadDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDownloadDropdown]);
+
+  const filterLeadsByDateRange = (dateRange) => {
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(now.getTime() + istOffset);
+    const today = new Date(istNow.toISOString().split('T')[0]);
+    
+    let startDate, endDate;
+    
+    switch (dateRange) {
+      case 'today':
+        startDate = new Date(today);
+        endDate = new Date(today);
+        endDate.setUTCDate(endDate.getUTCDate() + 1);
+        break;
+        
+      case 'thisWeek':
+        startDate = new Date(today);
+        const day = today.getUTCDay();
+        const diff = day === 0 ? 6 : day - 1;
+        startDate.setUTCDate(today.getUTCDate() - diff);
+        endDate = new Date(istNow);
+        break;
+        
+      case 'thisMonth':
+        startDate = new Date(today.getUTCFullYear(), today.getUTCMonth(), 1);
+        endDate = new Date(istNow);
+        break;
+        
+      case 'thisQuarter':
+        const currentQuarter = Math.floor(today.getUTCMonth() / 3);
+        startDate = new Date(today.getUTCFullYear(), currentQuarter * 3, 1);
+        endDate = new Date(istNow);
+        break;
+        
+      case 'thisYear':
+        startDate = new Date(today.getUTCFullYear(), 0, 1);
+        endDate = new Date(istNow);
+        break;
+        
+      case 'yesterday':
+        startDate = new Date(today);
+        startDate.setUTCDate(startDate.getUTCDate() - 1);
+        endDate = new Date(today);
+        break;
+        
+      case 'previousWeek':
+        const prevWeekEnd = new Date(today);
+        const dayOfWeek = today.getUTCDay();
+        const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        prevWeekEnd.setUTCDate(today.getUTCDate() - diffToMonday);
+        startDate = new Date(prevWeekEnd);
+        startDate.setUTCDate(prevWeekEnd.getUTCDate() - 7);
+        endDate = prevWeekEnd;
+        break;
+        
+      case 'previousMonth':
+        startDate = new Date(today.getUTCFullYear(), today.getUTCMonth() - 1, 1);
+        endDate = new Date(today.getUTCFullYear(), today.getUTCMonth(), 1);
+        break;
+        
+      case 'previousQuarter':
+        const prevQuarter = Math.floor(today.getUTCMonth() / 3) - 1;
+        if (prevQuarter < 0) {
+          startDate = new Date(today.getUTCFullYear() - 1, 9, 1);
+          endDate = new Date(today.getUTCFullYear(), 0, 1);
+        } else {
+          startDate = new Date(today.getUTCFullYear(), prevQuarter * 3, 1);
+          endDate = new Date(today.getUTCFullYear(), (prevQuarter + 1) * 3, 1);
+        }
+        break;
+        
+      case 'previousYear':
+        startDate = new Date(today.getUTCFullYear() - 1, 0, 1);
+        endDate = new Date(today.getUTCFullYear(), 0, 1);
+        break;
+        
+      default:
+        return leads;
+    }
+    
+    return leads.filter((lead) => {
+      if (!lead.createdAt) return false;
+      const leadDate = new Date(lead.createdAt);
+      return leadDate >= startDate && leadDate < endDate;
+    });
+  };
+
+  const handleDownloadLeadsExcel = (dateRange = 'all') => {
     if (!leads || leads.length === 0) {
       alert("No leads available to download.");
       return;
     }
 
-    const formattedData = leads.map((lead, index) => ({
+    let filteredLeads = dateRange === 'all' ? leads : filterLeadsByDateRange(dateRange);
+    
+    if (filteredLeads.length === 0) {
+      alert("No leads found for the selected date range.");
+      return;
+    }
+
+    const formattedData = filteredLeads.map((lead, index) => ({
       "Sl. No": index + 1,
       Name: lead.name || "N/A",
       Email: lead.email || "N/A",
@@ -738,10 +799,26 @@ const Dashboard = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
 
+    const dateRangeLabels = {
+      'today': 'Today',
+      'thisWeek': 'This Week',
+      'thisMonth': 'This Month',
+      'thisQuarter': 'This Quarter',
+      'thisYear': 'This Year',
+      'yesterday': 'Yesterday',
+      'previousWeek': 'Previous Week',
+      'previousMonth': 'Previous Month',
+      'previousQuarter': 'Previous Quarter',
+      'previousYear': 'Previous Year',
+      'all': 'Total Leads Captured'
+    };
+
     const today = new Date().toISOString().split("T")[0];
-    const filename = `Total Leads Captured_${today}.xlsx`;
+    const label = dateRangeLabels[dateRange] || 'Total Leads Captured';
+    const filename = `${label}_${today}.xlsx`;
 
     XLSX.writeFile(workbook, filename);
+    setShowDownloadDropdown(false);
   };
 
   const handleConfirmAction = async () => {
@@ -752,10 +829,10 @@ const Dashboard = () => {
 
     if (type === "reject") {
       if (!updatedRejected.includes(keyword)) {
-        updatedRejected.push(keyword); // Add to rejected
+        updatedRejected.push(keyword);
       }
     } else if (type === "accept") {
-      updatedRejected = updatedRejected.filter((word) => word !== keyword); // Remove from rejected
+      updatedRejected = updatedRejected.filter((word) => word !== keyword);
     }
 
     const updatedSettings = {
@@ -763,7 +840,6 @@ const Dashboard = () => {
       h2WordArray: updatedRejected,
     };
 
-    // Save to DB
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
       alert("User email not found!");
@@ -778,7 +854,6 @@ const Dashboard = () => {
         h2WordArray: updatedSettings.h2WordArray || [],
       });
 
-      // Update state after DB save
       setSettings(updatedSettings);
       alert("Settings saved successfully!");
     } catch (error) {
@@ -786,7 +861,6 @@ const Dashboard = () => {
       alert("Failed to save settings.");
     }
 
-    // Close modal
     setConfirmModal({ open: false, keyword: "", type: null });
   };
 
@@ -802,7 +876,7 @@ const Dashboard = () => {
             </p>
           </div>
         </div>
-      )}
+  )}
 
       {showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
@@ -852,17 +926,12 @@ const Dashboard = () => {
       )}
 
       {zeroBalanceAlertMemo}
-      {/* <ZeroBalanceAlert/> */}
 
-      {/* Loading Screen */}
       {isLoading && <LoadingScreen />}
 
-      {/* Sidebar Component */}
       <Sidebar status={status} />
 
-      {/* Main Content */}
       <div className={styles.dashboardContent}>
-        {/* Header Component */}
         <DashboardHeader
           status={status}
           handleStart={handleStart}
@@ -874,20 +943,17 @@ const Dashboard = () => {
           cooldownTime={cooldownTime}
         />
 
-
-
         <div style={{
           background: "#fff",
           borderRadius: "8px",
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           padding: "20px 40px",
-          margin: "0px 20px 15px 20px",  // Reduced from 20px to 10px top margin,
+          margin: "0px 20px 15px 20px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center"
         }}>
 
-          {/* Metrics Section */}
           <div className={styles.metricsSection}>
             <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
               <strong>{metrics.totalLeadsToday}</strong>
@@ -919,33 +985,97 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Controls Section inside the same container */}
-          <div style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-            marginLeft: "20px"
-          }}>
+          <div 
+            className="download-reports-container"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+              marginLeft: "20px",
+              position: "relative"
+            }}
+          >
             <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
               Settings
             </button>
-            <button className={styles.buttonLarge}
-              onClick={handleDownloadLeadsExcel}
+            <button 
+              className={styles.buttonLarge}
+              onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
               style={{ marginBottom: 0 }}
             >
               Download Reports
             </button>
+            
+            {showDownloadDropdown && (
+              <div style={{
+                position: 'absolute',
+                right: 0,
+                marginTop: '4px',
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                minWidth: '200px',
+                zIndex: 1000,
+                overflow: 'hidden'
+              }}>
+                {[
+                  { label: 'Today', value: 'today' },
+                  { label: 'This Week', value: 'thisWeek' },
+                  { label: 'This Month', value: 'thisMonth' },
+                  { label: 'This Quarter', value: 'thisQuarter' },
+                  { label: 'This Year', value: 'thisYear' },
+                  { label: 'Yesterday', value: 'yesterday' },
+                  { label: 'Previous Week', value: 'previousWeek' },
+                  { label: 'Previous Month', value: 'previousMonth' },
+                  { label: 'Previous Quarter', value: 'previousQuarter' },
+                  { label: 'Previous Year', value: 'previousYear' },
+                  { label: 'Custom', value: 'custom' }
+                ].map((option) => (
+                  <div
+                    key={option.value}
+                    onClick={() => {
+                      if (option.value === 'custom') {
+                        alert('Custom date range feature coming soon!');
+                        setShowDownloadDropdown(false);
+                      } else {
+                        handleDownloadLeadsExcel(option.value);
+                      }
+                    }}
+                    style={{
+                      padding: '12px 20px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: option.value === 'thisMonth' ? 'white' : '#333',
+                      backgroundColor: option.value === 'thisMonth' ? '#2196F3' : 'white',
+                      transition: 'background-color 0.2s ease',
+                      borderBottom: '1px solid #f0f0f0'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (option.value !== 'thisMonth') {
+                        e.target.style.backgroundColor = '#f5f5f5';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (option.value !== 'thisMonth') {
+                        e.target.style.backgroundColor = 'white';
+                      }
+                    }}
+                  >
+                    {option.label}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Recent Leads Table */}
         <div className={styles.leadsSection} style={{ height: 'calc(100vh - 410px)' }}>
           <div className={styles.mobileOnlyMessage}>
             <p>Use Desktop to login to see recent leads captured information</p>
           </div>
 
-          <div className={styles.tableWrapper} >
-
+          <div className={styles.tableWrapper}>
             <table className={styles.leadsTable}>
               <thead>
                 <tr>
@@ -1032,6 +1162,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      
       {confirmModal.open && (
         <div className="modal-overlay">
           <div className="modal-content">

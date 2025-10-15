@@ -69,6 +69,7 @@ const Sheets = () => {
     return localStorage.getItem("cancelled") === "true";
   });
   const [otpError, setOtpError] = useState('');
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
 
   const fetchBuyerBalance = useCallback(async () => {
     try {
@@ -775,6 +776,17 @@ const Sheets = () => {
   }, []);
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showDownloadDropdown && !event.target.closest('.download-reports-container')) {
+        setShowDownloadDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDownloadDropdown]);
+
+  useEffect(() => {
     const fetchMessageCount = async () => {
       try {
         const mobileNumber = localStorage.getItem("mobileNumber");
@@ -824,13 +836,107 @@ const Sheets = () => {
 
   const metrics = calculateMetrics();
 
-  const handleDownloadLeadsExcel = () => {
+  const filterLeadsByDateRange = (dateRange) => {
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(now.getTime() + istOffset);
+    const today = new Date(istNow.toISOString().split('T')[0]);
+    
+    let startDate, endDate;
+    
+    switch (dateRange) {
+      case 'today':
+        startDate = new Date(today);
+        endDate = new Date(today);
+        endDate.setUTCDate(endDate.getUTCDate() + 1);
+        break;
+        
+      case 'thisWeek':
+        startDate = new Date(today);
+        const day = today.getUTCDay();
+        const diff = day === 0 ? 6 : day - 1;
+        startDate.setUTCDate(today.getUTCDate() - diff);
+        endDate = new Date(istNow);
+        break;
+        
+      case 'thisMonth':
+        startDate = new Date(today.getUTCFullYear(), today.getUTCMonth(), 1);
+        endDate = new Date(istNow);
+        break;
+        
+      case 'thisQuarter':
+        const currentQuarter = Math.floor(today.getUTCMonth() / 3);
+        startDate = new Date(today.getUTCFullYear(), currentQuarter * 3, 1);
+        endDate = new Date(istNow);
+        break;
+        
+      case 'thisYear':
+        startDate = new Date(today.getUTCFullYear(), 0, 1);
+        endDate = new Date(istNow);
+        break;
+        
+      case 'yesterday':
+        startDate = new Date(today);
+        startDate.setUTCDate(startDate.getUTCDate() - 1);
+        endDate = new Date(today);
+        break;
+        
+      case 'previousWeek':
+        const prevWeekEnd = new Date(today);
+        const dayOfWeek = today.getUTCDay();
+        const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        prevWeekEnd.setUTCDate(today.getUTCDate() - diffToMonday);
+        startDate = new Date(prevWeekEnd);
+        startDate.setUTCDate(prevWeekEnd.getUTCDate() - 7);
+        endDate = prevWeekEnd;
+        break;
+        
+      case 'previousMonth':
+        startDate = new Date(today.getUTCFullYear(), today.getUTCMonth() - 1, 1);
+        endDate = new Date(today.getUTCFullYear(), today.getUTCMonth(), 1);
+        break;
+        
+      case 'previousQuarter':
+        const prevQuarter = Math.floor(today.getUTCMonth() / 3) - 1;
+        if (prevQuarter < 0) {
+          startDate = new Date(today.getUTCFullYear() - 1, 9, 1);
+          endDate = new Date(today.getUTCFullYear(), 0, 1);
+        } else {
+          startDate = new Date(today.getUTCFullYear(), prevQuarter * 3, 1);
+          endDate = new Date(today.getUTCFullYear(), (prevQuarter + 1) * 3, 1);
+        }
+        break;
+        
+      case 'previousYear':
+        startDate = new Date(today.getUTCFullYear() - 1, 0, 1);
+        endDate = new Date(today.getUTCFullYear(), 0, 1);
+        break;
+        
+      default:
+        return leads;
+    }
+    
+    return leads.filter((lead) => {
+      if (!lead.createdAt) return false;
+      const leadDate = new Date(lead.createdAt);
+      return leadDate >= startDate && leadDate < endDate;
+    });
+  };
+
+  const handleDownloadLeadsExcel = (dateRange = 'all') => {
     if (!leads || leads.length === 0) {
       alert("No leads available to download.");
       return;
     }
 
-    const formattedData = leads.map((lead, index) => ({
+    let filteredLeads = dateRange === 'all' ? leads : filterLeadsByDateRange(dateRange);
+    
+    if (filteredLeads.length === 0) {
+      alert("No leads found for the selected date range.");
+      return;
+    }
+
+    const formattedData = filteredLeads.map((lead, index) => ({
       "Sl. No": index + 1,
       Name: lead.name || "N/A",
       Email: lead.email || "N/A",
@@ -843,10 +949,26 @@ const Sheets = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
 
+    const dateRangeLabels = {
+      'today': 'Today',
+      'thisWeek': 'This Week',
+      'thisMonth': 'This Month',
+      'thisQuarter': 'This Quarter',
+      'thisYear': 'This Year',
+      'yesterday': 'Yesterday',
+      'previousWeek': 'Previous Week',
+      'previousMonth': 'Previous Month',
+      'previousQuarter': 'Previous Quarter',
+      'previousYear': 'Previous Year',
+      'all': 'Total Leads Captured'
+    };
+
     const today = new Date().toISOString().split("T")[0];
-    const filename = `Total Leads Captured_${today}.xlsx`;
+    const label = dateRangeLabels[dateRange] || 'Total Leads Captured';
+    const filename = `${label}_${today}.xlsx`;
 
     XLSX.writeFile(workbook, filename);
+    setShowDownloadDropdown(false);
   };
 
   return (
@@ -937,51 +1059,118 @@ const Sheets = () => {
       }}>
 
         <div className={styles.metricsSection}>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday}</strong>
             <span>Leads Purchased Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsThisWeek")}>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsThisWeek")}>
             <strong>{metrics.totalLeadsThisWeek}</strong>
             <span>Leads Purchased This Week</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
             <span>Lead Manager Replies Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
             <strong>{messageCount * metrics.totalLeadsToday || 0}</strong>
             <span>Whatsapp Replies Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
             <span>Emails Sent Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
             <strong>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}</strong>
             <span>Total Emails Sent</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
+          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
             <strong>{metrics.totalLeadsCaptured}</strong>
             <span>Total Leads Captured</span>
           </div>
         </div>
 
-        <div style={{ 
-          display: "flex", 
-          flexDirection: "column", 
-          gap: "4px",
-          marginLeft: "20px"
-        }}>
+        <div 
+          className="download-reports-container"
+          style={{ 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "4px",
+            marginLeft: "20px",
+            position: "relative"
+          }}
+        >
           <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
             Settings
           </button>
-          <button className={styles.buttonLarge} 
-            onClick={handleDownloadLeadsExcel} 
+          <button 
+            className={styles.buttonLarge} 
+            onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
             style={{ marginBottom: 0 }}
           >
             Download Reports
           </button>
+          
+          {showDownloadDropdown && (
+            <div style={{
+              position: 'absolute',
+              right: 0,
+              marginTop: '4px',
+              backgroundColor: 'white',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              minWidth: '200px',
+              zIndex: 1000,
+              overflow: 'hidden'
+            }}>
+              {[
+                { label: 'Today', value: 'today' },
+                { label: 'This Week', value: 'thisWeek' },
+                { label: 'This Month', value: 'thisMonth' },
+                { label: 'This Quarter', value: 'thisQuarter' },
+                { label: 'This Year', value: 'thisYear' },
+                { label: 'Yesterday', value: 'yesterday' },
+                { label: 'Previous Week', value: 'previousWeek' },
+                { label: 'Previous Month', value: 'previousMonth' },
+                { label: 'Previous Quarter', value: 'previousQuarter' },
+                { label: 'Previous Year', value: 'previousYear' },
+                { label: 'Custom', value: 'custom' }
+              ].map((option) => (
+                <div
+                  key={option.value}
+                  onClick={() => {
+                    if (option.value === 'custom') {
+                      alert('Custom date range feature coming soon!');
+                      setShowDownloadDropdown(false);
+                    } else {
+                      handleDownloadLeadsExcel(option.value);
+                    }
+                  }}
+                  style={{
+                    padding: '12px 20px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: option.value === 'thisMonth' ? 'white' : '#333',
+                    backgroundColor: option.value === 'thisMonth' ? '#2196F3' : 'white',
+                    transition: 'background-color 0.2s ease',
+                    borderBottom: '1px solid #f0f0f0'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (option.value !== 'thisMonth') {
+                      e.target.style.backgroundColor = '#f5f5f5';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (option.value !== 'thisMonth') {
+                      e.target.style.backgroundColor = 'white';
+                    }
+                  }}
+                >
+                  {option.label}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>

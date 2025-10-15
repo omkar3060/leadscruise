@@ -43,21 +43,54 @@ const Master = () => {
     "year-mo": "One Year"
   };
   const [searchTerm, setSearchTerm] = useState('');
+  const [showActiveOnly, setShowActiveOnly] = useState(false);
 
   // Add this function to your component
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  const calculateRemainingDays = (createdAt, subscriptionType) => {
+    const createdDate = new Date(createdAt);
+    const expiryDate = new Date(createdDate);
+
+    const SUBSCRIPTION_DURATIONS = {
+      "1-day": 1,
+      "7-days": 7,
+      "3-days": 3,
+      "one-mo": 30,
+      "six-mo": 180,
+      "year-mo": 365,
+      "three-mo": 90,
+    };
+
+    const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
+    expiryDate.setDate(expiryDate.getDate() + duration);
+
+    const today = new Date();
+    const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+    return remainingDays > 0 ? remainingDays : "Expired";
+  };
+
   // Add this function to filter the subscriptions
   // Updated filtering function with safety checks
   const filteredSubscriptions = subscriptions.filter((sub) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       (sub.unique_id?.toString() || '').toLowerCase().includes(searchLower) ||
       (sub.email?.toString() || '').toLowerCase().includes(searchLower) ||
       (sub.refId?.toString() || '').toLowerCase().includes(searchLower)
     );
+
+    // If showActiveOnly is true, also check if subscription is active
+    if (showActiveOnly) {
+      const remainingDays = calculateRemainingDays(sub.created_at, sub.subscription_type);
+      const isActive = remainingDays !== "Expired" && remainingDays > 0;
+      return matchesSearch && isActive;
+    }
+
+    return matchesSearch;
   });
 
   useEffect(() => {
@@ -284,29 +317,6 @@ const Master = () => {
     setIsLoading(false);
   };
 
-  const calculateRemainingDays = (createdAt, subscriptionType) => {
-    const createdDate = new Date(createdAt);
-    const expiryDate = new Date(createdDate);
-
-    const SUBSCRIPTION_DURATIONS = {
-      "1-day": 1,
-      "7-days": 7,
-      "3-days": 3,
-      "one-mo": 30,
-      "six-mo": 180,
-      "year-mo": 365,
-      "three-mo": 90,
-    };
-
-    const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
-    expiryDate.setDate(expiryDate.getDate() + duration);
-
-    const today = new Date();
-    const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-
-    return remainingDays > 0 ? remainingDays : "Expired";
-  };
-
   // Loading Screen Component
   const LoadingScreen = () => (
     <div className="loading-overlay">
@@ -526,7 +536,7 @@ const Master = () => {
         {/* Subscriptions Table */}
         <div className={masterstyles.leadsSection}>
           <div className={masterstyles.tableHeader}>
-            <span>Active Subscriptions</span>
+            <span>Subscriptions</span>
           </div>
 
           <div className={masterstyles.downBox}>
@@ -538,6 +548,15 @@ const Master = () => {
                 onChange={handleSearch}
                 className={masterstyles.searchInput}
               />
+              <label className={masterstyles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={showActiveOnly}
+                  onChange={(e) => setShowActiveOnly(e.target.checked)}
+                  className={masterstyles.checkbox}
+                />
+                <span>Show Active Only</span>
+              </label>
             </div>
 
             <div className={masterstyles.tableActions}>
@@ -698,9 +717,7 @@ const Master = () => {
                             <div className={masterstyles.actionBtns}>
                               <button
                                 className={masterstyles.editButton}
-                                onClick={() =>
-                                  handleOpenModal(sub.email, sub.unique_id)
-                                }
+                                onClick={() => handleOpenModal(sub.email, sub.unique_id)}
                               >
                                 🖉
                               </button>
@@ -716,20 +733,22 @@ const Master = () => {
                             </div>
                           ) : (
                             <>
-                              <button
-                                className={masterstyles.uploadButton}
-                                onClick={() =>
-                                  handleOpenModal(sub.email, sub.unique_id)
-                                }
-                              >
-                                Upload Invoice
-                              </button>
+                              {/* 🔹 Hide upload button for demo/free subscriptions */}
+                              {!(
+                                sub.subscription_type?.toLowerCase().includes("demo") ||
+                                sub.order_id?.startsWith("FREE-DEMO")
+                              ) && (
+                                  <button
+                                    className={masterstyles.uploadButton}
+                                    onClick={() => handleOpenModal(sub.email, sub.unique_id)}
+                                  >
+                                    Upload Invoice
+                                  </button>
+                                )}
                             </>
                           )
                         ) : (
-                          <span className={masterstyles.loadingText}>
-                            Loading...
-                          </span>
+                          <span className={masterstyles.loadingText}>Loading...</span>
                         )}
                       </td>
                     </tr>
@@ -737,7 +756,7 @@ const Master = () => {
                 ) : (
                   <tr>
                     <td colSpan="8" style={{ textAlign: "center" }}>
-                      No active subscriptions
+                      No subscriptions found
                     </td>
                   </tr>
                 )}
