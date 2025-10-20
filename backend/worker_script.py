@@ -1860,88 +1860,179 @@ def redirect_and_refresh(driver, wait):
             # Continue with the rest of the function logic - THIS WILL ALWAYS EXECUTE
             time.sleep(3)
 
-            # Read the data from the span element with color: rgb(42, 166, 153)
+            lead_data = {}
+    
+            # Extract Product/Title (h2)
+            h2_result = False
+            try:
+                time.sleep(3)
+                first_h2 = driver.find_element(By.XPATH, "//h2")
+                first_h2_text = first_h2.text
+                lead_data['product_title'] = first_h2_text
+                print(f"Product Title: {first_h2_text}", flush=True)
+                h2_result = first_h2_text not in h2_word_array
+                print(f"H2 Result: {h2_result}", flush=True)
+            except Exception as e:
+                print(f"Failed to read product title: {e}", flush=True)
+                lead_data['product_title'] = None
+            
+            # Extract Categories (breadcrumb)
             span_result = False
             try:
-                time.sleep(3)  # Static wait
+                time.sleep(3)
                 first_grid = driver.find_element(By.CSS_SELECTOR, "div.Mcat_buylead") 
                 coupling_spans = first_grid.find_elements(By.CSS_SELECTOR, "span[style*='color: rgb(42, 166, 153)']")
                 found_texts = [span.text.strip() for span in coupling_spans if span.text.strip()]
-                print(f"data from span: {found_texts}", flush=True)
-
-                # Check if the extracted text matches any word in the array
+                print(f"Categories from span: {found_texts}", flush=True)
+                
+                if len(found_texts) >= 2:
+                    lead_data['parent_category'] = found_texts[0]
+                    lead_data['sub_category'] = found_texts[1]
+                elif len(found_texts) == 1:
+                    lead_data['parent_category'] = found_texts[0]
+                    lead_data['sub_category'] = None
+                else:
+                    lead_data['parent_category'] = None
+                    lead_data['sub_category'] = None
+                
                 span_result = any(text in word_array for text in found_texts)
-                print(span_result, flush=True)
-
+                print(f"Span Result: {span_result}", flush=True)
             except Exception as e:
-                print(f"Failed to read data from span with specified color: {e}", flush=True)
-
-            # After reading the span, get the first <h2> element on the page
-            h2_result = False
-            try:
-                time.sleep(3)  # Static wait
-                first_h2 = driver.find_element(By.XPATH, "//h2")
-                first_h2_text = first_h2.text
-                lead_bought = first_h2_text
-                print(f"Read data from the first <h2>: {first_h2_text}", flush=True)
-
-                # Check if the extracted text matches any word in the h2_word_array
-                h2_result = first_h2_text not in h2_word_array
-                print(h2_result)
-
-            except Exception as e:
-                print(f"Failed to read data from the first <h2>: {e}", flush=True)
-
-            # Get the time element using the updated XPath based on the provided HTML structure
+                print(f"Failed to read categories: {e}", flush=True)
+                lead_data['parent_category'] = None
+                lead_data['sub_category'] = None
+            
+            # Extract Time Posted
             time_result = False
             try:
-                time.sleep(3)  # Static wait
-                
-                # Updated XPath to match the actual HTML structure
+                time.sleep(3)
                 time_element = driver.find_element(By.XPATH, "//div[contains(@class, 'lstNwLftLoc') and contains(@class, 'lstNwDflx')]//strong")
                 time_text = time_element.text
-                print(f"Time text: {time_text}", flush=True)
-
-                # Parse the time value
+                lead_data['time_posted'] = time_text
+                print(f"Time Posted: {time_text}", flush=True)
+                
+                # Parse time value
                 if 'mins ago' in time_text:
                     time_value = int(time_text.split()[0])
                 elif 'secs ago' in time_text:
-                    time_value = int(time_text.split()[0]) / 60  # Convert seconds to minutes
+                    time_value = int(time_text.split()[0]) / 60
                 elif 'hrs ago' in time_text:
-                    time_value = int(time_text.split()[0]) * 60  # Convert hours to minutes
+                    time_value = int(time_text.split()[0]) * 60
                 else:
-                    time_value = 999  # Default to a value greater than 10 mins if parsing fails
-
+                    time_value = 999
+                
                 time_result = time_value < 30
-                print(time_result, flush=True)
-
+                print(f"Time Result: {time_result}", flush=True)
             except Exception as e:
-                print(f"Failed to read the time text: {e}", flush=True)
-                # Try an alternative selector as a fallback
-                try:
-                    time_element = driver.find_element(By.CSS_SELECTOR, "div.lstNwLftLoc.lstNwDflx strong")
-                    time_text = time_element.text
-                    print(f"Time text (alternative method): {time_text}", flush=True)
-                    
-                    # Parse the time value
-                    if 'mins ago' in time_text:
-                        time_value = int(time_text.split()[0])
-                    elif 'secs ago' in time_text:
-                        time_value = int(time_text.split()[0]) / 60  # Convert seconds to minutes
-                    elif 'hrs ago' in time_text:
-                        time_value = int(time_text.split()[0]) * 60  # Convert hours to minutes
-                    else:
-                        time_value = 11  # Default to a value greater than 10 mins if parsing fails
-
-                    # Check if time is less than specified threshold
-                    time_result = time_value < 1000000
-                    print(time_result, flush=True)
-                    
-                except Exception as e2:
-                    print(f"Failed to read the time text with alternative method: {e2}", flush=True)
-                    print("Screenshot saved as time_element_error.png", flush=True)
-
-            # Check if the close button is available and click it if found
+                print(f"Failed to read time: {e}", flush=True)
+                lead_data['time_posted'] = None
+            
+            # Extract Location
+            try:
+                location_span = driver.find_element(By.CSS_SELECTOR, "span.city_click.tcont")
+                city = location_span.text
+                lead_data['city'] = city
+                
+                state_span = driver.find_element(By.CSS_SELECTOR, "span.state_click.tcont")
+                state = state_span.text
+                lead_data['state'] = state
+                
+                print(f"Location: {city}, {state}", flush=True)
+            except Exception as e:
+                print(f"Failed to read location: {e}", flush=True)
+                lead_data['city'] = None
+                lead_data['state'] = None
+            
+            # Extract Product Details from table
+            try:
+                table_rows = driver.find_elements(By.CSS_SELECTOR, "div.lstNwLftBtmCnt table tbody tr")
+                product_details = {}
+                
+                for row in table_rows:
+                    try:
+                        cells = row.find_elements(By.TAG_NAME, "td")
+                        if len(cells) >= 2:
+                            key = cells[0].text.strip()
+                            value = cells[1].text.strip().replace(':', '').replace('  ', ' ').strip()
+                            product_details[key] = value
+                    except Exception as e:
+                        print(f"Failed to parse table row: {e}", flush=True)
+                
+                lead_data['quantity'] = product_details.get('Quantity', None)
+                lead_data['speed'] = product_details.get('Speed', None)
+                lead_data['order_value'] = product_details.get('Probable Order Value', None)
+                
+                print(f"Product Details: {product_details}", flush=True)
+            except Exception as e:
+                print(f"Failed to read product details: {e}", flush=True)
+                lead_data['quantity'] = None
+                lead_data['speed'] = None
+                lead_data['order_value'] = None
+            
+            # Extract Buyer Details
+            try:
+                # Member since
+                member_since = driver.find_element(By.CSS_SELECTOR, "div.SLC_f13").text
+                lead_data['member_since'] = member_since.replace('- ', '').replace(' -', '').strip()
+                
+                # Buys
+                buys_element = driver.find_element(By.XPATH, "//p[contains(text(), 'Buys')]/following-sibling::span//b")
+                lead_data['buyer_buys'] = buys_element.text
+                
+                # Engagement
+                engagement_element = driver.find_element(By.XPATH, "//p[contains(text(), 'Engagement')]/following-sibling::span")
+                engagement_text = engagement_element.text
+                lead_data['buyer_engagement'] = engagement_text
+                
+                print(f"Buyer Details - Member: {lead_data['member_since']}, Buys: {lead_data['buyer_buys']}", flush=True)
+            except Exception as e:
+                print(f"Failed to read buyer details: {e}", flush=True)
+                lead_data['member_since'] = None
+                lead_data['buyer_buys'] = None
+                lead_data['buyer_engagement'] = None
+            
+            # Extract Verification Status
+            try:
+                # Check for mobile verification
+                mobile_verified = len(driver.find_elements(By.CSS_SELECTOR, "p.tooltip_vfr")) > 0
+                lead_data['mobile_verified'] = mobile_verified
+                
+                # Check for WhatsApp availability
+                whatsapp_available = driver.find_element(By.ID, "is_whatsup_active_1").get_attribute("value") == "yes"
+                lead_data['whatsapp_available'] = whatsapp_available
+                
+                print(f"Verification - Mobile: {mobile_verified}, WhatsApp: {whatsapp_available}", flush=True)
+            except Exception as e:
+                print(f"Failed to read verification status: {e}", flush=True)
+                lead_data['mobile_verified'] = False
+                lead_data['whatsapp_available'] = False
+            
+            # Extract hidden fields
+            try:
+                lead_data['offer_id'] = driver.find_element(By.ID, "ofrid1").get_attribute("value")
+                lead_data['mcat_id'] = driver.find_element(By.ID, "prime_mcat_id_1").get_attribute("value")
+                lead_data['city_id'] = driver.find_element(By.ID, "city_id_1").get_attribute("value")
+                lead_data['country'] = driver.find_element(By.ID, "card_country_1").get_attribute("value")
+            except Exception as e:
+                print(f"Failed to read hidden fields: {e}", flush=True)
+            
+            # Add validation results
+            lead_data['validation'] = {
+                'span_match': span_result,
+                'h2_match': h2_result,
+                'time_match': time_result,
+                'all_passed': span_result and h2_result and time_result
+            }
+            
+            # Save to JSON file
+            try:
+                with open('lead.json', 'w', encoding='utf-8') as f:
+                    json.dump(lead_data, f, indent=4, ensure_ascii=False)
+                print("Lead data saved to lead.json", flush=True)
+            except Exception as e:
+                print(f"Failed to save lead data to JSON: {e}", flush=True)
+            
+            # Check if the close button is available and click it
             try:
                 close_button = driver.find_element(By.XPATH, "//span[@class='glob_sa_close' and contains(text(), '—')]")
                 if click_element_safely(driver, close_button):
