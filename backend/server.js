@@ -1866,13 +1866,22 @@ const FetchedLead = mongoose.model("FetchedLead", leadSchema, "fetchedleads");
 
 app.post("/api/store-fetched-lead", async (req, res) => {
   try {
-    const { name, email, mobile, user_mobile_number, lead_bought, timestamp_text, uniqueId, address } = req.body;
+    const { 
+      name, 
+      email, 
+      mobile, 
+      user_mobile_number, 
+      lead_bought, 
+      timestamp_text, 
+      uniqueId, 
+      address 
+    } = req.body;
 
     if (!name || !mobile || !user_mobile_number || !lead_bought || !timestamp_text) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Check for duplicate leads in FetchedLead collection
+    // ✅ Step 1: Check for duplicate leads in FetchedLead collection
     const existingFetchedLead = await FetchedLead.findOne({
       name,
       mobile,
@@ -1881,11 +1890,10 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       address,
     });
 
-    // If duplicate found in FetchedLead, stop the Python script
     if (existingFetchedLead) {
       console.log("Duplicate lead detected in FetchedLead. Stopping script for user:", user_mobile_number);
 
-      // Find and terminate the Python process for this user
+      // ✅ Gracefully stop the Python process for this user
       const processKey = uniqueId ? uniqueId + 100000 : null;
       if (processKey && activePythonProcesses.has(processKey)) {
         const pythonProcess = activePythonProcesses.get(processKey);
@@ -1904,11 +1912,13 @@ app.post("/api/store-fetched-lead", async (req, res) => {
         }
 
         activePythonProcesses.delete(processKey);
+
         if (uniqueId && otpRequests.has(uniqueId)) {
           otpRequests.delete(uniqueId);
           otpFailures.delete(uniqueId);
         }
         cleanupDisplay(uniqueId);
+
         console.log(`Python process terminated for uniqueId: ${uniqueId}`);
       }
 
@@ -1919,21 +1929,28 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       });
     }
 
-    // Check if this lead was already captured by AI in the Lead collection
+    // ✅ Step 2: Check if lead already exists in AI-generated leads collection
     const existingAILead = await Lead.findOne({
       name,
+      email,
       mobile,
       user_mobile_number,
-      lead_bought,
+      $expr: {
+        $eq: [
+          { $substr: ["$lead_bought", 0, 10] },
+          lead_bought.substring(0, 10)
+        ]
+      },
+      address,
       source: "AI",
       aiProcessed: true
     });
 
-    // The source determination logic
-    const leadSource = existingAILead ? "AI" : "Manual"; // This is BACKWARDS!
-    const isAIProcessed = !existingAILead;
+    // ✅ Step 3: Determine source correctly
+    const leadSource = existingAILead ? "AI" : "Manual";
+    const isAIProcessed = !existingAILead; // true if new AI lead
 
-    // Store with the determined source
+    // ✅ Step 4: Store the new fetched lead
     const newLead = new FetchedLead({
       name,
       email,
@@ -1942,20 +1959,20 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       lead_bought,
       address,
       createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
-      source: leadSource,        // ← SAVED TO DATABASE
-      aiProcessed: isAIProcessed // ← SAVED TO DATABASE
+      source: leadSource,
+      aiProcessed: isAIProcessed,
     });
 
-    await newLead.save(); // ← Persisted to MongoDB
-    console.log("Lead saved successfully, ID:", newLead._id);
+    await newLead.save();
+    console.log("Lead saved successfully in FetchedLead:", newLead._id);
 
     return res.json({
-      message: "Lead data stored successfully",
+      message: "Lead stored successfully",
       lead: newLead,
     });
 
   } catch (error) {
-    console.error("Error saving lead:", error);
+    console.error("Error storing fetched lead:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
