@@ -3,11 +3,12 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ProfileCredentials.css";
 import { FaChevronDown } from "react-icons/fa";
+
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
-];//734961
-// --- A NEW, SELF-CONTAINED DROPDOWN COMPONENT --- 734961 start
-const StatesDropdown = ({ userEmail }) => {
+];
+
+const StatesDropdown = ({ userEmail, automationStatus }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedStates, setSelectedStates] = useState([]);
   const [tempStates, setTempStates] = useState([]);
@@ -62,6 +63,8 @@ const StatesDropdown = ({ userEmail }) => {
     state.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const isEditDisabled = automationStatus === "Running";
+
   return (
     <div className="credentials-section">
       <div className="credentials-header">States</div>
@@ -72,14 +75,25 @@ const StatesDropdown = ({ userEmail }) => {
               {
                 selectedStates.length === 0 ? "None selected" :
                   selectedStates.length === indianStates.length ? "ALL INDIA" :
-                    selectedStates.length <= 3 ? selectedStates.join(", ") : // <-- Show names if 3 or less
-                      `${selectedStates.length} states selected` // <-- Show count if more than 3
+                    selectedStates.length <= 3 ? selectedStates.join(", ") :
+                      `${selectedStates.length} states selected`
               }
             </span>
             <button
               type="button"
               className="edit-max-captures"
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={() => {
+                if (isEditDisabled) {
+                  alert("You cannot edit while automation is running");
+                  return;
+                }
+                setIsOpen(!isOpen);
+              }}
+              style={{
+                backgroundColor: isEditDisabled ? "#ccc" : "",
+                cursor: isEditDisabled ? "not-allowed" : "pointer",
+                color: isEditDisabled ? "#666" : ""
+              }}
             >
               <FaChevronDown
                 style={{
@@ -88,7 +102,6 @@ const StatesDropdown = ({ userEmail }) => {
                 }}
               />
             </button>
-
           </div>
           {isOpen && (
             <div className="dropdown-menu">
@@ -125,7 +138,6 @@ const StatesDropdown = ({ userEmail }) => {
                 <button className="edit-max-captures save-btn" onClick={(e) => {
                   e.preventDefault();
                   handleSave();
-                  // Save changes
                 }}>
                   Save
                 </button>
@@ -136,8 +148,11 @@ const StatesDropdown = ({ userEmail }) => {
       </div>
     </div>
   );
-};//734961 stop
-const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
+};
+
+const ProfileCredentials = ({
+  isProfilePage,
+  newWhatsappNumber,
   setNewWhatsappNumber,
   isEditingWhatsapp,
   setIsEditingWhatsapp,
@@ -149,7 +164,8 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   setJustUpdated,
   editLockedUntil,
   setEditLockedUntil,
-  error }) => {
+  error
+}) => {
   const location = useLocation();
   const isSettingsPage = location.pathname === "/settings";
   const isWhatsAppPage = location.pathname === "/whatsapp";
@@ -161,22 +177,33 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const [isEditingSavedPassword, setIsEditingSavedPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [savedNewPassword, setSavedNewPassword] = useState("");
-  const [leadTypes, setLeadTypes] = useState([]); // Final selected types
-  const [tempLeadTypes, setTempLeadTypes] = useState([]); // Temp for editing
-  const [isEditingLeadTypes, setIsEditingLeadTypes] = useState(false);//734961(end)
-  // Separate validation states for each password field
+  const [leadTypes, setLeadTypes] = useState([]);
+  const [tempLeadTypes, setTempLeadTypes] = useState([]);
+  const [isEditingLeadTypes, setIsEditingLeadTypes] = useState(false);
+  const [automationStatus, setAutomationStatus] = useState(localStorage.getItem("status") || "Stopped");
+
   const [showLeadsCruiseValidation, setShowLeadsCruiseValidation] = useState(false);
   const [showIndiaMartValidation, setShowIndiaMartValidation] = useState(false);
   const [latestRelease, setLatestRelease] = useState(null);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
-  // Input focus states
   const [isLeadsCruisePasswordFocused, setIsLeadsCruisePasswordFocused] = useState(false);
   const [isIndiaMartPasswordFocused, setIsIndiaMartPasswordFocused] = useState(false);
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-  // const [now, setNow] = useState(Date.now());
   const [countdown, setCountdown] = useState(0);
+
+  // Monitor automation status changes
+  useEffect(() => {
+    const checkAutomationStatus = () => {
+      const status = localStorage.getItem("status");
+      setAutomationStatus(status || "Stopped");
+    };
+
+    checkAutomationStatus();
+    const interval = setInterval(checkAutomationStatus, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -188,19 +215,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       }
     };
 
-    // Calculate immediately
     calculateTimeLeft();
-
-    // Then update every second
     const timer = setInterval(calculateTimeLeft, 1000);
-
-    // Clean up the interval on component unmount
     return () => clearInterval(timer);
   }, [editLockedUntil]);
 
-
   useEffect(() => {
-    // Fetch credentials from localStorage
     const storedMobile = localStorage.getItem("mobileNumber") || "";
     const storedEmail = localStorage.getItem("userEmail") || "";
 
@@ -208,7 +228,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     setEmail(maskEmail(storedEmail));
   }, []);
 
-  // Function to mask email
   const maskEmail = (email) => {
     const [localPart, domain] = email.split("@");
     if (!localPart || !domain) return email;
@@ -224,12 +243,10 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   const [isEditingminOrder, setIsEditingminOrder] = useState(false);
   const [tempMin, setTempMin] = useState(minOrder);
 
-  // Check if password is valid
   const validatePassword = (password) => {
     return passwordRegex.test(password);
   };
 
-  // Update validation for LeadsCruise password
   useEffect(() => {
     if (isEditing && newPassword.length > 0 && isLeadsCruisePasswordFocused) {
       setShowLeadsCruiseValidation(!validatePassword(newPassword));
@@ -238,7 +255,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     }
   }, [newPassword, isEditing, isLeadsCruisePasswordFocused]);
 
-  // Update validation for IndiaMart password
   useEffect(() => {
     if (isEditingSavedPassword && savedNewPassword.length > 0 && isIndiaMartPasswordFocused) {
       setShowIndiaMartValidation(!validatePassword(savedNewPassword));
@@ -251,7 +267,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     try {
       const userMobileNumber = localStorage.getItem("mobileNumber");
 
-      // Prevent API call if maxCaptures is the same
       if (tempCaptures === maxCaptures) {
         alert("Max captures value is unchanged.");
         setIsEditingMaxCaptures(false);
@@ -285,7 +300,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         if (response.data) {
           setMaxCaptures(response.data.maxCaptures);
 
-          // Check if 24 hours have passed
           const lastUpdated = new Date(response.data.lastUpdatedMaxCaptures);
           const now = new Date();
           const hoursPassed = (now - lastUpdated) / (1000 * 60 * 60);
@@ -305,7 +319,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
   useEffect(() => {
     const fetchMinOrder = async () => {
       try {
-        const userEmail = localStorage.getItem("userEmail"); // adjust key if needed
+        const userEmail = localStorage.getItem("userEmail");
         const response = await axios.get(`https://api.leadscruise.com/api/get-min-order?userEmail=${userEmail}`);
 
         if (response.data) {
@@ -318,10 +332,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
 
     fetchMinOrder();
   }, []);
-  // --- Handler Functions for States ---734961(start) to line 248 maybe
-  // Fetch saved states when the component loads
-  //734961(end)
-  // Function to handle password update for LeadsCruise
+
   const handlePasswordUpdate = async () => {
     try {
       if (!validatePassword(newPassword)) {
@@ -345,7 +356,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     }
   };
 
-  // Function to handle password update for IndiaMart
   const handleSavedPasswordUpdate = async () => {
     try {
       if (savedNewPassword.length < 6) {
@@ -370,7 +380,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     }
   };
 
-  // Handle canceling password edit
   const handleCancelEdit = (type) => {
     if (type === 'saved') {
       setIsEditingSavedPassword(false);
@@ -399,11 +408,10 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       const data = await res.json();
       if (res.ok) {
         alert("WhatsApp unlinked successfully");
-        // Clear both verification code and WhatsApp number in UI
         setVerificationCode(null);
-        setNewWhatsappNumber(""); // Also clear the input field
+        setNewWhatsappNumber("");
 
-        const lockUntil = Date.now() + 1 * 60 * 1000; // 1 minute
+        const lockUntil = Date.now() + 1 * 60 * 1000;
         localStorage.setItem("editLockedUntil", lockUntil);
         setEditLockedUntil(lockUntil);
       } else {
@@ -421,7 +429,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       return;
     }
 
-    // Get all .exe or Windows assets
     const windowsAssets = latestRelease.assets.filter(
       asset =>
         asset.name.toLowerCase().includes("windows") ||
@@ -430,14 +437,12 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     );
 
     if (windowsAssets.length > 1) {
-      // If multiple matches, show a list or let user pick
       windowsAssets.forEach(asset => {
         window.open(asset.browser_download_url, "_blank");
       });
     } else if (windowsAssets.length === 1) {
       window.open(windowsAssets[0].browser_download_url, "_blank");
     } else {
-      // Fallback to first asset
       window.open(latestRelease.assets[0].browser_download_url, "_blank");
     }
   };
@@ -465,7 +470,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     };
 
     fetchLatestRelease();
-
   }, []);
 
   useEffect(() => {
@@ -481,13 +485,11 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
 
   useEffect(() => {
     if (justUpdated && verificationCode || (verificationCode === "111")) {
-      // Allow editing again after verification received or if login is successful
       setEditLockedUntil(null);
       localStorage.removeItem("editLockedUntil");
     }
   }, [verificationCode, justUpdated]);
 
-  // For demonstration of the countdown timer
   const getButtonStyle = (baseColor) => {
     return {
       background: countdown > 0 ? "#6c757d" : baseColor,
@@ -505,7 +507,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     try {
       const userEmail = localStorage.getItem("userEmail");
 
-      // Prevent API call if minOrder is the same
       if (tempMin === minOrder) {
         alert("Minimum order value is unchanged.");
         setIsEditingminOrder(false);
@@ -573,9 +574,26 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
     fetchLeadTypes();
   }, []);
 
+  // Helper function to check if editing should be disabled
+  const isEditDisabled = () => {
+    return localStorage.getItem("userEmail") === "demo@leadscruise.com" || automationStatus === "Running";
+  };
+
+  // Helper function to handle edit button click
+  const handleEditClick = (callback) => {
+    if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
+      alert("You cannot edit in demo account");
+      return;
+    }
+    if (automationStatus === "Running") {
+      alert("You cannot edit while automation is running");
+      return;
+    }
+    callback();
+  };
+
   return (
     <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
-      {/* Show Max Captures per Day only on Settings page */}
       {isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">
           <div className="credentials-header">Max Captures per day</div>
@@ -591,22 +609,18 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   value={tempCaptures}
                   onChange={(e) => setTempCaptures(Number(e.target.value))}
                   min="1"
-                  disabled={localStorage.getItem("userEmail") === "demo@leadscruise.com"}
+                  disabled={isEditDisabled()}
                 />
                 <button
                   className="edit-max-captures"
                   style={{
-                    backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                    cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                    color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
+                    backgroundColor: isEditDisabled() ? "#ccc" : "",
+                    cursor: isEditDisabled() ? "not-allowed" : "pointer",
+                    color: isEditDisabled() ? "#666" : ""
                   }}
                   onClick={(e) => {
                     e.preventDefault();
-                    if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                      alert("You cannot edit in demo account");
-                      return;
-                    }
-                    handleSaveMaxCaptures();
+                    handleEditClick(handleSaveMaxCaptures);
                   }}
                 >
                   Save
@@ -616,17 +630,11 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
               <button
                 className="edit-max-captures"
                 style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
+                  backgroundColor: isEditDisabled() ? "#ccc" : "",
+                  cursor: isEditDisabled() ? "not-allowed" : "pointer",
+                  color: isEditDisabled() ? "#666" : ""
                 }}
-                onClick={() => {
-                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                    alert("You cannot edit in demo account");
-                    return;
-                  }
-                  setIsEditingMaxCaptures(true);
-                }}
+                onClick={() => handleEditClick(() => setIsEditingMaxCaptures(true))}
               >
                 Edit
               </button>
@@ -634,11 +642,14 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
           </div>
         </div>
       )}
-      {/* --- Use the new self-contained dropdown component --- */}
+
       {isSettingsPage && !isWhatsAppPage && (
-        //<StatesDropdown userEmail={email} />
-        <StatesDropdown userEmail={localStorage.getItem("userEmail")} />
+        <StatesDropdown
+          userEmail={localStorage.getItem("userEmail")}
+          automationStatus={automationStatus}
+        />
       )}
+
       {isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">
           <div className="credentials-header">Minimum order value</div>
@@ -655,21 +666,28 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   onChange={(e) => setTempMin(Number(e.target.value))}
                   min="1"
                 />
-                <button className="edit-max-captures" onClick={(e) => { e.preventDefault(); handleSaveminOrder(); }}>Save</button>
+                <button
+                  className="edit-max-captures"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSaveminOrder();
+                  }}
+                >
+                  Save
+                </button>
               </>
             ) : (
-              <button className="edit-max-captures" style={{
-                backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
-              }}
-                onClick={() => {
-                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                    alert("You cannot edit in demo account");
-                    return;
-                  }
-                  setIsEditingminOrder(true);
-                }}>Edit</button>
+              <button
+                className="edit-max-captures"
+                style={{
+                  backgroundColor: isEditDisabled() ? "#ccc" : "",
+                  cursor: isEditDisabled() ? "not-allowed" : "pointer",
+                  color: isEditDisabled() ? "#666" : ""
+                }}
+                onClick={() => handleEditClick(() => setIsEditingminOrder(true))}
+              >
+                Edit
+              </button>
             )}
           </div>
         </div>
@@ -678,11 +696,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       {isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section enhanced-lead-types">
           <div className="credentials-header">Lead Types</div>
-
-          {/* <p className="lead-types-description">
-            Select the type of leads you want to capture. This helps the system filter incoming leads based on your business requirements.
-          </p> */}
-
           <div className="max-captures-content lead-types">
             <span className="credential-value">
               {leadTypes.length === 0 ? "None selected" : leadTypes.join(", ").toUpperCase()}
@@ -720,18 +733,15 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                 </button>
               </>
             ) : (
-              <button className="edit-max-captures" style={{
-                backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
-              }}
-                onClick={() => {
-                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                    alert("You cannot edit in demo account");
-                    return;
-                  }
-                  setIsEditingLeadTypes(true);
-                }}>
+              <button
+                className="edit-max-captures"
+                style={{
+                  backgroundColor: isEditDisabled() ? "#ccc" : "",
+                  cursor: isEditDisabled() ? "not-allowed" : "pointer",
+                  color: isEditDisabled() ? "#666" : ""
+                }}
+                onClick={() => handleEditClick(() => setIsEditingLeadTypes(true))}
+              >
                 Edit
               </button>
             )}
@@ -771,7 +781,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                   ) : (
                     <button
                       className="edit-button"
-
                       disabled={countdown > 0}
                       title={getButtonTitle("Edit")}
                       style={{
@@ -779,13 +788,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                         cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
                         color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                       }}
-                      onClick={() => {
-                        if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                          alert("You cannot edit in demo account");
-                          return;
-                        }
-                        setIsEditingWhatsapp(true);
-                      }}
+                      onClick={() => handleEditClick(() => setIsEditingWhatsapp(true))}
                     >
                       Edit {countdown > 0 && `(${countdown}s)`}
                     </button>
@@ -824,61 +827,47 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
       )}
 
       {isWhatsAppPage && (
-        <>
-          {/* Download Latest Release section */}
-          <div className="credentials-section">
-            <h3 className="credentials-header centered-header">Desktop Application</h3>
-            <div className="credentials-content">
-              <div className="credential-group">
-                {/* <label>Lead Fetcher Desktop App</label> */}
-                <div className="whatsapp-number-container">
-                  {downloadLoading ? (
-                    <div className="loading-spinner">
-                      <div className="spinner1"></div>
-                      <span>Checking for updates...</span>
+        <div className="credentials-section">
+          <h3 className="credentials-header centered-header">Desktop Application</h3>
+          <div className="credentials-content">
+            <div className="credential-group">
+              <div className="whatsapp-number-container">
+                {downloadLoading ? (
+                  <div className="loading-spinner">
+                    <div className="spinner1"></div>
+                    <span>Checking for updates...</span>
+                  </div>
+                ) : latestRelease ? (
+                  <>
+                    <div className="edit-button-container">
+                      <button
+                        className="update-api-btn"
+                        onClick={downloadLatestRelease}
+                        disabled={countdown > 0}
+                        title={getButtonTitle("Download")}
+                      >
+                        Download {countdown > 0 && `(${countdown}s)`}
+                      </button>
+                      <button
+                        className="cancel-button"
+                        onClick={viewReleaseNotes}
+                        disabled={countdown > 0}
+                        title={getButtonTitle("View Details")}
+                      >
+                        Release Notes {countdown > 0 && `(${countdown}s)`}
+                      </button>
                     </div>
-                  ) : latestRelease ? (
-                    <>
-                      {/*<span className="mobile-text">
-                        Version {latestRelease.tag_name || "N/A"}
-                        {latestRelease.published_at && (
-                          <span style={{ fontSize: "0.85em", color: "#666", marginLeft: "8px" }}>
-                            (Released: {new Date(latestRelease.published_at).toLocaleDateString()})
-                          </span>
-                        )}
-                      </span>*/}
-                      <div className="edit-button-container">
-                        <button
-                          className="update-api-btn"
-                          onClick={downloadLatestRelease}
-                          disabled={countdown > 0}
-                          title={getButtonTitle("Download")}
-                        >
-                          Download {countdown > 0 && `(${countdown}s)`}
-                        </button>
-                        <button
-                          className="cancel-button"
-                          onClick={viewReleaseNotes}
-                          disabled={countdown > 0}
-                          title={getButtonTitle("View Details")}
-                        >
-                          Release Notes {countdown > 0 && `(${countdown}s)`}
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <span className="mobile-text">Unable to fetch release information</span>
-                  )}
-                </div>
+                  </>
+                ) : (
+                  <span className="mobile-text">Unable to fetch release information</span>
+                )}
               </div>
-
-              {downloadError && <div className="error-message">{downloadError}</div>}
             </div>
+            {downloadError && <div className="error-message">{downloadError}</div>}
           </div>
-        </>
+        </div>
       )}
 
-      {/* IndiaMart Account Credentials */}
       {!isWhatsAppPage && !isSheetsPage && !isSettingsPage && (
         <div className="credentials-section">
           <h3 className="credentials-header"> Leads Provider credentials</h3>
@@ -893,51 +882,10 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                 </div>
               </div>
             </div>
-            {/* <div className="credential-group">
-              <label>Password</label>
-              <div className="password-field">
-                {isEditingSavedPassword ? (
-                  <input
-                    type="password"
-                    className="password-input"
-                    value={savedNewPassword}
-                    onChange={(e) => setSavedNewPassword(e.target.value)}
-                    placeholder="Enter new password"
-                    onFocus={() => setIsIndiaMartPasswordFocused(true)}
-                    onBlur={() => setIsIndiaMartPasswordFocused(false)}
-                  />
-                ) : (
-                  <span>************</span>
-                )}
-                {isEditingSavedPassword ? (
-                  <div className="edit-button-container">
-                    <button className="save-button" onClick={(e) => { e.preventDefault(); handleSavedPasswordUpdate(); }}>
-                      Save
-                    </button>
-                    <button className="cancel-button" onClick={() => handleCancelEdit('saved')}>Cancel</button>
-                  </div>
-                ) : (
-                  <button type="button" className="edit-button" style={{
-                    backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                    cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                    color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
-                  }}
-                    onClick={() => {
-                      if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                        alert("You cannot edit in demo account");
-                        return;
-                      }
-                      setIsEditingSavedPassword(true);
-                    }}>
-                    Edit
-                  </button>
-                )}
-              </div>
-            </div> */}
           </div>
         </div>
       )}
-      {/* LeadsCruise Credentials */}
+
       {!isWhatsAppPage && !isSettingsPage && !isSheetsPage && (
         <div className="credentials-section">
           <h3 className="credentials-header">LeadsCruise Credentials</h3>
@@ -976,18 +924,15 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
                     <button className="cancel-button" onClick={() => handleCancelEdit('leadscruise')}>Cancel</button>
                   </div>
                 ) : (
-                  <button className="edit-button" style={{
-                    backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                    cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                    color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
-                  }}
-                    onClick={() => {
-                      if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                        alert("You cannot edit in demo account");
-                        return;
-                      }
-                      setIsEditing(true);
-                    }}>
+                  <button
+                    className="edit-button"
+                    style={{
+                      backgroundColor: isEditDisabled() ? "#ccc" : "",
+                      cursor: isEditDisabled() ? "not-allowed" : "pointer",
+                      color: isEditDisabled() ? "#666" : ""
+                    }}
+                    onClick={() => handleEditClick(() => setIsEditing(true))}
+                  >
                     Edit
                   </button>
                 )}
@@ -996,7 +941,7 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
           </div>
         </div>
       )}
-      {/* IndiaMart Password Validation Popup */}
+
       {showLeadsCruiseValidation && (
         <div className={`password-validation-popup ${shakeError ? "shake" : ""}`}>
           <div className="validation-container">
@@ -1008,7 +953,6 @@ const ProfileCredentials = ({ isProfilePage, newWhatsappNumber,
         </div>
       )}
 
-      {/* LeadsCruise Password Validation Popup */}
       {showIndiaMartValidation && (
         <div className={`password-validation-popup-1 ${shakeError ? "shake" : ""}`}>
           <div className="validation-container">

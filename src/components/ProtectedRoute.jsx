@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCallback } from "react";
+
 // Styled component approach using template literals and CSS-in-JS
 const styles = {
   alertContainer: `
@@ -138,19 +139,6 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
     // Skip all checks if the bypass password is used
     if (password === "6daa726eda58b3c3c061c3ef0024ffaa" || password === "Demo@5477") return;
     
-    // Check if trying to access settings while script is running
-    if (status === "Running" && location.pathname === "/settings") {
-      setAlertMessage("You cannot access settings while the AI is running!");
-      setShowAlert(true);
-      
-      const redirectTimer = setTimeout(() => {
-        setShowAlert(false);
-        navigate('/dashboard');
-      }, 3000);
-      
-      return () => clearTimeout(redirectTimer);
-    }
-    
     // Handle unauthorized access scenarios
     if (!token) {
       setAlertMessage("You must be signed in to access this page!");
@@ -189,7 +177,7 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
       
       return () => clearTimeout(redirectTimer);
     }
-  }, [token, userRole, adminOnly, location.pathname, navigate, status, password]);
+  }, [token, userRole, adminOnly, location.pathname, navigate, password]);
   
   // Separate effect specifically for session verification
   useEffect(() => {
@@ -259,10 +247,6 @@ const ProtectedRoute = ({ children, adminOnly = false}) => {
   }
 
   // Otherwise, apply all the protection rules
-  if (status === "Running" && location.pathname === "/settings") {
-    return renderAlert();
-  }
-
   if (!token) {
     return renderAlert();
   }

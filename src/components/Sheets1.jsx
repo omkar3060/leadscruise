@@ -70,6 +70,9 @@ const Sheets = () => {
   });
   const [otpError, setOtpError] = useState('');
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  const [showCustomDateModal, setShowCustomDateModal] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
   const fetchBuyerBalance = useCallback(async () => {
     try {
@@ -261,7 +264,7 @@ const Sheets = () => {
 
     fetchSettings();
   }, [navigate]);
-  
+
   const handleOtpSubmit = async () => {
     if (!otpValue || otpValue.length !== 4) {
       alert("Please enter a valid 4-digit OTP");
@@ -746,7 +749,7 @@ const Sheets = () => {
         return;
       }
       setIsLoadingLeads(true);
-      
+
       if (userMobile === "9999999999") {
         setLeads(demoLeads);
         return;
@@ -805,9 +808,9 @@ const Sheets = () => {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000;
     const istNow = new Date(now.getTime() + istOffset);
-    
+
     const today = new Date(istNow.toISOString().split('T')[0]);
-    
+
     const startOfWeek = new Date(today);
     const day = today.getUTCDay();
     const diff = day === 0 ? 6 : day - 1;
@@ -841,16 +844,16 @@ const Sheets = () => {
     const istOffset = 5.5 * 60 * 60 * 1000;
     const istNow = new Date(now.getTime() + istOffset);
     const today = new Date(istNow.toISOString().split('T')[0]);
-    
+
     let startDate, endDate;
-    
+
     switch (dateRange) {
       case 'today':
         startDate = new Date(today);
         endDate = new Date(today);
         endDate.setUTCDate(endDate.getUTCDate() + 1);
         break;
-        
+
       case 'thisWeek':
         startDate = new Date(today);
         const day = today.getUTCDay();
@@ -858,29 +861,29 @@ const Sheets = () => {
         startDate.setUTCDate(today.getUTCDate() - diff);
         endDate = new Date(istNow);
         break;
-        
+
       case 'thisMonth':
         startDate = new Date(today.getUTCFullYear(), today.getUTCMonth(), 1);
         endDate = new Date(istNow);
         break;
-        
+
       case 'thisQuarter':
         const currentQuarter = Math.floor(today.getUTCMonth() / 3);
         startDate = new Date(today.getUTCFullYear(), currentQuarter * 3, 1);
         endDate = new Date(istNow);
         break;
-        
+
       case 'thisYear':
         startDate = new Date(today.getUTCFullYear(), 0, 1);
         endDate = new Date(istNow);
         break;
-        
+
       case 'yesterday':
         startDate = new Date(today);
         startDate.setUTCDate(startDate.getUTCDate() - 1);
         endDate = new Date(today);
         break;
-        
+
       case 'previousWeek':
         const prevWeekEnd = new Date(today);
         const dayOfWeek = today.getUTCDay();
@@ -890,12 +893,12 @@ const Sheets = () => {
         startDate.setUTCDate(prevWeekEnd.getUTCDate() - 7);
         endDate = prevWeekEnd;
         break;
-        
+
       case 'previousMonth':
         startDate = new Date(today.getUTCFullYear(), today.getUTCMonth() - 1, 1);
         endDate = new Date(today.getUTCFullYear(), today.getUTCMonth(), 1);
         break;
-        
+
       case 'previousQuarter':
         const prevQuarter = Math.floor(today.getUTCMonth() / 3) - 1;
         if (prevQuarter < 0) {
@@ -906,16 +909,16 @@ const Sheets = () => {
           endDate = new Date(today.getUTCFullYear(), (prevQuarter + 1) * 3, 1);
         }
         break;
-        
+
       case 'previousYear':
         startDate = new Date(today.getUTCFullYear() - 1, 0, 1);
         endDate = new Date(today.getUTCFullYear(), 0, 1);
         break;
-        
+
       default:
         return leads;
     }
-    
+
     return leads.filter((lead) => {
       if (!lead.createdAt) return false;
       const leadDate = new Date(lead.createdAt);
@@ -923,14 +926,47 @@ const Sheets = () => {
     });
   };
 
-  const handleDownloadLeadsExcel = (dateRange = 'all') => {
+  const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customEnd = null) => {
     if (!leads || leads.length === 0) {
       alert("No leads available to download.");
       return;
     }
 
-    let filteredLeads = dateRange === 'all' ? leads : filterLeadsByDateRange(dateRange);
-    
+    let filteredLeads;
+    let label;
+
+    if (dateRange === 'custom' && customStart && customEnd) {
+      const startDate = new Date(customStart);
+      const endDate = new Date(customEnd);
+      endDate.setUTCDate(endDate.getUTCDate() + 1); // Include the end date
+
+      filteredLeads = leads.filter((lead) => {
+        if (!lead.createdAt) return false;
+        const leadDate = new Date(lead.createdAt);
+        return leadDate >= startDate && leadDate < endDate;
+      });
+
+      label = `Custom_${customStart}_to_${customEnd}`;
+    } else if (dateRange === 'all') {
+      filteredLeads = leads;
+      label = 'Total Leads Captured';
+    } else {
+      filteredLeads = filterLeadsByDateRange(dateRange);
+      const dateRangeLabels = {
+        'today': 'Today',
+        'thisWeek': 'This Week',
+        'thisMonth': 'This Month',
+        'thisQuarter': 'This Quarter',
+        'thisYear': 'This Year',
+        'yesterday': 'Yesterday',
+        'previousWeek': 'Previous Week',
+        'previousMonth': 'Previous Month',
+        'previousQuarter': 'Previous Quarter',
+        'previousYear': 'Previous Year'
+      };
+      label = dateRangeLabels[dateRange] || 'Total Leads Captured';
+    }
+
     if (filteredLeads.length === 0) {
       alert("No leads found for the selected date range.");
       return;
@@ -949,30 +985,129 @@ const Sheets = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
 
-    const dateRangeLabels = {
-      'today': 'Today',
-      'thisWeek': 'This Week',
-      'thisMonth': 'This Month',
-      'thisQuarter': 'This Quarter',
-      'thisYear': 'This Year',
-      'yesterday': 'Yesterday',
-      'previousWeek': 'Previous Week',
-      'previousMonth': 'Previous Month',
-      'previousQuarter': 'Previous Quarter',
-      'previousYear': 'Previous Year',
-      'all': 'Total Leads Captured'
-    };
-
     const today = new Date().toISOString().split("T")[0];
-    const label = dateRangeLabels[dateRange] || 'Total Leads Captured';
     const filename = `${label}_${today}.xlsx`;
 
     XLSX.writeFile(workbook, filename);
     setShowDownloadDropdown(false);
   };
+  const handleCustomDateSubmit = () => {
+    if (!customStartDate || !customEndDate) {
+      alert('Please select both start and end dates.');
+      return;
+    }
 
+    const start = new Date(customStartDate);
+    const end = new Date(customEndDate);
+
+    if (start > end) {
+      alert('Start date cannot be after end date.');
+      return;
+    }
+
+    handleDownloadLeadsExcel('custom', customStartDate, customEndDate);
+    setShowCustomDateModal(false);
+    setCustomStartDate('');
+    setCustomEndDate('');
+  };
   return (
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
+      {showCustomDateModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ marginBottom: '20px', color: '#333' }}>Select Custom Date Range</h3>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
+                Start Date:
+              </label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
+                End Date:
+              </label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowCustomDateModal(false);
+                  setCustomStartDate('');
+                  setCustomEndDate('');
+                }}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  backgroundColor: 'white',
+                  color: '#666',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCustomDateSubmit}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showOtpWaitPopup && !showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
           <div className={styles['otp-popup-container']}>
@@ -1047,10 +1182,10 @@ const Sheets = () => {
         cooldownTime={cooldownTime}
       />
 
-      <div style={{ 
-        background: "#fff", 
-        borderRadius: "8px", 
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)", 
+      <div style={{
+        background: "#fff",
+        borderRadius: "8px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
         padding: "20px 40px",
         margin: "0px 20px 15px 20px",
         display: "flex",
@@ -1089,11 +1224,11 @@ const Sheets = () => {
           </div>
         </div>
 
-        <div 
+        <div
           className="download-reports-container"
-          style={{ 
-            display: "flex", 
-            flexDirection: "column", 
+          style={{
+            display: "flex",
+            flexDirection: "column",
             gap: "4px",
             marginLeft: "20px",
             position: "relative"
@@ -1102,14 +1237,14 @@ const Sheets = () => {
           <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
             Settings
           </button>
-          <button 
-            className={styles.buttonLarge} 
+          <button
+            className={styles.buttonLarge}
             onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
             style={{ marginBottom: 0 }}
           >
             Download Reports
           </button>
-          
+
           {showDownloadDropdown && (
             <div style={{
               position: 'absolute',
@@ -1140,8 +1275,8 @@ const Sheets = () => {
                   key={option.value}
                   onClick={() => {
                     if (option.value === 'custom') {
-                      alert('Custom date range feature coming soon!');
                       setShowDownloadDropdown(false);
+                      setShowCustomDateModal(true);
                     } else {
                       handleDownloadLeadsExcel(option.value);
                     }
@@ -1220,7 +1355,7 @@ const Sheets = () => {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table className={`${styles.leadsTable} ${styles.tablePadding}`}> 
+                <table className={`${styles.leadsTable} ${styles.tablePadding}`}>
                   <thead>
                     <tr>
                       <th style={{ width: '50px' }}>No.</th>

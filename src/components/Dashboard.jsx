@@ -67,6 +67,9 @@ const Dashboard = () => {
   });
   const [otpError, setOtpError] = useState('');
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  const [showCustomDateModal, setShowCustomDateModal] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
   useEffect(() => {
     const fetchMessageCount = async () => {
@@ -773,13 +776,46 @@ const Dashboard = () => {
     });
   };
 
-  const handleDownloadLeadsExcel = (dateRange = 'all') => {
+  const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customEnd = null) => {
     if (!leads || leads.length === 0) {
       alert("No leads available to download.");
       return;
     }
 
-    let filteredLeads = dateRange === 'all' ? leads : filterLeadsByDateRange(dateRange);
+    let filteredLeads;
+    let label;
+    
+    if (dateRange === 'custom' && customStart && customEnd) {
+      const startDate = new Date(customStart);
+      const endDate = new Date(customEnd);
+      endDate.setUTCDate(endDate.getUTCDate() + 1);
+      
+      filteredLeads = leads.filter((lead) => {
+        if (!lead.createdAt) return false;
+        const leadDate = new Date(lead.createdAt);
+        return leadDate >= startDate && leadDate < endDate;
+      });
+      
+      label = `Custom_${customStart}_to_${customEnd}`;
+    } else if (dateRange === 'all') {
+      filteredLeads = leads;
+      label = 'Total Leads Captured';
+    } else {
+      filteredLeads = filterLeadsByDateRange(dateRange);
+      const dateRangeLabels = {
+        'today': 'Today',
+        'thisWeek': 'This Week',
+        'thisMonth': 'This Month',
+        'thisQuarter': 'This Quarter',
+        'thisYear': 'This Year',
+        'yesterday': 'Yesterday',
+        'previousWeek': 'Previous Week',
+        'previousMonth': 'Previous Month',
+        'previousQuarter': 'Previous Quarter',
+        'previousYear': 'Previous Year'
+      };
+      label = dateRangeLabels[dateRange] || 'Total Leads Captured';
+    }
     
     if (filteredLeads.length === 0) {
       alert("No leads found for the selected date range.");
@@ -799,26 +835,33 @@ const Dashboard = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
 
-    const dateRangeLabels = {
-      'today': 'Today',
-      'thisWeek': 'This Week',
-      'thisMonth': 'This Month',
-      'thisQuarter': 'This Quarter',
-      'thisYear': 'This Year',
-      'yesterday': 'Yesterday',
-      'previousWeek': 'Previous Week',
-      'previousMonth': 'Previous Month',
-      'previousQuarter': 'Previous Quarter',
-      'previousYear': 'Previous Year',
-      'all': 'Total Leads Captured'
-    };
-
     const today = new Date().toISOString().split("T")[0];
-    const label = dateRangeLabels[dateRange] || 'Total Leads Captured';
     const filename = `${label}_${today}.xlsx`;
 
     XLSX.writeFile(workbook, filename);
     setShowDownloadDropdown(false);
+  };
+
+  // PART 2 - Continuation from handleCustomDateSubmit function
+
+  const handleCustomDateSubmit = () => {
+    if (!customStartDate || !customEndDate) {
+      alert('Please select both start and end dates.');
+      return;
+    }
+
+    const start = new Date(customStartDate);
+    const end = new Date(customEndDate);
+
+    if (start > end) {
+      alert('Start date cannot be after end date.');
+      return;
+    }
+
+    handleDownloadLeadsExcel('custom', customStartDate, customEndDate);
+    setShowCustomDateModal(false);
+    setCustomStartDate('');
+    setCustomEndDate('');
   };
 
   const handleConfirmAction = async () => {
@@ -866,6 +909,103 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboardContainer}>
+
+      {showCustomDateModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ marginBottom: '20px', color: '#333' }}>Select Custom Date Range</h3>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
+                Start Date:
+              </label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
+                End Date:
+              </label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowCustomDateModal(false);
+                  setCustomStartDate('');
+                  setCustomEndDate('');
+                }}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  backgroundColor: 'white',
+                  color: '#666',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCustomDateSubmit}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showOtpWaitPopup && !showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
@@ -1036,8 +1176,8 @@ const Dashboard = () => {
                     key={option.value}
                     onClick={() => {
                       if (option.value === 'custom') {
-                        alert('Custom date range feature coming soon!');
                         setShowDownloadDropdown(false);
+                        setShowCustomDateModal(true);
                       } else {
                         handleDownloadLeadsExcel(option.value);
                       }

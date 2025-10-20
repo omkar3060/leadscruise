@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./Sidebar.module.css";
 import { FaWhatsapp } from "react-icons/fa";
@@ -6,32 +6,20 @@ import { SiGooglesheets } from "react-icons/si";
 import { FiSettings, FiLogOut } from "react-icons/fi";
 import { AiOutlineHome } from "react-icons/ai";
 import { BiBarChartSquare } from "react-icons/bi";
-import { MdOutlineRecommend } from "react-icons/md"; // Import referral icon
+import { MdOutlineRecommend } from "react-icons/md";
 import axios from "axios";
 import AIIcon from '../images/AI.png';
 import { HiUserGroup } from "react-icons/hi";
 import { FaYoutube } from "react-icons/fa";
+
 const Sidebar = ({ status }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Effect to check status and redirect from settings if running
-  useEffect(() => {
-    if (status === "Running" && location.pathname === "/settings") {
-      alert("You cannot access settings while the AI is running!");
-      // Redirect back to dashboard
-      if (location.pathname.includes("/master")) {
-        navigate("/master");
-      } else {
-        navigate("/dashboard");
-      }
-    }
-  }, [status, location.pathname, navigate]);
-
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
 
-    if (!isConfirmed) return; // Stop if user cancels
+    if (!isConfirmed) return;
 
     const userEmail = localStorage.getItem("userEmail");
 
@@ -41,7 +29,7 @@ const Sidebar = ({ status }) => {
       });
 
       localStorage.clear();
-      sessionStorage.clear(); // Clear session storage as well
+      sessionStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
           ? "https://app.leadscruise.com/"
@@ -104,37 +92,20 @@ const Sidebar = ({ status }) => {
               <BiBarChartSquare className={styles.icon} />
               <span className={styles.tooltipText}>Analytics</span>
             </div>
-            {<div
+            <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/whatsapp")}
             >
               <FaWhatsapp className={styles.icon} />
               <span className={styles.tooltipText}>WhatsApp</span>
-            </div>}
+            </div>
             <div
-              className={`${styles.sidebarIcon} ${styles.tooltip} ${status === "Running" ? styles.disabled : ""
-                }`}
-              onClick={() => {
-                console.log("Status in Sidebar:", status);
-                if (status === "Running") {
-                  alert(
-                    "You cannot go to settings while the AI is running!"
-                  );
-                } else {
-                  navigate("/settings");
-                }
-              }}
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/settings")}
             >
               <FiSettings className={styles.icon} />
               <span className={styles.tooltipText}>Settings</span>
             </div>
-            {/* <div
-              className={`${styles.sidebarIcon} ${styles.tooltip}`}
-              onClick={() => navigate("/team")}
-            >
-              <HiUserGroup className={styles.icon} />
-              <span className={styles.tooltipText}>Team</span>
-            </div> */}
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => window.open("https://seller.indiamart.com/", "_blank")}
@@ -172,7 +143,7 @@ const Sidebar = ({ status }) => {
               onClick={() => window.open("https://www.exportersindia.com/register-business-online?joinfree=sellurprdtshead", "_blank")}
             >
               <img
-                src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIACAAIAMBEQACEQEDEQH/xAAXAAEAAwAAAAAAAAAAAAAAAAAFBAYH/8QALRAAAQMCBAMHBQEAAAAAAAAAAQIDBAURAAYSMSEycQcTQUJhgaEUI0NRsSL/xAAaAQACAwEBAAAAAAAAAAAAAAACAwEEBQAG/8QAKBEAAgIBBAADCQAAAAAAAAAAAQIAAxEEEiExQYHwEyIkMjRxscHh/9oADAMBAAIRAxEAPwDccdOkd6dEYdDL0pht07IW4AT7YMVuRkCCWUcEyRgIUzTJ3aBVa5m40mVCbQg95rbSDrj6b83vZPU4q1W2s+GHE3tbodDVpRZU+W/Pl4R7P2YpFJYiU2k6VVapOBqPfZFyBqPuR8/rGtpKFfdY/wAqzzN9hXCL2YVnmgUmj9n8zvW0OSUaFmY6AXnHdQusq3uePQcNsM0djvqlb1iReqrSRLPklqYxlSmN1Er+pDAKgvmSDxAPqAQPbFbVOr3My9ZjalKoAYnCWl5kSEhP3v8AQUBzJ8vxbCmGDiGDkZmXVyUV9tcFMgKU1GQNCQLk/aUoWHidRxq1j4BseuRKbfUjMuhpMjMM+PNrjHcwYq+8i09RBKl+DjtuFx4JFwNyTsM72gRSqePZ/UtbdxyZNrMn6mS3RIyiXpCdUgp/Cx5iT4FXKnqT5TiKxtG8+X3/AJOY590RcAAAAWA2AwqHKHn/ACdUKlVoWYMvONJqcTSFNOK0h0JN0kHYEXIseBB3FuNzTakVqa3GVMRbTvIYdiLxp2bJ8dLZo8SlvEWW/Ikh4J9Uto5uhUnrhBFQPBJjBvPcWo9KZpbLgStx+Q8rXIkukFx5X7P8AHADbAM5Y8wlUCIYGTP/2Q=="
+                src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIACAAIAMBEQACEQEDEQH/xAAXAAEAAwAAAAAAAAAAAAAAAAAFBAYH/8QALRAAAQMCBAMHBQEAAAAAAAAAAQIDBAURAAYSMSEycQcTQUJhgaEUI0NRsSL/xAAaAQACAwEBAAAAAAAAAAAAAAACAwEEBQAG/8QAKBEAAgIBBAADCQAAAAAAAAAAAQIAAxEEEiExQYHwEyIkMzRxscHh/9oADAMBAAIRAxEAPwDccdOkd6dEYdDL0pht07IW4AT7YMVuRkCCWUcEyRgIUzTJ3aBVa5m40mVCbQg95rbSDrj6b83vZPU4q1W2s+GHE3tbodDVpRZU+W/Pl4R7P2YpFJYiU2k6VVapOBqPfZFyBqPuR8/rGtpKFfdY/wAqzzN9hXCL2YVnmgUmj9n8zvW0OSUaFmY6AXnHdQusq3uePQcNsM0djvqlb1iReqrSRLPklqYxlSmN1Er+pDAKgvmSDxAPqAQPbFbVOr3My9ZjalKoAYnCWl5kSEhP3v8AQUBzJ8vxbCmGDiGDkZmXVyUV9tcFMgKU1GQNCQLk/aUoWHidRxq1j4BseuRKbfUjMuhpMjMM+PNrjHcwYq+8i09RBKl+DjtuFx4JFwNyTsM72gRSqePZ/UtbdxyZNrMn6mS3RIyiXpCdUgp/Cx5iT4FXKnqT5TiKxtG8+X3/AJOY590RcAAAAWA2AwqHKHn/ACdUKlVoWYMvONJqcTSFNOK0h0JN0kHYEXIseBB3FuNzTakVqa3GVMRbTvIYdiLxp2bJ8dLZo8SlvEWW/Ikh4J9Uto5uhUnrhBFQPBJjBvPcWo9KZpbLgStx+Q8rXIkukFx5X7P8AHADbAM5Y8wlUCIYGTP/2Q=="
                 className={styles.icon}
                 alt="Exporters India"
                 style={{
@@ -204,7 +175,7 @@ const Sidebar = ({ status }) => {
               onClick={() => window.open("https://www.youtube.com/@FocusEngineeringProducts", "_blank")}
             >
               <FaYoutube className={styles.icon} style={{
-                color: "#FF0000", // YouTube red color
+                color: "#FF0000",
                 fontSize: "32px"
               }} />
               <span className={styles.tooltipText}>YouTube</span>

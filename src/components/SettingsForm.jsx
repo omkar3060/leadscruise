@@ -47,6 +47,7 @@ const SettingsForm = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const [originalSettings, setOriginalSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [automationStatus, setAutomationStatus] = useState(localStorage.getItem("status") || "Stopped");
   const navigate = useNavigate();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
@@ -60,6 +61,22 @@ const SettingsForm = () => {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Monitor automation status changes
+  useEffect(() => {
+    const checkAutomationStatus = () => {
+      const status = localStorage.getItem("status");
+      setAutomationStatus(status || "Stopped");
+    };
+
+    // Check status on mount
+    checkAutomationStatus();
+
+    // Set up interval to check status every second
+    const interval = setInterval(checkAutomationStatus, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -230,7 +247,7 @@ const SettingsForm = () => {
     }
   };
 
-const handleRevert = async () => {
+  const handleRevert = async () => {
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
       return alert("User email not found!");
@@ -282,6 +299,24 @@ const handleRevert = async () => {
     setEditingValue("");
   };
 
+  // Helper function to check if editing should be disabled
+  const isEditDisabled = () => {
+    return localStorage.getItem("userEmail") === "demo@leadscruise.com" || automationStatus === "Running";
+  };
+
+  // Helper function to handle edit button click
+  const handleEditClick = (type) => {
+    if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
+      alert("You cannot edit in demo account");
+      return;
+    }
+    if (automationStatus === "Running") {
+      alert("You cannot edit settings while automation is running");
+      return;
+    }
+    openModal(type);
+  };
+
   return (
     <div
       className="settings-page-wrapper"
@@ -331,17 +366,11 @@ const handleRevert = async () => {
                 type="button"
                 className="edit-button"
                 style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "", // grey background
-                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
+                  backgroundColor: isEditDisabled() ? "#ccc" : "",
+                  cursor: isEditDisabled() ? "not-allowed" : "pointer",
+                  color: isEditDisabled() ? "#666" : ""
                 }}
-                onClick={() => {
-                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                    alert("You cannot edit in demo account");
-                    return;
-                  }
-                  openModal("sentences");
-                }}
+                onClick={() => handleEditClick("sentences")}
               >
                 Edit
               </button>
@@ -365,17 +394,11 @@ const handleRevert = async () => {
                 type="button"
                 className="edit-button"
                 style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "", // grey background
-                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
+                  backgroundColor: isEditDisabled() ? "#ccc" : "",
+                  cursor: isEditDisabled() ? "not-allowed" : "pointer",
+                  color: isEditDisabled() ? "#666" : ""
                 }}
-                onClick={() => {
-                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                    alert("You cannot edit in demo account");
-                    return;
-                  }
-                  openModal("wordArray");
-                }}
+                onClick={() => handleEditClick("wordArray")}
               >
                 Edit
               </button>
@@ -399,17 +422,11 @@ const handleRevert = async () => {
                 type="button"
                 className="edit-button"
                 style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "", // grey background
-                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
+                  backgroundColor: isEditDisabled() ? "#ccc" : "",
+                  cursor: isEditDisabled() ? "not-allowed" : "pointer",
+                  color: isEditDisabled() ? "#666" : ""
                 }}
-                onClick={() => {
-                  if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
-                    alert("You cannot edit in demo account");
-                    return;
-                  }
-                  openModal("h2WordArray");
-                }}
+                onClick={() => handleEditClick("h2WordArray")}
               >
                 Edit
               </button>
@@ -525,7 +542,7 @@ const handleRevert = async () => {
                   overflow: "hidden",
                   minHeight: "38px",
                   width: "100%",
-                  maxWidth: "100%", // Prevents horizontal expansion
+                  maxWidth: "100%",
                   padding: "8px 12px",
                   boxSizing: "border-box",
                   border: "1px solid #ccc",
@@ -533,8 +550,8 @@ const handleRevert = async () => {
                   fontFamily: "inherit",
                   fontSize: "inherit",
                   lineHeight: "1.5",
-                  wordWrap: "break-word", // Forces text to wrap within the textarea
-                  whiteSpace: "pre-wrap", // Preserves line breaks but wraps text
+                  wordWrap: "break-word",
+                  whiteSpace: "pre-wrap",
                 }}
               />
               <button
