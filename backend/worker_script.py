@@ -635,8 +635,7 @@ def is_within_30_days(timestamp_text, thirty_days_ago):
     except Exception as e:
         print(f"Error parsing timestamp '{timestamp_text}': {e}. Assuming it's recent.", flush=True)
         return True
- 
-lead_bought=""
+
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, address=None):
     global lead_bought  # Access the global variable
     global lead_count
