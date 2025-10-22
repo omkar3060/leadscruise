@@ -2140,6 +2140,7 @@ def redirect_and_refresh(driver, wait):
                 else:
                     print(f"Close button not found or failed to click: {e}", flush=True)
 
+
             # If all conditions are True, click the "Contact Buyer Now" button
             if span_result and h2_result and time_result:
                 print("\n=== Running Scorer ===", flush=True)

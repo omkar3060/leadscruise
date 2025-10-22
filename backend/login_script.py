@@ -254,6 +254,392 @@ def start_worker():
     except Exception as e:
         print(f"Error starting worker: {e}", flush=True)
 
+def fetch_analytics_data(driver, user_mobile_number, user_password):
+    """
+    Fetch analytics data (charts and tables) from IndiaMART and store in database
+    """
+    try:
+        print("Starting analytics data fetch...", flush=True)
+        
+        # Navigate to analytics page
+        analytics_url = "https://seller.indiamart.com/reportnew/home"
+        print(f"Navigating to analytics page: {analytics_url}", flush=True)
+        driver.get(analytics_url)
+        time.sleep(5)  # Increased wait time
+        
+        # Set viewport and zoom
+        driver.execute_script("document.body.style.zoom = '100%';")
+        driver.set_window_size(1920, 1080)
+        
+        # Wait for page to load completely
+        wait = WebDriverWait(driver, 60)
+        
+        # Wait for analytics page to load
+        try:
+            # Try multiple selectors for the analytics page
+            analytics_loaded = False
+            selectors_to_try = [
+                ".Enquiries_header__2_RoR button",
+                "#Week",
+                "canvas[role='img']",
+                ".Enquiries_header__2_RoR"
+            ]
+            
+            for selector in selectors_to_try:
+                try:
+                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+                    analytics_loaded = True
+                    print(f"Analytics page loaded, found selector: {selector}", flush=True)
+                    break
+                except:
+                    continue
+            
+            if not analytics_loaded:
+                print("Analytics page not loaded properly, aborting...", flush=True)
+                return False
+                
+        except Exception as e:
+            print(f"Error waiting for analytics page: {e}", flush=True)
+            return False
+        
+        # Initialize data
+        weekly_base64 = ""
+        monthly_base64 = ""
+        location_data = []
+        category_data = []
+        
+        # Get weekly chart (default)
+        try:
+            print("Fetching weekly chart...", flush=True)
+            week_button = wait.until(EC.element_to_be_clickable((By.ID, "Week")))
+            week_button.click()
+            time.sleep(3)  # Increased wait time for chart to render
+            
+            # Find and capture weekly chart
+            weekly_canvas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[role='img']")))
+            weekly_base64 = driver.execute_script("""
+                const canvas = arguments[0];
+                return canvas.toDataURL('image/png').split(',')[1];
+            """, weekly_canvas)
+            print("Weekly chart captured successfully", flush=True)
+            
+        except Exception as e:
+            print(f"Error capturing weekly chart: {e}", flush=True)
+        
+        # Get monthly chart
+        try:
+            print("Fetching monthly chart...", flush=True)
+            month_button = wait.until(EC.element_to_be_clickable((By.ID, "Month")))
+            month_button.click()
+            time.sleep(3)  # Increased wait time for chart to render
+            
+            # Find and capture monthly chart
+            monthly_canvas = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[role='img']")))
+            monthly_base64 = driver.execute_script("""
+                const canvas = arguments[0];
+                return canvas.toDataURL('image/png').split(',')[1];
+            """, monthly_canvas)
+            print("Monthly chart captured successfully", flush=True)
+            
+        except Exception as e:
+            print(f"Error capturing monthly chart: {e}", flush=True)
+        
+        # Scrape table data
+        print("Fetching table data...", flush=True)
+        try:
+            # Use flexible selector that matches the table ID pattern
+            table_selector = 'table[id^="Enquiries_reportTableCSS"]'
+            
+            # Wait for table to be present
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, table_selector)))
+            
+            tables_exist = driver.execute_script(f"""
+                return document.querySelector('{table_selector}') !== null;
+            """)
+            
+            if tables_exist:
+                print(f"Found table with selector: {table_selector}", flush=True)
+                
+                # Debug: Get the actual table ID
+                actual_table_id = driver.execute_script("""
+                    const table = document.querySelector('table[id^="Enquiries_reportTableCSS"]');
+                    return table ? table.id : null;
+                """)
+                print(f"Actual table ID found: {actual_table_id}", flush=True)
+                
+                # Extract category data (default view - Top Categories tab is active)
+                category_data = driver.execute_script("""
+                    const table = document.querySelector('table[id^="Enquiries_reportTableCSS"]');
+                    if (!table) return [];
+                    
+                    const rows = Array.from(table.querySelectorAll('tbody tr'));
+                    return rows.map(row => {
+                        const cells = Array.from(row.querySelectorAll('td'));
+                        return {
+                            category: cells[0]?.textContent?.trim() || '',
+                            leadsConsumed: parseInt(cells[1]?.textContent?.trim().replace(/,/g, '') || '0'),
+                            enquiries: parseInt(cells[2]?.textContent?.trim().replace(/,/g, '') || '0'),
+                            calls: parseInt(cells[3]?.textContent?.trim().replace(/,/g, '') || '0')
+                        };
+                    }).filter(item => item.category !== ''); // Filter out empty rows
+                """)
+                print(f"Extracted {len(category_data)} category records", flush=True)
+                
+                # Check if there are location/category tabs to switch between
+                try:
+                    # Look for the specific location tab using the correct selector
+                    location_tab = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#locations")))
+                    if location_tab:
+                        print("Found location tab, switching to extract location data...", flush=True)
+                        location_tab.click()
+                        time.sleep(4)  # Wait for table to update
+                        
+                        # Wait for table to refresh with location data
+                        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, table_selector)))
+                        
+                        # Extract location data
+                        location_data = driver.execute_script("""
+                            const table = document.querySelector('table[id^="Enquiries_reportTableCSS"]');
+                            if (!table) return [];
+                            
+                            const rows = Array.from(table.querySelectorAll('tbody tr'));
+                            return rows.map(row => {
+                                const cells = Array.from(row.querySelectorAll('td'));
+                                return {
+                                    location: cells[0]?.textContent?.trim() || '',
+                                    leadsConsumed: parseInt(cells[1]?.textContent?.trim().replace(/,/g, '') || '0'),
+                                    enquiries: parseInt(cells[2]?.textContent?.trim().replace(/,/g, '') || '0'),
+                                    calls: parseInt(cells[3]?.textContent?.trim().replace(/,/g, '') || '0')
+                                };
+                            }).filter(item => item.location !== ''); // Filter out empty rows
+                        """)
+                        print(f"Extracted {len(location_data)} location records", flush=True)
+                    else:
+                        print("Location tab not found", flush=True)
+                        location_data = []
+                            
+                except Exception as tab_error:
+                    print(f"Error switching tabs: {tab_error}", flush=True)
+                    location_data = []
+                    
+            else:
+                print("No tables found on analytics page", flush=True)
+                category_data = []
+                location_data = []
+                
+        except Exception as e:
+            print(f"Error in table scraping: {e}", flush=True)
+            
+            # Additional debugging
+            try:
+                page_source_snippet = driver.execute_script("""
+                    const tableContainer = document.querySelector('.Enquiries_tableRen__3RhuF');
+                    return tableContainer ? tableContainer.innerHTML.substring(0, 500) : 'Table container not found';
+                """)
+                print(f"Page source snippet: {page_source_snippet}", flush=True)
+            except:
+                pass
+                
+            category_data = []
+            location_data = []
+        
+        # Only proceed if we have at least some data
+        if not weekly_base64 and not monthly_base64:
+            print("No charts captured, aborting analytics storage", flush=True)
+            return False
+        
+        # Prepare analytics data
+        analytics_data = {
+            "charts": {
+                "weekly": weekly_base64,
+                "monthly": monthly_base64
+            },
+            "tables": {
+                "locations": location_data,
+                "categories": category_data
+            },
+            "userMobileNumber": user_mobile_number
+        }
+        
+        # Store analytics data in database
+        store_analytics_data(analytics_data)
+        
+        print("Analytics data fetched and stored successfully!", flush=True)
+        return True
+        
+    except Exception as e:
+        print(f"Error fetching analytics data: {e}", flush=True)
+        return False
+ 
+def store_analytics_data(analytics_data):
+    """
+    Store analytics data in the database via API call
+    """
+    try:
+        # API endpoint to store analytics data
+        api_url = "https://api.leadscruise.com/api/analytics/store"  # Use localhost for development
+        
+        payload = {
+            "charts": analytics_data["charts"],
+            "tables": analytics_data["tables"],
+            "userMobileNumber": analytics_data["userMobileNumber"],
+            "fetchedAt": time.time()
+        }
+        
+        print(f"Sending analytics data to API: {api_url}", flush=True)
+        print(f"Payload keys: {list(payload.keys())}", flush=True)
+        print(f"Charts keys: {list(payload['charts'].keys()) if payload['charts'] else 'None'}", flush=True)
+        print(f"Tables keys: {list(payload['tables'].keys()) if payload['tables'] else 'None'}", flush=True)
+        
+        try:
+            response = requests.post(api_url, json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                print("Analytics data stored successfully in database", flush=True)
+                return True
+            else:
+                print(f"Failed to store analytics data. Status: {response.status_code}, Response: {response.text}", flush=True)
+                return False
+                
+        except requests.exceptions.ConnectionError as e:
+            print(f"Connection error - API server may not be running: {e}", flush=True)
+            print("Attempting to save analytics data locally...", flush=True)
+            return save_analytics_data_locally(analytics_data)
+        except requests.exceptions.Timeout as e:
+            print(f"Timeout error: {e}", flush=True)
+            print("Attempting to save analytics data locally...", flush=True)
+            return save_analytics_data_locally(analytics_data)
+            
+    except requests.exceptions.ConnectionError as e:
+        print(f"Connection error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+    except requests.exceptions.Timeout as e:
+        print(f"Timeout error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+    except Exception as e:
+        print(f"Error storing analytics data: {e}", flush=True)
+        print("Attempting to save analytics data locally...", flush=True)
+        return save_analytics_data_locally(analytics_data)
+
+def save_analytics_data_locally(analytics_data):
+    """
+    Save analytics data locally as a fallback when API is not available
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        # Create analytics directory if it doesn't exist
+        analytics_dir = "analytics_data"
+        if not os.path.exists(analytics_dir):
+            os.makedirs(analytics_dir)
+        
+        # Create filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{analytics_dir}/analytics_{analytics_data['userMobileNumber']}_{timestamp}.json"
+        
+        # Save data to file
+        with open(filename, 'w') as f:
+            json.dump(analytics_data, f, indent=2)
+        
+        print(f"Analytics data saved locally to: {filename}", flush=True)
+        return True
+        
+    except Exception as e:
+        print(f"Error saving analytics data locally: {e}", flush=True)
+        return False
+
+def extract_all_products(driver):
+    """Extract all product listings HTML content"""
+    print("Extracting all product listings...", flush=True)
+    
+    html_content = ""
+    try:
+        # Wait for the product list to load
+        wait = WebDriverWait(driver, 20)
+        product_list = wait.until(
+            EC.presence_of_element_located((By.ID, "product_lists"))
+        )
+        print("Found product list container", flush=True)
+        
+        # Count products before and after scrolling
+        initial_count = count_products(driver)
+        print(f"Initial product count: {initial_count}", flush=True)
+        
+        # Scroll to load all products
+        scroll_and_load_products(driver, max_scrolls=20)
+        
+        # Count products after scrolling
+        final_count = count_products(driver)
+        print(f"Final product count: {final_count}", flush=True)
+        
+        # Get the entire HTML content of the ul element
+        html_content = product_list.get_attribute("outerHTML")
+        print(f"Extracted HTML content ({len(html_content)} characters)", flush=True)
+        
+        return html_content, final_count
+        
+    except (TimeoutException, NoSuchElementException) as e:
+        print(f"Error finding product list: {str(e)}", flush=True)
+        return "", 0
+
+def save_html_content(html_content, filename="json_lister.txt"):
+    """Save HTML content to file"""
+    try:
+        
+        file_path = os.path.join("", filename)
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        print(f"HTML content saved to {file_path}", flush=True)
+        print(f"File size: {len(html_content)} characters", flush=True)
+        
+        return file_path
+    except Exception as e:
+        print(f"Error saving HTML file: {str(e)}", flush=True)
+        return None
+    
+def scroll_and_load_products(driver, max_scrolls=10):
+    """Scroll down to load all products dynamically"""
+    print("Starting to scroll and load products...", flush=True)
+    
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    scroll_count = 0
+    
+    while scroll_count < max_scrolls:
+        # Scroll down to bottom
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        
+        # Wait for new content to load
+        time.sleep(3)
+        
+        # Calculate new scroll height and compare with last scroll height
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        
+        print(f"Scroll {scroll_count + 1}: Height changed from {last_height} to {new_height}", flush=True)
+        
+        # Check if we've reached the bottom (no new content loaded)
+        if new_height == last_height:
+            print("No more content to load, stopping scroll", flush=True)
+            break
+            
+        last_height = new_height
+        scroll_count += 1
+    
+    print(f"Completed scrolling after {scroll_count + 1} attempts", flush=True)
+
+def count_products(driver):
+    """Count the number of product listings"""
+    try:
+        products = driver.find_elements(By.CLASS_NAME, "listElement")
+        return len(products)
+    except:
+        return 0
+
 def main():
     global worker_process
     
@@ -301,6 +687,63 @@ def main():
         except:
             print("Not logged in. Executing login process...", flush=True)
             logged_in = execute_login(driver, wait, input_data)
+            user_mobile_number = input_data.get("mobileNumber", "")
+            user_password = input_data.get("password", "")
+            analytics_success = fetch_analytics_data(driver, user_mobile_number, user_password)
+            if analytics_success:
+                print("Analytics data fetched and stored successfully!", flush=True)
+            else:
+                print("Failed to fetch analytics data, continuing with main process...", flush=True)
+
+            time.sleep(2)
+            driver.get("https://seller.indiamart.com/product/manageproducts/")
+
+            # Wait for the page to load
+            time.sleep(10)
+
+            # Extract the entire HTML content of the product list
+            print("Extracting product list HTML content", flush=True)
+
+                    # Extract all products with scrolling
+            html_content, product_count = extract_all_products(driver)
+            
+            if html_content:
+                # Save the complete HTML content
+                file_path = save_html_content(html_content, unique_id)
+                
+                # Create a summary file
+                print(f"Successfully scraped {product_count} products", flush=True)
+            else:
+                print("Failed to extract product data", flush=True)
+            # Execute the JSON creator script
+            print("Executing JSON creator script", flush=True)
+            try:
+                
+                # Execute the json_creator.py script
+                json_creator_path = "json_creator.py"
+
+                if os.path.exists(json_creator_path):
+                    res = subprocess.run(
+                    [sys.executable, json_creator_path, unique_id], 
+                    capture_output=True, 
+                    text=True, 
+                    cwd=os.getcwd())
+                    if res.returncode == 0:
+                        print("JSON creator script executed successfully", flush=True)
+                        print("Output:", res.stdout, flush=True)
+                    else:
+                        print(f"JSON creator script failed with return code {res.returncode}", flush=True)
+                        print("Error:", res.stderr, flush=True)
+                else:
+                    print(f"JSON creator script not found at {json_creator_path}", flush=True)
+                    print("Please create the JSON creator script to process the HTML content", flush=True)
+                
+            except Exception as e:
+                print(f"Error executing JSON creator script: {str(e)}", flush=True)
+
+            print("HTML content extraction and processing completed", flush=True)
+            
+            return 0  # Success exit code
         
         if not logged_in:
             print("Login failed. Exiting...", flush=True)
