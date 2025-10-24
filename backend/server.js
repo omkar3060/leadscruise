@@ -313,200 +313,6 @@ app.get("/api/check-edit-eligibility/:email", async (req, res) => {
   }
 });
 
-app.post("/api/create-demo-subscription", async (req, res) => {
-  try {
-    const { email, contact, referralId } = req.body;
-    if (!email || !contact) {
-      return res.status(400).json({
-        success: false,
-        error: "Email and contact are required"
-      });
-    }
-
-    // Validate referral ID
-    try {
-      const refRes = await axios.get(
-        `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
-      );
-      if (!refRes.data.success) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid Referral ID"
-        });
-      }
-    } catch (err) {
-      console.error("Error validating referral:", err);
-      return res.status(400).json({
-        success: false,
-        error: "Unable to verify Referral ID"
-      });
-    }
-
-    // Check if user already used demo
-    const existingDemo = await Payment.findOne({
-      contact,
-      subscription_type: "7-days",
-    });
-    if (existingDemo) {
-      return res.status(400).json({
-        success: false,
-        error: "You have already used the 7-day demo subscription"
-      });
-    }
-
-    // Find ALL active subscriptions for this user
-    const activeSubscriptions = await Payment.find({
-      email,
-      days_remaining: { $gt: 0 }
-    }).sort({ created_at: 1 }); // Sort by oldest first
-
-    // Calculate the furthest end date across all subscriptions
-    let startAt;
-    let totalDaysRemaining;
-    let demoStartDate;
-    let furthestEndDate = new Date();
-
-    if (activeSubscriptions && activeSubscriptions.length > 0) {
-      // Find the subscription that ends the latest
-      activeSubscriptions.forEach(sub => {
-        if (sub.days_remaining && sub.created_at) {
-          const subEndDate = new Date(sub.created_at);
-          subEndDate.setDate(subEndDate.getDate() + sub.days_remaining);
-
-          if (subEndDate > furthestEndDate) {
-            furthestEndDate = subEndDate;
-          }
-        }
-      });
-
-      // Calculate total days remaining from now until the furthest end date
-      const now = new Date();
-      const daysUntilEnd = Math.ceil((furthestEndDate - now) / (1000 * 60 * 60 * 24));
-
-      // Demo starts when all current subscriptions end
-      demoStartDate = new Date(furthestEndDate);
-
-      // Add 7 days to the furthest end date for demo period
-      const demoEndDate = new Date(furthestEndDate);
-      demoEndDate.setDate(demoEndDate.getDate() + 7);
-
-      // Total days = remaining days until furthest subscription ends + 7 demo days
-      totalDaysRemaining = Math.max(0, daysUntilEnd) + 7;
-
-      // Start autopay after demo ends
-      startAt = Math.floor(demoEndDate.getTime() / 1000);
-
-      console.log(`Found ${activeSubscriptions.length} active subscription(s)`);
-      console.log(`All subscriptions end by: ${furthestEndDate.toISOString()}`);
-      console.log(`Days remaining until all subs end: ${daysUntilEnd}`);
-      console.log(`Demo will start on: ${demoStartDate.toISOString()}`);
-      console.log(`Demo will end and autopay will start on: ${demoEndDate.toISOString()}`);
-      console.log(`Total days remaining: ${totalDaysRemaining}`);
-    } else {
-      // No existing subscription, demo starts immediately
-      demoStartDate = new Date();
-      totalDaysRemaining = 7;
-      furthestEndDate = new Date();
-
-      // Start autopay after 7 days from now
-      startAt = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
-      console.log(`No active subscriptions found. Demo starts immediately.`);
-      console.log(`Autopay will start after 7 days from now.`);
-    }
-
-    // Initialize Razorpay
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_SECRET,
-    });
-
-    // Create Razorpay subscription
-    const subscription = await razorpay.subscriptions.create({
-      plan_id: "plan_RVfeZmVYdtqlGU",
-      customer_notify: 1,
-      quantity: 1,
-      total_count: 12,
-      start_at: startAt,
-      addons: [],
-      notes: {
-        referral_id: referralId,
-        subscription_type: "7-day-demo-then-monthly",
-        customer_email: email,
-        customer_contact: contact
-      },
-      notify_info: {
-        notify_phone: contact,
-        notify_email: email
-      }
-    });
-    console.log("Created Razorpay subscription:", subscription.id);
-
-    // Get next payment ID
-    const getNextPaymentIdResponse = await axios.get(
-      "https://api.leadscruise.com/api/get-latest-id"
-    );
-    const uniqueId = getNextPaymentIdResponse.data.latestId;
-
-    // Save demo payment record with subscription details
-    const timestamp = Date.now();
-    const payment = new Payment({
-      unique_id: uniqueId,
-      email,
-      contact,
-      order_id: `FREE-DEMO-${timestamp}`,
-      payment_id: `FREE-DEMO-${timestamp}`,
-      signature: "FREE",
-      order_amount: 0,
-      subscription_type: "7-days",
-      days_remaining: totalDaysRemaining, // Total includes all existing subs + demo
-      razorpay_subscription_id: subscription.id,
-      autopay_enabled: true,
-      autopay_start_date: new Date(startAt * 1000),
-      created_at: new Date(),
-    });
-    await payment.save();
-
-    // Update user mobile number
-    await User.findOneAndUpdate(
-      { email },
-      { $set: { mobileNumber: contact } },
-      { new: true, upsert: false }
-    );
-
-    const autopayStartDateFormatted = new Date(startAt * 1000).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-
-    const demoExpiryDate = new Date(furthestEndDate);
-    demoExpiryDate.setDate(demoExpiryDate.getDate() + 7);
-
-    const messagePrefix = activeSubscriptions.length > 0
-      ? `7-day demo will start after your current subscription${activeSubscriptions.length > 1 ? 's' : ''} end${activeSubscriptions.length === 1 ? 's' : ''}. `
-      : '7-day demo activated! ';
-
-    console.log(`Demo subscription created for ${email} with autopay starting on ${new Date(startAt * 1000).toISOString()}`);
-
-    res.json({
-      success: true,
-      message: `${messagePrefix}Autopay will start automatically on ${autopayStartDateFormatted} at ₹3999+GST/month.`,
-      subscription_id: subscription.id,
-      autopay_start_date: new Date(startAt * 1000).toISOString(),
-      demo_start_date: demoStartDate.toISOString(),
-      demo_expiry: demoExpiryDate.toISOString(),
-      total_days_remaining: totalDaysRemaining,
-      active_subscriptions_count: activeSubscriptions.length
-    });
-  } catch (error) {
-    console.error("Error creating demo subscription:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to create demo subscription",
-      details: error.message
-    });
-  }
-});
 // Add endpoint for paid subscription (for users who already used demo)
 app.post("/api/create-paid-subscription", async (req, res) => {
   try {
@@ -658,46 +464,212 @@ app.post("/api/cancel-subscription", async (req, res) => {
   }
 });
 
-// Add subscription webhook handler to track payment status
+// ✅ CORRECT: Demo payment uses "7-days", autopay uses "one-mo"
+
+app.post("/api/create-demo-subscription", async (req, res) => {
+  try {
+    const { email, contact, referralId } = req.body;
+
+    if (!email || !contact) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Email and contact are required" 
+      });
+    }
+
+    // Validate referral ID
+    try {
+      const refRes = await axios.get(
+        `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
+      );
+      if (!refRes.data.success) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid Referral ID" 
+        });
+      }
+    } catch (err) {
+      console.error("Error validating referral:", err);
+      return res.status(400).json({ 
+        success: false, 
+        error: "Unable to verify Referral ID" 
+      });
+    }
+
+    // Check if user already used demo
+    const existingDemo = await Payment.findOne({
+      contact,
+      subscription_type: "7-days", // ✅ Consistent with getSubscriptionDuration
+    });
+
+    if (existingDemo) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "You have already used the 7-day demo subscription" 
+      });
+    }
+
+    // Initialize Razorpay
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_SECRET,
+    });
+
+    // Create or get customer
+    let customer;
+    try {
+      const customers = await razorpay.customers.all({
+        email: email,
+      });
+      
+      if (customers.items && customers.items.length > 0) {
+        customer = customers.items[0];
+        console.log("Found existing customer:", customer.id);
+      } else {
+        customer = await razorpay.customers.create({
+          name: email.split('@')[0],
+          email: email,
+          contact: contact,
+          notes: {
+            referral_id: referralId,
+          }
+        });
+        console.log("Created new customer:", customer.id);
+      }
+    } catch (customerError) {
+      console.error("Customer creation error:", customerError);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to create customer account"
+      });
+    }
+
+    const currentTime = Math.floor(Date.now() / 1000);
+    const trialEndTime = currentTime + (7 * 24 * 60 * 60); // 7 days from now
+
+    // Create subscription with 7-day trial
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: "plan_RVfeZmVYdtqlGU", // Your monthly plan
+      customer_id: customer.id,
+      quantity: 1,
+      total_count: 12, // 12 monthly cycles
+      customer_notify: 1,
+      addons: [],
+      notes: {
+        referral_id: referralId,
+        subscription_type: "7-day-trial", // ✅ Just metadata, not used in duration calculation
+        customer_email: email,
+        customer_contact: contact,
+        trial_days: "7"
+      },
+      notify_info: {
+        notify_phone: contact,
+        notify_email: email
+      },
+      start_at: trialEndTime, // First charge after 7 days
+    });
+
+    console.log("✅ Created subscription:", subscription.id);
+
+    // Get next payment ID
+    const getNextPaymentIdResponse = await axios.get(
+      "https://api.leadscruise.com/api/get-latest-id"
+    );
+    const uniqueId = getNextPaymentIdResponse.data.latestId;
+
+    // ✅ IMPORTANT: Save demo payment with "7-days" type
+    const timestamp = Date.now();
+    const payment = new Payment({
+      unique_id: uniqueId,
+      email,
+      contact,
+      order_id: `DEMO-${timestamp}`,
+      payment_id: `DEMO-${timestamp}`,
+      signature: "DEMO-TRIAL",
+      order_amount: 0,
+      subscription_type: "7-days", // ✅ This matches getSubscriptionDuration()
+      razorpay_subscription_id: subscription.id,
+      razorpay_customer_id: customer.id,
+      autopay_enabled: true,
+      autopay_start_date: new Date(trialEndTime * 1000).toISOString(),
+      trial_end_date: new Date(trialEndTime * 1000).toISOString(),
+      created_at: Date.now(),
+    });
+
+    await payment.save();
+
+    // Update user
+    await User.findOneAndUpdate(
+      { email },
+      { $set: { mobileNumber: contact } },
+      { new: true, upsert: false }
+    );
+
+    console.log(`✅ Demo subscription created for ${email}`);
+
+    res.json({ 
+      success: true, 
+      message: `7-day FREE demo activated! You will be automatically charged ₹3999+GST/month starting from ${new Date(trialEndTime * 1000).toLocaleDateString('en-IN')}`,
+      subscription_id: subscription.id,
+      customer_id: customer.id,
+      trial_end_date: new Date(trialEndTime * 1000).toISOString(),
+    });
+
+  } catch (error) {
+    console.error("Error creating demo subscription:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to create demo subscription",
+      details: error.message 
+    });
+  }
+});
+
+// ✅ Webhook creates "one-mo" payment for autopay charges
 app.post("/api/razorpay-webhook", async (req, res) => {
   try {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers['x-razorpay-signature'];
 
-    // Verify webhook signature
     const expectedSignature = crypto
       .createHmac('sha256', secret)
       .update(JSON.stringify(req.body))
       .digest('hex');
 
     if (signature !== expectedSignature) {
-      console.error("Invalid webhook signature");
+      console.error("❌ Invalid webhook signature");
       return res.status(400).json({ error: "Invalid signature" });
     }
 
     const event = req.body.event;
     const payload = req.body.payload;
 
-    console.log(`Received webhook event: ${event}`);
+    console.log(`📨 Webhook: ${event}`);
 
-    // Handle subscription charged event (when autopay charges)
     if (event === 'subscription.charged') {
-      const subscriptionId = payload.subscription.entity.id;
-      const paymentId = payload.payment.entity.id;
-      const amount = payload.payment.entity.amount;
+      const subscriptionEntity = payload.subscription.entity;
+      const paymentEntity = payload.payment.entity;
+      
+      const subscriptionId = subscriptionEntity.id;
+      const paymentId = paymentEntity.id;
+      const amount = paymentEntity.amount;
+      const status = paymentEntity.status;
+      
+      if (status !== 'captured') {
+        return res.json({ status: "acknowledged" });
+      }
 
-      // Find the original demo payment
-      const demoPayment = await Payment.findOne({
-        razorpay_subscription_id: subscriptionId
+      const demoPayment = await Payment.findOne({ 
+        razorpay_subscription_id: subscriptionId 
       });
 
       if (demoPayment) {
-        // Create new payment record for the autopay charge
         const getNextPaymentIdResponse = await axios.get(
           "https://api.leadscruise.com/api/get-latest-id"
         );
         const uniqueId = getNextPaymentIdResponse.data.latestId;
 
+        // ✅ Create monthly payment with "one-mo" type
         const newPayment = new Payment({
           unique_id: uniqueId,
           email: demoPayment.email,
@@ -706,50 +678,61 @@ app.post("/api/razorpay-webhook", async (req, res) => {
           payment_id: paymentId,
           signature: "AUTOPAY",
           order_amount: amount,
-          subscription_type: "one-mo",
+          subscription_type: "one-mo", // ✅ This matches getSubscriptionDuration()
           razorpay_subscription_id: subscriptionId,
+          razorpay_customer_id: demoPayment.razorpay_customer_id,
           autopay_enabled: true,
           created_at: Date.now(),
+          parent_payment_id: demoPayment._id,
+          is_trial_conversion: true,
         });
 
         await newPayment.save();
-        console.log(`Autopay payment recorded for ${demoPayment.email}`);
+        console.log(`✅ Monthly autopay payment recorded for ${demoPayment.email}`);
+
+        // Send invoice
+        try {
+          await axios.post("https://api.leadscruise.com/api/send-invoice-email", {
+            email: demoPayment.email,
+            unique_id: uniqueId
+          });
+        } catch (emailError) {
+          console.error("❌ Email failed:", emailError);
+        }
+
+        // Mark demo as converted
+        await Payment.updateOne(
+          { _id: demoPayment._id },
+          { 
+            $set: { 
+              trial_converted: true,
+              trial_converted_at: new Date()
+            }
+          }
+        );
       }
     }
 
-    // Handle subscription cancelled event
     if (event === 'subscription.cancelled') {
       const subscriptionId = payload.subscription.entity.id;
-      console.log(`Subscription cancelled: ${subscriptionId}`);
-
-      // Update payment records to mark autopay as disabled
       await Payment.updateMany(
         { razorpay_subscription_id: subscriptionId },
-        { $set: { autopay_enabled: false } }
+        { $set: { autopay_enabled: false, cancelled_at: new Date() } }
       );
     }
 
-    // Handle subscription completed event
     if (event === 'subscription.completed') {
       const subscriptionId = payload.subscription.entity.id;
-      console.log(`Subscription completed: ${subscriptionId}`);
-
       await Payment.updateMany(
         { razorpay_subscription_id: subscriptionId },
-        { $set: { autopay_enabled: false } }
+        { $set: { autopay_enabled: false, completed_at: new Date() } }
       );
-    }
-
-    // Handle subscription authenticated event (first payment after demo)
-    if (event === 'subscription.authenticated') {
-      const subscriptionId = payload.subscription.entity.id;
-      console.log(`Subscription authenticated: ${subscriptionId}`);
     }
 
     res.json({ status: "ok" });
 
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("❌ Webhook error:", error);
     res.status(500).json({ error: "Webhook processing failed" });
   }
 });

@@ -689,61 +689,62 @@ def main():
             logged_in = execute_login(driver, wait, input_data)
             user_mobile_number = input_data.get("mobileNumber", "")
             user_password = input_data.get("password", "")
-            analytics_success = fetch_analytics_data(driver, user_mobile_number, user_password)
-            if analytics_success:
-                print("Analytics data fetched and stored successfully!", flush=True)
-            else:
-                print("Failed to fetch analytics data, continuing with main process...", flush=True)
-
-            time.sleep(2)
-            driver.get("https://seller.indiamart.com/product/manageproducts/")
-
-            # Wait for the page to load
-            time.sleep(10)
-
-            # Extract the entire HTML content of the product list
-            print("Extracting product list HTML content", flush=True)
-
-                    # Extract all products with scrolling
-            html_content, product_count = extract_all_products(driver)
-            
-            if html_content:
-                # Save the complete HTML content
-                file_path = save_html_content(html_content, unique_id)
-                
-                # Create a summary file
-                print(f"Successfully scraped {product_count} products", flush=True)
-            else:
-                print("Failed to extract product data", flush=True)
-            # Execute the JSON creator script
-            print("Executing JSON creator script", flush=True)
-            try:
-                
-                # Execute the json_creator.py script
-                json_creator_path = "json_creator.py"
-
-                if os.path.exists(json_creator_path):
-                    res = subprocess.run(
-                    [sys.executable, json_creator_path, unique_id], 
-                    capture_output=True, 
-                    text=True, 
-                    cwd=os.getcwd())
-                    if res.returncode == 0:
-                        print("JSON creator script executed successfully", flush=True)
-                        print("Output:", res.stdout, flush=True)
-                    else:
-                        print(f"JSON creator script failed with return code {res.returncode}", flush=True)
-                        print("Error:", res.stderr, flush=True)
+            if logged_in:
+                analytics_success = fetch_analytics_data(driver, user_mobile_number, user_password)
+                if analytics_success:
+                    print("Analytics data fetched and stored successfully!", flush=True)
                 else:
-                    print(f"JSON creator script not found at {json_creator_path}", flush=True)
-                    print("Please create the JSON creator script to process the HTML content", flush=True)
-                
-            except Exception as e:
-                print(f"Error executing JSON creator script: {str(e)}", flush=True)
+                    print("Failed to fetch analytics data, continuing with main process...", flush=True)
 
-            print("HTML content extraction and processing completed", flush=True)
-            
-            return 0  # Success exit code
+                time.sleep(2)
+                driver.get("https://seller.indiamart.com/product/manageproducts/")
+
+                # Wait for the page to load
+                time.sleep(10)
+
+                # Extract the entire HTML content of the product list
+                print("Extracting product list HTML content", flush=True)
+
+                        # Extract all products with scrolling
+                html_content, product_count = extract_all_products(driver)
+                
+                if html_content:
+                    # Save the complete HTML content
+                    file_path = save_html_content(html_content, unique_id)
+                    
+                    # Create a summary file
+                    print(f"Successfully scraped {product_count} products", flush=True)
+                else:
+                    print("Failed to extract product data", flush=True)
+                # Execute the JSON creator script
+                print("Executing JSON creator script", flush=True)
+                try:
+                    
+                    # Execute the json_creator.py script
+                    json_creator_path = "json_creator.py"
+
+                    if os.path.exists(json_creator_path):
+                        res = subprocess.run(
+                        [sys.executable, json_creator_path, unique_id], 
+                        capture_output=True, 
+                        text=True, 
+                        cwd=os.getcwd())
+                        if res.returncode == 0:
+                            print("JSON creator script executed successfully", flush=True)
+                            print("Output:", res.stdout, flush=True)
+                        else:
+                            print(f"JSON creator script failed with return code {res.returncode}", flush=True)
+                            print("Error:", res.stderr, flush=True)
+                    else:
+                        print(f"JSON creator script not found at {json_creator_path}", flush=True)
+                        print("Please create the JSON creator script to process the HTML content", flush=True)
+                    
+                except Exception as e:
+                    print(f"Error executing JSON creator script: {str(e)}", flush=True)
+
+                print("HTML content extraction and processing completed", flush=True)
+                
+                return 0  # Success exit code
         
         if not logged_in:
             print("Login failed. Exiting...", flush=True)
