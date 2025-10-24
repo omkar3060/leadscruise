@@ -346,7 +346,7 @@ app.post("/api/create-demo-subscription", async (req, res) => {
     // Check if user already used demo
     const existingDemo = await Payment.findOne({
       contact,
-      subscription_type: "7-day",
+      subscription_type: "7-days",
     });
 
     if (existingDemo) {
@@ -403,7 +403,7 @@ app.post("/api/create-demo-subscription", async (req, res) => {
       payment_id: `FREE-DEMO-${timestamp}`,
       signature: "FREE",
       order_amount: 0,
-      subscription_type: "7-day",
+      subscription_type: "7-days",
       razorpay_subscription_id: subscription.id,
       autopay_enabled: true,
       autopay_start_date: new Date(startAt * 1000).toISOString(),

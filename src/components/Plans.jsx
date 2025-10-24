@@ -118,7 +118,7 @@ const Plans = () => {
     }
 
     // ✅ Handle 7-day demo with autopay
-    if (selectedPlan === "1-day") {
+    if (selectedPlan === "7-days") {
       try {
         const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
 
@@ -255,7 +255,7 @@ const Plans = () => {
     // navigate('/specific-route');
   };
   const handleDemoClick = () => {
-    handlePlanSelect("1-day", "0", "Demo Plan");
+    handlePlanSelect("7-days", "0", "Demo Plan");
     setShowModal(true);
   };
 
