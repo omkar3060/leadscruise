@@ -316,11 +316,10 @@ app.get("/api/check-edit-eligibility/:email", async (req, res) => {
 app.post("/api/create-demo-subscription", async (req, res) => {
   try {
     const { email, contact, referralId } = req.body;
-
     if (!email || !contact) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Email and contact are required" 
+      return res.status(400).json({
+        success: false,
+        error: "Email and contact are required"
       });
     }
 
@@ -330,16 +329,16 @@ app.post("/api/create-demo-subscription", async (req, res) => {
         `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
       );
       if (!refRes.data.success) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Invalid Referral ID" 
+        return res.status(400).json({
+          success: false,
+          error: "Invalid Referral ID"
         });
       }
     } catch (err) {
       console.error("Error validating referral:", err);
-      return res.status(400).json({ 
-        success: false, 
-        error: "Unable to verify Referral ID" 
+      return res.status(400).json({
+        success: false,
+        error: "Unable to verify Referral ID"
       });
     }
 
@@ -348,12 +347,71 @@ app.post("/api/create-demo-subscription", async (req, res) => {
       contact,
       subscription_type: "7-days",
     });
-
     if (existingDemo) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "You have already used the 7-day demo subscription" 
+      return res.status(400).json({
+        success: false,
+        error: "You have already used the 7-day demo subscription"
       });
+    }
+
+    // Find ALL active subscriptions for this user
+    const activeSubscriptions = await Payment.find({
+      email,
+      days_remaining: { $gt: 0 }
+    }).sort({ created_at: 1 }); // Sort by oldest first
+
+    // Calculate the furthest end date across all subscriptions
+    let startAt;
+    let totalDaysRemaining;
+    let demoStartDate;
+    let furthestEndDate = new Date();
+
+    if (activeSubscriptions && activeSubscriptions.length > 0) {
+      // Find the subscription that ends the latest
+      activeSubscriptions.forEach(sub => {
+        if (sub.days_remaining && sub.created_at) {
+          const subEndDate = new Date(sub.created_at);
+          subEndDate.setDate(subEndDate.getDate() + sub.days_remaining);
+
+          if (subEndDate > furthestEndDate) {
+            furthestEndDate = subEndDate;
+          }
+        }
+      });
+
+      // Calculate total days remaining from now until the furthest end date
+      const now = new Date();
+      const daysUntilEnd = Math.ceil((furthestEndDate - now) / (1000 * 60 * 60 * 24));
+
+      // Demo starts when all current subscriptions end
+      demoStartDate = new Date(furthestEndDate);
+
+      // Add 7 days to the furthest end date for demo period
+      const demoEndDate = new Date(furthestEndDate);
+      demoEndDate.setDate(demoEndDate.getDate() + 7);
+
+      // Total days = remaining days until furthest subscription ends + 7 demo days
+      totalDaysRemaining = Math.max(0, daysUntilEnd) + 7;
+
+      // Start autopay after demo ends
+      startAt = Math.floor(demoEndDate.getTime() / 1000);
+
+      console.log(`Found ${activeSubscriptions.length} active subscription(s)`);
+      console.log(`All subscriptions end by: ${furthestEndDate.toISOString()}`);
+      console.log(`Days remaining until all subs end: ${daysUntilEnd}`);
+      console.log(`Demo will start on: ${demoStartDate.toISOString()}`);
+      console.log(`Demo will end and autopay will start on: ${demoEndDate.toISOString()}`);
+      console.log(`Total days remaining: ${totalDaysRemaining}`);
+    } else {
+      // No existing subscription, demo starts immediately
+      demoStartDate = new Date();
+      totalDaysRemaining = 7;
+      furthestEndDate = new Date();
+
+      // Start autopay after 7 days from now
+      startAt = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
+      console.log(`No active subscriptions found. Demo starts immediately.`);
+      console.log(`Autopay will start after 7 days from now.`);
     }
 
     // Initialize Razorpay
@@ -361,9 +419,6 @@ app.post("/api/create-demo-subscription", async (req, res) => {
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_SECRET,
     });
-
-    // Calculate start time (7 days from now)
-    const startAt = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
 
     // Create Razorpay subscription
     const subscription = await razorpay.subscriptions.create({
@@ -384,7 +439,6 @@ app.post("/api/create-demo-subscription", async (req, res) => {
         notify_email: email
       }
     });
-
     console.log("Created Razorpay subscription:", subscription.id);
 
     // Get next payment ID
@@ -404,12 +458,12 @@ app.post("/api/create-demo-subscription", async (req, res) => {
       signature: "FREE",
       order_amount: 0,
       subscription_type: "7-days",
+      days_remaining: totalDaysRemaining, // Total includes all existing subs + demo
       razorpay_subscription_id: subscription.id,
       autopay_enabled: true,
-      autopay_start_date: new Date(startAt * 1000).toISOString(),
-      created_at: Date.now(),
+      autopay_start_date: new Date(startAt * 1000),
+      created_at: new Date(),
     });
-
     await payment.save();
 
     // Update user mobile number
@@ -419,34 +473,49 @@ app.post("/api/create-demo-subscription", async (req, res) => {
       { new: true, upsert: false }
     );
 
-    console.log(`Demo subscription created for ${email} with autopay starting on ${new Date(startAt * 1000).toISOString()}`);
-
-    res.json({ 
-      success: true, 
-      message: "7-day demo activated! Autopay will start automatically after 7 days at ₹3999+GST/month.",
-      subscription_id: subscription.id,
-      autopay_start_date: new Date(startAt * 1000).toISOString()
+    const autopayStartDateFormatted = new Date(startAt * 1000).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
     });
 
+    const demoExpiryDate = new Date(furthestEndDate);
+    demoExpiryDate.setDate(demoExpiryDate.getDate() + 7);
+
+    const messagePrefix = activeSubscriptions.length > 0
+      ? `7-day demo will start after your current subscription${activeSubscriptions.length > 1 ? 's' : ''} end${activeSubscriptions.length === 1 ? 's' : ''}. `
+      : '7-day demo activated! ';
+
+    console.log(`Demo subscription created for ${email} with autopay starting on ${new Date(startAt * 1000).toISOString()}`);
+
+    res.json({
+      success: true,
+      message: `${messagePrefix}Autopay will start automatically on ${autopayStartDateFormatted} at ₹3999+GST/month.`,
+      subscription_id: subscription.id,
+      autopay_start_date: new Date(startAt * 1000).toISOString(),
+      demo_start_date: demoStartDate.toISOString(),
+      demo_expiry: demoExpiryDate.toISOString(),
+      total_days_remaining: totalDaysRemaining,
+      active_subscriptions_count: activeSubscriptions.length
+    });
   } catch (error) {
     console.error("Error creating demo subscription:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: "Failed to create demo subscription",
-      details: error.message 
+      details: error.message
     });
   }
 });
-
 // Add endpoint for paid subscription (for users who already used demo)
 app.post("/api/create-paid-subscription", async (req, res) => {
   try {
     const { email, contact, referralId, amount } = req.body;
 
     if (!email || !contact || !amount) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Email, contact, and amount are required" 
+      return res.status(400).json({
+        success: false,
+        error: "Email, contact, and amount are required"
       });
     }
 
@@ -456,16 +525,16 @@ app.post("/api/create-paid-subscription", async (req, res) => {
         `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
       );
       if (!refRes.data.success) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Invalid Referral ID" 
+        return res.status(400).json({
+          success: false,
+          error: "Invalid Referral ID"
         });
       }
     } catch (err) {
       console.error("Error validating referral:", err);
-      return res.status(400).json({ 
-        success: false, 
-        error: "Unable to verify Referral ID" 
+      return res.status(400).json({
+        success: false,
+        error: "Unable to verify Referral ID"
       });
     }
 
@@ -496,18 +565,18 @@ app.post("/api/create-paid-subscription", async (req, res) => {
 
     console.log("Created paid Razorpay subscription:", subscription.id);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: "Subscription created successfully",
       subscription: subscription
     });
 
   } catch (error) {
     console.error("Error creating paid subscription:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: "Failed to create subscription",
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -515,7 +584,7 @@ app.post("/api/create-paid-subscription", async (req, res) => {
 app.post("/api/cancel-subscription", async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
@@ -526,9 +595,9 @@ app.post("/api/cancel-subscription", async (req, res) => {
     }
 
     // Get user's latest payment with active autopay (MongoDB/Mongoose syntax)
-    const latestPayment = await Payment.findOne({ 
+    const latestPayment = await Payment.findOne({
       email: email,
-      autopay_enabled: true 
+      autopay_enabled: true
     }).sort({ created_at: -1 });
 
     if (!latestPayment) {
@@ -536,7 +605,7 @@ app.post("/api/cancel-subscription", async (req, res) => {
     }
 
     const subscriptionId = latestPayment.razorpay_subscription_id;
-    
+
     // Cancel subscription on Razorpay if subscription ID exists
     if (subscriptionId) {
       try {
@@ -573,8 +642,8 @@ app.post("/api/cancel-subscription", async (req, res) => {
       year: 'numeric'
     });
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Subscription cancelled successfully',
       expiryDate: formattedExpiryDate,
       subscriptionId: subscriptionId
@@ -582,9 +651,9 @@ app.post("/api/cancel-subscription", async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error cancelling subscription:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to cancel subscription',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -616,10 +685,10 @@ app.post("/api/razorpay-webhook", async (req, res) => {
       const subscriptionId = payload.subscription.entity.id;
       const paymentId = payload.payment.entity.id;
       const amount = payload.payment.entity.amount;
-      
+
       // Find the original demo payment
-      const demoPayment = await Payment.findOne({ 
-        razorpay_subscription_id: subscriptionId 
+      const demoPayment = await Payment.findOne({
+        razorpay_subscription_id: subscriptionId
       });
 
       if (demoPayment) {
@@ -652,7 +721,7 @@ app.post("/api/razorpay-webhook", async (req, res) => {
     if (event === 'subscription.cancelled') {
       const subscriptionId = payload.subscription.entity.id;
       console.log(`Subscription cancelled: ${subscriptionId}`);
-      
+
       // Update payment records to mark autopay as disabled
       await Payment.updateMany(
         { razorpay_subscription_id: subscriptionId },
@@ -664,7 +733,7 @@ app.post("/api/razorpay-webhook", async (req, res) => {
     if (event === 'subscription.completed') {
       const subscriptionId = payload.subscription.entity.id;
       console.log(`Subscription completed: ${subscriptionId}`);
-      
+
       await Payment.updateMany(
         { razorpay_subscription_id: subscriptionId },
         { $set: { autopay_enabled: false } }
