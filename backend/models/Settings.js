@@ -10,6 +10,12 @@ const SettingsSchema = new mongoose.Schema({
   selectedStates: { type: [String], default: [] },
   initialSentences: { type: [String], default: [] },
   initialWordArray: { type: [String], default: [] },
+  thresholdLevel: {
+    type: String,
+    enum: ['aggressive', 'mild_aggressive', 'medium', 'mild_accurate', 'accurate'],
+    default: 'medium'
+  },
+  thresholdScore: { type: Number, default: 60 },
 });
 
 module.exports = mongoose.model("Settings", SettingsSchema);

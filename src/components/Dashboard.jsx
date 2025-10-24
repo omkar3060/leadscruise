@@ -538,6 +538,7 @@ const Dashboard = () => {
           minOrder: userSettings.minOrder || 0,
           leadTypes: userSettings.leadTypes || [],
           selectedStates: userSettings.selectedStates || [],
+          thresholdScore: userSettings.thresholdScore || 0,
         },
         {
           headers: {
@@ -694,16 +695,16 @@ const Dashboard = () => {
     const istOffset = 5.5 * 60 * 60 * 1000;
     const istNow = new Date(now.getTime() + istOffset);
     const today = new Date(istNow.toISOString().split('T')[0]);
-    
+
     let startDate, endDate;
-    
+
     switch (dateRange) {
       case 'today':
         startDate = new Date(today);
         endDate = new Date(today);
         endDate.setUTCDate(endDate.getUTCDate() + 1);
         break;
-        
+
       case 'thisWeek':
         startDate = new Date(today);
         const day = today.getUTCDay();
@@ -711,29 +712,29 @@ const Dashboard = () => {
         startDate.setUTCDate(today.getUTCDate() - diff);
         endDate = new Date(istNow);
         break;
-        
+
       case 'thisMonth':
         startDate = new Date(today.getUTCFullYear(), today.getUTCMonth(), 1);
         endDate = new Date(istNow);
         break;
-        
+
       case 'thisQuarter':
         const currentQuarter = Math.floor(today.getUTCMonth() / 3);
         startDate = new Date(today.getUTCFullYear(), currentQuarter * 3, 1);
         endDate = new Date(istNow);
         break;
-        
+
       case 'thisYear':
         startDate = new Date(today.getUTCFullYear(), 0, 1);
         endDate = new Date(istNow);
         break;
-        
+
       case 'yesterday':
         startDate = new Date(today);
         startDate.setUTCDate(startDate.getUTCDate() - 1);
         endDate = new Date(today);
         break;
-        
+
       case 'previousWeek':
         const prevWeekEnd = new Date(today);
         const dayOfWeek = today.getUTCDay();
@@ -743,12 +744,12 @@ const Dashboard = () => {
         startDate.setUTCDate(prevWeekEnd.getUTCDate() - 7);
         endDate = prevWeekEnd;
         break;
-        
+
       case 'previousMonth':
         startDate = new Date(today.getUTCFullYear(), today.getUTCMonth() - 1, 1);
         endDate = new Date(today.getUTCFullYear(), today.getUTCMonth(), 1);
         break;
-        
+
       case 'previousQuarter':
         const prevQuarter = Math.floor(today.getUTCMonth() / 3) - 1;
         if (prevQuarter < 0) {
@@ -759,16 +760,16 @@ const Dashboard = () => {
           endDate = new Date(today.getUTCFullYear(), (prevQuarter + 1) * 3, 1);
         }
         break;
-        
+
       case 'previousYear':
         startDate = new Date(today.getUTCFullYear() - 1, 0, 1);
         endDate = new Date(today.getUTCFullYear(), 0, 1);
         break;
-        
+
       default:
         return leads;
     }
-    
+
     return leads.filter((lead) => {
       if (!lead.createdAt) return false;
       const leadDate = new Date(lead.createdAt);
@@ -784,18 +785,18 @@ const Dashboard = () => {
 
     let filteredLeads;
     let label;
-    
+
     if (dateRange === 'custom' && customStart && customEnd) {
       const startDate = new Date(customStart);
       const endDate = new Date(customEnd);
       endDate.setUTCDate(endDate.getUTCDate() + 1);
-      
+
       filteredLeads = leads.filter((lead) => {
         if (!lead.createdAt) return false;
         const leadDate = new Date(lead.createdAt);
         return leadDate >= startDate && leadDate < endDate;
       });
-      
+
       label = `Custom_${customStart}_to_${customEnd}`;
     } else if (dateRange === 'all') {
       filteredLeads = leads;
@@ -816,7 +817,7 @@ const Dashboard = () => {
       };
       label = dateRangeLabels[dateRange] || 'Total Leads Captured';
     }
-    
+
     if (filteredLeads.length === 0) {
       alert("No leads found for the selected date range.");
       return;
@@ -932,7 +933,7 @@ const Dashboard = () => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
           }}>
             <h3 style={{ marginBottom: '20px', color: '#333' }}>Select Custom Date Range</h3>
-            
+
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
                 Start Date:
@@ -1016,7 +1017,7 @@ const Dashboard = () => {
             </p>
           </div>
         </div>
-  )}
+      )}
 
       {showOtpPopup && !cancelled && (
         <div className={styles['otp-popup-overlay']}>
@@ -1125,7 +1126,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div 
+          <div
             className="download-reports-container"
             style={{
               display: "flex",
@@ -1138,14 +1139,14 @@ const Dashboard = () => {
             <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
               Settings
             </button>
-            <button 
+            <button
               className={styles.buttonLarge}
               onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
               style={{ marginBottom: 0 }}
             >
               Download Reports
             </button>
-            
+
             {showDownloadDropdown && (
               <div style={{
                 position: 'absolute',
@@ -1244,6 +1245,10 @@ const Dashboard = () => {
                     Purchase Date
                     {sortField === "createdAt" && (sortOrder === "asc" ? "🔼" : "🔽")}
                   </th>
+                  <th onClick={() => handleSort("score")} style={{ cursor: "pointer", width: "8%" }}>
+                    Score
+                    {sortField === "score" && (sortOrder === "asc" ? "🔼" : "🔽")}
+                  </th>
                   <th style={{ width: "6%" }}>Action</th>
                 </tr>
               </thead>
@@ -1267,6 +1272,11 @@ const Dashboard = () => {
                             ? new Date(lead.createdAt).toLocaleString("en-IN", {
                               timeZone: "Asia/Kolkata"
                             })
+                            : "N/A"}
+                        </td>
+                        <td>
+                          {lead.score && !isNaN(lead.score) && lead.score !== 0
+                            ? lead.score.toFixed(2)
                             : "N/A"}
                         </td>
                         <td>
@@ -1302,7 +1312,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-      
+
       {confirmModal.open && (
         <div className="modal-overlay">
           <div className="modal-content">

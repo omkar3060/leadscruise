@@ -76,8 +76,8 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       // Fetch charts and tables data from the API
-      if(mobileNumber === "9999999999"){
-        setTableData({categories: demoAnalytics.tables.categories});
+      if (mobileNumber === "9999999999") {
+        setTableData({ categories: demoAnalytics.tables.categories });
         // console.log("Using demo table data:", demoAnalytics.tables.categories);
         return;
       }
@@ -157,7 +157,7 @@ const Dashboard = () => {
         return;
       }
 
-      if(userMobile === "9999999999"){
+      if (userMobile === "9999999999") {
         setUserLeads(demoLeads);
         return;
       }
@@ -302,7 +302,7 @@ const Dashboard = () => {
         return;
       }
 
-      if(mobileNumber === "9999999999"){
+      if (mobileNumber === "9999999999") {
         setLeads(demoLeads);
         return;
       }
@@ -399,12 +399,12 @@ const Dashboard = () => {
         alert("User email not found!");
         return;
       }
-      if(userEmail === "demo@leadscruise.com"){
-              setSettings(demoSettings); // Use demo settings for testing
-              setIsLoading(false); // End loading
-              return;
-            }
-      
+      if (userEmail === "demo@leadscruise.com") {
+        setSettings(demoSettings); // Use demo settings for testing
+        setIsLoading(false); // End loading
+        return;
+      }
+
       try {
         const response = await axios.get(
           `https://api.leadscruise.com/api/get-settings/${userEmail}`
@@ -431,33 +431,33 @@ const Dashboard = () => {
 
   // Calculate metrics based on leads data
   const calculateMetrics = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // Get the start of the current week (Monday)
-  const startOfWeek = new Date(today);
-  const day = today.getDay(); // Sunday: 0, Monday: 1, ..., Saturday: 6
-  const diff = day === 0 ? 6 : day - 1; // if Sunday, go back 6 days to get to Monday
-  startOfWeek.setDate(today.getDate() - diff);
-  startOfWeek.setHours(0, 0, 0, 0);
+    // Get the start of the current week (Monday)
+    const startOfWeek = new Date(today);
+    const day = today.getDay(); // Sunday: 0, Monday: 1, ..., Saturday: 6
+    const diff = day === 0 ? 6 : day - 1; // if Sunday, go back 6 days to get to Monday
+    startOfWeek.setDate(today.getDate() - diff);
+    startOfWeek.setHours(0, 0, 0, 0);
 
-  const leadsToday = leads.filter((lead) => {
-    const leadDate = new Date(lead.createdAt);
-    leadDate.setHours(0, 0, 0, 0);
-    return leadDate.getTime() === today.getTime();
-  });
+    const leadsToday = leads.filter((lead) => {
+      const leadDate = new Date(lead.createdAt);
+      leadDate.setHours(0, 0, 0, 0);
+      return leadDate.getTime() === today.getTime();
+    });
 
-  const leadsThisWeek = leads.filter((lead) => {
-    const leadDate = new Date(lead.createdAt);
-    return leadDate >= startOfWeek;
-  });
+    const leadsThisWeek = leads.filter((lead) => {
+      const leadDate = new Date(lead.createdAt);
+      return leadDate >= startOfWeek;
+    });
 
-  return {
-    totalLeadsToday: leadsToday.length,
-    totalLeadsThisWeek: leadsThisWeek.length,
-    totalLeadsCaptured: leads.length,
+    return {
+      totalLeadsToday: leadsToday.length,
+      totalLeadsThisWeek: leadsThisWeek.length,
+      totalLeadsCaptured: leads.length,
+    };
   };
-};
 
   const metrics = calculateMetrics();
 
@@ -495,45 +495,45 @@ const Dashboard = () => {
     }
   };
 
-useEffect(() => {
-  const uniqueId = localStorage.getItem("unique_id");
-  if (!uniqueId) return;
-  
-  const failureInterval = setInterval(async () => {
-    const isCancelled = localStorage.getItem("cancelled") === "true";
-    const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
-    
-    // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
-    
-    try {
-      const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
-      // console.log("API Response:", response.data);
-      
-      if (response.data.otpFailed) {
-        // console.log("OTP Failed detected! About to show alert...");
-        
-        setCancelled(true);
-        localStorage.setItem("cancelled", "true");
-        localStorage.setItem("showOtpPopup", "true");
-        localStorage.setItem("showOtpWaitPopup", "false");
-        setShowOtpPopup(true);
-        setShowOtpWaitPopup(false);
-        
-        if (!isAlertShown) {
-          // console.log("Showing alert now...");
-          alert("The OTP you entered is incorrect. Please try again.");
-          localStorage.setItem("otp_alert_shown", "true");
-        } else {
-          // console.log("Alert already shown, skipping...");
+  useEffect(() => {
+    const uniqueId = localStorage.getItem("unique_id");
+    if (!uniqueId) return;
+
+    const failureInterval = setInterval(async () => {
+      const isCancelled = localStorage.getItem("cancelled") === "true";
+      const isAlertShown = localStorage.getItem("otp_alert_shown") === "true";
+
+      // console.log("Polling - isCancelled:", isCancelled, "isAlertShown:", isAlertShown);
+
+      try {
+        const response = await axios.get(`https://api.leadscruise.com/api/check-otp-failure/${uniqueId}`);
+        // console.log("API Response:", response.data);
+
+        if (response.data.otpFailed) {
+          // console.log("OTP Failed detected! About to show alert...");
+
+          setCancelled(true);
+          localStorage.setItem("cancelled", "true");
+          localStorage.setItem("showOtpPopup", "true");
+          localStorage.setItem("showOtpWaitPopup", "false");
+          setShowOtpPopup(true);
+          setShowOtpWaitPopup(false);
+
+          if (!isAlertShown) {
+            // console.log("Showing alert now...");
+            alert("The OTP you entered is incorrect. Please try again.");
+            localStorage.setItem("otp_alert_shown", "true");
+          } else {
+            // console.log("Alert already shown, skipping...");
+          }
         }
+      } catch (err) {
+        console.error("API Error:", err);
       }
-    } catch (err) {
-      console.error("API Error:", err);
-    }
-  }, 2000);
-  
-  return () => clearInterval(failureInterval);
-}, [showOtpPopup, otpRequestId]);
+    }, 2000);
+
+    return () => clearInterval(failureInterval);
+  }, [showOtpPopup, otpRequestId]);
 
   useEffect(() => {
     const uniqueId = localStorage.getItem("unique_id");
@@ -680,6 +680,7 @@ useEffect(() => {
           minOrder: userSettings.minOrder || 0,
           leadTypes: userSettings.leadTypes || [],
           selectedStates: userSettings.selectedStates || [],
+          thresholdScore: userSettings.thresholdScore || 0,
         },
         {
           headers: {
@@ -916,10 +917,10 @@ useEffect(() => {
           cooldownTime={cooldownTime}
         />
 
-        
-  <div className={styles.assistantText}>
-    Your AI Sales Capture Reply Assistant Working 24x7!
-  </div>
+
+        <div className={styles.assistantText}>
+          Your AI Sales Capture Reply Assistant Working 24x7!
+        </div>
         <div className={styles.container}>
           <div className={styles.gridContainer}>
             {/* Overall AI Activity Card */}
@@ -966,60 +967,58 @@ useEffect(() => {
 
             {/* Attention Required Card */}
             <div className={styles.attentionColumn}>
-              
+              <div className={styles.attentionCard}>
+                <div className={styles.attentionHeader}>
+                  <BarChart3 size={20} className={styles.icon} />
+                  <div className={styles.tutorialText}>
+                    Key Metrics
+                  </div>
+                </div>
 
-<div className={styles.attentionCard}>
-  <div className={styles.attentionHeader}>
-    <BarChart3 size={20} className={styles.icon} />
-    <div className={styles.tutorialText}>
-      Key Metrics
-    </div>
-  </div>
+                {/* 4 Quadrants for Metrics */}
+                <div className={styles.metricsQuadrants}>
+                  <div className={styles.quadrant}>
+                    <div className={styles.quadrantNumber}>
+                      {metrics.totalLeadsToday}
+                    </div>
+                    <div className={styles.quadrantLabel}>
+                      Leads Today
+                    </div>
+                  </div>
 
-  {/* 4 Quadrants for Metrics */}
-  <div className={styles.metricsQuadrants}>
-    <div className={styles.quadrant}>
-      <div className={styles.quadrantNumber}>
-        {metrics.totalLeadsToday}
-      </div>
-      <div className={styles.quadrantLabel}>
-        Leads Today
-      </div>
-    </div>
-    
-    <div className={styles.quadrant}>
-      <div className={styles.quadrantNumber}>
-        {metrics.totalLeadsCaptured}
-      </div>
-      <div className={styles.quadrantLabel}>
-        Total Leads
-      </div>
-    </div>
-    
-    <div className={styles.quadrant}>
-      <div className={styles.quadrantNumber}>
-        {messageCount * metrics.totalLeadsToday || 0}
-      </div>
-      <div className={styles.quadrantLabel}>
-        WhatsApp Sent
-      </div>
-    </div>
-    
-    <div className={styles.quadrant}>
-      <div className={styles.quadrantNumber}>
-        {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
-      </div>
-      <div className={styles.quadrantLabel}>
-        Replies Sent
-      </div>
-    </div>
-  </div>
-   
-  {/* <button className={styles.linkButton} onClick={() => window.open("https://www.youtube.com/@FocusEngineeringProducts", "_blank")}>
+                  <div className={styles.quadrant}>
+                    <div className={styles.quadrantNumber}>
+                      {metrics.totalLeadsCaptured}
+                    </div>
+                    <div className={styles.quadrantLabel}>
+                      Total Leads
+                    </div>
+                  </div>
+
+                  <div className={styles.quadrant}>
+                    <div className={styles.quadrantNumber}>
+                      {messageCount * metrics.totalLeadsToday || 0}
+                    </div>
+                    <div className={styles.quadrantLabel}>
+                      WhatsApp Sent
+                    </div>
+                  </div>
+
+                  <div className={styles.quadrant}>
+                    <div className={styles.quadrantNumber}>
+                      {metrics.totalLeadsToday * (settings?.sentences?.length || 0)}
+                    </div>
+                    <div className={styles.quadrantLabel}>
+                      Replies Sent
+                    </div>
+                  </div>
+                </div>
+
+                {/* <button className={styles.linkButton} onClick={() => window.open("https://www.youtube.com/@FocusEngineeringProducts", "_blank")}>
     Go to Youtube Page
     <span className={styles.linkArrow}>→</span>
   </button> */}
-</div>
+              </div>
 
               <div className={styles.attentionCard}>
                 <div className={styles.attentionHeader}>
@@ -1066,10 +1065,10 @@ useEffect(() => {
                           </span>
                           <span className={styles.leadDate}>
                             {lead.createdAt
-                            ? new Date(lead.createdAt).toLocaleString("en-IN", {
-                              timeZone: "Asia/Kolkata"
-                            })
-                            : "N/A"}
+                              ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                                timeZone: "Asia/Kolkata"
+                              })
+                              : "N/A"}
                           </span>
                         </div>
                         {lead.source && (

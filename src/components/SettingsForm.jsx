@@ -111,7 +111,7 @@ const SettingsForm = () => {
           setOriginalSettings(response.data);
         } else {
           setSettings({ sentences: [], wordArray: [], h2WordArray: [] });
-          setOriginalSettings({ sentences: [], wordArray: [], h2WordArray: [] }); 
+          setOriginalSettings({ sentences: [], wordArray: [], h2WordArray: [] });
         }
       } catch (error) {
         console.error("Error fetching settings:", error);

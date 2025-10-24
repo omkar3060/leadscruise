@@ -12,6 +12,9 @@ const paymentSchema = new mongoose.Schema({
   created_at: { type: Date, default: Date.now },
   invoice_pdf: { data: Buffer, contentType: String }, // Store PDF as binary data
   days_remaining: { type: Number, default: null },
+  razorpay_subscription_id: { type: String, default: null },
+  autopay_enabled: { type: Boolean, default: false },
+  autopay_start_date: { type: Date, default: null },
 });
 
 module.exports = mongoose.model("Payment", paymentSchema);

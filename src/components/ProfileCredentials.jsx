@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ProfileCredentials.css";
 import { FaChevronDown } from "react-icons/fa";
-
+import MiscSettingsPopup from "./MiscSettingsPopup";
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ];
@@ -119,7 +119,7 @@ const StatesDropdown = ({ userEmail, automationStatus }) => {
                     checked={tempStates.length === indianStates.length}
                     onChange={(e) => handleAllIndiaChange(e.target.checked)}
                   />
-                  <span className="checkmark" />
+                  <span className="misc-checkmark" />
                   <strong>ALL INDIA</strong>
                 </label>
                 {filteredStates.map(state => (
@@ -129,7 +129,7 @@ const StatesDropdown = ({ userEmail, automationStatus }) => {
                       checked={tempStates.includes(state)}
                       onChange={(e) => handleStateChange(state, e.target.checked)}
                     />
-                    <span className="checkmark" />
+                    <span className="misc-checkmark" />
                     {state}
                   </label>
                 ))}
@@ -192,6 +192,10 @@ const ProfileCredentials = ({
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
   const [countdown, setCountdown] = useState(0);
+  const [thresholdLevel, setThresholdLevel] = useState('');
+  const [thresholdScore, setThresholdScore] = useState(0);
+  const [isEditingThreshold, setIsEditingThreshold] = useState(false);
+  const [tempThresholdLevel, setTempThresholdLevel] = useState('');
 
   // Monitor automation status changes
   useEffect(() => {
@@ -314,6 +318,42 @@ const ProfileCredentials = ({
     };
 
     fetchMaxCaptures();
+  }, []);
+
+  useEffect(() => {
+    const fetchThresholdSettings = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        const response = await axios.get(
+          `https://api.leadscruise.com/api/get-threshold?user_email=${userEmail}`
+        );
+
+        if (response.data) {
+          setThresholdLevel(response.data.thresholdLevel);
+          setThresholdScore(response.data.thresholdScore || 0);
+          setTempThresholdLevel(response.data.thresholdLevel);
+
+          // Optional: Check if threshold was updated in last 24 hours
+          if (response.data.lastUpdatedThreshold) {
+            const lastUpdated = new Date(response.data.lastUpdatedThreshold);
+            const now = new Date();
+            const hoursPassed = (now - lastUpdated) / (1000 * 60 * 60);
+
+            if (hoursPassed < 24) {
+              setIsEditingThreshold(false);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching threshold settings:", error);
+        // Set defaults if fetch fails
+        setThresholdLevel('medium');
+        setThresholdScore(60);
+        setTempThresholdLevel('medium');
+      }
+    };
+
+    fetchThresholdSettings();
   }, []);
 
   useEffect(() => {
@@ -592,6 +632,109 @@ const ProfileCredentials = ({
     callback();
   };
 
+  // Helper function to get score from level
+  const getScoreFromLevel = (level) => {
+    const scoreMap = {
+      'aggressive': 40,
+      'mild_aggressive': 50,
+      'medium': 60,
+      'mild_accurate': 70,
+      'accurate': 80
+    };
+    return scoreMap[level];
+  };
+
+  // Helper function to get level display name
+  const getLevelDisplayName = (level) => {
+    const nameMap = {
+      'aggressive': 'Aggressive',
+      'mild_aggressive': 'Mild Aggressive',
+      'medium': 'Medium',
+      'mild_accurate': 'Mild Accurate',
+      'accurate': 'Accurate'
+    };
+    return nameMap[level];
+  };
+
+  // Save threshold handler
+  const handleSaveThreshold = async () => {
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const newScore = getScoreFromLevel(tempThresholdLevel);
+
+      const response = await axios.put(
+        `https://api.leadscruise.com/api/settings/threshold/${userEmail}`,
+        {
+          thresholdLevel: tempThresholdLevel,
+          thresholdScore: newScore
+        }
+      );
+
+      if (response.data.success) {
+        setThresholdLevel(tempThresholdLevel);
+        setThresholdScore(newScore);
+        setIsEditingThreshold(false);
+
+        // Optional: Show success message
+        alert('Threshold setting saved successfully!');
+      }
+    } catch (error) {
+      console.error('Error saving threshold:', error);
+      alert('Failed to save threshold setting');
+    }
+  };
+
+  // Cancel edit handler
+  const handleCancelThresholdEdit = () => {
+    setTempThresholdLevel(thresholdLevel);
+    setIsEditingThreshold(false);
+  };
+
+  // Main Settings Button Component
+const MiscSettingsButton = ({ userEmail, automationStatus }) => {
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const isEditDisabled = automationStatus === "Running";
+
+  const handleOpenPopup = () => {
+    if (isEditDisabled) {
+      alert("You cannot edit while automation is running");
+      return;
+    }
+    setIsPopupOpen(true);
+  };
+
+  return (
+    <>
+      <div className="credentials-section">
+        <div className="credentials-header">Miscellaneous Settings</div>
+        <div className="max-captures-content">
+          <span className="credential-value">
+            Lead Types, States & Minimum Order
+          </span>
+          <button
+            className="edit-max-captures"
+            onClick={handleOpenPopup}
+            style={{
+              backgroundColor: isEditDisabled ? "#ccc" : "",
+              cursor: isEditDisabled ? "not-allowed" : "pointer",
+              color: isEditDisabled ? "#666" : ""
+            }}
+          >
+            Configure
+          </button>
+        </div>
+      </div>
+
+      <MiscSettingsPopup
+        userEmail={userEmail}
+        automationStatus={automationStatus}
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+      />
+    </>
+  );
+};
+
   return (
     <div className={`credentials-container ${isProfilePage ? 'profile-page' : ''}`}>
       {isSettingsPage && !isWhatsAppPage && (
@@ -644,33 +787,30 @@ const ProfileCredentials = ({
       )}
 
       {isSettingsPage && !isWhatsAppPage && (
-        <StatesDropdown
-          userEmail={localStorage.getItem("userEmail")}
-          automationStatus={automationStatus}
-        />
-      )}
-
-      {isSettingsPage && !isWhatsAppPage && (
         <div className="credentials-section">
-          <div className="credentials-header">Minimum order value</div>
+          <div className="credentials-header">Detection Threshold</div>
           <div className="max-captures-content">
             <span className="credential-value">
-              VALUE (INR) : {minOrder < 10 ? `0${minOrder}` : minOrder}
+              CURRENT: {thresholdLevel.toUpperCase()} (Score: {thresholdScore})
             </span>
-            {isEditingminOrder ? (
+            {isEditingThreshold ? (
               <>
-                <input
-                  type="number"
+                <select
                   className="max-captures-input min-order"
-                  value={tempMin}
-                  onChange={(e) => setTempMin(Number(e.target.value))}
-                  min="1"
-                />
+                  value={tempThresholdLevel}
+                  onChange={(e) => setTempThresholdLevel(e.target.value)}
+                >
+                  <option value="aggressive">Aggressive (Score ≥ 40)</option>
+                  <option value="mild_aggressive">Mild Aggressive (Score ≥ 50)</option>
+                  <option value="medium">Medium (Score ≥ 60)</option>
+                  <option value="mild_accurate">Mild Accurate (Score ≥ 70)</option>
+                  <option value="accurate">Accurate (Score ≥ 80)</option>
+                </select>
                 <button
                   className="edit-max-captures"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleSaveminOrder();
+                    handleSaveThreshold();
                   }}
                 >
                   Save
@@ -684,7 +824,7 @@ const ProfileCredentials = ({
                   cursor: isEditDisabled() ? "not-allowed" : "pointer",
                   color: isEditDisabled() ? "#666" : ""
                 }}
-                onClick={() => handleEditClick(() => setIsEditingminOrder(true))}
+                onClick={() => handleEditClick(() => setIsEditingThreshold(true))}
               >
                 Edit
               </button>
@@ -693,62 +833,13 @@ const ProfileCredentials = ({
         </div>
       )}
 
-      {isSettingsPage && !isWhatsAppPage && (
-        <div className="credentials-section enhanced-lead-types">
-          <div className="credentials-header">Lead Types</div>
-          <div className="max-captures-content lead-types">
-            <span className="credential-value">
-              {leadTypes.length === 0 ? "None selected" : leadTypes.join(", ").toUpperCase()}
-            </span>
 
-            {isEditingLeadTypes ? (
-              <>
-                <div className="lead-types-checkboxes">
-                  {["bulk", "business", "gst"].map((type) => (
-                    <label key={type} className="checkbox-label styled-checkbox" title={`Enable ${type.toUpperCase()} leads`}>
-                      <input
-                        type="checkbox"
-                        checked={tempLeadTypes.includes(type)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setTempLeadTypes([...tempLeadTypes, type]);
-                          } else {
-                            setTempLeadTypes(tempLeadTypes.filter((t) => t !== type));
-                          }
-                        }}
-                      />
-                      <span className="checkmark" />
-                      {type.toUpperCase()}
-                    </label>
-                  ))}
-                </div>
-                <button
-                  className="edit-max-captures save-btn"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSaveLeadTypes();
-                  }}
-                >
-                  Save
-                </button>
-              </>
-            ) : (
-              <button
-                className="edit-max-captures"
-                style={{
-                  backgroundColor: isEditDisabled() ? "#ccc" : "",
-                  cursor: isEditDisabled() ? "not-allowed" : "pointer",
-                  color: isEditDisabled() ? "#666" : ""
-                }}
-                onClick={() => handleEditClick(() => setIsEditingLeadTypes(true))}
-              >
-                Edit
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
+{isSettingsPage && !isWhatsAppPage && (
+  <MiscSettingsButton
+    userEmail={localStorage.getItem("userEmail")}
+    automationStatus={automationStatus}
+  />
+)}
       {isWhatsAppPage && (
         <div className="credentials-section">
           <h3 className="credentials-header">WhatsApp Settings</h3>

@@ -99,6 +99,7 @@ const Plans = () => {
     const email = localStorage.getItem("userEmail");
     const contact = localStorage.getItem("mobileNumber");
     const selectedPlan = localStorage.getItem("selectedPlan");
+
     if (!referralId.trim()) {
       alert("Please enter a Referral ID.");
       return;
@@ -116,48 +117,46 @@ const Plans = () => {
       return;
     }
 
-    // ✅ Block if user already used demo
+    // ✅ Handle 7-day demo with autopay
     if (selectedPlan === "1-day") {
-      const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
       try {
-        
+        const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
+
         if (res.data.used) {
-          alert(res.data.message || "You have already used the demo subscription. Please choose another plan.");
+          alert(res.data.message || "You have already used the 7-day demo subscription. Please choose another plan.");
           setShowModal(false);
           return;
         }
       } catch (err) {
         console.error("Error checking demo usage:", err);
-        alert(res.data.message || "Unable to validate demo subscription. Please try again.");
+        alert("Unable to validate demo subscription. Please try again.");
         setShowModal(false);
         return;
       }
 
-      // ✅ Directly create a free demo subscription without payment
+      // ✅ Create 7-day demo with autopay subscription
       try {
-        const timestamp = Date.now();
-        await axios.post("https://api.leadscruise.com/api/save-payment", {
-          unique_id: await getNextPaymentId(),
+        const demoResponse = await axios.post("https://api.leadscruise.com/api/create-demo-subscription", {
           email,
           contact,
-          order_id: `FREE-DEMO-${timestamp}`,
-          payment_id: `FREE-DEMO-${timestamp}`,
-          signature: "FREE",
-          order_amount: 0,
-          subscription_type: "1-day",
+          referralId: referralId.trim()
         });
 
-        alert("Demo subscription activated successfully!");
-        navigate("/execute-task");
-        return;
+        if (demoResponse.data.success) {
+          alert(`7-day demo activated! Autopay will start automatically after 7 days at ₹3999+GST/month.`);
+          navigate("/execute-task");
+          return;
+        } else {
+          throw new Error(demoResponse.data.error || "Failed to create demo subscription");
+        }
       } catch (error) {
         console.error("Error activating demo subscription:", error);
-        setPaymentError("Unable to activate demo. Please try again.");
+        setPaymentError(error.response?.data?.error || "Unable to activate demo. Please try again.");
         return;
       }
     }
 
-    // 🛒 For paid plans, proceed with Razorpay flow
+    // 🛒 For paid plans, proceed with normal Razorpay flow (keep existing code)
     try {
       const response = await fetch("https://api.leadscruise.com/order", {
         method: "POST",

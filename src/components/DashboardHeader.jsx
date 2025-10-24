@@ -3,7 +3,7 @@ import axios from "axios";
 import styles from "./Header.module.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaCheck, FaUser, FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaCog, FaWhatsapp, FaFileExcel, FaSignOutAlt, FaArrowLeft, FaSave, FaUndo, FaHeadset, FaWallet } from "react-icons/fa";
-import { io } from 'socket.io-client'; 
+import { io } from 'socket.io-client';
 
 const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSubmit, handleRevert, timer, isStarting, cooldownActive, cooldownTime }) => {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const supportEmail = "support@leadscruise.com";
-  const whatsappNumber = "+919579797269"; // Replace with actual number
+  const whatsappNumber = "+919579797269";
   const [scriptStatus, setScriptStatus] = useState("");
   const [lastTime, setLastTime] = useState(null);
   const isDemoAccount = localStorage.getItem("userEmail") === "demo@leadscruise.com";
@@ -31,54 +31,98 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const [isResetting, setIsResetting] = useState(false);
   const [showMaintenancePopup, setShowMaintenancePopup] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isCancelHovering, setIsCancelHovering] = useState(false);
+  const [hasAutopay, setHasAutopay] = useState(false);
+
   const handleResetUserData = async () => {
-  const userEmail = localStorage.getItem("userEmail");
-  const userMobile = localStorage.getItem("mobileNumber");
-  if (!userEmail || !userMobile) {
-    alert("Something went wrong. Please login again.");
-    return;
-  }
-
-  // Double confirmation
-  const firstConfirm = window.confirm(
-    "⚠️ WARNING: This will permanently delete ALL your leads data!\n\nThis action cannot be undone. Are you sure you want to continue?"
-  );
-  
-  if (!firstConfirm) return;
-
-  setIsResetting(true);
-
-  try {
-    const response = await fetch("https://api.leadscruise.com/api/reset-user-data", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}` // If you use JWT
-      },
-      body: JSON.stringify({
-        userEmail,
-        userMobile
-      })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      alert(`✅ Data reset successful!`);
-      
-      // Optionally refresh the page or redirect
-      //window.location.reload();
-       navigate("/execute-task");
-    } else {
-      alert(`❌ "Failed to reset data"}`);
+    const userEmail = localStorage.getItem("userEmail");
+    const userMobile = localStorage.getItem("mobileNumber");
+    if (!userEmail || !userMobile) {
+      alert("Something went wrong. Please login again.");
+      return;
     }
-  } catch (error) {
-    console.error("Reset data error:", error);
-    alert("❌ Network error. Please try again.");
-  } finally {
-    setIsResetting(false);
-  }
-};
+
+    const firstConfirm = window.confirm(
+      "⚠️ WARNING: This will permanently delete ALL your leads data!\n\nThis action cannot be undone. Are you sure you want to continue?"
+    );
+
+    if (!firstConfirm) return;
+
+    setIsResetting(true);
+
+    try {
+      const response = await fetch("https://api.leadscruise.com/api/reset-user-data", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          userEmail,
+          userMobile
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Data reset successful!`);
+        navigate("/execute-task");
+      } else {
+        alert(`❌ "Failed to reset data"}`);
+      }
+    } catch (error) {
+      console.error("Reset data error:", error);
+      alert("❌ Network error. Please try again.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+
+    if (!userEmail) {
+      alert("Something went wrong. Please login again.");
+      return;
+    }
+
+    const confirmCancel = window.confirm(
+      "⚠️ Are you sure you want to cancel your subscription?\n\nYour autopay will be disabled and your subscription will end at the current renewal date."
+    );
+
+    if (!confirmCancel) return;
+
+    setIsCancelling(true);
+
+    try {
+      const response = await fetch("https://api.leadscruise.com/api/cancel-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userEmail
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Subscription cancelled successfully! Your service will remain active until ${result.expiryDate || 'the end of your current billing period'}.`);
+        setHasAutopay(false);
+        window.location.reload();
+      } else {
+        alert(`❌ ${result.error || "Failed to cancel subscription"}`);
+      }
+    } catch (error) {
+      console.error("Cancel subscription error:", error);
+      alert("❌ Network error. Please try again.");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -91,7 +135,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
       try {
         const res = await axios.get(`https://api.leadscruise.com/api/user-status?email=${userEmail}`);
         setScriptStatus(res.data.status);
-        setLastTime(res.data.startTime); // unified field
+        setLastTime(res.data.startTime);
       } catch (err) {
         console.error("Error fetching status:", err);
       }
@@ -122,48 +166,10 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };
 
-  // const fetchUserBalance = async () => {
-  //   const userEmail = localStorage.getItem("userEmail");
-  //   try {
-  //     const response = await fetch(`https://api.leadscruise.com/api/user/balance?email=${(userEmail)}`);
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch balance');
-  //     }
-  //     const data = await response.json();
-  //     return data;
-  //   } catch (error) {
-  //     console.error('Error fetching balance:', error);
-  //     return { buyerBalance: 0, hasZeroBalance: true };
-  //   }
-  // };
-
-  // Add useEffect to fetch balance on component mount
-  // useEffect(() => {
-  //   const loadBalance = async () => {
-  //     setIsLoadingBalance(true);
-  //     // Get user email from your auth context or state
-  //     const userEmail = localStorage.getItem('userEmail');
-  //     if (userEmail) {
-  //       const balanceData = await fetchUserBalance(userEmail);
-  //       setBalance(balanceData);
-  //     }
-  //     setIsLoadingBalance(false);
-  //   };
-
-  //   loadBalance();
-
-  //   // Optional: Set up interval to refresh balance periodically
-  //   const balanceInterval = setInterval(loadBalance, 30000); // Refresh every 30 seconds
-
-  //   return () => clearInterval(balanceInterval);
-  // }, []);
-
   const getBalanceFromStorage = () => {
     try {
       const storedBalance = localStorage.getItem('buyerBalance');
       const balance = storedBalance ? parseFloat(storedBalance) : 0;
-      // console.log('Balance retrieved from localStorage:', balance);
-      // console.log("Status", status);
       return {
         buyerBalance: balance,
         hasZeroBalance: balance === 0
@@ -174,25 +180,20 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     }
   };
 
-  // Your existing component code with balance state
   const [balance, setBalance] = useState(() => getBalanceFromStorage());
 
-  // Simplified useEffect for localStorage balance management
   useEffect(() => {
-    // Function to update balance from localStorage
     const updateBalance = () => {
       const newBalance = getBalanceFromStorage();
       setBalance(newBalance);
     };
 
-    // Listen for storage events (when localStorage changes in other tabs)
     const handleStorageChange = (e) => {
       if (e.key === 'buyerBalance') {
         updateBalance();
       }
     };
 
-    // Listen for custom balance update events
     const handleBalanceUpdate = (e) => {
       if (e.detail) {
         setBalance(e.detail);
@@ -204,8 +205,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('balanceUpdated', handleBalanceUpdate);
 
-    // Optional: Set up interval to refresh balance periodically from localStorage
-    const balanceInterval = setInterval(updateBalance, 10000); // Check every 10 seconds
+    const balanceInterval = setInterval(updateBalance, 10000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -223,7 +223,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Handle clicks outside dropdown to close it
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -246,7 +245,10 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         }
 
         const response = await axios.get(`https://api.leadscruise.com/api/get-subscription/${userEmail}`);
-        const { renewal_date, status, unique_id } = response.data;
+        const { renewal_date, status, unique_id, autopay_enabled } = response.data;
+
+        // Set autopay status
+        setHasAutopay(autopay_enabled === true || autopay_enabled === 1);
 
         if (!unique_id) {
           console.warn("Unique ID is missing from the response.");
@@ -262,21 +264,18 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           return;
         }
 
-        // Calculate days left for renewal
         const renewalDate = new Date(renewal_date);
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
+        today.setHours(0, 0, 0, 0);
         const diffTime = renewalDate - today;
-        const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        let remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         if (remainingDays < 0) {
-          remainingDays = 0; // Ensure days left is not negative
+          remainingDays = 0;
         }
         setDaysLeft(remainingDays);
         setIsSubscriptionActive(remainingDays > 0);
 
-        // Show popup only once after login
         const hasSeenPopup = localStorage.getItem("hasSeenPopup");
-        // console.log("userEmail", userEmail); 
         if (
           userEmail?.trim().toLowerCase() !== "support@leadscruise.com" &&
           remainingDays > 0 &&
@@ -298,7 +297,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           setDaysLeft(0);
           setIsSubscriptionActive(false);
 
-          // Show popup only once after login for expired subscriptions
           const hasSeenPopup = localStorage.getItem("hasSeenPopup");
           if (!hasSeenPopup) {
             setShowPopup(true);
@@ -326,7 +324,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     localStorage.setItem("hasSeenPopup", "true");
   };
 
-  // Toggle profile dropdown
   const toggleProfileDropdown = () => {
     if (window.innerWidth < 768) {
       setShowProfileDropdown(!showProfileDropdown);
@@ -335,7 +332,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     }
   };
 
-  // Navigation handlers
   const handleNavigation = (path) => {
     setShowProfileDropdown(false);
     navigate(path);
@@ -344,7 +340,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
 
-    if (!isConfirmed) return; // Stop if user cancels
+    if (!isConfirmed) return;
 
     const userEmail = localStorage.getItem("userEmail");
 
@@ -354,7 +350,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
       });
 
       localStorage.clear();
-      sessionStorage.clear(); // Clear session storage as well
+      sessionStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
           ? "https://app.leadscruise.com/"
@@ -364,17 +360,14 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     }
   };
 
-    useEffect(() => {
-    // connect (use your backend origin)
+  useEffect(() => {
     const socket = io("https://api.leadscruise.com", {
       transports: ['websocket'],
-      // auth: { token: '...' } // authenticate if needed
     });
 
     socket.on('connect', () => console.log('socket connected', socket.id));
 
     socket.on('maintenance-notice', (payload) => {
-      // ignore for support/demo users client-side if needed
       const email = localStorage.getItem("userEmail");
       if (email === 'support@leadscruise.com' || email === 'demo@leadscruise.com') return;
 
@@ -387,7 +380,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
     };
   }, []);
 
-
   const handleClose = () => {
     setShowMaintenancePopup(false);
     setNotice(null);
@@ -395,36 +387,35 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
 
   return (
     <div className={styles.dashboardHeader}>
-      {/* Subscription Expiry Popup */}
       {showPopup &&
-  localStorage.getItem("userEmail") !== "support@leadscruise.com" &&
-  localStorage.getItem("userEmail") !== "demo@leadscruise.com" && (
-    <div className={styles.popupOverlay}>
-      <div className={styles.popupContent}>
-        <h2>
-          {daysLeft > 0
-            ? "Subscription Expiring Soon!"
-            : "Subscription Expired"}
-        </h2>
-        <p>
-          {daysLeft > 0
-            ? `Your subscription will expire in ${daysLeft} day(s). Please renew it to continue using the service.`
-            : "Your subscription has expired. Please renew it to continue using the service."}
-        </p>
-        <button
-          onClick={() => navigate("/plans")}
-          className={styles.renewButton}
-        >
-          Renew Now
-        </button>
-        <button onClick={handleClosePopup} className={styles.closeButton}>
-          Close
-        </button>
-      </div>
-    </div>
-)}
+        localStorage.getItem("userEmail") !== "support@leadscruise.com" &&
+        localStorage.getItem("userEmail") !== "demo@leadscruise.com" && (
+          <div className={styles.popupOverlay}>
+            <div className={styles.popupContent}>
+              <h2>
+                {daysLeft > 0
+                  ? "Subscription Expiring Soon!"
+                  : "Subscription Expired"}
+              </h2>
+              <p>
+                {daysLeft > 0
+                  ? `Your subscription will expire in ${daysLeft} day(s). Please renew it to continue using the service.`
+                  : "Your subscription has expired. Please renew it to continue using the service."}
+              </p>
+              <button
+                onClick={() => navigate("/plans")}
+                className={styles.renewButton}
+              >
+                Renew Now
+              </button>
+              <button onClick={handleClosePopup} className={styles.closeButton}>
+                Close
+              </button>
+            </div>
+          </div>
+        )}
 
-{showMaintenancePopup && notice && (
+      {showMaintenancePopup && notice && (
         <div className={styles.popupOverlay}>
           <div className={styles.popupContent}>
             <h2>{notice.title || 'Maintenance Notice'}</h2>
@@ -435,7 +426,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
       )}
 
       <div className={styles.statusSection}>
-        {/* If the user is in settings or profile, show 'Return to Dashboard' */}
         {location.pathname === "/settings" || location.pathname === "/profile" || location.pathname === "/whatsapp" || location.pathname === "/analytics" ? (
           <div>
             <div className={styles.statusLabel} onClick={() => navigate("/dashboard")}>
@@ -459,8 +449,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         <div className={styles.startStopButtons}>
           {location.pathname === "/settings" ? (
             <>
-
-
               <button
                 className={styles.startButton}
                 style={{
@@ -560,7 +548,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
       <div className={styles.profileSection} ref={dropdownRef}>
         {location.pathname === "/profile" ? (
           <>
-            {/* Show both Profile & Renew buttons in mobile view */}
             <div className={styles.profileButtonGroup} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
 
               {isMobile && (
@@ -568,7 +555,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                   <FaUser className={styles.iconOnly} /> <span className={styles.buttonText}>Profile</span>
                 </button>
               )}
-              
+
               <button
                 className={styles.subscriptionButton}
                 onClick={() => {
@@ -596,8 +583,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 </div>
               </button>
 
-              {/* Reset User Data Button */}
-              
               <button
                 className={styles.resetDataButton}
                 onClick={handleResetUserData}
@@ -626,11 +611,40 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 </span>
               </button>
 
+              {hasAutopay && (
+                <button
+                  className={styles.cancelSubscriptionButton}
+                  onClick={handleCancelSubscription}
+                  onMouseEnter={() => setIsCancelHovering(true)}
+                  onMouseLeave={() => setIsCancelHovering(false)}
+                  disabled={localStorage.getItem("userEmail") === "demo@leadscruise.com" || isCancelling}
+                  style={{
+                    cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" || isCancelling ? "not-allowed" : "pointer",
+                    opacity: localStorage.getItem("userEmail") === "demo@leadscruise.com" || isCancelling ? 0.6 : 1,
+                    backgroundColor: isCancelHovering ? '#d97706' : '#f59e0b',
+                    color: 'white',
+                    border: 'none',
+                    padding: '24px 20px',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    whiteSpace: 'nowrap',
+                    margin: '0px'
+                  }}
+                >
+                  <span>
+                    {isCancelling ? "⏳ Cancelling..." : isCancelHovering ? "⚠️ Cancel Autopay" : "🚫 Cancel"}
+                  </span>
+                </button>
+              )}
+
             </div>
           </>
         ) : (
           <div className={styles.profileHeader} style={location.pathname === "/analytics" || location.pathname === "/whatsapp" ? { marginTop: "15px" } : {}}>
-            {/* Balance Display for non-profile pages */}
             <div className={`${styles.balanceContainer} ${styles.tooltip2}`} data-tooltip={
               `Shows the latest fetched balance from the Leads provider`
             }>

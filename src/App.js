@@ -83,11 +83,10 @@ const Layout = () => {
       <Routes>
         {/* Redirect "/" to "/login" if on app.leadscruise.com */}
         
-        <Route path="/" element={<LandingPage page="index.html" />} />
+        {/* <Route path="/" element={<LandingPage page="index.html" />} /> */}
         
-
         {/* Public Routes */}
-        <Route path="/login" element={<SignIn />} />
+        <Route path="/" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/enter-email" element={<EnterEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />

@@ -312,6 +312,379 @@ app.get("/api/check-edit-eligibility/:email", async (req, res) => {
     });
   }
 });
+
+app.post("/api/create-demo-subscription", async (req, res) => {
+  try {
+    const { email, contact, referralId } = req.body;
+
+    if (!email || !contact) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Email and contact are required" 
+      });
+    }
+
+    // Validate referral ID
+    try {
+      const refRes = await axios.get(
+        `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
+      );
+      if (!refRes.data.success) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid Referral ID" 
+        });
+      }
+    } catch (err) {
+      console.error("Error validating referral:", err);
+      return res.status(400).json({ 
+        success: false, 
+        error: "Unable to verify Referral ID" 
+      });
+    }
+
+    // Check if user already used demo
+    const existingDemo = await Payment.findOne({
+      contact,
+      subscription_type: "7-day",
+    });
+
+    if (existingDemo) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "You have already used the 7-day demo subscription" 
+      });
+    }
+
+    // Initialize Razorpay
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_SECRET,
+    });
+
+    // Calculate start time (7 days from now)
+    const startAt = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
+
+    // Create Razorpay subscription
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: "plan_RVfeZmVYdtqlGU",
+      customer_notify: 1,
+      quantity: 1,
+      total_count: 12,
+      start_at: startAt,
+      addons: [],
+      notes: {
+        referral_id: referralId,
+        subscription_type: "7-day-demo-then-monthly",
+        customer_email: email,
+        customer_contact: contact
+      },
+      notify_info: {
+        notify_phone: contact,
+        notify_email: email
+      }
+    });
+
+    console.log("Created Razorpay subscription:", subscription.id);
+
+    // Get next payment ID
+    const getNextPaymentIdResponse = await axios.get(
+      "https://api.leadscruise.com/api/get-latest-id"
+    );
+    const uniqueId = getNextPaymentIdResponse.data.latestId;
+
+    // Save demo payment record with subscription details
+    const timestamp = Date.now();
+    const payment = new Payment({
+      unique_id: uniqueId,
+      email,
+      contact,
+      order_id: `FREE-DEMO-${timestamp}`,
+      payment_id: `FREE-DEMO-${timestamp}`,
+      signature: "FREE",
+      order_amount: 0,
+      subscription_type: "7-day",
+      razorpay_subscription_id: subscription.id,
+      autopay_enabled: true,
+      autopay_start_date: new Date(startAt * 1000).toISOString(),
+      created_at: Date.now(),
+    });
+
+    await payment.save();
+
+    // Update user mobile number
+    await User.findOneAndUpdate(
+      { email },
+      { $set: { mobileNumber: contact } },
+      { new: true, upsert: false }
+    );
+
+    console.log(`Demo subscription created for ${email} with autopay starting on ${new Date(startAt * 1000).toISOString()}`);
+
+    res.json({ 
+      success: true, 
+      message: "7-day demo activated! Autopay will start automatically after 7 days at ₹3999+GST/month.",
+      subscription_id: subscription.id,
+      autopay_start_date: new Date(startAt * 1000).toISOString()
+    });
+
+  } catch (error) {
+    console.error("Error creating demo subscription:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to create demo subscription",
+      details: error.message 
+    });
+  }
+});
+
+// Add endpoint for paid subscription (for users who already used demo)
+app.post("/api/create-paid-subscription", async (req, res) => {
+  try {
+    const { email, contact, referralId, amount } = req.body;
+
+    if (!email || !contact || !amount) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Email, contact, and amount are required" 
+      });
+    }
+
+    // Validate referral ID
+    try {
+      const refRes = await axios.get(
+        `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
+      );
+      if (!refRes.data.success) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid Referral ID" 
+        });
+      }
+    } catch (err) {
+      console.error("Error validating referral:", err);
+      return res.status(400).json({ 
+        success: false, 
+        error: "Unable to verify Referral ID" 
+      });
+    }
+
+    // Initialize Razorpay
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_SECRET,
+    });
+
+    // Create Razorpay subscription (immediate start)
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: "plan_RVfeZmVYdtqlGU",
+      customer_notify: 1,
+      quantity: 1,
+      total_count: 12,
+      addons: [],
+      notes: {
+        referral_id: referralId,
+        subscription_type: "monthly-subscription",
+        customer_email: email,
+        customer_contact: contact
+      },
+      notify_info: {
+        notify_phone: contact,
+        notify_email: email
+      }
+    });
+
+    console.log("Created paid Razorpay subscription:", subscription.id);
+
+    res.json({ 
+      success: true, 
+      message: "Subscription created successfully",
+      subscription: subscription
+    });
+
+  } catch (error) {
+    console.error("Error creating paid subscription:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to create subscription",
+      details: error.message 
+    });
+  }
+});
+// Add this endpoint to your server.js file
+app.post("/api/cancel-subscription", async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Prevent demo account from cancelling
+    if (email === "demo@leadscruise.com") {
+      return res.status(403).json({ error: 'Demo account cannot cancel subscription' });
+    }
+
+    // Get user's latest payment with active autopay (MongoDB/Mongoose syntax)
+    const latestPayment = await Payment.findOne({ 
+      email: email,
+      autopay_enabled: true 
+    }).sort({ created_at: -1 });
+
+    if (!latestPayment) {
+      return res.status(404).json({ error: 'No active autopay subscription found' });
+    }
+
+    const subscriptionId = latestPayment.razorpay_subscription_id;
+    
+    // Cancel subscription on Razorpay if subscription ID exists
+    if (subscriptionId) {
+      try {
+        const razorpay = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_SECRET,
+        });
+
+        await razorpay.subscriptions.cancel(subscriptionId);
+        console.log(`✅ Razorpay subscription ${subscriptionId} cancelled successfully for ${email}`);
+      } catch (razorpayError) {
+        console.error('⚠ Error cancelling Razorpay subscription:', razorpayError);
+        // Continue with database update even if Razorpay cancellation fails
+      }
+    }
+
+    // Update database - disable autopay (MongoDB/Mongoose syntax)
+    const updateResult = await Payment.updateMany(
+      { razorpay_subscription_id: subscriptionId },
+      { $set: { autopay_enabled: false } }
+    );
+
+    console.log(`✅ Updated ${updateResult.modifiedCount} payment records for ${email}`);
+
+    // Calculate expiry date based on subscription type
+    const subscriptionDays = getSubscriptionDuration(latestPayment.subscription_type);
+    const expirationDate = new Date(latestPayment.created_at);
+    expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+
+    // Format the expiry date
+    const formattedExpiryDate = expirationDate.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Subscription cancelled successfully',
+      expiryDate: formattedExpiryDate,
+      subscriptionId: subscriptionId
+    });
+
+  } catch (error) {
+    console.error('❌ Error cancelling subscription:', error);
+    res.status(500).json({ 
+      error: 'Failed to cancel subscription',
+      details: error.message 
+    });
+  }
+});
+
+// Add subscription webhook handler to track payment status
+app.post("/api/razorpay-webhook", async (req, res) => {
+  try {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
+
+    // Verify webhook signature
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(JSON.stringify(req.body))
+      .digest('hex');
+
+    if (signature !== expectedSignature) {
+      console.error("Invalid webhook signature");
+      return res.status(400).json({ error: "Invalid signature" });
+    }
+
+    const event = req.body.event;
+    const payload = req.body.payload;
+
+    console.log(`Received webhook event: ${event}`);
+
+    // Handle subscription charged event (when autopay charges)
+    if (event === 'subscription.charged') {
+      const subscriptionId = payload.subscription.entity.id;
+      const paymentId = payload.payment.entity.id;
+      const amount = payload.payment.entity.amount;
+      
+      // Find the original demo payment
+      const demoPayment = await Payment.findOne({ 
+        razorpay_subscription_id: subscriptionId 
+      });
+
+      if (demoPayment) {
+        // Create new payment record for the autopay charge
+        const getNextPaymentIdResponse = await axios.get(
+          "https://api.leadscruise.com/api/get-latest-id"
+        );
+        const uniqueId = getNextPaymentIdResponse.data.latestId;
+
+        const newPayment = new Payment({
+          unique_id: uniqueId,
+          email: demoPayment.email,
+          contact: demoPayment.contact,
+          order_id: `AUTOPAY-${Date.now()}`,
+          payment_id: paymentId,
+          signature: "AUTOPAY",
+          order_amount: amount,
+          subscription_type: "one-mo",
+          razorpay_subscription_id: subscriptionId,
+          autopay_enabled: true,
+          created_at: Date.now(),
+        });
+
+        await newPayment.save();
+        console.log(`Autopay payment recorded for ${demoPayment.email}`);
+      }
+    }
+
+    // Handle subscription cancelled event
+    if (event === 'subscription.cancelled') {
+      const subscriptionId = payload.subscription.entity.id;
+      console.log(`Subscription cancelled: ${subscriptionId}`);
+      
+      // Update payment records to mark autopay as disabled
+      await Payment.updateMany(
+        { razorpay_subscription_id: subscriptionId },
+        { $set: { autopay_enabled: false } }
+      );
+    }
+
+    // Handle subscription completed event
+    if (event === 'subscription.completed') {
+      const subscriptionId = payload.subscription.entity.id;
+      console.log(`Subscription completed: ${subscriptionId}`);
+      
+      await Payment.updateMany(
+        { razorpay_subscription_id: subscriptionId },
+        { $set: { autopay_enabled: false } }
+      );
+    }
+
+    // Handle subscription authenticated event (first payment after demo)
+    if (event === 'subscription.authenticated') {
+      const subscriptionId = payload.subscription.entity.id;
+      console.log(`Subscription authenticated: ${subscriptionId}`);
+    }
+
+    res.json({ status: "ok" });
+
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.status(500).json({ error: "Webhook processing failed" });
+  }
+});
+
 app.get("/api/has-used-demo", async (req, res) => {
   try {
     const { contact } = req.query;
@@ -1284,6 +1657,7 @@ app.post("/api/cycle", async (req, res) => {
     minOrder,
     leadTypes,
     selectedStates,
+    thresholdScore,
   } = req.body;
 
   if (!req.body || Object.keys(req.body).length === 0) {
@@ -1365,6 +1739,7 @@ app.post("/api/cycle", async (req, res) => {
     selectedStates,
     leadCount,
     maxCaptures,
+    thresholdScore,
   });
 
   console.log("Spawning Python LOGIN process...");
@@ -1754,7 +2129,10 @@ const leadSchema = new mongoose.Schema({
   address: { type: String },
   createdAt: { type: Date, default: Date.now },
   source: { type: String, enum: ['AI', 'Manual'], default: 'Manual' },
-  aiProcessed: { type: Boolean, default: false }
+  aiProcessed: { type: Boolean, default: false },
+
+  // ✅ new field
+  score: { type: Number, default: 0 }
 }, {
   strict: false,
   versionKey: false
@@ -1766,7 +2144,7 @@ const WhatsAppSettings = require("./models/WhatsAppSettings");
 // Endpoint to receive lead data from Selenium script and store in DB
 app.post("/api/store-lead", async (req, res) => {
   try {
-    const { name, email, mobile, user_mobile_number, lead_bought, address } = req.body;
+    const { name, email, mobile, user_mobile_number, lead_bought, address, score } = req.body;
 
     if (!name || !mobile || !user_mobile_number || !lead_bought) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -1778,7 +2156,7 @@ app.post("/api/store-lead", async (req, res) => {
       userCounter = new UserLeadCounter({
         user_mobile_number,
         leadCount: 0,
-        maxCaptures: 10, // or set a default if needed
+        maxCaptures: 10,
       });
     }
 
@@ -1792,14 +2170,14 @@ app.post("/api/store-lead", async (req, res) => {
     });
 
     if (existingLead) {
-      const timeDiff = (new Date() - existingLead.createdAt) / 1000; // in seconds
-      if (timeDiff < 345600) { // within 4 days
+      const timeDiff = (new Date() - existingLead.createdAt) / 1000;
+      if (timeDiff < 345600) {
         console.log("Duplicate lead detected. Skipping.");
         return res.status(409).json({ error: "Duplicate lead detected" });
       }
     }
 
-    // Store the new lead
+    // ✅ Store new lead (with score)
     const newLead = new Lead({
       name,
       email,
@@ -1809,8 +2187,10 @@ app.post("/api/store-lead", async (req, res) => {
       createdAt: new Date(),
       address,
       source: "AI",
-      aiProcessed: true
+      aiProcessed: true,
+      score: typeof score === "number" ? score : 0  // 👈 store the score
     });
+
     await newLead.save();
 
     // Increment lead count
@@ -1862,19 +2242,17 @@ app.get("/api/get-leads/:mobileNumber", async (req, res) => {
 
 const FetchedLead = mongoose.model("FetchedLead", leadSchema, "fetchedleads");
 
-// Replace this section in your server.js file (around line 1200-1250)
-
 app.post("/api/store-fetched-lead", async (req, res) => {
   try {
-    const { 
-      name, 
-      email, 
-      mobile, 
-      user_mobile_number, 
-      lead_bought, 
-      timestamp_text, 
-      uniqueId, 
-      address 
+    const {
+      name,
+      email,
+      mobile,
+      user_mobile_number,
+      lead_bought,
+      timestamp_text,
+      uniqueId,
+      address
     } = req.body;
 
     if (!name || !mobile || !user_mobile_number || !lead_bought || !timestamp_text) {
@@ -1893,22 +2271,21 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     if (existingFetchedLead) {
       console.log("Duplicate lead detected in FetchedLead. Stopping script for user:", user_mobile_number);
 
-      // ✅ Gracefully stop the Python process for this user
       const processKey = uniqueId ? uniqueId + 100000 : null;
       if (processKey && activePythonProcesses.has(processKey)) {
         const pythonProcess = activePythonProcesses.get(processKey);
 
         try {
-          pythonProcess.kill('SIGTERM');
+          pythonProcess.kill("SIGTERM");
           setTimeout(() => {
             if (activePythonProcesses.has(processKey)) {
               console.log(`Force killing Python process for uniqueId: ${uniqueId}`);
-              pythonProcess.kill('SIGKILL');
+              pythonProcess.kill("SIGKILL");
             }
           }, 2000);
         } catch (error) {
           console.error("Error terminating Python process:", error);
-          pythonProcess.kill('SIGKILL');
+          pythonProcess.kill("SIGKILL");
         }
 
         activePythonProcesses.delete(processKey);
@@ -1917,15 +2294,15 @@ app.post("/api/store-fetched-lead", async (req, res) => {
           otpRequests.delete(uniqueId);
           otpFailures.delete(uniqueId);
         }
-        cleanupDisplay(uniqueId);
 
+        cleanupDisplay(uniqueId);
         console.log(`Python process terminated for uniqueId: ${uniqueId}`);
       }
 
       return res.status(409).json({
         error: "DUPLICATE_LEAD_STOP_SCRIPT",
         message: "Lead fetching stopped due to duplicate detection",
-        action: "script_terminated"
+        action: "script_terminated",
       });
     }
 
@@ -1938,17 +2315,18 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       $expr: {
         $eq: [
           { $substr: ["$lead_bought", 0, 10] },
-          lead_bought.substring(0, 10)
-        ]
+          lead_bought.substring(0, 10),
+        ],
       },
       address,
       source: "AI",
-      aiProcessed: true
+      aiProcessed: true,
     });
 
-    // ✅ Step 3: Determine source correctly
+    // ✅ Step 3: Determine source and score
     const leadSource = existingAILead ? "AI" : "Manual";
-    const isAIProcessed = !existingAILead; // true if new AI lead
+    const isAIProcessed = !existingAILead;
+    const scoreValue = existingAILead ? existingAILead.score || 0 : 0; // 👈 fetch score if found
 
     // ✅ Step 4: Store the new fetched lead
     const newLead = new FetchedLead({
@@ -1961,6 +2339,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
       source: leadSource,
       aiProcessed: isAIProcessed,
+      score: scoreValue, // 👈 store the same score in fetched lead
     });
 
     await newLead.save();

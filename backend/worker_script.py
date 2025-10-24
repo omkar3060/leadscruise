@@ -26,6 +26,7 @@ max_captures = 0
 skip_lead = False
 lead_bought = ""
 redirect_count = 0
+score=0
 
 def reset_lead_count_daily():
     """Reset lead count daily at 5 AM IST"""
@@ -640,22 +641,23 @@ def is_within_30_days(timestamp_text, thirty_days_ago):
 def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, address=None):
     global lead_bought  # Access the global variable
     global lead_count
+    global score
 
     url = "https://api.leadscruise.com/api/store-lead"
     data = {
         "name": name,
         "mobile": mobile,
         "user_mobile_number": user_mobile_number,
-        "lead_bought": lead_bought if lead_bought else "Not Available",  # Provide default value
-        "address": address if address else "Not Available"  # Provide default value
+        "lead_bought": lead_bought if lead_bought else "Not Available",
+        "address": address if address else "Not Available",
+        "score": float(score) if score else 0   # ✅ ensure numeric value
     }
-    
+
     if email:
         data["email"] = email
-    
-    # Print the data being sent for debugging
+
     print(f"Sending data to dashboard: {data}", flush=True)
-    
+
     try:
         response = requests.post(url, json=data)
         if response.status_code == 200:
@@ -1473,6 +1475,7 @@ def click_element_safely(driver, element, max_attempts=3):
     return False
 
 def get_lead_score(unique_id, config_path='config.json', score_threshold=50):
+    global score
     """
     Run the scorer script with unique product and lead files for this user.
     
@@ -2143,12 +2146,13 @@ def redirect_and_refresh(driver, wait):
             # If all conditions are True, click the "Contact Buyer Now" button
             if span_result and h2_result and time_result:
                 print("\n=== Running Scorer ===", flush=True)
+                threshold_score = int(input_data.get("thresholdScore", 0))
                 score, breakdown, should_contact = get_lead_score(
                     unique_id=unique_id,
                     lead_path=unique_lead_filename,
                     products_filename='products',
                     config_path='config.json',
-                    score_threshold=50
+                    score_threshold=threshold_score
                 )
                 if should_contact:
                     print(f"✓ Lead scored {score:.2f} - Contacting buyer", flush=True)

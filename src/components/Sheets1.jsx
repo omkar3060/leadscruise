@@ -468,6 +468,7 @@ const Sheets = () => {
           minOrder: userSettings.minOrder || 0,
           leadTypes: userSettings.leadTypes || [],
           selectedStates: userSettings.selectedStates || [],
+          thresholdScore: userSettings.thresholdScore || 0,
         },
         {
           headers: {
@@ -1366,6 +1367,7 @@ const Sheets = () => {
                       <th>Email</th>
                       <th>Mobile</th>
                       <th>Date</th>
+                      <th style={{ width: '100px' }}>Score</th>
                       <th style={{ width: '100px' }}>Action</th>
                     </tr>
                   </thead>
@@ -1405,6 +1407,11 @@ const Sheets = () => {
                               })
                               : "N/A"}
                           </td>
+                          <td>
+                          {lead.score && !isNaN(lead.score) && lead.score !== 0
+                            ? lead.score.toFixed(2)
+                            : "N/A"}
+                        </td>
                           <td style={{ textAlign: 'center' }}>
                             <button
                               onClick={() => handleToggleRejected(lead.lead_bought, isRejected)}
