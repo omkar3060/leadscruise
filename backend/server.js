@@ -352,7 +352,7 @@ app.post("/api/create-paid-subscription", async (req, res) => {
 
     // Create Razorpay subscription (immediate start)
     const subscription = await razorpay.subscriptions.create({
-      plan_id: "plan_RVfeZmVYdtqlGU",
+      plan_id: "plan_RXH4298xyYVdUt",
       customer_notify: 1,
       quantity: 1,
       total_count: 12,
@@ -386,6 +386,230 @@ app.post("/api/create-paid-subscription", async (req, res) => {
     });
   }
 });
+
+// 1. Create ₹1 authorization order
+app.post("/api/create-demo-order", async (req, res) => {
+  try {
+    const { email, contact, referralId } = req.body;
+
+    // ✅ Validation checks - ADD THESE
+    if (!email || !contact) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Email and contact are required" 
+      });
+    }
+
+    if (!referralId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Referral ID is required" 
+      });
+    }
+
+    // ✅ Validate referral ID
+    try {
+      const refRes = await axios.get(
+        `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
+      );
+      if (!refRes.data.success) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid Referral ID" 
+        });
+      }
+    } catch (err) {
+      console.error("Error validating referral:", err);
+      return res.status(400).json({ 
+        success: false, 
+        error: "Unable to verify Referral ID" 
+      });
+    }
+
+    // ✅ Check if user already used demo
+    const existingDemo = await Payment.findOne({
+      contact,
+      subscription_type: "7-days",
+    });
+
+    if (existingDemo) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "You have already used the 7-day demo subscription" 
+      });
+    }
+    
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_SECRET,
+    });
+
+    // ✅ Create ₹1 order for payment method authorization
+    const order = await razorpay.orders.create({
+      amount: 100, // ₹1 in paisa (will be refunded)
+      currency: "INR",
+      receipt: `DEMO-AUTH-${Date.now()}`,
+      notes: {
+        email: email,
+        contact: contact,
+        referral_id: referralId,
+        type: "demo_authorization"
+      }
+    });
+
+    console.log("✅ Demo authorization order created:", order.id);
+
+    res.json({
+      success: true,
+      order_id: order.id,
+      amount: order.amount,
+      email: email,
+      contact: contact,
+      referralId: referralId
+    });
+
+  } catch (error) {
+    console.error("Error creating demo order:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to create authorization order",
+      details: error.message 
+    });
+  }
+});
+
+// 2. After successful ₹1 payment, create subscription
+app.post("/api/activate-demo-after-auth", async (req, res) => {
+  try {
+    const { email, contact, referralId, payment_id, order_id } = req.body;
+
+    if (!email || !contact || !payment_id) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Missing required fields" 
+      });
+    }
+
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_SECRET,
+    });
+
+    // Get payment details
+    const payment = await razorpay.payments.fetch(payment_id);
+    
+    console.log("Payment fetched:", payment_id, "Status:", payment.status);
+
+    if (payment.status !== 'captured') {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Payment not captured" 
+      });
+    }
+
+    // Create customer with saved payment method
+    const customer = await razorpay.customers.create({
+      name: email.split('@')[0],
+      email: email,
+      contact: contact,
+    });
+
+    console.log("Customer created:", customer.id);
+
+    // Create token from the payment
+    const token = await razorpay.customers.addToken(customer.id, {
+      method: payment.method,
+      card: payment.card ? { id: payment.card.id } : undefined,
+      vpa: payment.vpa || undefined,
+    });
+
+    console.log("Token added for customer:", customer.id);
+
+    const currentTime = Math.floor(Date.now() / 1000);
+    const trialEndTime = currentTime + (7 * 24 * 60 * 60);
+
+    // Create subscription with saved token
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: "plan_RXH4298xyYVdUt",
+      customer_id: customer.id,
+      quantity: 1,
+      total_count: 12,
+      start_at: trialEndTime,
+      customer_notify: 1,
+      addons: [],
+      notes: {
+        referral_id: referralId,
+        demo_user: "true",
+        subscription_type: "7-day-trial"
+      }
+    });
+
+    console.log("✅ Subscription created:", subscription.id);
+
+    // Refund the ₹1 authorization amount
+    try {
+      await razorpay.payments.refund(payment_id, {
+        amount: 100,
+        notes: {
+          reason: "Demo authorization refund"
+        }
+      });
+      console.log("✅ ₹1 refunded for payment:", payment_id);
+    } catch (refundError) {
+      console.error("⚠ Refund failed (non-critical):", refundError);
+      // Continue even if refund fails - user can contact support
+    }
+
+    // Save payment record
+    const getNextPaymentIdResponse = await axios.get(
+      "https://api.leadscruise.com/api/get-latest-id"
+    );
+    const uniqueId = getNextPaymentIdResponse.data.latestId;
+
+    const demoPayment = new Payment({
+      unique_id: uniqueId,
+      email,
+      contact,
+      order_id: order_id || `DEMO-${Date.now()}`,
+      payment_id: payment_id,
+      signature: "DEMO-TRIAL",
+      order_amount: 0,
+      subscription_type: "7-days",
+      razorpay_subscription_id: subscription.id,
+      razorpay_customer_id: customer.id,
+      autopay_enabled: true,
+      trial_end_date: new Date(trialEndTime * 1000).toISOString(),
+      created_at: Date.now(),
+      payment_method_collected: true,
+    });
+
+    await demoPayment.save();
+
+    await User.findOneAndUpdate(
+      { email },
+      { $set: { mobileNumber: contact } },
+      { new: true, upsert: false }
+    );
+
+    console.log(`✅ Demo activated successfully for ${email}`);
+
+    res.json({
+      success: true,
+      message: "Demo activated with autopay",
+      subscription_id: subscription.id,
+      trial_end_date: new Date(trialEndTime * 1000).toISOString(),
+    });
+
+  } catch (error) {
+    console.error("Error activating demo:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to activate demo",
+      details: error.message 
+    });
+  }
+});
+
 // Add this endpoint to your server.js file
 app.post("/api/cancel-subscription", async (req, res) => {
   try {
@@ -549,7 +773,7 @@ app.post("/api/create-demo-subscription", async (req, res) => {
 
     // Create subscription with 7-day trial
     const subscription = await razorpay.subscriptions.create({
-      plan_id: "plan_RVfeZmVYdtqlGU", // Your monthly plan
+      plan_id: "plan_RXH4298xyYVdUt", // Your monthly plan
       customer_id: customer.id,
       quantity: 1,
       total_count: 12, // 12 monthly cycles

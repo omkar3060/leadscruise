@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LeadFetcher Splash</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
             padding: 0;
@@ -12,130 +18,267 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e17;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+        
+        /* Static grid background */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 1;
+        }
+        
+        /* Static decorative dots */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(0, 240, 255, 0.3);
+            border-radius: 50%;
         }
         
         .splash-container {
-            width: 500px;
-            height: 350px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            width: 600px;
+            height: 700px;
+            padding: 60px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 40px;
             text-align: center;
         }
         
+        .logo-container {
+            position: relative;
+            margin-bottom: 40px;
+        }
+        
         .logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
+            width: 120px;
+            height: 120px;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            filter: drop-shadow(0 0 30px rgba(0, 240, 255, 0.3));
         }
         
-        .logo-text {
-            font-size: 40px;
-            font-weight: bold;
-            color: white;
-            font-family: Arial, sans-serif;
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .glow-ring {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px solid rgba(0, 240, 255, 0.3);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Corner accents */
+        .glow-ring::before,
+        .glow-ring::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #00f0ff;
+            border-radius: 50%;
+        }
+        
+        .glow-ring::before {
+            top: -4px;
+            left: -4px;
+        }
+        
+        .glow-ring::after {
+            bottom: -4px;
+            right: -4px;
+        }
+        
+        .brand-container {
+            margin-bottom: 40px;
         }
         
         h1 {
-            margin: 0 0 10px 0;
-            font-size: 36px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 56px;
+            font-weight: 300;
+            background: linear-gradient(135deg, #ffffff 0%, #00f0ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: 0px;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #00f0ff;
+            font-weight: 400;
+            margin-top: 12px;
+        }
+        
+        .badge-icon {
+            width: 16px;
+            height: 16px;
+            background: #00f0ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #0a0e17;
         }
         
         .tagline {
             font-size: 16px;
-            color: #666;
-            margin-bottom: 30px;
-            font-weight: 400;
+            color: white;
+            font-weight: 300;
+            letter-spacing: 0.5px;
         }
         
         .loading-container {
+            width: 280px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
         
         .loading-text {
             font-size: 14px;
-            color: #888;
-            font-weight: 500;
+            color: #9ca3af;
+            font-weight: 300;
+            letter-spacing: 0.5px;
         }
         
         .loading-bar {
-            width: 200px;
-            height: 4px;
-            background: #e0e0e0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 2px;
             overflow: hidden;
+            position: relative;
         }
         
         .loading-progress {
-            width: 0%;
+            position: absolute;
+            left: 0;
+            top: 0;
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            animation: loading 2s ease-in-out infinite;
+            width: 40%;
+            background: linear-gradient(90deg, #00f0ff 0%, #0080ff 100%);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
         }
         
-        @keyframes loading {
-            0% { width: 0%; }
-            50% { width: 70%; }
-            100% { width: 100%; }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-top: 3px solid #00f0ff;
+            border-right: 3px solid rgba(0, 240, 255, 0.5);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
         }
         
         .version {
             position: absolute;
-            bottom: 20px;
+            bottom: 30px;
             font-size: 12px;
-            color: #999;
+            color: #4b5563;
+            font-weight: 500;
+            z-index: 10;
         }
         
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e0e0e0;
-            border-top: 4px solid #667eea;
+        .status-dots {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(0, 240, 255, 0.5);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .status-dot.active {
+            background: #00f0ff;
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
         }
     </style>
 </head>
 <body>
+    <div class="particles">
+        <!-- Static decorative particles -->
+        <div class="particle" style="left: 10%; top: 20%;"></div>
+        <div class="particle" style="left: 85%; top: 15%;"></div>
+        <div class="particle" style="left: 15%; top: 75%;"></div>
+        <div class="particle" style="left: 90%; top: 80%;"></div>
+        <div class="particle" style="left: 30%; top: 30%;"></div>
+        <div class="particle" style="left: 70%; top: 60%;"></div>
+        <div class="particle" style="left: 25%; top: 85%;"></div>
+        <div class="particle" style="left: 80%; top: 40%;"></div>
+    </div>
+    <div class="grid-overlay"></div>
+    
     <div class="splash-container">
-        <div class="logo">
-            <span class="logo-text">LF</span>
+        <div class="logo-container">
+            <div class="glow-ring"></div>
+            <div class="logo">
+                <img src="logo.png" alt="LeadsCruise Logo">
+            </div>
         </div>
-        <h1>LeadFetcher</h1>
-        <p class="tagline">Lead Management System</p>
+        
+        <div class="brand-container">
+            <h1>LeadsCruise</h1>
+            <p class="tagline">Lead Management System</p>
+            <div class="badge">
+                <div class="badge-icon">⚡</div>
+                <span>AI-POWERED AUTOMATION</span>
+            </div>
+        </div>
         
         <div class="loading-container">
-            <div class="spinner"></div>
-            <p class="loading-text">Loading Application...</p>
-            <div class="loading-bar">
-                <div class="loading-progress"></div>
+            
+            <p class="loading-text">Initializing Application</p>
+            <div class="status-dots">
+                <div class="status-dot active"></div>
+                <div class="status-dot"></div>
+                <div class="status-dot"></div>
             </div>
         </div>
         
