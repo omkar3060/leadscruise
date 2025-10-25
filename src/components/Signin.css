@@ -93,7 +93,7 @@ html, body {
   margin-bottom: 0.5rem;
   border-radius: 8px;
   border: 1px solid rgba(226, 232, 240, 0.5);
-  background: rgba(240, 242, 245, 0.6);
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
   backdrop-filter: blur(10px);
   font-weight: 500;
   color: white;
@@ -153,7 +153,7 @@ html, body {
   border: 1px solid rgba(226, 232, 240, 0.5);
   border-radius: 8px;
   font-size: 0.95rem;
-  background: rgba(255, 255, 255, 0.7);
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }

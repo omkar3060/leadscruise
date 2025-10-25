@@ -21,10 +21,10 @@ const Footer = () => {
   };
 
   const [isPopupOpen, setIsPopupOpen] = React.useState(false);
-  // Hide footer on root route
+ /* // Hide footer on root route
   if (window.location.pathname === "/") {
     return null;
-  }
+  }*/
 
   return (
     <footer className="footer">

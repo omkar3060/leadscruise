@@ -320,12 +320,12 @@ const SignUp = () => {
             <p className="signup-prompt">
               Already have an account? {" "}
               <a
-              
-                onClick={(e) => { e.preventDefault(); navigate('/login'); }}
-                className="signup-now-link"
-              >
-                Login Now!
-              </a>
+                //href="/login"
+  onClick={(e) => { e.preventDefault(); navigate('/'); }}
+  className="signup-now-link"
+>
+  Login Now!
+</a>
             </p>
           </div>
         </div>
