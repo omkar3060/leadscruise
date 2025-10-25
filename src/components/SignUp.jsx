@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Dither from "./Dither.tsx"; // Add this line
 import { useNavigate, Link } from "react-router-dom";
 import logo from "../images/logo_front.png";
 import axios from "axios";
@@ -10,7 +11,7 @@ import { Eye, EyeOff } from "lucide-react";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
-import loginBg from "../images/login-background.jpg";
+//import loginBg from "../images/login-background.jpg";
 
 // Add the typing animation component
 const TypingAnimation = () => {
@@ -153,7 +154,28 @@ const SignUp = () => {
   };
 
   return (
-    <div className="login-page-container signup-form-compact" style={{ backgroundImage: `url(${loginBg})` }}>
+    <div className="login-page-container signup-form-compact" style={{ position: 'relative', overflow: 'hidden' }}>
+  {/* Dither Background */}
+  <div style={{ 
+    position: 'fixed', 
+    top: 0, 
+    left: 0, 
+    width: '100%', 
+    height: '100%', 
+    zIndex: 0 
+  }}>
+    <Dither
+      waveColor={[51/255, 102/255, 128/255]}
+      disableAnimation={false}
+      enableMouseInteraction={true}
+      mouseRadius={0.3}
+      colorNum={4}
+      waveAmplitude={0.3}
+      waveFrequency={3}
+      waveSpeed={0.05}
+      pixelSize={2}
+    />
+  </div>
       {isLoading && (
         <div className="loading-overlay">
           <div className="loading-container">
@@ -206,7 +228,7 @@ const SignUp = () => {
                 />
               </div>
 
-              <div className="input-group">
+              <div className="input-group" style={{ position: 'relative' }}>
                 <label htmlFor="password">Password</label>
                 <div className="password-input-wrapper">
                   <input

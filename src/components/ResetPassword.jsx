@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Dither from "./Dither.tsx"; // Add this line
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import Lottie from "lottie-react"; // Add this import
@@ -7,7 +8,7 @@ import "./TaskExecutor.css";
 import "./Signin.css";
 import "./Plans.css";
 import styles from "./Dashboard.module.css";
-import loginBg from "../images/login-background.jpg";
+//import loginBg from "../images/login-background.jpg";
 import logo from "../images/logo_front.png";
 import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
@@ -22,11 +23,11 @@ const useDynamicSeparator = () => {
   useEffect(() => {
     const updateSeparatorHeight = () => {
       const loginBox = document.querySelector('.login-box');
-      
+
       // Only apply on larger screens where separator is visible
       if (loginBox && window.innerWidth > 1200) {
         const boxHeight = loginBox.offsetHeight;
-        
+
         // Set CSS custom property for separator height
         document.documentElement.style.setProperty('--separator-height', boxHeight + 'px');
       } else {
@@ -34,27 +35,27 @@ const useDynamicSeparator = () => {
         document.documentElement.style.removeProperty('--separator-height');
       }
     };
-    
+
     // Update on mount
     updateSeparatorHeight();
-    
+
     // Update on window resize
     const handleResize = () => {
       updateSeparatorHeight();
     };
-    
+
     // Update when login box content changes
     const handleMutation = () => {
       setTimeout(updateSeparatorHeight, 100); // Small delay to ensure DOM is updated
     };
-    
+
     // Set up event listeners
     window.addEventListener('resize', handleResize);
-    
+
     // Use MutationObserver to detect changes in login box content
     const observer = new MutationObserver(handleMutation);
     const loginBox = document.querySelector('.login-box');
-    
+
     if (loginBox) {
       observer.observe(loginBox, {
         childList: true,
@@ -63,7 +64,7 @@ const useDynamicSeparator = () => {
         attributeFilter: ['style', 'class']
       });
     }
-    
+
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -78,7 +79,7 @@ const TypingAnimation = () => {
     "capturing leads automatically !",
     "sending messages on WhatsApp !"
   ];
-  
+
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [currentText, setCurrentText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -87,7 +88,7 @@ const TypingAnimation = () => {
   useEffect(() => {
     const handleTyping = () => {
       const currentMessage = messages[currentMessageIndex];
-      
+
       if (isDeleting) {
         setCurrentText(currentMessage.substring(0, currentText.length - 1));
         setTypingSpeed(25);
@@ -244,7 +245,28 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="login-page-container" style={{ backgroundImage: `url(${loginBg})` }}>
+    <div className="login-page-container" style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Dither Background */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0
+      }}>
+        <Dither
+          waveColor={[51 / 255, 102 / 255, 128 / 255]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={4}
+          waveAmplitude={0.3}
+          waveFrequency={3}
+          waveSpeed={0.05}
+          pixelSize={2}
+        />
+      </div>
       <div className="login-form-wrapper">
         <div className="login-box">
           <div className="login-form-container">
@@ -258,27 +280,27 @@ const ResetPassword = () => {
                     <p className="warning-text">Make sure both passwords match before proceeding.</p>
                   </div>
                 </div>
-                
+
                 <div className="input-group">
                   <label htmlFor="email">Email Address</label>
-                  <input 
-                    type="email" 
-                    id="email" 
+                  <input
+                    type="email"
+                    id="email"
                     placeholder="Enter Your Email Address"
                     value={email}
                     name="email"
                     autoComplete="email"
                     readOnly
-                    required 
+                    required
                   />
                 </div>
 
                 <div className="input-group">
                   <label htmlFor="newPassword">New Password</label>
                   <div style={{ position: 'relative' }}>
-                    <input 
+                    <input
                       type={showPassword ? "text" : "password"}
-                      id="newPassword" 
+                      id="newPassword"
                       placeholder="New Password"
                       value={newPassword}
                       onChange={handlePasswordChange}
@@ -286,7 +308,7 @@ const ResetPassword = () => {
                       autoComplete="new-password"
                       onFocus={() => setShowError(true)}
                       onBlur={() => setShowError(false)}
-                      required 
+                      required
                       style={{ paddingRight: '45px' }}
                     />
                     <button
@@ -315,18 +337,18 @@ const ResetPassword = () => {
 
                 <div className="input-group">
                   <label htmlFor="confirmPassword">Confirm Password</label>
-                  <input 
+                  <input
                     type={showPassword ? "text" : "password"}
-                    id="confirmPassword" 
+                    id="confirmPassword"
                     placeholder="Confirm Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     name="confirmpassword"
                     autoComplete="new-password"
-                    required 
+                    required
                   />
                 </div>
-                
+
                 <p className="confirm-text">
                   By clicking next you confirm to reset your password
                 </p>
@@ -363,14 +385,14 @@ const ResetPassword = () => {
               <div className="success-content">
                 <h1 className="login-title">Password Changed</h1>
                 <div className="status-icon" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <Lottie 
+                  <Lottie
                     animationData={successAnimation}
                     className="status-animation"
                     loop={false}
                     autoplay={true}
-                    style={{ 
-                      width: '100px', 
-                      height: '100px' 
+                    style={{
+                      width: '100px',
+                      height: '100px'
                     }}
                   />
                 </div>
@@ -399,14 +421,14 @@ const ResetPassword = () => {
               <div className="error-content">
                 <h1 className="login-title">Reset Failed</h1>
                 <div className="status-icon" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <Lottie 
+                  <Lottie
                     animationData={errorAnimation}
                     className="status-animation"
                     loop={true}
                     autoplay={true}
-                    style={{ 
-                      width: '100px', 
-                      height: '100px' 
+                    style={{
+                      width: '100px',
+                      height: '100px'
                     }}
                   />
                 </div>

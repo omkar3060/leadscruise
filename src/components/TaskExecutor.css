@@ -73,7 +73,7 @@
   background-color: #cbd5e0 !important;
 }
 .logout-text {
-  color: #666;
+  color: white;
   font-size: 0.875rem;
   margin: 0;
 }
@@ -82,7 +82,7 @@
 }
 
 .instruction-text {
-  color: #666;
+  color: white;
   font-size: 1rem;
   margin-bottom: 1.5rem;
   line-height: 1.5;
@@ -96,7 +96,7 @@
   margin-bottom: 1.5rem;
 }
 
-.warning-text {
+.exec-warning-text {
   color: #c53030;
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
@@ -104,12 +104,12 @@
   line-height: 1.4;
 }
 
-.warning-text:last-child {
+.exec-warning-text:last-child {
   margin-bottom: 0;
 }
 
 .confirm-text {
-  color: #666;
+  color: white;
   font-size: 0.875rem;
   text-align: center;
   margin-bottom: 1.5rem;
@@ -122,7 +122,7 @@
 }
 
 .back-link {
-  color: #666;
+  color: white;
   cursor: pointer;
   margin-bottom: 0.75rem;
   font-size: 0.875rem;
@@ -396,7 +396,7 @@
     padding: 0.5rem;
   }
   
-  .warning-text {
+  .exec-warning-text {
     font-size: 0.75rem;
   }
   
@@ -653,7 +653,7 @@
     padding: 0.75rem;
   }
   
-  .warning-text {
+  .exec-warning-text {
     font-size: 0.8rem;
   }
   

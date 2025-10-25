@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Dither from "./Dither.tsx"; // Add this line
 import axios from "axios";
 import Lottie from "lottie-react"; // Add this import
 import successAnimation from "../animations/success.json"; // Replace with your Lottie JSON file
@@ -10,7 +11,7 @@ import "./TaskExecutor.css";
 import "./Signin.css";
 import "./Plans.css";
 import styles from "./Dashboard.module.css";
-import loginBg from "../images/login-background.jpg";
+//import loginBg from "../images/login-background.jpg";
 
 // Custom hook for dynamic separator (same as TaskExecutor)
 const useDynamicSeparator = () => {
@@ -185,7 +186,28 @@ const CheckNumber = () => {
   };
 
   return (
-    <div className="login-page-container" style={{ backgroundImage: `url(${loginBg})` }}>
+    <div className="login-page-container" style={{ position: 'relative', overflow: 'hidden' }}>
+  {/* Dither Background */}
+  <div style={{ 
+    position: 'fixed', 
+    top: 0, 
+    left: 0, 
+    width: '100%', 
+    height: '100%', 
+    zIndex: 0 
+  }}>
+    <Dither
+      waveColor={[51/255, 102/255, 128/255]}
+      disableAnimation={false}
+      enableMouseInteraction={true}
+      mouseRadius={0.3}
+      colorNum={4}
+      waveAmplitude={0.3}
+      waveFrequency={3}
+      waveSpeed={0.05}
+      pixelSize={2}
+    />
+  </div>
       <div className="login-form-wrapper">
         <div className="login-box">
           <div className="login-form-container">

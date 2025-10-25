@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Dither from "./Dither.tsx"; // Change from ./Dither to ./Dither.tsx
 import { useNavigate} from "react-router-dom";
 import axios from "axios";
 import "./styles.css";
@@ -8,7 +9,7 @@ import bgImage1 from "../images/values-1.png";
 import bgImage2 from "../images/values-2.png";
 import bgImage3 from "../images/values-3.png";
 import logo from "../images/logo_front.png";
-import loginBg from "../images/login-background.jpg";
+//import loginBg from "../images/login-background.jpg";
 import { FaGoogle, FaFacebookF, FaUserPlus } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
 import {
@@ -581,7 +582,28 @@ const SignIn = () => {
   }, []);
 
   return (
-    <div className="login-page-container" style={{ backgroundImage: `url(${loginBg})` }}>
+    <div className="login-page-container" style={{ position: 'relative', overflow: 'hidden' }}>
+  {/* Dither Background */}
+  <div style={{ 
+    position: 'fixed', 
+    top: 0, 
+    left: 0, 
+    width: '100%', 
+    height: '100%', 
+    zIndex: 0 
+  }}>
+    <Dither
+       waveColor={[51/255, 102/255, 128/255]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={5}
+          waveAmplitude={0.25}
+          waveFrequency={2.5}
+          waveSpeed={0.03}
+          pixelSize={2.5}
+    />
+  </div>
       
 
 {isLoading && (
@@ -628,8 +650,15 @@ const SignIn = () => {
 )}
       <div className="login-form-wrapper">
         <div className="login-box">
-        <div className="login-form-container">
-          <h1 className="login-title">Login</h1>
+  <div className="login-form-container">
+    <button 
+      className="back-button-top" 
+      onClick={() => window.location.href = 'https://leadscruise.com'}
+      aria-label="Go back to home"
+    >
+      ← Back
+    </button>
+    <h1 className="login-title">Login</h1>
 
           
           <button className="social-button" onClick={handleGoogleSignIn}>
@@ -685,6 +714,7 @@ const SignIn = () => {
               <a href="#" onClick={() => navigate('/signup')} className="signup-now-link">Sign up</a>
               <span> Now!</span>
           </p>
+          
         </div>
         </div>
       </div>
