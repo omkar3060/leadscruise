@@ -586,11 +586,12 @@ def extract_all_products(driver):
         print(f"Error finding product list: {str(e)}", flush=True)
         return "", 0
 
-def save_html_content(html_content, filename="json_lister.txt"):
+def save_html_content(html_content, unique_id):
     """Save HTML content to file"""
     try:
-        
-        file_path = os.path.join("", filename)
+        # Create proper filename with unique_id
+        filename = f"json_lister_{unique_id}.txt"
+        file_path = os.path.join(os.getcwd(), filename)
         
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
@@ -602,7 +603,7 @@ def save_html_content(html_content, filename="json_lister.txt"):
     except Exception as e:
         print(f"Error saving HTML file: {str(e)}", flush=True)
         return None
-    
+     
 def scroll_and_load_products(driver, max_scrolls=10):
     """Scroll down to load all products dynamically"""
     print("Starting to scroll and load products...", flush=True)
