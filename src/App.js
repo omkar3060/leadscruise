@@ -7,6 +7,9 @@ import {
   Navigate,
 } from "react-router-dom";
 import SignIn from "./components/SignIn";
+import TestDither from "./components/TestDither";
+
+
 import SignUp from "./components/SignUp";
 import CheckNumber from "./components/CheckNumber";
 import TaskExecutor from "./components/TaskExecutor";
@@ -95,6 +98,8 @@ const Layout = () => {
         <Route path="/refund" element={<LandingPage page="refund.html" />} />
         <Route path="/shipping" element={<LandingPage page="shipping.html" />} />
         <Route path="/contact" element={<LandingPage page="contact.html" />} />
+        // In your routes:
+        <Route path="/test-dither" element={<TestDither />} />
 
         {/* Protected Routes */}
         <Route

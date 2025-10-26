@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import Dither from "./Dither.tsx";
 import "./SettingsForm.css";
 import ProfileCredentials from "./ProfileCredentials";
 import Sidebar from "./Sidebar";
@@ -1012,6 +1013,28 @@ const Sheets = () => {
     setCustomEndDate('');
   };
   return (
+     <>
+    {/* Add Dither Background */}
+    <div style={{ 
+      position: 'fixed', 
+      top: 0, 
+      left: 0, 
+      width: '100%', 
+      height: '100%', 
+      zIndex: 0 
+    }}>
+      <Dither
+        waveColor={[51/255, 102/255, 128/255]}
+        disableAnimation={false}
+        enableMouseInteraction={true}
+        mouseRadius={0.3}
+        colorNum={5}
+        waveAmplitude={0.25}
+        waveFrequency={2.5}
+        waveSpeed={0.03}
+        pixelSize={2.5}
+      />
+    </div>
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
       {showCustomDateModal && (
         <div style={{
@@ -1195,31 +1218,31 @@ const Sheets = () => {
       }}>
 
         <div className={styles.metricsSection}>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday}</strong>
             <span>Leads Purchased Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsThisWeek")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsThisWeek")}>
             <strong>{metrics.totalLeadsThisWeek}</strong>
             <span>Leads Purchased This Week</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
             <span>Lead Manager Replies Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
             <strong>{messageCount * metrics.totalLeadsToday || 0}</strong>
             <span>Whatsapp Replies Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsToday")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
             <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
             <span>Emails Sent Today</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
             <strong>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}</strong>
             <span>Total Emails Sent</span>
           </div>
-          <div className={styles.metric} onClick={() => navigate("/aiTotalLeadsCaptured")}>
+          <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
             <strong>{metrics.totalLeadsCaptured}</strong>
             <span>Total Leads Captured</span>
           </div>
@@ -1451,6 +1474,7 @@ const Sheets = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -1,3 +1,12 @@
+/* Remove old backgrounds */
+:global(body) {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+:global(#root) {
+  background: transparent !important;
+}
 .profile-page-wrapper {
   display: flex;
   flex-direction: column;
@@ -6,15 +15,22 @@
   /* overflow-y: auto; */
   margin-left: 65px;
   padding: 10px;
+  background: transparent;
 }
 
 .profile-scroll-container {
+  background: transparent !important;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   height: calc(100vh - 70px); /* Adjust based on header height */
-  z-index: 0;
   width: 100%;
+}
+.profile-page-wrapper::before,
+.profile-scroll-container::before {
+  content: none !important;
 }
 
 .profile-content-layout {
@@ -301,7 +317,13 @@
     background: linear-gradient(to right, rgba(255,255,255,0), rgba(0,0,0,0.1));
     pointer-events: none;
   }
-  
+  .table-container,
+.billing-details,
+.billing-and-subscription-container {
+  background-color: white !important;
+  position: relative;
+  z-index: 1;
+}
   .billing-address-text {
     flex-direction: column;
     align-items: flex-start;

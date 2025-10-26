@@ -1,5 +1,5 @@
 body {
-  background-image: url('../images/background.jpg');
+  background:transparent;
 }
 /* Settings page specific override */
 .settings-page-wrapper .table-container {
@@ -13,6 +13,9 @@ body {
   padding-left: 25px;
 }
 .settings-page-wrapper {
+  position: relative;
+  z-index: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -258,7 +261,7 @@ body {
   position: fixed;
   left: 60px;
   width: calc(100% - 90px);
-  z-index: 1000;
+  z-index: 1000 !important;
   display: flex;
   justify-content: space-between;
   align-items: center;

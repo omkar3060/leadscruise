@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Dither from "./Dither.tsx";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import "./TotalLeadsToday.css"; // Reuse same CSS
@@ -45,6 +46,28 @@ const TotalLeadsAllTime = () => {
   };
 
   return (
+    <>
+    {/* Dither Background */}
+    <div style={{ 
+      position: 'fixed', 
+      top: 0, 
+      left: 0, 
+      width: '100%', 
+      height: '100%', 
+      zIndex: -1
+    }}>
+      <Dither
+        waveColor={[51/255, 102/255, 128/255]}
+        disableAnimation={false}
+        enableMouseInteraction={true}
+        mouseRadius={0.3}
+        colorNum={5}
+        waveAmplitude={0.25}
+        waveFrequency={2.5}
+        waveSpeed={0.03}
+        pixelSize={2.5}
+      />
+    </div>
     <div className="leads-container">
       <h2>All Captured Leads</h2>
       <div className="download-and-back-div">
@@ -93,6 +116,7 @@ const TotalLeadsAllTime = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

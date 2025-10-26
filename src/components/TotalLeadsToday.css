@@ -1,3 +1,4 @@
+
 .leads-container {
   padding: 20px;
   width: 100vw;
@@ -5,7 +6,10 @@
   box-sizing: border-box;
   justify-content: flex-start;
 }
-
+/* Make the heading white */
+.leads-container h2 {
+  color: white !important;
+}
 h2 {
   text-align: center;
   margin-bottom: 10px;

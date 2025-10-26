@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
+import Dither from "./Dither.tsx"; // Add this import
 import "./TotalLeadsToday.css"; // Reuse same CSS
 
 const AITotalLeadsToday = () => {
@@ -50,54 +51,78 @@ const AITotalLeadsToday = () => {
   };
 
   return (
-    <div className="leads-container">
-      <h2>Total Leads Captured Today by AI</h2>
-      <div className="download-and-back-div">
-        <button className="excel-btn" onClick={exportToExcel}>Download</button>
-        <button className="back-btn" onClick={() => window.history.back()}>
-          Back
-        </button>
+    <>
+      {/* Dither Background */}
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        width: '100%', 
+        height: '100%', 
+        zIndex: -1
+      }}>
+        <Dither
+          waveColor={[51/255, 102/255, 128/255]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={5}
+          waveAmplitude={0.25}
+          waveFrequency={2.5}
+          waveSpeed={0.03}
+          pixelSize={2.5}
+        />
       </div>
 
-      <div className="table-container1">
-        {todayLeads.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th className="slno-col">Sl.No.</th>
-                <th>Product</th>
-                <th>Address</th>
-                <th>Name</th>
-                <th>Mobile Number</th>
-                <th>Email</th>
-                <th>Purchase Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todayLeads.map((lead, index) => (
-                <tr key={lead._id || index}>
-                  <td>{index + 1}</td>
-                  <td>{lead.lead_bought || "N/A"}</td>
-                  <td>{lead.address || "N/A"}</td>
-                  <td>{lead.name || "N/A"}</td>
-                  <td>{lead.mobile || "N/A"}</td>
-                  <td>{lead.email || "N/A"}</td>
-                  <td>
-                    {lead.createdAt
-                      ? new Date(lead.createdAt).toLocaleString("en-IN", {
-                          timeZone: "Asia/Kolkata"
-                        })
-                      : "N/A"}
-                  </td>
+      <div className="leads-container">
+        <h2>Total Leads Captured Today by AI</h2>
+        <div className="download-and-back-div">
+          <button className="excel-btn" onClick={exportToExcel}>Download</button>
+          <button className="back-btn" onClick={() => window.history.back()}>
+            Back
+          </button>
+        </div>
+
+        <div className="table-container1">
+          {todayLeads.length > 0 ? (
+            <table>
+              <thead>
+                <tr>
+                  <th className="slno-col">Sl.No.</th>
+                  <th>Product</th>
+                  <th>Address</th>
+                  <th>Name</th>
+                  <th>Mobile Number</th>
+                  <th>Email</th>
+                  <th>Purchase Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p style={{ textAlign: "center" }}>No leads captured today.</p>
-        )}
+              </thead>
+              <tbody>
+                {todayLeads.map((lead, index) => (
+                  <tr key={lead._id || index}>
+                    <td>{index + 1}</td>
+                    <td>{lead.lead_bought || "N/A"}</td>
+                    <td>{lead.address || "N/A"}</td>
+                    <td>{lead.name || "N/A"}</td>
+                    <td>{lead.mobile || "N/A"}</td>
+                    <td>{lead.email || "N/A"}</td>
+                    <td>
+                      {lead.createdAt
+                        ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                            timeZone: "Asia/Kolkata"
+                          })
+                        : "N/A"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p style={{ textAlign: "center" }}>No leads captured today.</p>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

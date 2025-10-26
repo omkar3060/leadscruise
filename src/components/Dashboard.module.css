@@ -5,9 +5,11 @@
 }
 /* Dashboard Container */
 .dashboardContainer {
+  position: relative;
   display: flex;
   height: 100vh;
   width: 100vw;
+  background: transparent;
 }
 
 .otp-popup-overlay {
@@ -124,6 +126,8 @@
 
 /* Main Content */
 .dashboardContent {
+  position: relative;
+  /*z-index: 1;*/
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -464,6 +468,7 @@
 
 .dashboardHeight{
   overflow-y: auto;
+  background: transparent;
 }
 
 .gridContainer {
@@ -984,7 +989,7 @@
   text-align: center;
   font-size: 1.5rem;
   font-weight: bold;
-  color: black;
+  color: white;
   padding: 2rem 2rem;
   width: 100%;
 }

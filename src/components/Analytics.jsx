@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Dither from "./Dither.tsx";
 import DashboardHeader from "./DashboardHeader";
 import Sidebar from "./Sidebar";
 import "./Analytics.css";
@@ -123,6 +124,28 @@ export default function Analytics() {
     if (!chartData.weekly && !chartData.monthly) return null;
 
     return (
+        <>
+        {/* Dither Background */}
+        <div style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            width: '100%', 
+            height: '100%', 
+            zIndex: 0
+        }}>
+            <Dither
+                waveColor={[51/255, 102/255, 128/255]}
+                disableAnimation={false}
+                enableMouseInteraction={true}
+                mouseRadius={0.3}
+                colorNum={5}
+                waveAmplitude={0.25}
+                waveFrequency={2.5}
+                waveSpeed={0.03}
+                pixelSize={2.5}
+            />
+        </div>
         <div className="settings-page-wrapper">
             {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
             <DashboardHeader
@@ -243,5 +266,6 @@ export default function Analytics() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

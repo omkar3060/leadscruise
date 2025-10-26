@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Dither from "./Dither.tsx";
 import { useNavigate } from "react-router-dom";
 import styles from "./Profile.module.css"; // Importing module CSS
 import Sidebar from "./Sidebar";
@@ -288,6 +289,28 @@ const Profile = () => {
   );
 
   return (
+    <>
+    {/* Dither Background */}
+    <div style={{ 
+      position: 'fixed', 
+      top: 0, 
+      left: 0, 
+      width: '100%', 
+      height: '100%', 
+      zIndex: -1
+    }}>
+      <Dither
+        waveColor={[51/255, 102/255, 128/255]}
+        disableAnimation={false}
+        enableMouseInteraction={true}
+        mouseRadius={0.3}
+        colorNum={5}
+        waveAmplitude={0.25}
+        waveFrequency={2.5}
+        waveSpeed={0.03}
+        pixelSize={2.5}
+      />
+    </div>
     <div className={styles["profile-page-wrapper"]}>
       {/* Show loading overlay when data is being fetched */}
       {isLoading && <LoadingScreen />}
@@ -296,7 +319,8 @@ const Profile = () => {
       <Sidebar status={status} />
 
       {/* Fixed Dashboard Header */}
-      <DashboardHeader />
+      {/* Fixed Dashboard Header */}
+      <DashboardHeader style={{ position: 'relative', zIndex: 1000 }} />
 
       {/* Scrollable Profile Container */}
       <div className={styles["profile-scroll-container"]}>
@@ -456,6 +480,7 @@ const Profile = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
