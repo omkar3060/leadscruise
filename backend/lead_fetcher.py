@@ -46,6 +46,8 @@ import platform
 import atexit
 import win32con
 import winreg
+from login_ui import LoginUI
+import customtkinter as ctk
 
 try:
     import pystray
@@ -577,7 +579,47 @@ def extract_verification_code(driver, wait, app_instance=None):
     """
     logger.info("Looking for verification code...")
     
-    # Try multiple selectors for the verification code
+    # Primary method: Try to get code from data-link-code attribute
+    try:
+        logger.debug("Trying to extract code from data-link-code attribute")
+        code_container = wait.until(
+            EC.presence_of_element_located((By.XPATH, "//div[@data-link-code]"))
+        )
+        data_link_code = code_container.get_attribute("data-link-code")
+        if data_link_code:
+            # Remove commas and extract the code
+            code = data_link_code.replace(",", "")
+            logger.info(f"Found verification code from data-link-code attribute: {code}")
+            
+            # Display in UI if app_instance is provided
+            if app_instance:
+                app_instance.root.after(0, lambda c=code: app_instance.show_verification_code(c))
+            
+            return code
+    except Exception as e:
+        logger.debug(f"Failed to extract from data-link-code attribute: {e}")
+    
+    # Secondary method: Extract from individual span elements with specific classes
+    try:
+        logger.debug("Trying to extract code from individual span elements")
+        code_spans = wait.until(
+            EC.presence_of_all_elements_located(
+                (By.XPATH, "//div[@data-link-code]//span[@class='x2b8uid xk50ysn x1aueamr x1jzgpr8 x14ug900']")
+            )
+        )
+        code = "".join([span.text.strip() for span in code_spans if span.text.strip()])
+        if code:
+            logger.info(f"Found verification code from span elements: {code}")
+            
+            # Display in UI if app_instance is provided
+            if app_instance:
+                app_instance.root.after(0, lambda c=code: app_instance.show_verification_code(c))
+            
+            return code
+    except Exception as e:
+        logger.debug(f"Failed to extract from span elements: {e}")
+    
+    # Fallback: Try multiple selectors for the verification code
     code_selectors = [
         (By.XPATH, "//span[contains(@class, 'xzwifym')]"),
         (By.XPATH, "//div[contains(@class, 'verification-code')]/span"),
@@ -639,6 +681,14 @@ def extract_verification_code(driver, wait, app_instance=None):
         # Try to find any elements that might contain the code
         try:
             logger.info("Looking for any elements that might contain the code...")
+            
+            # Check for data-link-code attributes
+            all_elements_with_data = driver.find_elements(By.XPATH, "//*[@data-link-code]")
+            for elem in all_elements_with_data:
+                data_code = elem.get_attribute("data-link-code")
+                if data_code:
+                    logger.info(f"Found data-link-code attribute: {data_code}")
+            
             all_spans = driver.find_elements(By.TAG_NAME, "span")
             for span in all_spans:
                 text = span.text.strip()
@@ -654,7 +704,7 @@ def extract_verification_code(driver, wait, app_instance=None):
             logger.error(f"Error searching for potential codes: {e}")
         
         return None
-    
+           
 def check_for_login_success(driver):
         """Check for the settings icon that indicates successful login"""
         logger.info("Checking for login success (looking for settings icon)...")
@@ -1699,9 +1749,6 @@ class SessionExpiredError(Exception):
 class LoginApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("LeadsCruise Login")
-        self.root.geometry("400x350")
-        self.root.resizable(False, False)
         self.root.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
 
         # Tray icon reference
@@ -1716,32 +1763,28 @@ class LoginApp:
         
         # Create config directory if it doesn't exist
         os.makedirs(self.config_dir, exist_ok=True)
-
-        # Center the window
-        self.root.update_idletasks()
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
-        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.root.winfo_screenheight() // 2) - (height // 2)
-        self.root.geometry(f'{width}x{height}+{x}+{y}')
         
         # Login API Configuration
         self.login_url = "https://api.leadscruise.com/api/login"
         
-        # Setup Login GUI
-        self.setup_login_gui()
+        # ✅ Create Modern UI
+        self.modern_ui = LoginUI(self.root)
+        
+        # Store references to UI variables for compatibility
+        self.email_var = self.modern_ui.email_var
+        self.password_var = self.modern_ui.password_var
+        self.remember_me_var = self.modern_ui.remember_me_var
+        self.status_var = self.modern_ui.status_var
+        
+        # ✅ NOW override the login handler - this is the critical fix
+        self.modern_ui.login_button.config(command=self.handle_login_click)
+        
         self.conditional_autostart = ConditionalAutoStart(app_name="LeadFetcher")
-        
-        # ADD THIS: Enable autostart in registry
         self.conditional_autostart.enable_autostart()
-        
-        # ADD THIS: Mark app as running
         self.conditional_autostart.mark_app_running()
-        # Try auto-login after a short delay to ensure GUI is ready
-        self.root.after(100, self.try_auto_login)
         
-        # Add a button to clear saved data for debugging
-        self.add_debug_button()
+        # Try auto-login after a short delay
+        self.root.after(100, self.try_auto_login)
 
     def get_encryption_key(self):
         """Get or create encryption key for storing tokens securely"""
@@ -1794,6 +1837,21 @@ class LoginApp:
             
         except Exception as e:
             print(f"❌ Error saving login data: {e}")
+    
+    def handle_login_click(self):
+        """Handle login button click - wrapper for login_threaded"""
+        email = self.email_var.get().strip()
+        password = self.password_var.get()
+
+        if not email or not password:
+            self.modern_ui.show_error("Email and password are required!")
+            return
+
+        # Show progress indicator
+        self.modern_ui.show_progress("Authenticating...")
+
+        # Start login in thread
+        self.login_threaded()
 
     def load_login_data(self):
         """Load and decrypt saved login data"""
@@ -2015,80 +2073,6 @@ class LoginApp:
         """Helper method for logging (if you have a response area)"""
         print(message)  # For now, just print. You can connect this to your GUI if needed
 
-    def setup_login_gui(self):
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="20")
-        main_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # Logo/Title
-        title_label = ttk.Label(main_frame, text="LeadsCruise", 
-                            font=("Arial", 20, "bold"))
-        title_label.pack(pady=(0, 10))
-        
-        subtitle_label = ttk.Label(main_frame, text="Lead Management System", 
-                                font=("Arial", 12))
-        subtitle_label.pack(pady=(0, 20))
-        
-        # Email
-        email_frame = ttk.Frame(main_frame)
-        email_frame.pack(fill=tk.X, pady=5)
-        ttk.Label(email_frame, text="Email:").pack(anchor=tk.W)
-        self.email_var = tk.StringVar()
-        self.email_entry = ttk.Entry(email_frame, textvariable=self.email_var, width=30)
-        self.email_entry.pack(fill=tk.X, pady=5)
-        
-        # Password
-        password_frame = ttk.Frame(main_frame)
-        password_frame.pack(fill=tk.X, pady=5)
-        ttk.Label(password_frame, text="Password:").pack(anchor=tk.W)
-        self.password_var = tk.StringVar()
-        # Change from ttk.Entry to tk.Entry for password field
-        self.password_entry = tk.Entry(password_frame, textvariable=self.password_var, 
-                                        width=30, show="*")
-        self.password_entry.pack(fill=tk.X, pady=5)
-
-        # Show Password Checkbox
-        self.show_password_var = tk.BooleanVar()
-        self.show_password_cb = ttk.Checkbutton(password_frame, text="Show Password", 
-                                            variable=self.show_password_var,
-                                            command=self.toggle_password_visibility)
-        self.show_password_cb.pack(anchor=tk.W, pady=5)
-        
-        # Remember Me Checkbox
-        self.remember_me_var = tk.BooleanVar(value=True)  # Default to True
-        remember_me_cb = ttk.Checkbutton(password_frame, text="Remember me", 
-                                        variable=self.remember_me_var)
-        remember_me_cb.pack(anchor=tk.W, pady=5)
-        
-        # Login Button
-        self.login_button = ttk.Button(main_frame, text="Login", 
-                                    command=self.login_threaded)
-        self.login_button.pack(pady=10)
-        
-        # Logout Button (initially hidden)
-        self.logout_button = ttk.Button(main_frame, text="Logout & Clear Data", 
-                                    command=self.manual_logout)
-        
-        # Status label
-        self.status_var = tk.StringVar(value="Enter your credentials to login")
-        status_label = ttk.Label(main_frame, textvariable=self.status_var)
-        status_label.pack(pady=5)
-        
-        # Progress bar (hidden initially)
-        self.progress = ttk.Progressbar(main_frame, mode='indeterminate', length=300)
-        
-        # Demo credentials hint
-        self.hint_frame = ttk.Frame(main_frame)
-        self.hint_frame.pack(pady=10)
-        ttk.Label(self.hint_frame, text="Demo Credentials:", font=("Arial", 10, "bold")).pack()
-        ttk.Label(self.hint_frame, text="Email: demo@leadscruise.com").pack()
-        ttk.Label(self.hint_frame, text="Password: demo123").pack()
-        
-        # Store references to main components for hiding/showing
-        self.main_frame = main_frame
-        self.email_frame = email_frame
-        self.password_frame = password_frame
-
     def add_debug_button(self):
         """Add debug button to clear saved data"""
         debug_frame = ttk.Frame(self.main_frame)
@@ -2107,71 +2091,14 @@ class LoginApp:
     def hide_login_form(self):
         """Hide login form during auto-login"""
         try:
-            self.email_frame.pack_forget()
-            self.password_frame.pack_forget()
-            self.login_button.pack_forget()
-            self.hint_frame.pack_forget()
-            if hasattr(self, 'logout_button'):
-                self.logout_button.pack_forget()
+            self.modern_ui.hide_form()
         except:
             pass
 
     def show_login_form(self):
         """Show login form if auto-login fails"""
         try:
-            print("=== SHOW_LOGIN_FORM CALLED ===")
-            
-            # Show other components
-            self.email_frame.pack(fill=tk.X, pady=5)
-            self.login_button.pack(pady=10)
-            self.hint_frame.pack(pady=10)
-            
-            # List all widgets in password_frame BEFORE destruction
-            print(f"Widgets in password_frame BEFORE: {[w for w in self.password_frame.winfo_children()]}")
-            
-            # Destroy ALL widgets in password_frame
-            for widget in self.password_frame.winfo_children():
-                print(f"Destroying widget: {widget}")
-                widget.destroy()
-            
-            print(f"Widgets in password_frame AFTER destroy: {[w for w in self.password_frame.winfo_children()]}")
-            
-            # Recreate everything
-            ttk.Label(self.password_frame, text="Password:").pack(anchor=tk.W)
-            self.password_var = tk.StringVar()
-            self.password_entry = tk.Entry(self.password_frame, 
-                                            textvariable=self.password_var, 
-                                            width=30, show="*")
-            self.password_entry.pack(fill=tk.X, pady=5)
-            
-            # Create NEW BooleanVar
-            self.show_password_var = tk.BooleanVar(value=False)
-            print(f"Created new show_password_var: {id(self.show_password_var)}")
-            
-            # Create NEW Checkbutton
-            self.show_password_cb = ttk.Checkbutton(self.password_frame, 
-                                                    text="Show Password", 
-                                                    variable=self.show_password_var,
-                                                    command=self.toggle_password_visibility)
-            self.show_password_cb.pack(anchor=tk.W, pady=5)
-            print(f"Created new checkbox: {self.show_password_cb}")
-            
-            # Remember Me
-            self.remember_me_var = tk.BooleanVar(value=True)
-            self.remember_me_cb = ttk.Checkbutton(self.password_frame, 
-                                                text="Remember me", 
-                                                variable=self.remember_me_var)
-            self.remember_me_cb.pack(anchor=tk.W, pady=5)
-            
-            # Pack password frame
-            self.password_frame.pack(fill=tk.X, pady=5)
-            
-            # Clear fields
-            self.password_var.set('')
-            self.email_var.set('')
-            
-            print("=== SHOW_LOGIN_FORM COMPLETE ===")
-            
+            self.modern_ui.show_form()
         except Exception as e:
             print(f"Error showing login form: {e}")
             traceback.print_exc()
@@ -2237,24 +2164,13 @@ class LoginApp:
         """Authenticate user with the LeadsCruise API"""
         email = self.email_var.get().strip()
         password = self.password_var.get()
-        print(f"DEBUG Email: '{email}' Password: '{password}'")
-        
+
+        print(f"DEBUG: Starting login for {email}")  # Debug print
+
         if not email or not password:
-            self.update_status("Error: Email and password are required!")
-            messagebox.showerror("Error", "Please enter both email and password!")
+            self.root.after(0, lambda: self.modern_ui.show_error("Email and password are required!"))
             return
-            
-        # Update GUI safely
-        try:
-            if self.root.winfo_exists():
-                self.root.after(0, lambda: self.login_button.config(state='disabled'))
-                self.root.after(0, lambda: self.progress.pack(pady=5))
-                self.root.after(0, lambda: self.progress.start())
-                self.root.after(0, lambda: self.update_status("Authenticating..."))
-        except tk.TclError:
-            # Window destroyed, exit login process
-            return
-        
+
         try:
             # Prepare login data
             login_data = {
@@ -2262,42 +2178,45 @@ class LoginApp:
                 "password": password,
                 "emailVerified": False
             }
-            
+
             headers = {
                 'Content-Type': 'application/json',
                 'User-Agent': 'LeadFetcher-Client/1.0'
             }
-            
+
+            print(f"DEBUG: Sending request to {self.login_url}")  # Debug print
+
             # Make API request
             response = requests.post(
-                self.login_url, 
-                json=login_data, 
-                headers=headers, 
+                self.login_url,
+                json=login_data,
+                headers=headers,
                 timeout=30
             )
-            
+
+            print(f"DEBUG: Response status: {response.status_code}")  # Debug print
+
             if response.status_code == 200:
                 try:
                     data = response.json()
-                    
+                    print(f"DEBUG: Response data: {data.get('success')}")  # Debug print
+
                     if data.get('success'):
                         # Extract user info
                         user_data = data.get('user', {})
                         token = data.get('token')
                         session_id = data.get('sessionId')
                         mobile_number = user_data.get('mobileNumber', '')
-                        
+
                         # Generate token and session ID if not provided by API
                         if not token:
                             print("⚠️ No token from API, generating local token...")
                             token = self.generate_token(email, password)
-                            print(f"✅ Generated token: {token[:20]}...")
-                        
+
                         if not session_id:
                             print("⚠️ No session ID from API, generating local session ID...")
                             session_id = self.generate_session_id()
-                            print(f"✅ Generated session ID: {session_id[:20]}...")
-                        
+
                         # Store user data for main app
                         self.user_data = {
                             'email': user_data.get('email', email),
@@ -2306,34 +2225,29 @@ class LoginApp:
                             'token': token,
                             'sessionId': session_id
                         }
-                        
-                        # Debug: Check token
-                        print(f"🔐 Token stored: {token[:20]}..." if token else "❌ No token!")
-                        print(f"📊 User data keys: {list(self.user_data.keys())}")
-                        print(f"📊 Token length: {len(token)}")
-                        
+
+                        print(f"✅ Login successful for {email}")  # Debug print
+
                         # Save login data if "Remember me" is checked
                         if self.remember_me_var.get():
-                            print("💾 Remember me is checked, saving login data...")
                             self.save_login_data(self.user_data)
-                        else:
-                            print("⚠️ Remember me not checked, skipping save")
-                        
-                        # Update status
-                        self.root.after(0, lambda: self.update_status("Login successful!"))
-                        
+
+                        # Update UI on main thread
+                        self.root.after(0, lambda: self.modern_ui.show_success("Login successful!"))
+
                         # Close login window and open main app
-                        self.root.after(0, self.open_main_app)
-                        
+                        self.root.after(500, self.open_main_app)
+
                     else:
                         error_msg = data.get('message', 'Login failed')
-                        self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
-                        self.root.after(0, lambda: messagebox.showerror("Login Failed", error_msg))
-                        
+                        print(f"❌ Login failed: {error_msg}")  # Debug print
+                        self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
+
                 except json.JSONDecodeError as e:
                     error_msg = f"Failed to parse response: {str(e)}"
-                    self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
-                    
+                    print(f"❌ JSON error: {error_msg}")  # Debug print
+                    self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
+
             else:
                 error_msg = f"HTTP {response.status_code}: {response.reason}"
                 try:
@@ -2341,29 +2255,24 @@ class LoginApp:
                     error_msg = error_data.get('message', error_msg)
                 except:
                     pass
-                self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
-                self.root.after(0, lambda: messagebox.showerror("Login Failed", error_msg))
-                
+                print(f"❌ HTTP error: {error_msg}")  # Debug print
+                self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
+
         except requests.exceptions.Timeout:
             error_msg = "Request timeout (30 seconds)"
-            self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
-            
+            print(f"❌ Timeout: {error_msg}")  # Debug print
+            self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
+
         except requests.exceptions.ConnectionError:
             error_msg = "Connection error - check internet connection"
-            self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
-            
+            print(f"❌ Connection error: {error_msg}")  # Debug print
+            self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
+
         except Exception as e:
             error_msg = f"Unexpected error: {str(e)}"
-            self.root.after(0, lambda: self.update_status(f"Error: {error_msg}"))
-            
-        finally:
-            # Re-enable GUI safely
-            try:
-                if self.root.winfo_exists():
-                    self.root.after(0, self._cleanup_login_gui)
-            except tk.TclError:
-                # Window already destroyed
-                pass
+            print(f"❌ Exception: {error_msg}")  # Debug print
+            print(f"Traceback: {traceback.format_exc()}")  # Debug traceback
+            self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
     def _cleanup_login_gui(self):
         """Safely cleanup login GUI elements"""
@@ -2460,8 +2369,12 @@ class LeadFetcherApp:
     def __init__(self, root, user_data):
         self.gui_update_queue = queue.Queue()
         self.root = root
-        self.root.title("Lead Fetcher")
-        self.root.geometry("800x600")
+        self.root.title("LeadsCruise Dashboard")
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
+        
+        # Configure window
+        self.root.geometry("1200x700")
         self.root.resizable(True, True)
         
         # Initialize tray-related attributes first
@@ -3352,258 +3265,544 @@ class LeadFetcherApp:
             sys.exit(0)
 
     def setup_gui(self):
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="10")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        main_container = ctk.CTkFrame(self.root, corner_radius=0, fg_color="#0a0f1e")
+        main_container.pack(fill="both", expand=True)
         
-        # Configure grid weights
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(1, weight=1)
+        # ========== LEFT SIDEBAR ==========
+        sidebar = ctk.CTkFrame(main_container, width=250, corner_radius=0, fg_color="#1a1f2e")
+        sidebar.pack(side="left", fill="y", padx=0, pady=0)
+        sidebar.pack_propagate(False)
         
-        # Title with user info
-        title_frame = ttk.Frame(main_frame)
-        title_frame.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        # Logo/Brand
+        brand_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+        brand_frame.pack(pady=30, padx=20)
         
-        title_label = ttk.Label(title_frame, text="Leads Fetcher", 
-                               font=("Arial", 16, "bold"))
-        title_label.pack()
+        ctk.CTkLabel(brand_frame, text="🚀", font=ctk.CTkFont(size=32)).pack()
+        ctk.CTkLabel(brand_frame, text="LeadsCruise", 
+                    font=ctk.CTkFont(size=20, weight="bold"),
+                    text_color="#60a5fa").pack()
         
-        user_info_label = ttk.Label(title_frame, 
-                                   text=f"Logged in as: {self.user_email} ({self.user_role})",
-                                   font=("Arial", 10))
-        user_info_label.pack()
+        # User info section
+        user_frame = ctk.CTkFrame(sidebar, fg_color="#2d3548", corner_radius=10)
+        user_frame.pack(pady=20, padx=15, fill="x")
         
-        # Mobile number input
-        ttk.Label(main_frame, text="Mobile Number:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ctk.CTkLabel(user_frame, text="👤", font=ctk.CTkFont(size=24)).pack(pady=(10, 5))
+        ctk.CTkLabel(user_frame, text=self.user_email, 
+                    font=ctk.CTkFont(size=11),
+                    text_color="#a0aec0").pack()
+        ctk.CTkLabel(user_frame, text=f"Role: {self.user_role.upper()}", 
+                    font=ctk.CTkFont(size=10, weight="bold"),
+                    text_color="#60a5fa").pack(pady=(2, 10))
+        
+        # Navigation menu
+        nav_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+        nav_frame.pack(pady=20, padx=15, fill="x")
+        
+        ctk.CTkLabel(nav_frame, text="MENU", 
+                    font=ctk.CTkFont(size=11, weight="bold"),
+                    text_color="#6b7280").pack(anchor="w", pady=(0, 10))
+        
+        # Navigation buttons
+        nav_buttons = [
+            ("📱 Fetch Leads", self.show_fetch_panel), 
+        ]
+        
+        for text, command in nav_buttons:
+            btn = ctk.CTkButton(nav_frame, text=text, height=40,
+                               fg_color="transparent", 
+                               hover_color="#2d3548",
+                               anchor="w",
+                               command=command if command else lambda: None)
+            btn.pack(fill="x", pady=2)
+        
+        # Bottom actions
+        bottom_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+        bottom_frame.pack(side="bottom", pady=20, padx=15, fill="x")
+        
+        ctk.CTkButton(bottom_frame, text="🔄 Check Updates",
+                     height=35, fg_color="#2d3548", hover_color="#3d4558",
+                     command=self.check_for_updates_clicked).pack(fill="x", pady=5)
+        
+        ctk.CTkButton(bottom_frame, text="🚪 Logout",
+                     height=35, fg_color="#ef4444", hover_color="#dc2626",
+                     command=self.logout).pack(fill="x", pady=5)
+        
+        # ========== MAIN CONTENT AREA ==========
+        self.content_area = ctk.CTkFrame(main_container, corner_radius=0, fg_color="#0a0f1e")
+        self.content_area.pack(side="right", fill="both", expand=True)
+        
+        # Show dashboard by default
+        self.show_fetch_panel()
+
+    def show_dashboard(self):
+        """Show dashboard overview"""
+        self.clear_content_area()
+        
+        # Header
+        header = ctk.CTkFrame(self.content_area, fg_color="transparent")
+        header.pack(pady=20, padx=30, fill="x")
+        
+        ctk.CTkLabel(header, text="Dashboard Overview", 
+                    font=ctk.CTkFont(size=28, weight="bold")).pack(anchor="w")
+        
+        # Stats cards
+        stats_container = ctk.CTkFrame(self.content_area, fg_color="transparent")
+        stats_container.pack(pady=20, padx=30, fill="x")
+        
+        stats = [
+            ("📊 Total Leads", "1,234", "#10b981"),
+            ("✅ Processed", "987", "#3b82f6"),
+            ("⏳ Pending", "247", "#f59e0b"),
+            ("📱 Messages Sent", "856", "#8b5cf6"),
+        ]
+        
+        for i, (label, value, color) in enumerate(stats):
+            card = ctk.CTkFrame(stats_container, fg_color="#1a1f2e", corner_radius=15)
+            card.grid(row=0, column=i, padx=10, sticky="ew")
+            stats_container.grid_columnconfigure(i, weight=1)
+            
+            ctk.CTkLabel(card, text=label, font=ctk.CTkFont(size=12),
+                        text_color="#a0aec0").pack(pady=(20, 5))
+            ctk.CTkLabel(card, text=value, font=ctk.CTkFont(size=32, weight="bold"),
+                        text_color=color).pack(pady=(0, 20))
+    
+    def show_fetch_panel(self):
+        """Show lead fetching panel"""
+        self.clear_content_area()
+        
+        # Header
+        header = ctk.CTkFrame(self.content_area, fg_color="transparent")
+        header.pack(pady=20, padx=30, fill="x")
+        
+        ctk.CTkLabel(header, text="Fetch Leads", 
+                    font=ctk.CTkFont(size=28, weight="bold")).pack(anchor="w")
+        ctk.CTkLabel(header, text="Retrieve and process lead data from the server", 
+                    font=ctk.CTkFont(size=13),
+                    text_color="#a0aec0").pack(anchor="w", pady=(5, 0))
+        
+        # Main content with cards
+        content = ctk.CTkFrame(self.content_area, fg_color="transparent")
+        content.pack(pady=20, padx=30, fill="both", expand=True)
+        
+        # Left panel - Configuration
+        left_panel = ctk.CTkFrame(content, fg_color="#1a1f2e", corner_radius=15)
+        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 15))
+        
+        # Card header
+        ctk.CTkLabel(left_panel, text="Configuration", 
+                    font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(20, 15), padx=20, anchor="w")
+        
+        # Mobile number field
+        mobile_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
+        mobile_frame.pack(pady=10, padx=20, fill="x")
+        
+        ctk.CTkLabel(mobile_frame, text="📱 Mobile Number", 
+                    font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(0, 8))
+        
         self.mobile_var = tk.StringVar(value=self.default_mobile)
-        mobile_entry = ttk.Entry(main_frame, textvariable=self.mobile_var, width=20)
-        mobile_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        self.mobile_entry = ctk.CTkEntry(mobile_frame, height=45, 
+                                         textvariable=self.mobile_var,
+                                         placeholder_text="Enter mobile number",
+                                         font=ctk.CTkFont(size=13))
+        self.mobile_entry.pack(fill="x")
         
-        # Callback URL input
-        # ttk.Label(main_frame, text="Callback URL:").grid(row=2, column=0, sticky=tk.W, pady=5)
-        # self.callback_var = tk.StringVar(value=self.callback_url)
-        # callback_entry = ttk.Entry(main_frame, textvariable=self.callback_var, width=50)
-        # callback_entry.grid(row=2, column=1, columnspan=2, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        # Options
+        options_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
+        options_frame.pack(pady=15, padx=20, fill="x")
         
-        # Fetch button
-        self.fetch_button = ttk.Button(main_frame, text="Fetch Leads Data", 
-                                      command=self.fetch_data_threaded)
-        self.fetch_button.grid(row=3, column=0, pady=5)
+        ctk.CTkLabel(options_frame, text="⚙️ Options", 
+                    font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(0, 10))
         
         # Send confirmation checkbox
         self.send_confirmation_var = tk.BooleanVar(value=True)
-        confirm_cb = ttk.Checkbutton(main_frame, text="Send confirmation when data received", 
-                                    variable=self.send_confirmation_var)
-        confirm_cb.grid(row=3, column=1, columnspan=2, pady=5, sticky=tk.W, padx=(10, 0))
-        
-        # Status label
-        self.status_var = tk.StringVar(value="Ready to fetch data...")
-        status_label = ttk.Label(main_frame, textvariable=self.status_var)
-        status_label.grid(row=4, column=0, columnspan=3, pady=10)
-        
-        # Progress bar
-        self.progress = ttk.Progressbar(main_frame, mode='indeterminate')
-        self.progress.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        
-        # ===== NEW: WhatsApp Verification Code Display (Compact) =====
-        self.verification_frame = tk.Frame(main_frame, bg="#1e3a8a", relief=tk.RIDGE, borderwidth=1)
-        self.verification_frame.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
-        self.verification_frame.grid_remove()  # Hidden by default
-        
-        # Single row layout
-        compact_frame = tk.Frame(self.verification_frame, bg="#1e3a8a")
-        compact_frame.pack(fill=tk.X, padx=10, pady=6)
-        
-        # Header (left side)
-        tk.Label(compact_frame, 
-                text="WhatsApp Code:",
-                font=("Arial", 9, "bold"),
-                bg="#1e3a8a", fg="white").pack(side=tk.LEFT, padx=(0, 10))
-        
-        # Verification code display (center, inline)
-        self.verification_code_label = tk.Label(compact_frame,
-                                                text="------",
-                                                font=("Courier New", 20, "bold"),
-                                                bg="#3b82f6", fg="white",
-                                                relief=tk.FLAT,
-                                                borderwidth=1,
-                                                padx=12, pady=4)
-        self.verification_code_label.pack(side=tk.LEFT, padx=5)
-        
-        # Copy button (right side)
-        self.copy_code_button = ttk.Button(compact_frame,
-                                          text="Copy",
-                                          command=self.copy_verification_code,
-                                          width=8)
-        self.copy_code_button.pack(side=tk.LEFT, padx=5)
-        
-        # ===== End Verification Code Display =====
-        
-        # Log section header with toggle button
-        log_header_frame = ttk.Frame(main_frame)
-        log_header_frame.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(20, 5))
-        log_header_frame.columnconfigure(1, weight=1)
-        
-        self.log_label = ttk.Label(log_header_frame, text="API Response:")
-        self.log_label.grid(row=0, column=0, sticky=tk.W)
-        
-        self.toggle_logs_button = ttk.Button(log_header_frame, text="Show Logs", 
-                                            command=self.toggle_logs)
-        self.toggle_logs_button.grid(row=0, column=2, sticky=tk.E)
-        
-        # Text area for response (initially hidden)
-        self.response_text = scrolledtext.ScrolledText(main_frame, height=15, width=80)
-        self.response_text.grid(row=8, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
-        self.response_text.grid_remove()  # Hide initially
-        
-        # Configure grid weights for resizing
-        main_frame.rowconfigure(8, weight=1)
-        
-        # Button frame
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=9, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
-        button_frame.columnconfigure(1, weight=1)
-        
-        # Clear button
-        clear_button = ttk.Button(button_frame, text="Clear Response", command=self.clear_response)
-        clear_button.grid(row=0, column=0, sticky=tk.W)
+        confirm_cb = ctk.CTkCheckBox(options_frame, 
+                                     text="Send confirmation when data received",
+                                     variable=self.send_confirmation_var,
+                                     font=ctk.CTkFont(size=12))
+        confirm_cb.pack(anchor="w", pady=5)
         
         # Auto-fetch checkbox
         self.auto_fetch_var = tk.BooleanVar(value=True)
-        auto_fetch_cb = ttk.Checkbutton(button_frame, text="Auto-fetch every 5 minutes", 
-                                       variable=self.auto_fetch_var, 
-                                       command=self.toggle_auto_fetch)
-        auto_fetch_cb.grid(row=0, column=1, sticky=tk.W, padx=(20, 0))
+        auto_fetch_cb = ctk.CTkCheckBox(options_frame, 
+                                        text="Auto-fetch every 5 minutes",
+                                        variable=self.auto_fetch_var,
+                                        command=self.toggle_auto_fetch,
+                                        font=ctk.CTkFont(size=12))
+        auto_fetch_cb.pack(anchor="w", pady=5)
         
-        # Control buttons
-        control_frame = ttk.Frame(button_frame)
-        control_frame.grid(row=0, column=2, sticky=tk.E)
-
-        # Store reference to control_frame for update button
-        self.control_frame = control_frame
-
-        # Test buttons
-        # ttk.Button(control_frame, text="Test Minimize", 
-        #         command=self.minimize_to_tray).pack(side=tk.LEFT, padx=(0, 5))
-        # ttk.Button(control_frame, text="Test Restore", 
-        #         command=lambda: self.send_message("restore_window")).pack(side=tk.LEFT, padx=(0, 5))
+        # Fetch button
+        fetch_btn_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
+        fetch_btn_frame.pack(pady=20, padx=20, fill="x")
         
-        # # NEW: Test Verification Code Display
-        # ttk.Button(control_frame, text="Test Code Display", 
-        #         command=lambda: self.show_verification_code("123-456")).pack(side=tk.LEFT, padx=(0, 5))
+        self.fetch_button = ctk.CTkButton(fetch_btn_frame, 
+                                         text="🚀 Fetch Leads Data",
+                                         height=50,
+                                         font=ctk.CTkFont(size=15, weight="bold"),
+                                         fg_color="#3b82f6",
+                                         hover_color="#2563eb",
+                                         command=self.fetch_data_threaded)
+        self.fetch_button.pack(fill="x")
         
-        # ttk.Button(control_frame, text="Debug State", 
-        #         command=self.debug_protocol_state).pack(side=tk.LEFT, padx=(0, 5))
+        # Status section
+        status_frame = ctk.CTkFrame(left_panel, fg_color="#2d3548", corner_radius=10)
+        status_frame.pack(pady=(10, 20), padx=20, fill="x")
+        
+        ctk.CTkLabel(status_frame, text="📡 Status", 
+                    font=ctk.CTkFont(size=12, weight="bold")).pack(pady=(15, 5), padx=15, anchor="w")
+        
+        self.status_var = tk.StringVar(value="Ready to fetch data...")
+        self.status_label = ctk.CTkLabel(status_frame, 
+                                        textvariable=self.status_var,
+                                        font=ctk.CTkFont(size=12),
+                                        text_color="#a0aec0")
+        self.status_label.pack(pady=(0, 15), padx=15, anchor="w")
+        
+        # Progress bar
+        self.progress = ctk.CTkProgressBar(left_panel, mode='indeterminate')
+        self.progress.pack(pady=(0, 20), padx=20, fill="x")
+        self.progress.set(0)
+        
+        # Right panel - Activity Log
+        right_panel = ctk.CTkFrame(content, fg_color="#1a1f2e", corner_radius=15)
+        right_panel.pack(side="right", fill="both", expand=True)
+        
+        # Log header with toggle
+        log_header = ctk.CTkFrame(right_panel, fg_color="transparent")
+        log_header.pack(pady=20, padx=20, fill="x")
+        
+        ctk.CTkLabel(log_header, text="📋 Activity Log", 
+                    font=ctk.CTkFont(size=18, weight="bold")).pack(side="left")
+        
+        self.toggle_logs_button = ctk.CTkButton(log_header, 
+                                               text="👁️ Show Details",
+                                               width=120,
+                                               height=32,
+                                               fg_color="#2d3548",
+                                               hover_color="#3d4558",
+                                               command=self.toggle_logs)
+        self.toggle_logs_button.pack(side="right")
+        
+        # Log display area (hidden by default)
+        self.log_container = ctk.CTkFrame(right_panel, fg_color="#2d3548", corner_radius=10)
+        self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
+        self.log_container.pack_forget()  # Hide initially
+        
+        # Create scrolled text widget for logs
+        self.response_text = scrolledtext.ScrolledText(
+            self.log_container,
+            height=20,
+            width=50,
+            bg="#1a1f2e",
+            fg="#e5e7eb",
+            font=("Consolas", 10),
+            insertbackground="#60a5fa",
+            relief=tk.FLAT,
+            borderwidth=0
+        )
+        self.response_text.pack(pady=10, padx=10, fill="both", expand=True)
+        
+        # Clear logs button
+        clear_btn = ctk.CTkButton(self.log_container, 
+                                 text="🗑️ Clear Logs",
+                                 height=35,
+                                 fg_color="#ef4444",
+                                 hover_color="#dc2626",
+                                 command=self.clear_response)
+        clear_btn.pack(pady=(0, 10), padx=10, fill="x")
+        
+        # WhatsApp Verification Code Display
+        self.verification_frame = ctk.CTkFrame(right_panel, 
+                                              fg_color="#1e3a8a", 
+                                              corner_radius=10)
+        self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
+        self.verification_frame.pack_forget()  # Hide by default
+        
+        ver_content = ctk.CTkFrame(self.verification_frame, fg_color="transparent")
+        ver_content.pack(fill="x", padx=15, pady=12)
+        
+        ctk.CTkLabel(ver_content, text="🔐 WhatsApp Verification Code:",
+                    font=ctk.CTkFont(size=11, weight="bold"),
+                    text_color="white").pack(side="left", padx=(0, 10))
+        
+        self.verification_code_label = ctk.CTkLabel(ver_content,
+                                                   text="------",
+                                                   font=ctk.CTkFont(size=24, weight="bold"),
+                                                   text_color="white",
+                                                   fg_color="#3b82f6",
+                                                   corner_radius=8,
+                                                   width=150,
+                                                   height=40)
+        self.verification_code_label.pack(side="left", padx=5)
+        
+        self.copy_code_button = ctk.CTkButton(ver_content,
+                                             text="📋 Copy",
+                                             width=80,
+                                             height=40,
+                                             fg_color="#10b981",
+                                             hover_color="#059669",
+                                             command=self.copy_verification_code)
+        self.copy_code_button.pack(side="left", padx=5)
+    
+    def show_whatsapp_panel(self):
+        """Show WhatsApp automation panel"""
+        self.clear_content_area()
+        
+        header = ctk.CTkFrame(self.content_area, fg_color="transparent")
+        header.pack(pady=20, padx=30, fill="x")
+        
+        ctk.CTkLabel(header, text="WhatsApp Automation", 
+                    font=ctk.CTkFont(size=28, weight="bold")).pack(anchor="w")
+        
+        # Placeholder content
+        content = ctk.CTkFrame(self.content_area, fg_color="#1a1f2e", corner_radius=15)
+        content.pack(pady=20, padx=30, fill="both", expand=True)
+        
+        ctk.CTkLabel(content, text="🚧 WhatsApp automation panel coming soon...",
+                    font=ctk.CTkFont(size=16)).pack(pady=100)
+    
+    def clear_content_area(self):
+        """Clear all widgets from content area"""
+        for widget in self.content_area.winfo_children():
+            widget.destroy()
+    
 
-        # Check Updates button
-        ttk.Button(control_frame, text="Check Updates", 
-                command=self.check_for_updates_clicked).pack(side=tk.LEFT, padx=(0, 5))
+            self.log_container.pack_forget()
+            self.logs_visible = False
+            self.toggle_logs_button.configure(text="👁️ Show Details")
+    
+    def toggle_logs(self):
+        """Toggle log visibility"""
+        if not self.logs_visible:
+            # Check authentication
+            if not self.logs_authenticated:
+                # Use simple Tkinter dialog to avoid CustomTkinter issues
+                password = simpledialog.askstring(
+                    "Authentication Required",
+                    "Enter password to view logs:",
+                    show='*',
+                    parent=self.root
+                )
+                
+                # Force window to front immediately
+                self.root.lift()
+                self.root.focus_force()
+                self.root.attributes('-topmost', True)
+                self.root.update()
+                self.root.after(200, lambda: self.root.attributes('-topmost', False))
+                
+                if password != self.LOG_PASSWORD:
+                    self.status_var.set("❌ Incorrect password. Access denied.")
+                    return
+                
+                self.logs_authenticated = True
+                self.status_var.set("✅ Logs unlocked successfully")
+            
+            # Show logs
+            self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
+            self.logs_visible = True
+            self.toggle_logs_button.configure(text="🙈 Hide Details")
+        else:
+            # Hide logs
+            self.log_container.pack_forget()
+            self.logs_visible = False
+            self.toggle_logs_button.configure(text="👁️ Show Details")
 
-        ttk.Button(control_frame, text="Logout", 
-                command=self.logout).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(control_frame, text="Force Quit", 
-                command=self.quit_app).pack(side=tk.LEFT)
-
+    def show_password_dialog(self):
+        """Show custom password dialog"""
+        # Create modal dialog
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Authentication Required")
+        dialog.geometry("400x250")
+        dialog.resizable(False, False)
+        
+        # Make it modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (400 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (250 // 2)
+        dialog.geometry(f"400x250+{x}+{y}")
+        
+        # Dialog content
+        main_frame = ctk.CTkFrame(dialog, fg_color="#1a1f2e")
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Icon and title
+        ctk.CTkLabel(main_frame, text="🔐", 
+                    font=ctk.CTkFont(size=40)).pack(pady=(20, 10))
+        
+        ctk.CTkLabel(main_frame, text="Authentication Required", 
+                    font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(0, 5))
+        
+        ctk.CTkLabel(main_frame, text="Enter password to view detailed logs", 
+                    font=ctk.CTkFont(size=12),
+                    text_color="#a0aec0").pack(pady=(0, 20))
+        
+        # Password entry
+        password_var = tk.StringVar()
+        password_entry = ctk.CTkEntry(main_frame, 
+                                     textvariable=password_var,
+                                     placeholder_text="Enter password",
+                                     show="•",
+                                     height=45,
+                                     font=ctk.CTkFont(size=13))
+        password_entry.pack(fill="x", pady=10)
+        password_entry.focus()
+        
+        # Error label (hidden initially)
+        error_label = ctk.CTkLabel(main_frame, text="", 
+                                   text_color="#ef4444",
+                                   font=ctk.CTkFont(size=11))
+        error_label.pack(pady=(5, 10))
+        
+        # Result storage
+        result = {"password": None, "authenticated": False}
+        
+        def validate_password():
+            password = password_var.get()
+            if password == self.LOG_PASSWORD:
+                result["password"] = password
+                result["authenticated"] = True
+                dialog.grab_release()
+                dialog.destroy()
+            else:
+                error_label.configure(text="❌ Incorrect password. Please try again.")
+                password_entry.delete(0, tk.END)
+                password_entry.focus()
+        
+        def cancel():
+            result["authenticated"] = False
+            dialog.grab_release()
+            dialog.destroy()
+        
+        # Bind Enter key
+        password_entry.bind("<Return>", lambda e: validate_password())
+        
+        # Buttons
+        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        button_frame.pack(fill="x", pady=(10, 0))
+        
+        ctk.CTkButton(button_frame, text="Cancel",
+                     height=40,
+                     fg_color="#2d3548",
+                     hover_color="#3d4558",
+                     command=cancel).pack(side="left", fill="x", expand=True, padx=(0, 5))
+        
+        ctk.CTkButton(button_frame, text="Unlock",
+                     height=40,
+                     fg_color="#3b82f6",
+                     hover_color="#2563eb",
+                     command=validate_password).pack(side="right", fill="x", expand=True, padx=(5, 0))
+        
+        # Wait for dialog to close
+        self.root.wait_window(dialog)
+        
+        # Restore main window focus
+        self.root.focus_force()
+        self.root.lift()
+        
+        return result["authenticated"]
+    
+    def toggle_logs(self):
+        """Toggle log visibility"""
+        if not self.logs_visible:
+            # Check authentication
+            if not self.logs_authenticated:
+                # Create password dialog
+                password = simpledialog.askstring(
+                    title="Authentication Required",
+                    prompt="Enter password to view logs:"
+                )
+                # password = password_dialog.get_input()
+                
+                # Restore main window focus immediately
+                self.root.focus_force()
+                self.root.lift()
+                self.root.attributes('-topmost', True)
+                self.root.after(100, lambda: self.root.attributes('-topmost', False))
+                
+                if password != self.LOG_PASSWORD:
+                    self.status_var.set("❌ Incorrect password. Access denied.")
+                    return
+                
+                self.logs_authenticated = True
+                self.status_var.set("✅ Logs unlocked successfully")
+            
+            # Show logs
+            self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
+            self.logs_visible = True
+            self.toggle_logs_button.configure(text="🙈 Hide Details")
+        else:
+            # Hide logs
+            self.log_container.pack_forget()
+            self.logs_visible = False
+            self.toggle_logs_button.configure(text="👁️ Show Details")
+    
     def show_verification_code(self, code):
         """Display the verification code prominently in the UI"""
-        print(f"DEBUG: show_verification_code called with code: {code}")  # Debug print
+        print(f"DEBUG: show_verification_code called with code: {code}")
         
         try:
             self.current_verification_code = code
-            self.verification_code_label.config(text=code)
-            self.verification_frame.grid()  # Show the frame
+            
+            # Update the label text - use configure() for CustomTkinter
+            self.verification_code_label.configure(text=code)
+            
+            # Show the verification frame
+            self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
             
             # Force update the display
             self.root.update_idletasks()
             
-            print(f"DEBUG: Verification frame grid() called, should be visible now")  # Debug print
+            print(f"DEBUG: Verification frame displayed successfully")
             
-            # Also log to response
-            self.response_text.insert(tk.END, f"\n{'='*60}\n")
-            self.response_text.insert(tk.END, f"🔔 VERIFICATION CODE DETECTED: {code}\n")
-            self.response_text.insert(tk.END, f"{'='*60}\n\n")
-            self.response_text.see(tk.END)
+            # Also log to response if response_text exists
+            if hasattr(self, 'response_text'):
+                try:
+                    self.response_text.insert(tk.END, f"\n{'='*60}\n")
+                    self.response_text.insert(tk.END, f"🔔 VERIFICATION CODE DETECTED: {code}\n")
+                    self.response_text.insert(tk.END, f"{'='*60}\n\n")
+                    self.response_text.see(tk.END)
+                except:
+                    pass
             
             # Flash effect - animate the background color
             def flash(count=0):
                 if count < 6:  # Flash 3 times
                     bg_color = "#10b981" if count % 2 == 0 else "#3b82f6"
-                    self.verification_code_label.config(bg=bg_color)
+                    try:
+                        # Use configure() instead of config() for CustomTkinter
+                        self.verification_code_label.configure(fg_color=bg_color)
+                    except:
+                        pass
                     self.root.after(300, lambda: flash(count + 1))
             
             flash()
             
         except Exception as e:
             print(f"ERROR in show_verification_code: {e}")
+            import traceback
             traceback.print_exc()
     
     def hide_verification_code(self):
-        """Hide the verification code display"""
-        self.verification_frame.grid_remove()
+        """Hide verification code display"""
+        self.verification_frame.pack_forget()
         self.current_verification_code = None
-        self.verification_code_label.config(text="------", bg="#3b82f6")
-
+        self.verification_code_label.configure(text="------", fg_color="#3b82f6")
+    
     def copy_verification_code(self):
-        """Copy the verification code to clipboard"""
+        """Copy verification code to clipboard"""
         if self.current_verification_code:
             self.root.clipboard_clear()
             self.root.clipboard_append(self.current_verification_code)
             self.root.update()
             
-            # Show feedback
-            original_text = self.copy_code_button.config('text')[-1]
-            self.copy_code_button.config(text="✅ Copied!")
-            self.root.after(2000, lambda: self.copy_code_button.config(text=original_text))
-            
-            self.log_to_response(f"✅ Verification code {self.current_verification_code} copied to clipboard")
-
-    def toggle_logs(self):
-        """Toggle log visibility with password protection"""
-        print(f"🔄 toggle_logs called - Current state: logs_visible={self.logs_visible}, authenticated={self.logs_authenticated}")
-        
-        if not self.logs_visible:
-            # Trying to show logs - check authentication
-            if not self.logs_authenticated:
-                password = simpledialog.askstring(
-                    "Password Required", 
-                    "Enter password to view logs:",
-                    show='*',
-                    parent=self.root
-                )
-                
-                if password != self.LOG_PASSWORD:
-                    self.status_var.set("Incorrect password. Access denied.")
-                    return
-                
-                self.logs_authenticated = True
-                print("✅ Password authenticated")
-            
-            # Show logs
-            print("📝 Showing logs...")
-            self.response_text.grid(row=8, column=0, columnspan=3, 
-                       sticky=(tk.W, tk.E, tk.N, tk.S), pady=5) 
-            self.root.update_idletasks()
-            self.logs_visible = True
-            self.toggle_logs_button.config(text="Hide Logs")
-            self.log_label.config(text="API Response (Logs Visible):")
-            
-            # Force the widget to update and scroll to end
-            self.root.update_idletasks()
-            try:
-                self.response_text.see(tk.END)
-            except:
-                pass
-            
-            print(f"✅ Logs shown - Widget visible: {self.response_text.winfo_ismapped()}")
-        else:
-            # Hide logs
-            print("📝 Hiding logs...")
-            self.response_text.grid_remove()
-            self.logs_visible = False
-            self.toggle_logs_button.config(text="Show Logs")
-            self.log_label.config(text="API Response:")
-            print("✅ Logs hidden")
+            # Visual feedback
+            original_text = self.copy_code_button.cget('text')
+            self.copy_code_button.configure(text="✅ Copied!")
+            self.root.after(2000, lambda: self.copy_code_button.configure(text=original_text))
 
     def clear_response(self):
         """Clear the response text area"""
