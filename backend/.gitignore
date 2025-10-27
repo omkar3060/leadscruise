@@ -37,3 +37,4 @@ session_*.pkl
 worker_script_backup_*.py
 config.json
 json_lister_*.txt
+products_*.json

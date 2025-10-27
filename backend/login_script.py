@@ -744,8 +744,6 @@ def main():
                     print(f"Error executing JSON creator script: {str(e)}", flush=True)
 
                 print("HTML content extraction and processing completed", flush=True)
-                
-                return 0  # Success exit code
         
         if not logged_in:
             print("Login failed. Exiting...", flush=True)
