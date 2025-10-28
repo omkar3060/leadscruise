@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Dither from "./Dither.tsx";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Plans.css';
@@ -100,106 +99,65 @@ const Plans = () => {
     const email = localStorage.getItem("userEmail");
     const contact = localStorage.getItem("mobileNumber");
     const selectedPlan = localStorage.getItem("selectedPlan");
-
     if (!referralId.trim()) {
       alert("Please enter a Referral ID.");
       return;
     }
 
-    // ✅ REPLACE THIS ENTIRE SECTION - Handle 7-day demo with ₹1 authorization
-    if (selectedPlan === "1-day" || selectedPlan === "7-days") { // Handle both for safety
-      try {
-        // Check if already used demo
-        const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
+    try {
+      const res = await axios.get(`https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`);
+      if (!res.data.success) {
+        alert("Invalid Referral ID.");
+        return;
+      }
+    } catch (err) {
+      console.error("Error validating referral:", err);
+      alert("Unable to verify Referral ID. Please try again.");
+      return;
+    }
 
+    // ✅ Block if user already used demo
+    if (selectedPlan === "7-days") {
+      const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
+      try {
+        
         if (res.data.used) {
-          alert(res.data.message || "You have already used the 7-day demo subscription.");
+          alert(res.data.message || "You have already used the demo subscription. Please choose another plan.");
           setShowModal(false);
           return;
         }
+      } catch (err) {
+        console.error("Error checking demo usage:", err);
+        alert(res.data.message || "Unable to validate demo subscription. Please try again.");
+        setShowModal(false);
+        return;
+      }
 
-        // ✅ Create ₹1 authorization order
-        const orderResponse = await axios.post("https://api.leadscruise.com/api/create-demo-order", {
+      // ✅ Directly create a free demo subscription without payment
+      try {
+        const timestamp = Date.now();
+        await axios.post("https://api.leadscruise.com/api/save-payment", {
+          unique_id: await getNextPaymentId(),
           email,
           contact,
-          referralId: referralId.trim()
+          order_id: `FREE-DEMO-${timestamp}`,
+          payment_id: `FREE-DEMO-${timestamp}`,
+          signature: "FREE",
+          order_amount: 0,
+          subscription_type: "7-days",
         });
 
-        if (!orderResponse.data.success) {
-          throw new Error("Failed to create authorization order");
-        }
-
-        // ✅ Open Razorpay checkout for ₹1 authorization
-        const options = {
-          key: "rzp_live_febmpQBBFIuphK",
-          amount: 100, // ₹1 in paisa
-          currency: "INR",
-          name: "LeadsCruise",
-          description: "7-Day FREE Demo - Payment Authorization (₹1 will be refunded immediately)",
-          order_id: orderResponse.data.order_id,
-          prefill: {
-            email: email,
-            contact: contact
-          },
-          handler: async function (response) {
-            try {
-              // ✅ After successful ₹1 payment, activate demo subscription
-              const activateResponse = await axios.post(
-                "https://api.leadscruise.com/api/activate-demo-after-auth",
-                {
-                  email,
-                  contact,
-                  referralId: referralId.trim(),
-                  payment_id: response.razorpay_payment_id,
-                  order_id: response.razorpay_order_id,
-                  signature: response.razorpay_signature
-                }
-              );
-
-              if (activateResponse.data.success) {
-                alert(
-                  `🎉 7-Day FREE Demo Activated!\n\n +
-                ✅ ₹1 authorization amount refunded\n
-                ✅ No charges for 7 days\n
-                💳 Autopay starts: ${new Date(activateResponse.data.trial_end_date).toLocaleDateString('en-IN')}\n
-                💰 Amount after trial: ₹3999+GST/month`
-                );
-                navigate("/execute-task");
-              }
-            } catch (error) {
-              console.error("Error activating demo:", error);
-              alert("Failed to activate demo. Please contact support.");
-              setPaymentError("Failed to activate demo subscription");
-            }
-          },
-          theme: {
-            color: "#3399cc"
-          },
-          notes: {
-            type: "demo_authorization",
-            referral_id: referralId.trim()
-          }
-        };
-
-        const rzp = new window.Razorpay(options);
-
-        rzp.on("payment.failed", function (response) {
-          alert("Payment authorization failed. Please try again with a valid payment method.");
-          setPaymentError("Authorization failed");
-        });
-
-        rzp.open();
-        return; // ✅ Important: Stop execution here for demo
-
+        alert("Demo subscription activated successfully!");
+        navigate("/execute-task");
+        return;
       } catch (error) {
-        console.error("Error with demo subscription:", error);
-        alert("Unable to start demo. Please try again.");
-        setPaymentError(error.message || "Demo activation failed");
+        console.error("Error activating demo subscription:", error);
+        setPaymentError("Unable to activate demo. Please try again.");
         return;
       }
     }
 
-    // 🛒 REST OF YOUR EXISTING CODE FOR PAID PLANS (keep as is)
+    // 🛒 For paid plans, proceed with Razorpay flow
     try {
       const response = await fetch("https://api.leadscruise.com/order", {
         method: "POST",
@@ -303,28 +261,6 @@ const Plans = () => {
   };
 
   return (
-    <>
-    {/* Dither Background */}
-    <div style={{ 
-      position: 'fixed', 
-      top: 0, 
-      left: 0, 
-      width: '100%', 
-      height: '100%', 
-      zIndex: 0
-    }}>
-      <Dither
-        waveColor={[51/255, 102/255, 128/255]}
-        disableAnimation={false}
-        enableMouseInteraction={true}
-        mouseRadius={0.3}
-        colorNum={5}
-        waveAmplitude={0.25}
-        waveFrequency={2.5}
-        waveSpeed={0.03}
-        pixelSize={2.5}
-      />
-    </div>
     <div className="plans-container">
       <div className="plans-content">
         <div className="plans-header">
@@ -625,7 +561,6 @@ const Plans = () => {
         </div>
       )}
     </div>
-    </>
   );
 };
 

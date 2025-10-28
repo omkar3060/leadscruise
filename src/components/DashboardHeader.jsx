@@ -583,34 +583,6 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
                 </div>
               </button>
 
-              <button
-                className={styles.resetDataButton}
-                onClick={handleResetUserData}
-                onMouseEnter={() => setIsResetHovering(true)}
-                onMouseLeave={() => setIsResetHovering(false)}
-                disabled={localStorage.getItem("userEmail") === "demo@leadscruise.com" || isResetting}
-                style={{
-                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" || isResetting ? "not-allowed" : "pointer",
-                  opacity: localStorage.getItem("userEmail") === "demo@leadscruise.com" || isResetting ? 0.6 : 1,
-                  backgroundColor: isResetHovering ? '#dc3545' : '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  padding: '24px 20px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  whiteSpace: 'nowrap',
-                  margin: '0px'
-                }}
-              >
-                <span>
-                  {isResetting ? "🔄 Resetting..." : isResetHovering ? "⚠️ Reset Data" : "🗑️ Reset"}
-                </span>
-              </button>
-
               {hasAutopay && (
                 <button
                   className={styles.cancelSubscriptionButton}

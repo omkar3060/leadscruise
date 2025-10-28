@@ -363,6 +363,10 @@
   margin: 3px;
 }
 
+.renewalText:first-of-type {
+  margin-top: 20px;
+}
+
 /* Advanced Popup Styling */
 .popupOverlay {
   position: fixed;

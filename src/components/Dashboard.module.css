@@ -223,11 +223,6 @@
   background-color: #f0f0f0;
 }
 
-
-
-
-
-
 /* Individual Metric Box */
 .metricBox, .comingSoon {
   background: #f9f9f9;
@@ -269,6 +264,7 @@
   overflow-y: auto;
   overflow-x: auto; /* Allows horizontal scrolling if needed */
   z-index: 0;
+  background-color: white;
   height: 53vh;
 }
 
@@ -282,6 +278,40 @@
   position: sticky;
   top: 0;
   z-index: 0;
+}
+
+/* New class specifically for Sheets page */
+.sheetsPageTable {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  table-layout: fixed;
+}
+
+.sheetsPageTable th,
+.sheetsPageTable td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+  font-size: 14px;
+  background-color: white;
+}
+
+.sheetsPageTable th {
+  background: #f1f1f1;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 0;
+}
+
+.sheetsPageTable td {
+  color: #555;
+}
+
+.sheetsPageTable tr:hover {
+  background: #f9f9f9 !important;
 }
 
 /* Leads Table */
