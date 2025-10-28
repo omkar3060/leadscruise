@@ -73,7 +73,7 @@
   background-color: #cbd5e0 !important;
 }
 .logout-text {
-  color: white;
+  color: black;
   font-size: 0.875rem;
   margin: 0;
 }
@@ -82,7 +82,7 @@
 }
 
 .instruction-text {
-  color: white;
+  color: black;
   font-size: 1rem;
   margin-bottom: 1.5rem;
   line-height: 1.5;
@@ -109,7 +109,7 @@
 }
 
 .confirm-text {
-  color: white;
+  color: black;
   font-size: 0.875rem;
   text-align: center;
   margin-bottom: 1.5rem;
@@ -122,7 +122,7 @@
 }
 
 .back-link {
-  color: white;
+  color: black;
   cursor: pointer;
   margin-bottom: 0.75rem;
   font-size: 0.875rem;
@@ -264,7 +264,7 @@
 }
 
 .logout-link {
-  color: #666;
+  color: black;
   font-size: 14px;
 }
 
