@@ -6,7 +6,9 @@ File: responsive_login_ui.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageDraw, ImageTk
+import customtkinter as ctk
 import threading
+from ctypes import windll, byref, c_int, sizeof
 
 
 class LoginUI:
@@ -172,18 +174,25 @@ class LoginUI:
         self.create_promo_card()
     
     def create_social_button(self, parent, text):
-        """Create a social login button"""
-        btn = tk.Button(parent, text=text,
-                       font=("Segoe UI", 10),
-                       bg='#f5f5f5', fg='#1a1a1a',
-                       relief=tk.FLAT, bd=0,
-                       cursor='hand2',
-                       command=lambda: messagebox.showinfo("Coming Soon", 
-                                f"{text} integration coming soon!"))
-        btn.pack(fill=tk.X, ipady=10, pady=4)
-        btn.bind('<Enter>', lambda e: btn.config(bg='#e8e8e8'))
-        btn.bind('<Leave>', lambda e: btn.config(bg='#f5f5f5'))
+        """Create a rounded social login button (CustomTkinter)"""
+        btn = ctk.CTkButton(
+        parent,
+        text=text,
+        font=ctk.CTkFont(family="Segoe UI", size=14),
+        corner_radius=10,           # 👈 rounded corners
+        fg_color="#1a1a1a",         # normal background
+        hover_color="#333333",      # hover background
+        text_color="#f5f5f5",       # text color
+        height=40,
+        cursor="hand2",
+        command=lambda: messagebox.showinfo(
+            "Coming Soon",
+            f"{text} integration coming soon!")
+        )
+        btn.pack(fill="x", pady=4)
+        
         return btn
+
     
     def create_divider(self, parent):
         """Create OR divider"""
@@ -196,64 +205,107 @@ class LoginUI:
     
     def create_email_field(self, parent):
         """Create email input field"""
-        tk.Label(parent, text="Email", font=("Segoe UI", 9), 
-                bg='white', fg='#333333').pack(anchor=tk.W, pady=(0, 5))
-        
-        email_entry = tk.Entry(parent, textvariable=self.email_var,
-                              font=("Segoe UI", 10), bg='#f5f5f5', 
-                              fg='#333333', relief=tk.FLAT, bd=0)
-        email_entry.pack(fill=tk.X, ipady=10, pady=(0, 15))
-        email_entry.insert(0, "srinivas.m@focusengg.com")
-        email_entry.bind('<FocusIn>', lambda e: email_entry.config(bg='#e8f4f8'))
-        email_entry.bind('<FocusOut>', lambda e: email_entry.config(bg='#f5f5f5'))
+        ctk.CTkLabel(
+            parent,
+            text="Email",
+            font=ctk.CTkFont(family="Helvetica", size=14),
+            text_color='#333333',
+            anchor='w'
+        ).pack(anchor=tk.W, pady=(0, 5))
+
+        # Use CTkEntry instead of tk.Entry
+        email_entry = ctk.CTkEntry(
+            parent,
+            textvariable=self.email_var,
+            height=40,
+            corner_radius=10,   # Rounded corners
+            fg_color="#f5f5f5", # background color
+            border_color="#e0e0e0",
+            border_width=1,
+            text_color="#333333",
+            font=ctk.CTkFont(family="Segoe UI", size=14),
+            placeholder_text="srinivas.m@focusengg.com"
+        )
+        email_entry.pack(fill="x", pady=(0, 15))
+        # Bind focus color changes
+        email_entry.bind('<FocusIn>', lambda e: email_entry.configure(fg_color="#e8f4f8"))
+        email_entry.bind('<FocusOut>', lambda e: email_entry.configure(fg_color="#f5f5f5"))
     
     def create_password_field(self, parent):
         """Create password input field with show/hide toggle"""
-        # Password label and forgot password link
+        # Header: Password label + Forgot Password link
         password_header = tk.Frame(parent, bg='white')
         password_header.pack(fill=tk.X, pady=(0, 5))
-        
-        tk.Label(password_header, text="Password", font=("Segoe UI", 9),
-                bg='white', fg='#333333').pack(side=tk.LEFT)
-        
-        forgot_btn = tk.Label(password_header, text="Forgot Password?",
-                             font=("Segoe UI", 8), bg='white', fg='#999999',
-                             cursor='hand2')
+
+        tk.Label(
+            password_header,
+            text="Password",
+            font=("Helvetica", 10),
+            bg='white',
+            fg='#333333'
+        ).pack(side=tk.LEFT)
+
+        forgot_btn = tk.Label(
+            password_header,
+            text="Forgot Password?",
+            font=("Segoe UI", 8),
+            bg='white',
+            fg='#999999',
+            cursor='hand2'
+        )
         forgot_btn.pack(side=tk.RIGHT)
         forgot_btn.bind('<Button-1>', lambda e: self.forgot_password())
-        forgot_btn.bind('<Enter>', lambda e: forgot_btn.config(fg='#666666'))
-        forgot_btn.bind('<Leave>', lambda e: forgot_btn.config(fg='#999999'))
-        
-        # Password entry with show/hide button
-        password_container = tk.Frame(parent, bg='#f5f5f5')
+        forgot_btn.bind('<Enter>', lambda e: forgot_btn.configure(fg='#666666'))
+        forgot_btn.bind('<Leave>', lambda e: forgot_btn.configure(fg='#999999'))
+
+        # Container frame for password entry + eye icon
+        password_container = tk.Frame(parent, bg='white')
         password_container.pack(fill=tk.X, pady=(0, 15))
-        
-        self.password_entry = tk.Entry(password_container, textvariable=self.password_var,
-                                      font=("Segoe UI", 10), bg='#f5f5f5',
-                                      fg='#333333', relief=tk.FLAT, bd=0, show='•')
-        self.password_entry.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=12, ipady=10)
-        self.password_entry.bind('<FocusIn>', lambda e: password_container.config(bg='#e8f4f8'))
-        self.password_entry.bind('<FocusOut>', lambda e: password_container.config(bg='#f5f5f5'))
-        self.password_entry.bind('<Return>', lambda e: self.on_login_click())
-        
-        # Show/Hide password button (eye icon)
-        self.show_password_btn = tk.Label(password_container, text="👁", 
-                                         font=("Segoe UI", 12), bg='#f5f5f5',
-                                         cursor='hand2')
-        self.show_password_btn.pack(side=tk.RIGHT, padx=12)
+
+        # Create a rounded CTkEntry (like email)
+        self.password_entry = ctk.CTkEntry(
+            password_container,
+            textvariable=self.password_var,
+            height=40,
+            corner_radius=10,             # 👈 Rounded corners
+            fg_color="#f5f5f5",
+            border_color="#e0e0e0",
+            border_width=1,
+            text_color="#333333",
+            font=ctk.CTkFont(family="Segoe UI", size=14),
+            placeholder_text="Enter your password",
+            show="•"                     # Hidden by default
+        )
+        self.password_entry.pack(fill="x", expand=True)
+
+        # Add the eye toggle button (same color & alignment)
+        self.show_password_btn = tk.Label(
+            self.password_entry,          # Place inside entry widget
+            text="👁",
+            font=("Segoe UI", 12),
+            bg="#f5f5f5",
+            cursor="hand2"
+        )
+        self.show_password_btn.place(relx=0.93, rely=0.5, anchor="center")
         self.show_password_btn.bind('<Button-1>', lambda e: self.toggle_password())
-    
+
+        # Focus color change effect (same as email)
+        self.password_entry.bind('<FocusIn>', lambda e: self.password_entry.configure(fg_color="#e8f4f8"))
+        self.password_entry.bind('<FocusOut>', lambda e: self.password_entry.configure(fg_color="#f5f5f5"))
     def create_login_button(self, parent):
-        """Create login button"""
-        self.login_button = tk.Button(parent, text="Login",
-                             font=("Segoe UI", 11, "bold"),
-                             bg='#1a1a1a', fg='white',
-                             relief=tk.FLAT, bd=0,
-                             cursor='hand2',
-                             command=self.on_login_click)
-        self.login_button.pack(pady=(0, 15), ipady=8, ipadx=20)
-        self.login_button.bind('<Enter>', lambda e: self.login_button.config(bg='#333333'))
-        self.login_button.bind('<Leave>', lambda e: self.login_button.config(bg='#1a1a1a'))
+        """Create rounded login button"""
+        self.login_button = ctk.CTkButton(parent,
+                                      text="Login",
+                                      height=45,
+                                      corner_radius=25,  # 👈 Rounded corners
+                                      font=ctk.CTkFont(size=15, weight="bold"),
+                                      fg_color="#1a1a1a",
+                                      hover_color="#333333",
+                                      text_color="white",
+                                      command=self.on_login_click)
+        self.login_button.pack(pady=(0, 15), ipadx=20, ipady=8)
+        self.login_button.bind('<Enter>', lambda e: self.login_button.configure(bg='#333333'))
+        self.login_button.bind('<Leave>', lambda e: self.login_button.configure(bg='#1a1a1a'))
     
     def create_signup_link(self, parent):
         """Create sign up link"""
@@ -268,39 +320,79 @@ class LoginUI:
                              cursor='hand2')
         signup_btn.pack(side=tk.LEFT, padx=(5, 0))
         signup_btn.bind('<Button-1>', lambda e: self.sign_up())
-        signup_btn.bind('<Enter>', lambda e: signup_btn.config(fg='#6B5B95'))
-        signup_btn.bind('<Leave>', lambda e: signup_btn.config(fg='#1a1a1a'))
+        signup_btn.bind('<Enter>', lambda e: signup_btn.configure(fg='#6B5B95'))
+        signup_btn.bind('<Leave>', lambda e: signup_btn.configure(fg='#1a1a1a'))
         
         tk.Label(signup_frame, text="Now!",
                 font=("Segoe UI", 9), bg='white', fg='#666666').pack(side=tk.LEFT, padx=(5, 0))
     
     def create_promo_card(self):
         canvas_width = self.canvas.winfo_reqwidth() or 1200
-        canvas_height = self.canvas.winfo_reqheight() or 700
-        
+        canvas_height = self.canvas.winfo_reqheight() or 500
+
         promo_x = int(canvas_width * 0.70)   # shifted right
         promo_y = int(canvas_height * 0.45)
-        
-        promo_card = tk.Frame(self.canvas, bg='white', bd=0)
-        promo_content = tk.Frame(promo_card, bg='white', padx=25, pady=18)
-        promo_content.pack()
-        
+
+        # Rounded frame (acts as promo card)
+        promo_card = ctk.CTkFrame(
+            self.canvas,
+            width=500,         # Change this to control width
+            height=150,        # Change this to control height
+            fg_color="white",
+            border_width=1,
+            border_color="#e0e0e0"
+        )
+
+        # Place promo card on canvas so it can be repositioned on resize
+        self.promo_window = self.canvas.create_window(promo_x, promo_y, anchor=tk.CENTER, window=promo_card)
+
+        # Inner content area
+        promo_content = ctk.CTkFrame(promo_card, fg_color="white")
+        promo_content.pack(padx=20, pady=12, fill="both", expand=True)
+
         text_frame = tk.Frame(promo_content, bg='white')
-        text_frame.pack(side=tk.LEFT)
-        
-        line1 = tk.Label(text_frame,text="Your LeadsCruise AI is capturing leads automatically !!",
-             font=("Segoe UI", 13),bg='white',fg='#333333')
-        line1.pack(anchor=tk.W, padx=10)
-        
-        arrow_btn = tk.Label(promo_content, text="↑",
-                 font=("Segoe UI", 20, "bold"),
-                 bg='#1a1a1a', fg='white',
-                 width=2, height=1, cursor='hand2')
-        
-        arrow_btn.pack(side=tk.LEFT, padx=(15, 0))
-        
-        self.promo_window = self.canvas.create_window(promo_x, promo_y,
-                              anchor=tk.CENTER, window=promo_card)
+        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        line1 = tk.Label(
+            text_frame,
+            text="Your LeadsCruise AI is capturing leads automatically !!",
+            font=("Segoe UI", 12),
+            bg='white',
+            fg='#333333'
+        )
+        line1.pack(anchor=tk.W)
+
+        arrow_btn = ctk.CTkButton(
+            promo_content,
+            text="↑",
+            width=20,       # adjust for desired size
+            height=30,
+            corner_radius=15,
+            font=ctk.CTkFont(family="Segoe UI", size=18, weight="bold"),
+            fg_color="#1a1a1a",
+            hover_color="#333333",
+            text_color="white",
+            cursor="hand2",
+        )
+        arrow_btn.pack(side="left", padx=(25, 5))
+
+        # Apply rounded corners effect (best-effort)
+        self._apply_rounded_corners(promo_card)
+
+    def _apply_rounded_corners(self, widget):
+        """Apply a rounded corner effect to the widget"""
+        try:
+            # For Windows 11
+            widget.update_idletasks()
+            hwnd = windll.user32.GetParent(widget.winfo_id())
+            DWMWA_WINDOW_CORNER_PREFERENCE = 33
+            DWMWCP_ROUND = 2
+            windll.dwmapi.DwmSetWindowAttribute(
+                hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, 
+                byref(c_int(DWMWCP_ROUND)), sizeof(c_int)
+                )
+        except:
+            pass  # If Windows API not available, gracefully skip
 
     
     def on_window_resize(self, event):
@@ -363,12 +455,12 @@ class LoginUI:
     def toggle_password(self):
         """Toggle password visibility"""
         if self.show_password_var.get():
-            self.password_entry.config(show='•')
-            self.show_password_btn.config(text='👁')
+            self.password_entry.configure(show='•')
+            self.show_password_btn.configure(text='👁')
             self.show_password_var.set(False)
         else:
-            self.password_entry.config(show='')
-            self.show_password_btn.config(text='👁‍🗨')
+            self.password_entry.configure(show='')
+            self.show_password_btn.configure(text='👁‍🗨')
             self.show_password_var.set(True)
     
     def forgot_password(self):
@@ -400,13 +492,13 @@ class LoginUI:
         self.status_var.set(message)
         self.progress.pack(pady=10)
         self.progress.start()
-        self.login_button.config(state='disabled')
+        self.login_button.configure(state='disabled')
     
     def hide_progress(self):
         """Hide progress indicator"""
         self.progress.stop()
         self.progress.pack_forget()
-        self.login_button.config(state='normal')
+        self.login_button.configure(state='normal')
     
     def show_error(self, message):
         """Show error message"""
@@ -449,3 +541,7 @@ if __name__ == "__main__":
     ui.on_login_click = test_login
     
     root.mainloop()
+
+
+
+    

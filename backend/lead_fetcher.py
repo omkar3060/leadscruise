@@ -1777,7 +1777,7 @@ class LoginApp:
         self.status_var = self.modern_ui.status_var
         
         # ✅ NOW override the login handler - this is the critical fix
-        self.modern_ui.login_button.config(command=self.handle_login_click)
+        self.modern_ui.login_button.configure(command=self.handle_login_click)
         
         self.conditional_autostart = ConditionalAutoStart(app_name="LeadFetcher")
         self.conditional_autostart.enable_autostart()
@@ -2279,7 +2279,7 @@ class LoginApp:
         try:
             self.progress.stop()
             self.progress.pack_forget()
-            self.login_button.config(state='normal')
+            self.login_button.configure(state='normal')
         except (tk.TclError, AttributeError):
             # GUI already destroyed or doesn't exist
             pass
