@@ -391,7 +391,7 @@ app.post("/api/create-paid-subscription", async (req, res) => {
 app.post("/api/create-demo-order", async (req, res) => {
   try {
     const { email, contact, referralId } = req.body;
-
+    console.log("Create demo order request:", req.body);
     // ✅ Validation checks - ADD THESE
     if (!email || !contact) {
       return res.status(400).json({ 

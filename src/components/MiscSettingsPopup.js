@@ -442,7 +442,7 @@ const MiscSettingsPopup = ({
         </div>
 
         {isEditDisabled && (
-          <p className="warning-text">
+          <p className="misc-warning-text">
             Cannot edit settings while automation is running
           </p>
         )}
