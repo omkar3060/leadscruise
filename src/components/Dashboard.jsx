@@ -826,11 +826,14 @@ const Dashboard = () => {
 
     const formattedData = filteredLeads.map((lead, index) => ({
       "Sl. No": index + 1,
-      Name: lead.name || "N/A",
-      Email: lead.email || "N/A",
-      Phone: lead.mobile || lead.user_mobile_number || "N/A",
-      "Product(s)": lead.lead_bought || "N/A",
+      "Tag": lead.source || "Normal",
+      "Product Requested": lead.lead_bought || "N/A",
+      "Address": lead.address || "N/A",
+      "Name": lead.name || "N/A",
+      "Email": lead.email || "N/A",
+      "Mobile": lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : (lead.mobile || lead.user_mobile_number || "N/A"),
       "Captured At": new Date(lead.createdAt).toLocaleString(),
+      "Score": lead.score && !isNaN(lead.score) && lead.score !== 0 ? lead.score.toFixed(2) : "N/A",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(formattedData);

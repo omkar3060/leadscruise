@@ -50,13 +50,7 @@ html, body {
 
 /* Enhanced glassmorphic centered box */
 .login-box {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0.05)
-  );
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: white;
   padding: 5rem 4.5rem;
   border-radius: 16px;
   box-shadow: 
@@ -78,12 +72,12 @@ html, body {
 }
 
 .login-title {
-  font-size: 2rem;
+  flex-grow: 1;
+  font-size: 3rem;
   font-weight: 600;
-  margin-bottom: 1rem;
-  color: white;
+  margin-bottom: 0;
+  color: black;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 0;
 }
 
 /* --- Improved Social Button Styles with Glassmorphism --- */
@@ -93,7 +87,7 @@ html, body {
   margin-bottom: 0.5rem;
   border-radius: 8px;
   border: 1px solid rgba(226, 232, 240, 0.5);
-  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  background: black;
   backdrop-filter: blur(10px);
   font-weight: 500;
   color: white;
@@ -107,7 +101,7 @@ html, body {
 }
 
 .social-button:hover {
-  background: rgba(247, 250, 252, 0.8);
+  background: grey;
   border-color: rgba(26, 32, 44, 0.3);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -144,7 +138,7 @@ html, body {
   font-size: 0.875rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
-  color: white;
+  color: black;
 }
 
 .input-group input {
@@ -153,7 +147,7 @@ html, body {
   border: 1px solid rgba(226, 232, 240, 0.5);
   border-radius: 8px;
   font-size: 0.95rem;
-  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  background: white;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
@@ -217,13 +211,13 @@ html, body {
 
 .forgot-password-link {
   font-size: 0.8rem;
-  color: white;
+  color: black;
   text-decoration: none;
   cursor: pointer;
 }
 
 .forgot-password-link:hover {
-  color: white;
+  color: black;
 }
 
 /* Login button - centered and positioned right below eye button */
@@ -232,7 +226,7 @@ html, body {
   padding: 12px 40px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  background: black;
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -260,11 +254,11 @@ html, body {
   margin-top: 1.5rem;
   font-size: 0.9rem;
   font-weight: 400;
-  color: white;
+  color: black;
 }
 
 .signup-now-link {
-  color: white;
+  color: black;
   font-weight: 600;
   text-decoration: none;
 }
@@ -272,14 +266,20 @@ html, body {
 .signup-now-link:hover {
   text-decoration: underline;
 }
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .back-button-top {
   width: auto;
   padding: 6px 16px;
-  margin-bottom: 0.5rem; /* CHANGED: Reduced from 0.75rem for tighter spacing */
-  margin-top: 0; /* ADDED: Remove any top margin */
+  margin: 0;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  background: black;
   color: white;
   font-weight: 500;
   font-size: 0.875rem;
@@ -287,6 +287,7 @@ html, body {
   display: inline-block;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(26, 32, 44, 0.15);
+  flex-shrink: 0;
 }
 
 .back-button-top:hover {
@@ -318,13 +319,13 @@ html, body {
 }
 
 .static-text {
-  color: white;
+  color: black;
   font-weight: 600;
   margin-right: 0.2rem;
 }
 
 .typing-text {
-  color: white;
+  color: black;
   font-weight: 500;
   min-height: 1.5em;
   display: inline-block;
@@ -343,13 +344,7 @@ html, body {
 }
 
 .info-box {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.15),
-    rgba(255, 255, 255, 0.08)
-  );
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: white;
   padding: 0.75rem 2rem;
   border-radius: 12px;
   box-shadow: 
@@ -379,7 +374,7 @@ html, body {
   transform: translateY(-50%);
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  background: black;
   color: white;
   border: none;
   border-radius: 50%;
@@ -567,14 +562,14 @@ html, body {
 
 .terms-label {
   margin: 0;
-  color: white;
+  color: black;
   font-weight: 400;
   font-size: 0.875rem;
   line-height: 1.4;
 }
 
 .terms-link {
-  color: white;
+  color: black;
   text-decoration: none;
   font-weight: 500;
 }
@@ -636,7 +631,7 @@ html, body {
   font-size: 2.25rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
-  color: white;
+  color: black;
 }
 
 .signup-form-compact .terms-checkbox {

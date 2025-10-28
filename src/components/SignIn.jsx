@@ -651,14 +651,16 @@ const SignIn = () => {
       <div className="login-form-wrapper">
         <div className="login-box">
   <div className="login-form-container">
-    <button 
-      className="back-button-top" 
-      onClick={() => window.location.href = 'https://leadscruise.com'}
-      aria-label="Go back to home"
-    >
-      ← Back
-    </button>
-    <h1 className="login-title">Login</h1>
+    <div className="header-row">
+      <button 
+        className="back-button-top" 
+        onClick={() => window.location.href = 'https://leadscruise.com'}
+        aria-label="Go back to home"
+      >
+        ← Back
+      </button>
+      <h1 className="login-title">Login</h1>
+    </div>
 
           
           <button className="social-button" onClick={handleGoogleSignIn}>

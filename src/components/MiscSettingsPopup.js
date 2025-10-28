@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FaTimes } from 'react-icons/fa';
+
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ];
+
 const MiscSettingsPopup = ({ 
   userEmail, 
   automationStatus, 
@@ -22,6 +24,10 @@ const MiscSettingsPopup = ({
   // Min Order state
   const [minOrder, setMinOrder] = useState(0);
   const [tempMin, setTempMin] = useState(0);
+
+  // Reset button state
+  const [isResetHovering, setIsResetHovering] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const isEditDisabled = automationStatus === "Running";
 
@@ -81,6 +87,53 @@ const MiscSettingsPopup = ({
       fetchMinOrder();
     }
   }, [userEmail, isOpen, fetchLeadTypes, fetchStates, fetchMinOrder]);
+
+  // Reset User Data Handler
+  const handleResetUserData = async () => {
+    const userMobile = localStorage.getItem("mobileNumber");
+    if (!userEmail || !userMobile) {
+      alert("Something went wrong. Please login again.");
+      return;
+    }
+
+    const firstConfirm = window.confirm(
+      "⚠️ WARNING: This will permanently delete ALL your leads data!\n\nThis action cannot be undone. Are you sure you want to continue?"
+    );
+
+    if (!firstConfirm) return;
+
+    setIsResetting(true);
+
+    try {
+      const response = await fetch("https://api.leadscruise.com/api/reset-user-data", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          userEmail,
+          userMobile
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Data reset successful!`);
+        onClose();
+        // Reload the page or navigate as needed
+        window.location.reload();
+      } else {
+        alert(`❌ Failed to reset data`);
+      }
+    } catch (error) {
+      console.error("Reset data error:", error);
+      alert("❌ Network error. Please try again.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Save Lead Types
   const handleSaveLeadTypes = async () => {
@@ -243,6 +296,8 @@ const MiscSettingsPopup = ({
 
   if (!isOpen) return null;
 
+  const isDemoAccount = localStorage.getItem("userEmail") === "demo@leadscruise.com";
+
   return (
     <div className="misc-settings-overlay" onClick={handleCancel}>
       <div className="misc-settings-popup" onClick={(e) => e.stopPropagation()}>
@@ -253,7 +308,11 @@ const MiscSettingsPopup = ({
           </button>
         </div>
 
-        <div className="misc-popup-content">
+        <div className="misc-popup-content" style={{
+          maxHeight: '70vh',
+          overflowY: 'auto',
+          padding: '20px'
+        }}>
           
           {/* States Section */}
           <div className="settings-section">
@@ -340,6 +399,8 @@ const MiscSettingsPopup = ({
               />
             </div>
           </div>
+
+
         </div>
 
         <div className="popup-footer">
@@ -348,6 +409,24 @@ const MiscSettingsPopup = ({
             onClick={handleCancel}
           >
             Cancel
+          </button>
+          <button
+            className="reset-data-btn"
+            onClick={handleResetUserData}
+            disabled={isDemoAccount || isResetting || isEditDisabled}
+            style={{
+              backgroundColor: isDemoAccount || isResetting || isEditDisabled ? "#ccc" : "#dc3545",
+              cursor: isDemoAccount || isResetting || isEditDisabled ? "not-allowed" : "pointer",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "4px",
+              fontSize: "14px",
+              fontWeight: "500",
+              transition: "all 0.3s ease"
+            }}
+          >
+            {isResetting ? "🔄 Resetting..." : "🗑️ Reset Data"}
           </button>
           <button
             className="save-all-btn"
