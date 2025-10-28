@@ -394,16 +394,16 @@ app.post("/api/create-demo-order", async (req, res) => {
     console.log("Create demo order request:", req.body);
     // ✅ Validation checks - ADD THESE
     if (!email || !contact) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Email and contact are required" 
+      return res.status(400).json({
+        success: false,
+        error: "Email and contact are required"
       });
     }
 
     if (!referralId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Referral ID is required" 
+      return res.status(400).json({
+        success: false,
+        error: "Referral ID is required"
       });
     }
 
@@ -413,16 +413,16 @@ app.post("/api/create-demo-order", async (req, res) => {
         `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
       );
       if (!refRes.data.success) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Invalid Referral ID" 
+        return res.status(400).json({
+          success: false,
+          error: "Invalid Referral ID"
         });
       }
     } catch (err) {
       console.error("Error validating referral:", err);
-      return res.status(400).json({ 
-        success: false, 
-        error: "Unable to verify Referral ID" 
+      return res.status(400).json({
+        success: false,
+        error: "Unable to verify Referral ID"
       });
     }
 
@@ -433,12 +433,12 @@ app.post("/api/create-demo-order", async (req, res) => {
     });
 
     if (existingDemo) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "You have already used the 7-day demo subscription" 
+      return res.status(400).json({
+        success: false,
+        error: "You have already used the 7-day demo subscription"
       });
     }
-    
+
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_SECRET,
@@ -470,10 +470,10 @@ app.post("/api/create-demo-order", async (req, res) => {
 
   } catch (error) {
     console.error("Error creating demo order:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: "Failed to create authorization order",
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -484,9 +484,9 @@ app.post("/api/activate-demo-after-auth", async (req, res) => {
     const { email, contact, referralId, payment_id, order_id } = req.body;
 
     if (!email || !contact || !payment_id) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Missing required fields" 
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields"
       });
     }
 
@@ -497,13 +497,13 @@ app.post("/api/activate-demo-after-auth", async (req, res) => {
 
     // Get payment details
     const payment = await razorpay.payments.fetch(payment_id);
-    
+
     console.log("Payment fetched:", payment_id, "Status:", payment.status);
 
     if (payment.status !== 'captured') {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Payment not captured" 
+      return res.status(400).json({
+        success: false,
+        error: "Payment not captured"
       });
     }
 
@@ -602,10 +602,10 @@ app.post("/api/activate-demo-after-auth", async (req, res) => {
 
   } catch (error) {
     console.error("Error activating demo:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: "Failed to activate demo",
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -695,9 +695,9 @@ app.post("/api/create-demo-subscription", async (req, res) => {
     const { email, contact, referralId } = req.body;
 
     if (!email || !contact) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Email and contact are required" 
+      return res.status(400).json({
+        success: false,
+        error: "Email and contact are required"
       });
     }
 
@@ -707,16 +707,16 @@ app.post("/api/create-demo-subscription", async (req, res) => {
         `https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`
       );
       if (!refRes.data.success) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Invalid Referral ID" 
+        return res.status(400).json({
+          success: false,
+          error: "Invalid Referral ID"
         });
       }
     } catch (err) {
       console.error("Error validating referral:", err);
-      return res.status(400).json({ 
-        success: false, 
-        error: "Unable to verify Referral ID" 
+      return res.status(400).json({
+        success: false,
+        error: "Unable to verify Referral ID"
       });
     }
 
@@ -727,9 +727,9 @@ app.post("/api/create-demo-subscription", async (req, res) => {
     });
 
     if (existingDemo) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "You have already used the 7-day demo subscription" 
+      return res.status(400).json({
+        success: false,
+        error: "You have already used the 7-day demo subscription"
       });
     }
 
@@ -745,7 +745,7 @@ app.post("/api/create-demo-subscription", async (req, res) => {
       const customers = await razorpay.customers.all({
         email: email,
       });
-      
+
       if (customers.items && customers.items.length > 0) {
         customer = customers.items[0];
         console.log("Found existing customer:", customer.id);
@@ -831,8 +831,8 @@ app.post("/api/create-demo-subscription", async (req, res) => {
 
     console.log(`✅ Demo subscription created for ${email}`);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `7-day FREE demo activated! You will be automatically charged ₹3999+GST/month starting from ${new Date(trialEndTime * 1000).toLocaleDateString('en-IN')}`,
       subscription_id: subscription.id,
       customer_id: customer.id,
@@ -841,10 +841,10 @@ app.post("/api/create-demo-subscription", async (req, res) => {
 
   } catch (error) {
     console.error("Error creating demo subscription:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: "Failed to create demo subscription",
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -873,18 +873,18 @@ app.post("/api/razorpay-webhook", async (req, res) => {
     if (event === 'subscription.charged') {
       const subscriptionEntity = payload.subscription.entity;
       const paymentEntity = payload.payment.entity;
-      
+
       const subscriptionId = subscriptionEntity.id;
       const paymentId = paymentEntity.id;
       const amount = paymentEntity.amount;
       const status = paymentEntity.status;
-      
+
       if (status !== 'captured') {
         return res.json({ status: "acknowledged" });
       }
 
-      const demoPayment = await Payment.findOne({ 
-        razorpay_subscription_id: subscriptionId 
+      const demoPayment = await Payment.findOne({
+        razorpay_subscription_id: subscriptionId
       });
 
       if (demoPayment) {
@@ -927,8 +927,8 @@ app.post("/api/razorpay-webhook", async (req, res) => {
         // Mark demo as converted
         await Payment.updateOne(
           { _id: demoPayment._id },
-          { 
-            $set: { 
+          {
+            $set: {
               trial_converted: true,
               trial_converted_at: new Date()
             }
