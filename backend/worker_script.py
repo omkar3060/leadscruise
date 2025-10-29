@@ -2014,9 +2014,9 @@ def redirect_and_refresh(driver, wait):
                 elif 'hrs ago' in time_text:
                     time_value = int(time_text.split()[0]) * 60
                 else:
-                    time_value = 999
+                    time_value = 0
                 
-                time_result = time_value < 30
+                time_result = time_value < 300
                 print(f"Time Result: {time_result}", flush=True)
             except Exception as e:
                 print(f"Failed to read time: {e}", flush=True)
