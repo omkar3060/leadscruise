@@ -2148,12 +2148,10 @@ def redirect_and_refresh(driver, wait):
                 print("\n=== Running Scorer ===", flush=True)
                 threshold_score = int(input_data.get("thresholdScore", 0))
                 score, breakdown, should_contact = get_lead_score(
-                    unique_id=unique_id,
-                    lead_path=unique_lead_filename,
-                    products_filename='products',
-                    config_path='config.json',
-                    score_threshold=threshold_score
-                )
+    unique_id=unique_id,
+    config_path='config.json',
+    score_threshold=threshold_score
+)
                 if should_contact:
                     print(f"✓ Lead scored {score:.2f} - Contacting buyer", flush=True)
                     if click_contact_buyer_now_button(driver, wait):
