@@ -916,54 +916,124 @@ def input_phone_number_in_new_chat(driver, phone_number):
             return False
 
 def select_contact_from_search_results(driver):
-        """Select the first contact from search results"""
-        logger.info("Looking for first contact in search results...")
-        
-        # Try multiple selectors for the first contact in search results
-        contact_selectors = [
-            (By.XPATH, "//div[@role='gridcell']//div[@role='gridcell']"),
-            (By.XPATH, "//div[@class='_ak8o']"),
-            (By.XPATH, "//div[@class='_ak8q']"),
-            (By.XPATH, "//div[contains(@class, 'x1n2onr6') and @role='row']"),
-            (By.XPATH, "//div[@role='row']//div[@role='gridcell']"),
-            (By.XPATH, "//div[contains(@class, 'x1n2onr6') and @role='gridcell']")
-        ]
-        
-        contact_element = None
-        for selector_type, selector in contact_selectors:
-            try:
-                # Find all elements matching the selector
-                contact_elements = driver.find_elements(selector_type, selector)
-                if contact_elements:
-                    # Get the first visible element
-                    for element in contact_elements:
-                        if element.is_displayed():
-                            contact_element = element
-                            logger.info(f"Found first contact using selector: {selector}")
-                            break
-                    if contact_element:
-                        break
-            except:
-                continue
-        
-        if not contact_element:
-            logger.warning("Could not find any contact in search results")
-            return False
-        
+    """Select the first contact from search results"""
+    logger.info("Looking for first contact in search results...")
+    
+    # Wait a moment for the search results to appear
+    time.sleep(2)
+    
+    # Try multiple selectors for the first contact in search results
+    contact_selectors = [
+        # More specific selectors targeting the clickable container
+        (By.XPATH, "//div[@role='listitem']//div[@role='button' and @tabindex='-1']"),
+        (By.XPATH, "//div[@role='listitem']//div[contains(@class, '_ak72')]"),
+        (By.XPATH, "//div[@class='_ak72 false false _ak73 _asiw _ap1- _ap1_']"),
+        # Target the gridcell that contains the contact name
+        (By.XPATH, "//div[@role='gridcell' and @aria-colindex='2']//ancestor::div[@role='button']"),
+        # Fallback to original selectors
+        (By.XPATH, "//div[@role='gridcell']//div[@role='gridcell']"),
+        (By.XPATH, "//div[@class='_ak8o']"),
+        (By.XPATH, "//div[@class='_ak8q']"),
+        (By.XPATH, "//div[contains(@class, 'x1n2onr6') and @role='row']"),
+        (By.XPATH, "//div[@role='row']//div[@role='gridcell']"),
+        (By.XPATH, "//div[contains(@class, 'x1n2onr6') and @role='gridcell']")
+    ]
+    
+    contact_element = None
+    for selector_type, selector in contact_selectors:
         try:
-            # Click on the contact
-            logger.info("Clicking on contact...")
-            contact_element.click()
-            logger.info("Successfully clicked on contact!")
+            # Wait for elements to be present
+            wait = WebDriverWait(driver, 10)
+            contact_elements = wait.until(EC.presence_of_all_elements_located((selector_type, selector)))
             
-            # Wait a moment after clicking
+            if contact_elements:
+                # Get the first visible element
+                for element in contact_elements:
+                    if element.is_displayed():
+                        contact_element = element
+                        logger.info(f"Found first contact using selector: {selector}")
+                        break
+                if contact_element:
+                    break
+        except Exception as e:
+            logger.debug(f"Selector {selector} failed: {e}")
+            continue
+    
+    if not contact_element:
+        logger.warning("Could not find any contact in search results")
+        return False
+    
+    try:
+        # Method 1: Try scrolling into view first, then click
+        try:
+            logger.info("Method 1: Scrolling into view and clicking...")
+            driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", contact_element)
+            time.sleep(1)
+            
+            # Wait for element to be clickable
+            wait = WebDriverWait(driver, 10)
+            clickable_element = wait.until(EC.element_to_be_clickable(contact_element))
+            clickable_element.click()
+            logger.info("Successfully clicked on contact using Method 1!")
             time.sleep(3)
-            
             return True
         except Exception as e:
-            logger.error(f"Error clicking on contact: {e}")
-            logger.debug(traceback.format_exc())
-            return False
+            logger.error(f"Method 1 failed: {e}")
+        
+        # Method 2: Try using JavaScript click
+        try:
+            logger.info("Method 2: Using JavaScript click...")
+            driver.execute_script("arguments[0].click();", contact_element)
+            logger.info("Successfully clicked on contact using Method 2!")
+            time.sleep(3)
+            return True
+        except Exception as e:
+            logger.error(f"Method 2 failed: {e}")
+        
+        # Method 3: Try using ActionChains with move_to_element
+        try:
+            logger.info("Method 3: Using ActionChains move_to_element...")
+            actions = ActionChains(driver)
+            actions.move_to_element(contact_element).pause(0.5).click().perform()
+            logger.info("Successfully clicked on contact using Method 3!")
+            time.sleep(3)
+            return True
+        except Exception as e:
+            logger.error(f"Method 3 failed: {e}")
+        
+        # Method 4: Try finding a parent container and clicking that
+        try:
+            logger.info("Method 4: Finding parent button container...")
+            # Try to find the parent button element
+            parent_button = contact_element.find_element(By.XPATH, "./ancestor::div[@role='button']")
+            if parent_button:
+                logger.info("Found parent button container")
+                driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", parent_button)
+                time.sleep(1)
+                driver.execute_script("arguments[0].click();", parent_button)
+                logger.info("Successfully clicked on parent button using Method 4!")
+                time.sleep(3)
+                return True
+        except Exception as e:
+            logger.error(f"Method 4 failed: {e}")
+        
+        # Method 5: Try pressing Enter key on the element
+        try:
+            logger.info("Method 5: Using Enter key...")
+            contact_element.send_keys(Keys.RETURN)
+            logger.info("Successfully activated contact using Enter key!")
+            time.sleep(3)
+            return True
+        except Exception as e:
+            logger.error(f"Method 5 failed: {e}")
+        
+        logger.error("All methods failed to click on contact")
+        return False
+        
+    except Exception as e:
+        logger.error(f"Error clicking on contact: {e}")
+        logger.debug(traceback.format_exc())
+        return False
 
 def send_message_to_contact(driver, message):
         """Send a message to the selected contact"""
@@ -2659,8 +2729,6 @@ class LeadFetcherApp:
 
             menu = pystray.Menu(
                 pystray.MenuItem("Show App", self.show_window),
-                pystray.MenuItem("Force Show (Backup)", self.force_show_window),
-                pystray.MenuItem("---", None),
                 pystray.MenuItem("Quit", self.quit_app)
             )
             
@@ -2782,6 +2850,17 @@ class LeadFetcherApp:
         print("🔄 force_show_window called")
         self.send_message("force_restore_window")
 
+    def _restart_main_loop(self):
+        """Restart the main event loop if it stopped"""
+        try:
+            print("🔧 Attempting to restart main loop...")
+            # Process any pending events
+            self.root.update_idletasks()
+            self.root.update()
+            print("✅ Main loop restarted")
+        except Exception as e:
+            print(f"❌ Failed to restart main loop: {e}")
+
     def _restore_window_main_thread(self):
         """Restore window - called on main thread via periodic check"""
         try:
@@ -2812,32 +2891,29 @@ class LeadFetcherApp:
                 try:
                     print("📝 Attempting to restore log visibility...")
                     
-                    # CRITICAL: First ensure the widget state is NORMAL so it can be edited/displayed
+                    # CRITICAL: Ensure widget state is NORMAL so it can be edited/displayed
                     self.response_text.config(state=tk.NORMAL)
                     
-                    # Grid the widget
-                    self.response_text.grid(row=8, column=0, columnspan=3, 
-                                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                    # ✅ FIX: Use pack instead of grid since log_container uses pack
+                    self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
                     
                     # Update button text BEFORE forcing update
-                    self.toggle_logs_button.config(text="Hide Logs")
-                    self.log_label.config(text="API Response (Logs Visible):")
+                    self.toggle_logs_button.config(text="🙈 Hide Details")
                     
                     # Force a complete update cycle
                     self.root.update_idletasks()
                     self.root.update()
                     
                     # Verify it's visible
-                    is_mapped = self.response_text.winfo_ismapped()
-                    print(f"✅ Logs restored - Widget mapped: {is_mapped}, State: {self.response_text.cget('state')}")
+                    is_mapped = self.log_container.winfo_ismapped()
+                    print(f"✅ Logs restored - Container mapped: {is_mapped}, Response text state: {self.response_text.cget('state')}")
                     
                     if not is_mapped:
-                        print("⚠️ Widget not mapped, forcing grid again...")
-                        self.response_text.grid(row=8, column=0, columnspan=3, 
-                                            sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                        print("⚠️ Container not mapped, forcing pack again...")
+                        self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
                         self.root.update_idletasks()
                         self.root.update()
-                        print(f"✅ After force grid - Widget mapped: {self.response_text.winfo_ismapped()}")
+                        print(f"✅ After force pack - Container mapped: {self.log_container.winfo_ismapped()}")
                     
                     # Scroll to end
                     try:
@@ -2906,18 +2982,6 @@ class LeadFetcherApp:
             except:
                 pass
 
-    def _restart_main_loop(self):
-        """Restart the main event loop if it stopped"""
-        try:
-            print("🔧 Attempting to restart main loop...")
-            # Process any pending events
-            self.root.update_idletasks()
-            self.root.update()
-            print("✅ Main loop restarted")
-        except Exception as e:
-            print(f"❌ Failed to restart main loop: {e}")
-
-
     def restore_window_main_thread(self):
         """Restore window - runs in main thread"""
         print("=" * 60)
@@ -2973,13 +3037,11 @@ class LeadFetcherApp:
                     # CRITICAL: Ensure widget state is NORMAL
                     self.response_text.config(state=tk.NORMAL)
                     
-                    # Grid the widget
-                    self.response_text.grid(row=8, column=0, columnspan=3, 
-                                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                    # ✅ FIX: Use pack instead of grid
+                    self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
                     
                     # Update labels
-                    self.toggle_logs_button.config(text="Hide Logs")
-                    self.log_label.config(text="API Response (Logs Visible):")
+                    self.toggle_logs_button.config(text="🙈 Hide Details")
                     
                     # Force complete update
                     self.root.update_idletasks()
@@ -2991,7 +3053,7 @@ class LeadFetcherApp:
                     except:
                         pass
                     
-                    print(f"✅ Logs restored - Widget mapped: {self.response_text.winfo_ismapped()}")
+                    print(f"✅ Logs restored - Container mapped: {self.log_container.winfo_ismapped()}")
                 except Exception as e:
                     print(f"❌ Error restoring log visibility: {e}")
                     import traceback
@@ -3076,13 +3138,11 @@ class LeadFetcherApp:
                         # CRITICAL: Ensure widget state is NORMAL
                         self.response_text.config(state=tk.NORMAL)
                         
-                        # Grid the widget
-                        self.response_text.grid(row=8, column=0, columnspan=3, 
-                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                        # ✅ FIX: Use pack instead of grid
+                        self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
                         
                         # Update labels
-                        self.toggle_logs_button.config(text="Hide Logs")
-                        self.log_label.config(text="API Response (Logs Visible):")
+                        self.toggle_logs_button.config(text="🙈 Hide Details")
                         
                         # Force complete update
                         self.root.update_idletasks()
@@ -3094,7 +3154,7 @@ class LeadFetcherApp:
                         except:
                             pass
                         
-                        print(f"✅ Logs restored after force - Widget mapped: {self.response_text.winfo_ismapped()}")
+                        print(f"✅ Logs restored after force - Container mapped: {self.log_container.winfo_ismapped()}")
                     except Exception as e:
                         print(f"❌ Error restoring log visibility: {e}")
                         import traceback
@@ -3214,56 +3274,6 @@ class LeadFetcherApp:
             return True
         return False
     
-    def quit_app(self, icon=None, item=None):
-        """Completely exit the application and kill related processes"""
-        print("quit_app called")  # Debug print
-        try:
-            # Stop any auto-fetch timer
-            if hasattr(self, 'auto_fetch_timer') and self.auto_fetch_timer:
-                self.root.after_cancel(self.auto_fetch_timer)
-
-            # Stop tray icon if running
-            if self.tray_icon:
-                print("Stopping tray icon before quit...")
-                self.tray_icon.stop()
-                self.tray_icon = None
-
-            self.log_to_response("❌ Application closing...")
-
-            # Gracefully close Tkinter
-            if self.root and self.root.winfo_exists():
-                self.root.quit()
-                self.root.destroy()
-
-            print("🔻 Killing firefox and leadfetcher processes...")
-
-            # ---- Force terminate related processes ----
-            if os.name == "nt":  # Windows
-                subprocess.call("taskkill /F /IM firefox.exe /T", shell=True)
-                subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True)
-            else:  # Linux / macOS
-                subprocess.call("pkill -f firefox", shell=True)
-                subprocess.call("pkill -f leadfetcher", shell=True)
-
-            print("✅ All related processes killed successfully.")
-
-            # Exit the app
-            sys.exit(0)
-
-        except Exception as e:
-            print(f"Error during quit: {e}")
-            try:
-                # Try to kill processes even if something failed
-                if os.name == "nt":
-                    subprocess.call("taskkill /F /IM firefox.exe /T", shell=True)
-                    subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True)
-                else:
-                    subprocess.call("pkill -f firefox", shell=True)
-                    subprocess.call("pkill -f leadfetcher", shell=True)
-            except Exception:
-                pass
-            sys.exit(0)
-
     def setup_gui(self):
         main_container = ctk.CTkFrame(self.root, corner_radius=0, fg_color="#0a0f1e")
         main_container.pack(fill="both", expand=True)
@@ -3309,10 +3319,10 @@ class LeadFetcherApp:
         
         for text, command in nav_buttons:
             btn = ctk.CTkButton(nav_frame, text=text, height=40,
-                               fg_color="transparent", 
-                               hover_color="#2d3548",
-                               anchor="w",
-                               command=command if command else lambda: None)
+                            fg_color="transparent", 
+                            hover_color="#2d3548",
+                            anchor="w",
+                            command=command if command else lambda: None)
             btn.pack(fill="x", pady=2)
         
         # Bottom actions
@@ -3320,12 +3330,17 @@ class LeadFetcherApp:
         bottom_frame.pack(side="bottom", pady=20, padx=15, fill="x")
         
         ctk.CTkButton(bottom_frame, text="🔄 Check Updates",
-                     height=35, fg_color="#2d3548", hover_color="#3d4558",
-                     command=self.check_for_updates_clicked).pack(fill="x", pady=5)
+                    height=35, fg_color="#2d3548", hover_color="#3d4558",
+                    command=self.check_for_updates_clicked).pack(fill="x", pady=5)
         
         ctk.CTkButton(bottom_frame, text="🚪 Logout",
-                     height=35, fg_color="#ef4444", hover_color="#dc2626",
-                     command=self.logout).pack(fill="x", pady=5)
+                    height=35, fg_color="#ef4444", hover_color="#dc2626",
+                    command=self.logout).pack(fill="x", pady=5)
+        
+        # ✅ NEW: Quit Application Button
+        ctk.CTkButton(bottom_frame, text="⛔ Quit Application",
+                    height=35, fg_color="#7f1d1d", hover_color="#991b1b",
+                    command=self.confirm_and_quit).pack(fill="x", pady=5)
         
         # ========== MAIN CONTENT AREA ==========
         self.content_area = ctk.CTkFrame(main_container, corner_radius=0, fg_color="#0a0f1e")
@@ -3333,6 +3348,121 @@ class LeadFetcherApp:
         
         # Show dashboard by default
         self.show_fetch_panel()
+
+    def confirm_and_quit(self):
+        """Show confirmation dialog before quitting the application"""
+        print("🔴 confirm_and_quit called")
+        
+        try:
+            # Make sure window is visible and on top
+            try:
+                if self.root.state() == 'withdrawn':
+                    self.root.deiconify()
+                self.root.lift()
+                self.root.attributes('-topmost', True)
+                self.root.after(100, lambda: self.root.attributes('-topmost', False))
+            except:
+                pass
+            
+            # Show confirmation dialog
+            result = messagebox.askyesno(
+                "Quit Application", 
+                "Are you sure you want to quit?\n\n"
+                "⚠️ This will:\n"
+                "• Stop all background processes\n"
+                "• Kill Firefox and related processes\n"
+                "• Completely exit the application\n\n"
+                "Note: Use 'Logout' to keep your session for next time.",
+                parent=self.root,
+                icon='warning'
+            )
+            
+            if result:
+                print("✅ User confirmed quit")
+                self.log_to_response("🔴 User initiated application quit...")
+                
+                # Set force_quit flag to bypass tray minimization
+                self.force_quit = True
+                
+                # Call quit_app
+                self.quit_app()
+            else:
+                print("❌ User cancelled quit")
+                self.log_to_response("❌ Quit cancelled by user")
+                
+        except Exception as e:
+            print(f"❌ Error in confirm_and_quit: {e}")
+            import traceback
+            traceback.print_exc()
+
+
+    def quit_app(self, icon=None, item=None):
+        """Completely exit the application and kill related processes"""
+        print("quit_app called")  # Debug print
+        try:
+            # Mark app as stopped
+            if hasattr(self, 'conditional_autostart'):
+                self.conditional_autostart.mark_app_stopped()
+            
+            # Stop any auto-fetch timer
+            if hasattr(self, 'auto_fetch_timer') and self.auto_fetch_timer:
+                self.root.after_cancel(self.auto_fetch_timer)
+
+            # Stop tray icon if running
+            if self.tray_icon:
+                print("Stopping tray icon before quit...")
+                try:
+                    self.tray_icon.stop()
+                except:
+                    pass
+                self.tray_icon = None
+
+            self.log_to_response("❌ Application closing...")
+
+            # Gracefully close Tkinter
+            if self.root and self.root.winfo_exists():
+                try:
+                    self.root.quit()
+                    self.root.destroy()
+                except:
+                    pass
+
+            print("🔻 Killing firefox and leadfetcher processes...")
+
+            # ---- Force terminate related processes ----
+            if os.name == "nt":  # Windows
+                subprocess.call("taskkill /F /IM firefox.exe /T", shell=True, 
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:  # Linux / macOS
+                subprocess.call("pkill -f firefox", shell=True,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.call("pkill -f leadfetcher", shell=True,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            print("✅ All related processes killed successfully.")
+
+            # Exit the app
+            sys.exit(0)
+
+        except Exception as e:
+            print(f"Error during quit: {e}")
+            try:
+                # Try to kill processes even if something failed
+                if os.name == "nt":
+                    subprocess.call("taskkill /F /IM firefox.exe /T", shell=True,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    subprocess.call("pkill -f firefox", shell=True,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.call("pkill -f leadfetcher", shell=True,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
+            sys.exit(0)
 
     def show_dashboard(self):
         """Show dashboard overview"""
@@ -4103,7 +4233,6 @@ class LeadFetcherApp:
                     print(f"Error in cleanup_ui: {e}")
             
             self.gui_update_queue.put(cleanup_ui)
-
 
     def send_confirmation_response(self, mobile, received_data):
         """Send confirmation back to the server that data was received"""
