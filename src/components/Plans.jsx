@@ -93,141 +93,110 @@ const Plans = () => {
   };
 
   const paymentHandler = async (e) => {
-    e.preventDefault();
-    const email = localStorage.getItem("userEmail");
-    const contact = localStorage.getItem("mobileNumber");
-    const currentSelectedPlan = localStorage.getItem("selectedPlan");
-    
-    console.log("🔍 Payment Handler Debug:", {
-      currentSelectedPlan,
-      selectedPlanDetails,
-      referralId: referralId.trim()
-    });
-    if (!referralId.trim()) {
-      alert("Please enter a Referral ID.");
+  e.preventDefault();
+  const email = localStorage.getItem("userEmail");
+  const contact = localStorage.getItem("mobileNumber");
+  const selectedPlan = localStorage.getItem("selectedPlan");
+  
+  if (!referralId.trim()) {
+    alert("Please enter a Referral ID.");
+    return;
+  }
+  
+  try {
+    const res = await axios.get(`https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`);
+    if (!res.data.success) {
+      alert("Invalid Referral ID.");
       return;
     }
-
+  } catch (err) {
+    console.error("Error validating referral:", err);
+    alert("Unable to verify Referral ID. Please try again.");
+    return;
+  }
+  
+  // ✅ Block if user already used demo
+  if (selectedPlan === "7-days") {
     try {
-      const res = await axios.get('https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}');
-      if (!res.data.success) {
-        alert("Invalid Referral ID.");
-        return;
-      }
-    } catch (err) {
-      console.error("Error validating referral:", err);
-      alert("Unable to verify Referral ID. Please try again.");
-      return;
-    }
-
-    // ✅ Block if user already used demo
-    if (selectedPlan === "7-days") {
-      const res = await axios.get('https://api.leadscruise.com/api/has-used-demo?contact=${contact}');
-      try {
-        
-        if (res.data.used) {
-          alert(res.data.message || "You have already used the demo subscription. Please choose another plan.");
-          setShowModal(false);
-          return;
-        }
-      } catch (err) {
-        console.error("Error checking demo usage:", err);
-        alert(res.data.message || "Unable to validate demo subscription. Please try again.");
+      const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
+      
+      if (res.data.used) {
+        alert(res.data.message || "You have already used the demo subscription. Please choose another plan.");
         setShowModal(false);
         return;
       }
-
-      // ✅ Directly create a free demo subscription without payment
-      try {
-        const timestamp = Date.now();
-        await axios.post("https://api.leadscruise.com/api/save-payment", {
-          unique_id: await getNextPaymentId(),
-        const orderResponse = await axios.post("https://api.leadscruise.com/api/create-demo-order", {
-          email,
-          contact,
-          order_id: 'FREE-DEMO-${timestamp}',
-          payment_id: 'FREE-DEMO-${timestamp}',
-          signature: "FREE",
-          order_amount: 0,
-          subscription_type: "7-days",
-        });
-
-        alert("Demo subscription activated successfully!");
-        navigate("/execute-task");
-        return;
-      } catch (error) {
-        console.error("Error activating demo subscription:", error);
-        setPaymentError("Unable to activate demo. Please try again.");
-        return;
-      }
-    }
-
-    // 🛒 For paid plans, proceed with Razorpay flow
-    try {
-    console.log("💳 Processing paid plan:", currentSelectedPlan);
-    
-    if (selectedPlanDetails.price === "0" || selectedPlanDetails.price === 0) {
-      console.error("❌ ERROR: Paid plan has price 0!");
-      alert("Invalid plan configuration. Please select a plan again.");
+    } catch (err) {
+      console.error("Error checking demo usage:", err);
+      alert("Unable to validate demo subscription. Please try again.");
       setShowModal(false);
       return;
     }
-
+    
+    // ✅ Directly create a free demo subscription without payment
     try {
-      const baseAmount = parseInt(localStorage.getItem("selectedPrice") || "2999", 10);
-      const amountInPaisa = baseAmount * 100;
-      const gstAmount = Math.round(amountInPaisa * 0.18);
-      const amount = amountInPaisa + gstAmount;
-      const currency = "INR";
-      const receiptId = `order_${Date.now()}`;
-
-      console.log("💰 Payment Details:", {
-        baseAmount,
-        gst: gstAmount / 100,
-        total: amount / 100,
-        plan: currentSelectedPlan
+      const timestamp = Date.now();
+      await axios.post("https://api.leadscruise.com/api/save-payment", {
+        unique_id: await getNextPaymentId(),
+        email,
+        contact,
+        order_id: `FREE-DEMO-${timestamp}`,
+        payment_id: `FREE-DEMO-${timestamp}`,
+        signature: "FREE",
+        order_amount: 0,
+        subscription_type: "7-days",
       });
-
-      const response = await fetch("https://api.leadscruise.com/order", {
-        method: "POST",
-        body: JSON.stringify({ amount, currency, receipt: receiptId }),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const order = await response.json();
-      var options = {
-        key: "rzp_live_febmpQBBFIuphK",
-        amount,
-        currency,
-        name: "Focus Engineering",
-        description: "Test Transaction",
-        image: "https://example.com/your_logo",
-        order_id: order.id,
-        prefill: { email, contact },
-        handler: async function (response) {
-          const validationResult = await validateRes(response);
-          if (validationResult && validationResult.success) {
-            await savePaymentDetails(response);
-          } else {
-            console.error("Payment validation failed:", validationResult);
-            setPaymentError("Payment validation failed. Please try again.");
-          }
-        },
-        theme: { color: "#3399cc" },
-      };
-
-      var rzp1 = new window.Razorpay(options);
-      rzp1.on("payment.failed", function () {
-        setPaymentError("Payment unsuccessful. Please try again.");
-        setTimeout(() => navigate("/check-number"), 2000);
-      });
-      rzp1.open();
+      alert("Demo subscription activated successfully!");
+      navigate("/execute-task");
+      return;
     } catch (error) {
-      console.error("Error during payment process:", error);
+      console.error("Error activating demo subscription:", error);
+      setPaymentError("Unable to activate demo. Please try again.");
+      return;
+    }
+  }
+  
+  // 🛒 For paid plans, proceed with Razorpay flow
+  try {
+    const response = await fetch("https://api.leadscruise.com/order", {
+      method: "POST",
+      body: JSON.stringify({ amount, currency, receipt: receiptId }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const order = await response.json();
+    
+    var options = {
+      key: "rzp_live_febmpQBBFIuphK",
+      amount,
+      currency,
+      name: "Focus Engineering",
+      description: "Test Transaction",
+      image: "https://example.com/your_logo",
+      order_id: order.id,
+      prefill: { email, contact },
+      handler: async function (response) {
+        const validationResult = await validateRes(response);
+        if (validationResult && validationResult.success) {
+          await savePaymentDetails(response);
+        } else {
+          console.error("Payment validation failed:", validationResult);
+          setPaymentError("Payment validation failed. Please try again.");
+        }
+      },
+      theme: { color: "#3399cc" },
+    };
+    
+    var rzp1 = new window.Razorpay(options);
+    rzp1.on("payment.failed", function () {
       setPaymentError("Payment unsuccessful. Please try again.");
       setTimeout(() => navigate("/check-number"), 2000);
-    }
-  };
+    });
+    rzp1.open();
+  } catch (error) {
+    console.error("Error during payment process:", error);
+    setPaymentError("Payment unsuccessful. Please try again.");
+    setTimeout(() => navigate("/check-number"), 2000);
+  }
+};
 
   const validateRes = async (response) => {
     try {
@@ -617,6 +586,7 @@ const Plans = () => {
           </div>
         )}
       </div>
+      </>
   );
 };
 
