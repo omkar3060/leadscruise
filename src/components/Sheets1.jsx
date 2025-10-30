@@ -10,6 +10,55 @@ import styles from "./Dashboard.module.css";
 import demoLeads from "../data/demoLeads";
 import demoSettings from "../data/demoSettings";
 import * as XLSX from "xlsx";
+const getScoreColor = (score) => {
+  if (!score || isNaN(score) || score === 0) {
+    return {
+      backgroundColor: '#f5f5f5',
+      color: '#999',
+      borderColor: '#ddd'
+    };
+  }
+  
+  const numScore = parseFloat(score);
+  
+  if (numScore < 40) {
+    return {
+      backgroundColor: '#ffebee',
+      color: '#c62828',
+      borderColor: '#ef5350'
+    };
+  } else if (numScore >= 40 && numScore < 50) {
+    return {
+      backgroundColor: '#fff3e0',
+      color: '#e65100',
+      borderColor: '#ff9800'
+    };
+  } else if (numScore >= 50 && numScore < 60) {
+    return {
+      backgroundColor: '#fffde7',
+      color: '#f57f17',
+      borderColor: '#ffeb3b'
+    };
+  } else if (numScore >= 60 && numScore < 70) {
+    return {
+      backgroundColor: '#e3f2fd',
+      color: '#1565c0',
+      borderColor: '#42a5f5'
+    };
+  } else if (numScore >= 70 && numScore < 80) {
+    return {
+      backgroundColor: '#e8f5e9',
+      color: '#2e7d32',
+      borderColor: '#66bb6a'
+    };
+  } else { // >= 80
+    return {
+      backgroundColor: '#c8e6c9',
+      color: '#1b5e20',
+      borderColor: '#4caf50'
+    };
+  }
+};
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -47,6 +96,8 @@ const Sheets = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isStarting, setIsStarting] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [canDownloadReports, setCanDownloadReports] = useState(false);
+const [subscriptionCheckLoading, setSubscriptionCheckLoading] = useState(true);
   const [timer, setTimer] = useState(0);
   const [settings, setSettings] = useState({
     sentences: [],
@@ -74,6 +125,7 @@ const Sheets = () => {
   const [showCustomDateModal, setShowCustomDateModal] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
 
   const fetchBuyerBalance = useCallback(async () => {
     try {
@@ -168,6 +220,38 @@ const Sheets = () => {
     }
     return null;
   }, [buyerBalance, status, isVisible]);
+// Add this useEffect to check active subscriptions (place it after other useEffect hooks)
+useEffect(() => {
+  const checkActiveSubscriptions = async () => {
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) {
+        setCanDownloadReports(false);
+        setSubscriptionCheckLoading(false);
+        return;
+      }
+
+      const response = await axios.get(
+        `https://api.leadscruise.com/api/get-active-subscriptions?email=${userEmail}`
+      );
+
+      if (response.data.success) {
+        setCanDownloadReports(response.data.canDownloadReports);
+        
+        // Log subscription details for debugging
+        console.log("Active Subscriptions:", response.data.activeSubscriptions);
+        console.log("Can Download Reports:", response.data.canDownloadReports);
+      }
+    } catch (error) {
+      console.error("Failed to check active subscriptions:", error);
+      setCanDownloadReports(false);
+    } finally {
+      setSubscriptionCheckLoading(false);
+    }
+  };
+
+  checkActiveSubscriptions();
+}, []);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -928,74 +1012,82 @@ const Sheets = () => {
     });
   };
 
-  const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customEnd = null) => {
-    if (!leads || leads.length === 0) {
-      alert("No leads available to download.");
-      return;
-    }
-
-    let filteredLeads;
-    let label;
-
-    if (dateRange === 'custom' && customStart && customEnd) {
-      const startDate = new Date(customStart);
-      const endDate = new Date(customEnd);
-      endDate.setUTCDate(endDate.getUTCDate() + 1); // Include the end date
-
-      filteredLeads = leads.filter((lead) => {
-        if (!lead.createdAt) return false;
-        const leadDate = new Date(lead.createdAt);
-        return leadDate >= startDate && leadDate < endDate;
-      });
-
-      label = `Custom_${customStart}_to_${customEnd}`;
-    } else if (dateRange === 'all') {
-      filteredLeads = leads;
-      label = 'Total Leads Captured';
-    } else {
-      filteredLeads = filterLeadsByDateRange(dateRange);
-      const dateRangeLabels = {
-        'today': 'Today',
-        'thisWeek': 'This Week',
-        'thisMonth': 'This Month',
-        'thisQuarter': 'This Quarter',
-        'thisYear': 'This Year',
-        'yesterday': 'Yesterday',
-        'previousWeek': 'Previous Week',
-        'previousMonth': 'Previous Month',
-        'previousQuarter': 'Previous Quarter',
-        'previousYear': 'Previous Year'
-      };
-      label = dateRangeLabels[dateRange] || 'Total Leads Captured';
-    }
-
-    if (filteredLeads.length === 0) {
-      alert("No leads found for the selected date range.");
-      return;
-    }
-
-    const formattedData = filteredLeads.map((lead, index) => ({
-      "Sl. No": index + 1,
-      "Tag": lead.source || "Normal",
-      "Product Requested": lead.lead_bought || "N/A",
-      "Address": lead.address || "N/A",
-      "Name": lead.name || "N/A",
-      "Email": lead.email || "N/A",
-      "Mobile": lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : (lead.mobile || lead.user_mobile_number || "N/A"),
-      "Captured At": new Date(lead.createdAt).toLocaleString(),
-      "Score": lead.score && !isNaN(lead.score) && lead.score !== 0 ? lead.score.toFixed(2) : "N/A",
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
-
-    const today = new Date().toISOString().split("T")[0];
-    const filename = `${label}_${today}.xlsx`;
-
-    XLSX.writeFile(workbook, filename);
+  // Update the handleDownloadLeadsExcel function (replace the existing one)
+const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customEnd = null) => {
+  // Check if user can download reports
+  if (!canDownloadReports) {
+    setShowUpgradePopup(true);
     setShowDownloadDropdown(false);
-  };
+    return;
+  }
+
+  if (!leads || leads.length === 0) {
+    alert("No leads available to download.");
+    return;
+  }
+
+  let filteredLeads;
+  let label;
+
+  if (dateRange === 'custom' && customStart && customEnd) {
+    const startDate = new Date(customStart);
+    const endDate = new Date(customEnd);
+    endDate.setUTCDate(endDate.getUTCDate() + 1);
+
+    filteredLeads = leads.filter((lead) => {
+      if (!lead.createdAt) return false;
+      const leadDate = new Date(lead.createdAt);
+      return leadDate >= startDate && leadDate < endDate;
+    });
+
+    label = `Custom_${customStart}_to_${customEnd}`;
+  } else if (dateRange === 'all') {
+    filteredLeads = leads;
+    label = 'Total Leads Captured';
+  } else {
+    filteredLeads = filterLeadsByDateRange(dateRange);
+    const dateRangeLabels = {
+      'today': 'Today',
+      'thisWeek': 'This Week',
+      'thisMonth': 'This Month',
+      'thisQuarter': 'This Quarter',
+      'thisYear': 'This Year',
+      'yesterday': 'Yesterday',
+      'previousWeek': 'Previous Week',
+      'previousMonth': 'Previous Month',
+      'previousQuarter': 'Previous Quarter',
+      'previousYear': 'Previous Year'
+    };
+    label = dateRangeLabels[dateRange] || 'Total Leads Captured';
+  }
+
+  if (filteredLeads.length === 0) {
+    alert("No leads found for the selected date range.");
+    return;
+  }
+
+  const formattedData = filteredLeads.map((lead, index) => ({
+    "Sl. No": index + 1,
+    "Tag": lead.source || "Normal",
+    "Product Requested": lead.lead_bought || "N/A",
+    "Address": lead.address || "N/A",
+    "Name": lead.name || "N/A",
+    "Email": lead.email || "N/A",
+    "Mobile": lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : (lead.mobile || lead.user_mobile_number || "N/A"),
+    "Captured At": new Date(lead.createdAt).toLocaleString(),
+    "Score": lead.score && !isNaN(lead.score) && lead.score !== 0 ? lead.score.toFixed(2) : "N/A",
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
+
+  const today = new Date().toISOString().split("T")[0];
+  const filename = `${label}_${today}.xlsx`;
+
+  XLSX.writeFile(workbook, filename);
+  setShowDownloadDropdown(false);
+};
   const handleCustomDateSubmit = () => {
     if (!customStartDate || !customEndDate) {
       alert('Please select both start and end dates.');
@@ -1039,6 +1131,161 @@ const Sheets = () => {
       />
     </div>
     <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
+      {/* Upgrade Popup Modal */}
+      {showUpgradePopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+            animation: 'slideIn 0.3s ease-out',
+            position: 'relative'
+          }}>
+            {/* Close button */}
+            <button
+              onClick={() => setShowUpgradePopup(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'transparent',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#999',
+                padding: '0',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '0'
+              }}
+            >
+              ×
+            </button>
+
+            {/* Lock Icon */}
+            <div style={{ 
+              textAlign: 'center',
+              fontSize: '64px', 
+              marginBottom: '20px',
+              animation: 'bounce 0.5s ease-in-out'
+            }}>
+              🔒
+            </div>
+
+            {/* Title */}
+            <h2 style={{ 
+              color: '#333',
+              textAlign: 'center',
+              marginBottom: '15px',
+              fontSize: '24px',
+              fontWeight: '600'
+            }}>
+              Subscription Required
+            </h2>
+
+            {/* Description */}
+            <p style={{ 
+              color: '#666',
+              textAlign: 'center',
+              marginBottom: '25px',
+              fontSize: '15px',
+              lineHeight: '1.6'
+            }}>
+              Download Reports feature is only available for 6-month and yearly subscription plans.
+              Please upgrade your plan to access this feature.
+            </p>
+
+            {/* Action Buttons */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '10px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => setShowUpgradePopup(false)}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'background-color 0.2s',
+                  marginBottom: '0'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#5a6268'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#6c757d'}
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={() => {
+                  setShowUpgradePopup(false);
+                  navigate('/plans');
+                }}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'background-color 0.2s',
+                  marginBottom: '0'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
+              >
+                Go to Plans Page →
+              </button>
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes slideIn {
+              from {
+                opacity: 0;
+                transform: translateY(-30px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+
+            @keyframes bounce {
+              0%, 100% {
+                transform: translateY(0);
+              }
+              50% {
+                transform: translateY(-10px);
+              }
+            }
+          `}</style>
+        </div>
+      )}
       {showCustomDateModal && (
         <div style={{
           position: 'fixed',
@@ -1265,12 +1512,27 @@ const Sheets = () => {
             Settings
           </button>
           <button
-            className={styles.buttonLarge}
-            onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
-            style={{ marginBottom: 0 }}
-          >
-            Download Reports
-          </button>
+  className={styles.buttonLarge}
+  onClick={() => {
+    if (subscriptionCheckLoading) {
+      alert("Checking subscription status, please wait...");
+      return;
+    }
+    
+    if (!canDownloadReports) {
+      setShowUpgradePopup(true);
+      return;
+    }
+    setShowDownloadDropdown(!showDownloadDropdown);
+  }}
+  style={{ 
+    marginBottom: 0,
+    opacity: subscriptionCheckLoading ? 0.6 : 1,
+    cursor: subscriptionCheckLoading ? 'wait' : 'pointer'
+  }}
+>
+  {subscriptionCheckLoading ? "Checking..." : "Download Reports"}
+</button>
 
           {showDownloadDropdown && (
             <div style={{
@@ -1433,11 +1695,36 @@ const Sheets = () => {
                               })
                               : "N/A"}
                           </td>
-                          <td>
-                          {lead.score && !isNaN(lead.score) && lead.score !== 0
-                            ? lead.score.toFixed(2)
-                            : "N/A"}
-                        </td>
+                          <td style={{ textAlign: 'center' }}>
+  {lead.score && !isNaN(lead.score) && lead.score !== 0 ? (
+    <span style={{
+      padding: '4px 12px',
+      borderRadius: '12px',
+      fontSize: '11px',
+      fontWeight: 'bold',
+      ...getScoreColor(lead.score),
+      border: `1px solid ${getScoreColor(lead.score).borderColor}`,
+      whiteSpace: 'nowrap',
+      display: 'inline-block'
+    }}>
+      {lead.score.toFixed(2)}
+    </span>
+  ) : (
+    <span style={{
+      padding: '4px 12px',
+      borderRadius: '12px',
+      fontSize: '11px',
+      fontWeight: 'bold',
+      backgroundColor: '#f5f5f5',
+      color: '#999',
+      border: '1px solid #ddd',
+      whiteSpace: 'nowrap',
+      display: 'inline-block'
+    }}>
+      N/A
+    </span>
+  )}
+</td>
                           <td style={{ textAlign: 'center' }}>
                             <button
                               onClick={() => handleToggleRejected(lead.lead_bought, isRejected)}

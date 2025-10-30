@@ -1318,7 +1318,79 @@ const otpRequests = new Map();
 const otpFailures = new Map();
 
 const activePythonProcesses = new Map();
+// Add this endpoint to your server.js file (around line 1400-1500)
 
+app.get("/api/get-active-subscriptions", async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
+    // Find all payments for this user
+    const allPayments = await Payment.find({ email })
+      .sort({ created_at: -1 })
+      .exec();
+
+    if (!allPayments || allPayments.length === 0) {
+      return res.json({
+        success: true,
+        hasActiveSubscription: false,
+        canDownloadReports: false,
+        activeSubscriptions: [],
+        message: "No subscriptions found"
+      });
+    }
+
+    const now = new Date();
+    const activeSubscriptions = [];
+
+    // Check each payment to see if it's still active
+    for (const payment of allPayments) {
+      const subscriptionDays = getSubscriptionDuration(payment.subscription_type);
+      const expirationDate = new Date(payment.created_at);
+      expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+
+      // If subscription is still active
+      if (now < expirationDate) {
+        activeSubscriptions.push({
+          type: payment.subscription_type,
+          startDate: payment.created_at,
+          expirationDate: expirationDate.toISOString(),
+          daysRemaining: Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24))
+        });
+      }
+    }
+
+    // Determine if user can download reports
+    // User can download reports if they have ANY active subscription that is NOT one-mo or three-mo
+    const canDownloadReports = activeSubscriptions.some(sub => 
+      sub.type !== 'one-mo' && 
+      sub.type !== 'three-mo' && 
+      sub.type !== '7-days'
+    );
+
+    res.json({
+      success: true,
+      hasActiveSubscription: activeSubscriptions.length > 0,
+      canDownloadReports,
+      activeSubscriptions,
+      totalActiveSubscriptions: activeSubscriptions.length
+    });
+
+  } catch (error) {
+    console.error("Error fetching active subscriptions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
 app.post("/api/execute-task", async (req, res) => {
   // Set a higher timeout for this specific response
   res.setTimeout(900000); // 15 minutes
@@ -1587,7 +1659,7 @@ else
 
 We typically respond within some minutes!`;
 
-          // Upsert WhatsApp settings for the user's mobile number
+          // Upsert whatsapp settings for the user's mobile number
           await WhatsappSettings.findOneAndUpdate(
             { mobileNumber }, // match by main mobileNumber
             {
@@ -1603,7 +1675,7 @@ We typically respond within some minutes!`;
 
           console.log(`WhatsApp message saved for ${mobileNumber}`);
         } catch (whatsAppError) {
-          console.error("Error saving WhatsApp settings:", whatsAppError);
+          console.error("Error saving whatsapp settings:", whatsAppError);
         }
 
 
@@ -1649,7 +1721,55 @@ const UserLeadCounter = mongoose.model(
   "UserLeadCounter",
   userLeadCounterSchema
 );
+// Add this endpoint after your other user-related routes (around line 1400-1500)
 
+app.get("/api/get-user-subscription", async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
+    // Find the latest payment for this user
+    const latestPayment = await Payment.findOne({ email })
+      .sort({ created_at: -1 })
+      .exec();
+
+    if (!latestPayment) {
+      return res.status(404).json({
+        success: false,
+        message: "No subscription found for this user"
+      });
+    }
+
+    // Check if subscription is still active
+    const subscriptionDays = getSubscriptionDuration(latestPayment.subscription_type);
+    const expirationDate = new Date(latestPayment.created_at);
+    expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+    
+    const isActive = new Date() < expirationDate;
+
+    res.json({
+      success: true,
+      subscriptionPlan: latestPayment.subscription_type,
+      isActive,
+      expirationDate: expirationDate.toISOString(),
+      createdAt: latestPayment.created_at
+    });
+
+  } catch (error) {
+    console.error("Error fetching user subscription:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
 app.post("/api/update-max-captures", async (req, res) => {
   try {
     console.log("Received Data:", req.body); // Debugging
@@ -2760,7 +2880,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //           verificationCode = codeMatch[1];
 //           console.log(`Verification code captured for ${messageItem._id}: ${verificationCode}`);
 //           try {
-//             // Update the verificationCode in WhatsApp settings
+//             // Update the verificationCode in whatsapp settings
 //             await WhatsAppSettings.findOneAndUpdate(
 //               { mobileNumber: messageItem.user_mobile_number },
 //               { verificationCode },
@@ -3138,15 +3258,15 @@ app.get("/api/get-user-leads-with-message/:userMobile", async (req, res) => {
       return res.status(400).json({ error: "User mobile number is required" });
     }
 
-    // Fetch WhatsApp settings for this user
+    // Fetch whatsapp settings for this user
     const settings = await WhatsAppSettings.findOne({ mobileNumber: userMobile });
     const user = await User.findOne({ mobileNumber: userMobile });
 
     if (!settings || !settings.whatsappNumber || !settings.messages || settings.messages.length === 0) {
-      console.warn("No WhatsApp settings found for this user");
+      console.warn("No whatsapp settings found for this user");
       return res.status(404).json({
         success: false,
-        message: "No WhatsApp settings found for this user"
+        message: "No whatsapp settings found for this user"
       });
     }
 

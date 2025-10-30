@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Dither from "./Dither.tsx"
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Plans.css';
@@ -19,7 +20,7 @@ const Plans = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setSelected((prev) => (prev + 1) % 2);
-    }, 5000); // Change every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
@@ -40,15 +41,14 @@ const Plans = () => {
   const handlePlanSelect = (plan, price, planName) => {
     setSelectedPlan(plan);
     localStorage.setItem("selectedPrice", price);
-    localStorage.setItem("selectedPlan", plan); // Store subscription type
+    localStorage.setItem("selectedPlan", plan);
     setSelectedPlanDetails({ name: planName, price: price });
   };
 
-  // Razorpay Payment Integration
   const baseAmount = parseInt(localStorage.getItem("selectedPrice") || "2999", 10);
-  const amountInPaisa = baseAmount * 100;  // Convert to paisa
-  const gstAmount = Math.round(amountInPaisa * 0.18);  // 18% GST
-  const amount = amountInPaisa + gstAmount;  // Total amount in paisa
+  const amountInPaisa = baseAmount * 100;
+  const gstAmount = Math.round(amountInPaisa * 0.18);
+  const amount = amountInPaisa + gstAmount;
   const currency = "INR";
   const receiptId = "qwsaq1";
 
@@ -70,11 +70,9 @@ const Plans = () => {
         subscription_type: selectedPlan,
       });
 
-      // Check if the user has previous payments
       const response = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
-      const hasPreviousPayments = response.data.length > 1; // More than one payment means user already subscribed
+      const hasPreviousPayments = response.data.length > 1;
 
-      // Redirect based on payment history
       if (hasPreviousPayments) {
         alert("Subscription successful!!!");
         navigate("/dashboard");
@@ -98,14 +96,20 @@ const Plans = () => {
     e.preventDefault();
     const email = localStorage.getItem("userEmail");
     const contact = localStorage.getItem("mobileNumber");
-    const selectedPlan = localStorage.getItem("selectedPlan");
+    const currentSelectedPlan = localStorage.getItem("selectedPlan");
+    
+    console.log("🔍 Payment Handler Debug:", {
+      currentSelectedPlan,
+      selectedPlanDetails,
+      referralId: referralId.trim()
+    });
     if (!referralId.trim()) {
       alert("Please enter a Referral ID.");
       return;
     }
 
     try {
-      const res = await axios.get(`https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`);
+      const res = await axios.get('https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}');
       if (!res.data.success) {
         alert("Invalid Referral ID.");
         return;
@@ -118,7 +122,7 @@ const Plans = () => {
 
     // ✅ Block if user already used demo
     if (selectedPlan === "7-days") {
-      const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
+      const res = await axios.get('https://api.leadscruise.com/api/has-used-demo?contact=${contact}');
       try {
         
         if (res.data.used) {
@@ -138,10 +142,11 @@ const Plans = () => {
         const timestamp = Date.now();
         await axios.post("https://api.leadscruise.com/api/save-payment", {
           unique_id: await getNextPaymentId(),
+        const orderResponse = await axios.post("https://api.leadscruise.com/api/create-demo-order", {
           email,
           contact,
-          order_id: `FREE-DEMO-${timestamp}`,
-          payment_id: `FREE-DEMO-${timestamp}`,
+          order_id: 'FREE-DEMO-${timestamp}',
+          payment_id: 'FREE-DEMO-${timestamp}',
           signature: "FREE",
           order_amount: 0,
           subscription_type: "7-days",
@@ -159,6 +164,30 @@ const Plans = () => {
 
     // 🛒 For paid plans, proceed with Razorpay flow
     try {
+    console.log("💳 Processing paid plan:", currentSelectedPlan);
+    
+    if (selectedPlanDetails.price === "0" || selectedPlanDetails.price === 0) {
+      console.error("❌ ERROR: Paid plan has price 0!");
+      alert("Invalid plan configuration. Please select a plan again.");
+      setShowModal(false);
+      return;
+    }
+
+    try {
+      const baseAmount = parseInt(localStorage.getItem("selectedPrice") || "2999", 10);
+      const amountInPaisa = baseAmount * 100;
+      const gstAmount = Math.round(amountInPaisa * 0.18);
+      const amount = amountInPaisa + gstAmount;
+      const currency = "INR";
+      const receiptId = `order_${Date.now()}`;
+
+      console.log("💰 Payment Details:", {
+        baseAmount,
+        gst: gstAmount / 100,
+        total: amount / 100,
+        plan: currentSelectedPlan
+      });
+
       const response = await fetch("https://api.leadscruise.com/order", {
         method: "POST",
         body: JSON.stringify({ amount, currency, receipt: receiptId }),
@@ -223,7 +252,7 @@ const Plans = () => {
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to logout?");
 
-    if (!isConfirmed) return; // Stop if user cancels
+    if (!isConfirmed) return;
 
     const userEmail = localStorage.getItem("userEmail");
 
@@ -233,7 +262,7 @@ const Plans = () => {
       });
 
       localStorage.clear();
-      sessionStorage.clear(); // Clear session storage as well
+      sessionStorage.clear();
       window.location.href =
         window.location.hostname === "app.leadscruise.com"
           ? "https://app.leadscruise.com/"
@@ -248,319 +277,346 @@ const Plans = () => {
       alert("Please select a plan first!");
       return;
     }
-    setShowModal(true); // you can later show your coupon popup here
+    setShowModal(true);
   };
+
   const handleGoBack = () => {
-    navigate(-1); // Goes back to previous page
-    // OR if you want to go to a specific route:
-    // navigate('/specific-route');
+    navigate(-1);
   };
+
   const handleDemoClick = () => {
     handlePlanSelect("7-days", "0", "Demo Plan");
     setShowModal(true);
   };
 
   return (
-    <div className="plans-container">
-      <div className="plans-content">
-        <div className="plans-header">
-          <h2>Select Plan for subscription</h2>
-        </div>
-
-        <div className="plans-grid">
-          {/* One Month Plan - Now First */}
-          <div className="plan-card">
-            <div className="plan-header">
-              <h3>One Month Plan</h3>
-              <p className="plan-subtitle">Features :</p>
-              <p className="plan-description">Dive into one month plan comes with everything your business needs</p>
-            </div>
-
-            <div className="features-list">
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited Automatic AI Lead Captures</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Lead reply automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI WhatsApp Reply Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Business Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Full Encryption & Authenticated System</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Free Updates for AI</span>
-              </div>
-            </div>
-
-            <div className="coupon-section">
-              <p className="coupon-text">Coupon Auto Applied at Checkout</p>
-            </div>
-
-            <div className="price-section">
-              <span className="discounted-price">2999</span>
-              <div className="price-details">
-                <span>EXCL of GST</span>
-                <span>PER / Month</span>
-              </div>
-            </div>
-
-            <button
-              className="select-plan-btn"
-              onClick={() => {
-                handlePlanSelect("one-mo", "2999", "One Month Plan");
-                handleNextClick();
-              }}
-            >
-              <span>→</span>
-            </button>
-          </div>
-
-          {/* Three Month Plan - Now Second */}
-          <div className="plan-card">
-            <div className="plan-header">
-              <h3>Three Month Plan</h3>
-              <p className="plan-subtitle">Features :</p>
-              <p className="plan-description">Perfect for getting started with comprehensive AI automation</p>
-            </div>
-
-            <div className="features-list">
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited Automatic AI Lead Captures</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Lead reply automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI WhatsApp Reply Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Business Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Full Encryption & Authenticated System</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Free Updates for AI</span>
-              </div>
-            </div>
-
-            <div className="coupon-section">
-              <p className="coupon-text">Coupon Auto Applied at Checkout</p>
-            </div>
-
-            <div className="price-section">
-              <span className="discounted-price">7999</span>
-              <div className="price-details">
-                <span>EXCL of GST</span>
-                <span>FOR 3 Months</span>
-              </div>
-            </div>
-
-            <button
-              className="select-plan-btn"
-              onClick={() => {
-                handlePlanSelect("three-mo", "7999", "Three Month Plan");
-                handleNextClick();
-              }}
-            >
-              <span>→</span>
-            </button>
-          </div>
-
-          {/* Six Month Plan */}
-          <div className="plan-card">
-            <div className="plan-header">
-              <h3>Six Month Plan</h3>
-              <p className="plan-subtitle">Features :</p>
-              <p className="plan-description">Get the best value with our six month plan - perfect for growing businesses</p>
-            </div>
-
-            <div className="features-list">
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited Automatic AI Lead Captures</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Lead reply automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI WhatsApp Reply Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Business Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Full Encryption & Authenticated System</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Free Updates for AI</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Priority Customer Support</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Advanced Analytics Dashboard</span>
-              </div>
-            </div>
-
-            <div className="coupon-section">
-              <p className="coupon-text">Coupon Auto Applied at Checkout</p>
-            </div>
-
-            <div className="price-section">
-              <span className="discounted-price">14999</span>
-              <div className="price-details">
-                <span>EXCL of GST</span>
-                <span>FOR 6 Months</span>
-              </div>
-            </div>
-
-            <button
-              className="select-plan-btn"
-              onClick={() => {
-                handlePlanSelect("six-mo", "14999", "Six Month Plan");
-                handleNextClick();
-              }}
-            >
-              <span>→</span>
-            </button>
-          </div>
-
-          {/* Yearly Plan - POPULAR */}
-          <div className="plan-card plan-card-popular">
-            <div className="popular-badge">POPULAR</div>
-            <div className="plan-header">
-              <h3>Yearly Plan</h3>
-              <p className="plan-subtitle">Features :</p>
-              <p className="plan-description">Maximum savings with our comprehensive yearly subscription for serious businesses</p>
-            </div>
-
-            <div className="features-list">
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited Automatic AI Lead Captures</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Lead reply automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI WhatsApp Reply Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Unlimited AI Business Automation</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Full Encryption & Authenticated System</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Free Updates for AI</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Priority Customer Support</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Advanced Analytics Dashboard</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Dedicated Account Manager</span>
-              </div>
-              <div className="feature-item">
-                <span className="checkmark">✓</span>
-                <span>Custom Integration Support</span>
-              </div>
-            </div>
-
-            <div className="coupon-section">
-              <p className="coupon-text">Coupon Auto Applied at Checkout</p>
-            </div>
-
-            <div className="price-section">
-              <span className="discounted-price">29999</span>
-              <div className="price-details">
-                <span>EXCL of GST</span>
-                <span>FOR 12 Months</span>
-              </div>
-            </div>
-
-            <button
-              className="select-plan-btn select-plan-btn-popular"
-              onClick={() => {
-                handlePlanSelect("year-mo", "29999", "Yearly Plan");
-                handleNextClick();
-              }}
-            >
-              <span>→</span>
-            </button>
-          </div>
-        </div>
+    <>
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        width: '100%', 
+        height: '100%', 
+        zIndex: 0
+      }}>
+        <Dither
+          waveColor={[51/255, 102/255, 128/255]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={5}
+          waveAmplitude={0.25}
+          waveFrequency={2.5}
+          waveSpeed={0.03}
+          pixelSize={2.5}
+        />
       </div>
+      <div className="plans-container">
+        <div className="plans-content">
+          <div className="plans-header">
+            <h2>Select Plan for subscription</h2>
+            <button className="go-back-btn" onClick={handleGoBack}>Go Back</button>
+          </div>
 
-      <div className="bottom-section">
-        <div className="demo-section">
-          <button className="demo-link" onClick={handleDemoClick}>Need a&nbsp;<span className="demo-bold">Demo?</span></button>
-        </div>
-        <button className="logout-link" onClick={handleGoBack}>Go Back</button>
-      </div>
+          <div className="plans-grid">
+            {/* One Month Plan */}
+            <div className="plan-card">
+              <div className="plan-header">
+                <h3>One Month Plan</h3>
+                <p className="plan-subtitle">Features :</p>
+                <p className="plan-description">Dive into one month plan comes with everything your business needs</p>
+              </div>
 
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Selected Plan Details</h3>
-            <div className="selected-plan-info">
-              <h4>{selectedPlanDetails.name}</h4>
-              <p className="selected-price">
-                {selectedPlanDetails.price === "0" ? "Free Demo" : `₹${selectedPlanDetails.price} +GST`}
-              </p>
+              <div className="features-list">
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited Automatic AI Lead Captures</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI Lead reply automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI Business Automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Full Encryption & Authenticated System</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Free Updates for AI</span>
+                </div>
+              </div>
+
+              <div className="coupon-section">
+                <p className="coupon-text">Coupon Auto Applied at Checkout</p>
+              </div>
+
+              <div className="price-section">
+                <span className="discounted-price">2999</span>
+                <div className="price-details">
+                  <span>EXCL of GST</span>
+                  <span>PER / Month</span>
+                </div>
+              </div>
+
+              <button
+                className="select-plan-btn"
+                onClick={() => {
+                  handlePlanSelect("one-mo", "2999", "One Month Plan");
+                  handleNextClick();
+                }}
+              >
+                <span>→</span>
+              </button>
             </div>
-            <h3>Enter Referral ID</h3>
-            <input
-              type="text"
-              value={referralId}
-              onChange={(e) => setReferralId(e.target.value)}
-              placeholder="Enter your referral ID"
-              className="referral-input"
-            />
-            {paymentError && <p className="error-message">{paymentError}</p>}
-            <div className="modal-buttons">
-              <button onClick={paymentHandler} className="proceed-btn">Proceed</button>
-              <button onClick={() => setShowModal(false)} className="cancel-btn">Cancel</button>
+
+            {/* Three Month Plan */}
+            <div className="plan-card">
+              <div className="plan-header">
+                <h3>Three Month Plan</h3>
+                <p className="plan-subtitle">Features :</p>
+                <p className="plan-description">Perfect for getting started with comprehensive AI automation</p>
+              </div>
+
+              <div className="features-list">
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited Automatic AI Lead Captures</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI Lead reply automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI Business Automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Full Encryption & Authenticated System</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Free Updates for AI</span>
+                </div>
+              </div>
+
+              <div className="coupon-section">
+                <p className="coupon-text">Coupon Auto Applied at Checkout</p>
+              </div>
+
+              <div className="price-section">
+                <span className="discounted-price">7999</span>
+                <div className="price-details">
+                  <span>EXCL of GST</span>
+                  <span>FOR 3 Months</span>
+                </div>
+              </div>
+
+              <button
+                className="select-plan-btn"
+                onClick={() => {
+                  handlePlanSelect("three-mo", "7999", "Three Month Plan");
+                  handleNextClick();
+                }}
+              >
+                <span>→</span>
+              </button>
+            </div>
+
+            {/* Six Month Plan */}
+            <div className="plan-card">
+              <div className="plan-header">
+                <h3>Six Month Plan</h3>
+                <p className="plan-subtitle">Features :</p>
+                <p className="plan-description">Get the best value with our six month plan - perfect for growing businesses</p>
+              </div>
+
+              <div className="features-list">
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited Automatic AI Lead Captures</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI Lead reply automation</span>
+                </div>
+                <div className="feature-item">
+  <span className="checkmark">✓</span>
+  <span>Download Reports</span>
+</div>
+
+<div className="feature-item">
+  <span className="checkmark">✓</span>
+  <span>API Access</span>
+</div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI Business Automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Full Encryption & Authenticated System</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Free Updates for AI</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Priority Customer Support</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Advanced Analytics Dashboard</span>
+                </div>
+              </div>
+
+              <div className="coupon-section">
+                <p className="coupon-text">Coupon Auto Applied at Checkout</p>
+              </div>
+
+              <div className="price-section">
+                <span className="discounted-price">14999</span>
+                <div className="price-details">
+                  <span>EXCL of GST</span>
+                  <span>FOR 6 Months</span>
+                </div>
+              </div>
+
+              <button
+                className="select-plan-btn"
+                onClick={() => {
+                  handlePlanSelect("six-mo", "14999", "Six Month Plan");
+                  handleNextClick();
+                }}
+              >
+                <span>→</span>
+              </button>
+            </div>
+
+            {/* Yearly Plan - POPULAR */}
+            <div className="plan-card plan-card-popular">
+              <div className="popular-badge">Includes WhatsApp Automation</div>
+              <div className="plan-header">
+                <h3>Yearly Plan</h3>
+                <p className="plan-subtitle">Features :</p>
+                <p className="plan-description">Maximum savings with our comprehensive yearly subscription for serious businesses</p>
+              </div>
+
+              <div className="features-list">
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited Automatic AI Lead Captures</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI Lead reply automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI WhatsApp Reply Automation</span>
+                </div>
+                <div className="feature-item">
+  <span className="checkmark">✓</span>
+  <span>Download Reports</span>
+</div>
+
+<div className="feature-item">
+  <span className="checkmark">✓</span>
+  <span>API Access</span>
+</div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI Business Automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Full Encryption & Authenticated System</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Free Updates for AI</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Priority Customer Support</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Advanced Analytics Dashboard</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Dedicated Account Manager</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Custom Integration Support</span>
+                </div>
+              </div>
+
+              <div className="coupon-section">
+                <p className="coupon-text">Coupon Auto Applied at Checkout</p>
+              </div>
+
+              <div className="price-section">
+                <span className="discounted-price">29999</span>
+                <div className="price-details">
+                  <span>EXCL of GST</span>
+                  <span>FOR 12 Months</span>
+                </div>
+              </div>
+
+              <button
+                className="select-plan-btn select-plan-btn-popular"
+                onClick={() => {
+                  handlePlanSelect("year-mo", "29999", "Yearly Plan");
+                  handleNextClick();
+                }}
+              >
+                <span>→</span>
+              </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
+
+        <div className="bottom-section">
+          <div className="demo-section">
+            <button className="demo-link" onClick={handleDemoClick}>Need a&nbsp;<span className="demo-bold">Demo?</span></button>
+          </div>
+        </div>
+
+        {showModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Selected Plan Details</h3>
+              <div className="selected-plan-info">
+                <h4>{selectedPlanDetails.name}</h4>
+                <p className="selected-price">
+                  {selectedPlanDetails.price === "0" ? "Free Demo" : `₹${selectedPlanDetails.price} +GST`}
+                </p>
+              </div>
+              <h3>Enter Referral ID</h3>
+              <input
+                type="text"
+                value={referralId}
+                onChange={(e) => setReferralId(e.target.value)}
+                placeholder="Enter your referral ID"
+                className="referral-input"
+              />
+              {paymentError && <p className="error-message">{paymentError}</p>}
+              <div className="modal-buttons">
+                <button onClick={paymentHandler} className="proceed-btn">Proceed</button>
+                <button onClick={() => setShowModal(false)} className="cancel-btn">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
   );
 };
 

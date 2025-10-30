@@ -27,12 +27,46 @@ body {
   width: 100%;
 }
 
+
+.plans-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
 .plans-header h2 {
   font-size: 18px;
   font-weight: 600;
   color: white;
-  margin-bottom: 20px; /* Reduced from 30px */
+  margin-bottom: 0;
   line-height: 1.4;
+}
+
+.plans-header .go-back-btn {
+  width: auto;
+  padding: 6px 16px;
+  margin: 0;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(26, 32, 44, 0.15);
+  flex-shrink: 0;
+}
+
+.plans-header .go-back-btn:hover {
+  background:grey;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 32, 44, 0.25);
+  text-decoration: none;
 }
 
 .plans-grid {

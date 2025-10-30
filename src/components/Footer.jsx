@@ -10,6 +10,12 @@ const Footer = () => {
     window.location.pathname === '/dashboard';
   const isMobile = window.innerWidth <= 768;
   const showScrollMessage = isDashboard && !isMobile;
+const isTestDitherPage = window.location.pathname.includes('/test-dither');
+  // Check if we're on a page that uses settings-page-wrapper
+  const needsHigherZIndex = 
+    window.location.pathname.includes('/settings') ||
+    window.location.pathname.includes('/analytics') ||
+    window.location.pathname.includes('/whatsapp');
 
   const handleEmailClick = () => {
     window.location.href = `mailto:${supportEmail}`;
@@ -21,13 +27,9 @@ const Footer = () => {
   };
 
   const [isPopupOpen, setIsPopupOpen] = React.useState(false);
- /* // Hide footer on root route
-  if (window.location.pathname === "/") {
-    return null;
-  }*/
 
   return (
-    <footer className="footer">
+    <footer className="footer" style={needsHigherZIndex ? { zIndex: 100 } : {}}>
       <div className="footer-content">
         <div className='footer-left'>
           {/* {showScrollMessage && (
@@ -53,19 +55,30 @@ const Footer = () => {
 
 
         </div>
+        {!isTestDitherPage && (
         <div className="support-button-container">
           <button
             className="support-button"
+            style={needsHigherZIndex ? { position: 'relative', zIndex: 102 } : {}}
             onClick={() => setIsPopupOpen(true)}
           >
             Contact Support
           </button>
         </div>
+        )}
       </div>
 
       {isPopupOpen && (
-        <div className="popup-overlay" onClick={() => setIsPopupOpen(false)}>
-          <div className="popup-content" onClick={e => e.stopPropagation()}>
+        <div 
+          className="popup-overlay" 
+          style={needsHigherZIndex ? { zIndex: 9999 } : {}}
+          onClick={() => setIsPopupOpen(false)}
+        >
+          <div 
+            className="popup-content" 
+            style={needsHigherZIndex ? { zIndex: 10000 } : {}}
+            onClick={e => e.stopPropagation()}
+          >
             <div className="popup-header">
               <h2>Contact Support</h2>
               <button

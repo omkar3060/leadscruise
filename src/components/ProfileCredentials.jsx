@@ -189,7 +189,10 @@ const ProfileCredentials = ({
   const [downloadError, setDownloadError] = useState("");
   const [isLeadsCruisePasswordFocused, setIsLeadsCruisePasswordFocused] = useState(false);
   const [isIndiaMartPasswordFocused, setIsIndiaMartPasswordFocused] = useState(false);
-
+const [canAccessDesktopApp, setCanAccessDesktopApp] = useState(false);
+const [subscriptionCheckLoading, setSubscriptionCheckLoading] = useState(true);
+const [activeSubscriptions, setActiveSubscriptions] = useState([]);
+const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/;
   const [countdown, setCountdown] = useState(0);
   const [thresholdLevel, setThresholdLevel] = useState('');
@@ -294,7 +297,51 @@ const ProfileCredentials = ({
       }
     }
   };
+useEffect(() => {
+  const checkActiveSubscriptions = async () => {
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) {
+        setCanAccessDesktopApp(false);
+        setSubscriptionCheckLoading(false);
+        return;
+      }
 
+      // Demo account gets full access
+      if (userEmail === "demo@leadscruise.com") {
+        setCanAccessDesktopApp(true);
+        setSubscriptionCheckLoading(false);
+        return;
+      }
+
+      const response = await axios.get(
+        `https://api.leadscruise.com/api/get-active-subscriptions?email=${userEmail}`
+      );
+
+      if (response.data.success) {
+        setActiveSubscriptions(response.data.activeSubscriptions);
+        
+        // Check if user has any active yearly subscription
+        const hasYearlySubscription = response.data.activeSubscriptions.some(
+          sub => sub.type === 'year-mo'
+        );
+        
+        setCanAccessDesktopApp(hasYearlySubscription);
+        
+        console.log("Active Subscriptions:", response.data.activeSubscriptions);
+        console.log("Has Yearly Subscription:", hasYearlySubscription);
+        console.log("Can Access Desktop App:", hasYearlySubscription);
+      }
+    } catch (error) {
+      console.error("Failed to check active subscriptions:", error);
+      setCanAccessDesktopApp(false);
+    } finally {
+      setSubscriptionCheckLoading(false);
+    }
+  };
+
+  checkActiveSubscriptions();
+}, []);
   useEffect(() => {
     const fetchMaxCaptures = async () => {
       try {
@@ -842,7 +889,7 @@ const MiscSettingsButton = ({ userEmail, automationStatus }) => {
 )}
       {isWhatsAppPage && (
         <div className="credentials-section">
-          <h3 className="credentials-header">WhatsApp Settings</h3>
+          <h3 className="credentials-header">whatsapp settings</h3>
           <div className="credentials-content">
             <div className="credential-group">
               <label>Your WhatsApp Number</label>
@@ -871,18 +918,67 @@ const MiscSettingsButton = ({ userEmail, automationStatus }) => {
                     </button>
                   ) : (
                     <button
-                      className="edit-button"
-                      disabled={countdown > 0}
-                      title={getButtonTitle("Edit")}
-                      style={{
-                        backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                        cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                        color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
-                      }}
-                      onClick={() => handleEditClick(() => setIsEditingWhatsapp(true))}
-                    >
-                      Edit {countdown > 0 && `(${countdown}s)`}
-                    </button>
+  className="edit-button"
+  disabled={countdown > 0 || subscriptionCheckLoading}
+  title={
+    subscriptionCheckLoading 
+      ? "Checking subscription..." 
+      : countdown > 0 
+        ? getButtonTitle("Edit")
+        : !canAccessDesktopApp
+          ? "Yearly subscription required"
+          : "Edit your WhatsApp number"
+  }
+  style={{
+    backgroundColor: 
+      localStorage.getItem("userEmail") === "demo@leadscruise.com" || 
+      subscriptionCheckLoading ||
+      !canAccessDesktopApp
+        ? "#ccc" 
+        : "",
+    cursor: 
+      localStorage.getItem("userEmail") === "demo@leadscruise.com" || 
+      subscriptionCheckLoading ||
+      !canAccessDesktopApp ||
+      countdown > 0
+        ? "not-allowed" 
+        : "pointer",
+    color: 
+      localStorage.getItem("userEmail") === "demo@leadscruise.com" || 
+      subscriptionCheckLoading ||
+      !canAccessDesktopApp
+        ? "#666" 
+        : "",
+    opacity: subscriptionCheckLoading ? 0.6 : 1
+  }}
+  onClick={() => {
+    // Check demo account
+    if (localStorage.getItem("userEmail") === "demo@leadscruise.com") {
+      alert("Demo account cannot edit WhatsApp settings");
+      return;
+    }
+    
+    // Check subscription loading
+    if (subscriptionCheckLoading) {
+      alert("Checking subscription status, please wait...");
+      return;
+    }
+    
+    // Check yearly subscription
+    if (!canAccessDesktopApp) {
+      setShowUpgradePopup(true);
+      return;
+    }
+    
+    // All checks passed, proceed with edit
+    handleEditClick(() => setIsEditingWhatsapp(true));
+  }}
+>
+  {subscriptionCheckLoading 
+    ? "Checking..." 
+    : `Edit ${countdown > 0 ? `(${countdown}s)` : ''}`
+  }
+</button>
                   )
                 ) : (
                   <div className="edit-button-container">
@@ -916,7 +1012,217 @@ const MiscSettingsButton = ({ userEmail, automationStatus }) => {
           </div>
         </div>
       )}
+{/* Upgrade Popup Modal - Only shows when non-yearly user clicks buttons */}
+{showUpgradePopup && (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10000,
+    padding: '20px'
+  }}>
+    <div style={{
+      backgroundColor: 'white',
+      borderRadius: '12px',
+      padding: '30px',
+      maxWidth: '500px',
+      width: '100%',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+      animation: 'slideIn 0.3s ease-out',
+      position: 'relative'
+    }}>
+      {/* Close button */}
+      <button
+        onClick={() => setShowUpgradePopup(false)}
+        style={{
+          position: 'absolute',
+          top: '15px',
+          right: '15px',
+          background: 'transparent',
+          border: 'none',
+          fontSize: '24px',
+          cursor: 'pointer',
+          color: '#999',
+          padding: '0',
+          width: '30px',
+          height: '30px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '0'
+        }}
+      >
+        ×
+      </button>
 
+      {/* Lock Icon */}
+      <div style={{ 
+        textAlign: 'center',
+        fontSize: '64px', 
+        marginBottom: '20px',
+        animation: 'bounce 0.5s ease-in-out'
+      }}>
+        🔒
+      </div>
+
+      {/* Title */}
+      <h2 style={{ 
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: '15px',
+        fontSize: '24px',
+        fontWeight: '600'
+      }}>
+        Yearly Subscription Required
+      </h2>
+
+      {/* Description */}
+      <p style={{ 
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: '25px',
+        fontSize: '15px',
+        lineHeight: '1.6'
+      }}>
+        The Desktop Application feature is exclusively available for yearly subscription plans.
+        Upgrade your plan to download the desktop app and access release notes.
+      </p>
+
+      {/* Current Subscriptions */}
+      {activeSubscriptions.length > 0 && (
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: '20px',
+          borderRadius: '8px',
+          marginBottom: '25px'
+        }}>
+          <p style={{ 
+            fontSize: '14px', 
+            color: '#495057',
+            marginBottom: '12px',
+            fontWeight: '600'
+          }}>
+            Your Current Subscriptions:
+          </p>
+          {activeSubscriptions.map((sub, index) => (
+            <div key={index} style={{
+              padding: '12px',
+              backgroundColor: 'white',
+              borderRadius: '6px',
+              marginBottom: index < activeSubscriptions.length - 1 ? '8px' : '0',
+              border: '1px solid #dee2e6'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <strong style={{ fontSize: '14px', color: '#333' }}>
+                    {sub.type === 'six-mo' ? '📅 6-Month Plan' :
+                     sub.type === 'three-mo' ? '📅 3-Month Plan' :
+                     sub.type === 'one-mo' ? '📅 Monthly Plan' : 
+                     sub.type === '7-days' ? '📅 7-Day Trial' : '📅 Subscription'}
+                  </strong>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                    Expires: {new Date(sub.expirationDate).toLocaleDateString('en-IN')}
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: '11px',
+                  padding: '4px 8px',
+                  backgroundColor: '#e3f2fd',
+                  color: '#1976d2',
+                  borderRadius: '12px',
+                  fontWeight: '600'
+                }}>
+                  {sub.daysRemaining} days left
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '10px',
+        justifyContent: 'center'
+      }}>
+        <button
+          onClick={() => setShowUpgradePopup(false)}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            transition: 'background-color 0.2s',
+            marginBottom: '0'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#5a6268'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#6c757d'}
+        >
+          Maybe Later
+        </button>
+        <button
+          onClick={() => {
+            setShowUpgradePopup(false);
+            window.location.href = '/plans';
+          }}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            transition: 'background-color 0.2s',
+            marginBottom: '0'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
+        >
+          Upgrade to Yearly Plan →
+        </button>
+      </div>
+    </div>
+
+    <style>{`
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes bounce {
+        0%, 100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+    `}</style>
+  </div>
+)}
       {isWhatsAppPage && (
         <div className="credentials-section">
           <h3 className="credentials-header centered-header">Desktop Application</h3>
@@ -933,7 +1239,13 @@ const MiscSettingsButton = ({ userEmail, automationStatus }) => {
                     <div className="edit-button-container">
                       <button
                         className="update-api-btn"
-                        onClick={downloadLatestRelease}
+                        onClick={() => {
+  if (!canAccessDesktopApp) {
+    setShowUpgradePopup(true);
+    return;
+  }
+  downloadLatestRelease();
+}}
                         disabled={countdown > 0}
                         title={getButtonTitle("Download")}
                       >
@@ -941,7 +1253,13 @@ const MiscSettingsButton = ({ userEmail, automationStatus }) => {
                       </button>
                       <button
                         className="cancel-button"
-                        onClick={viewReleaseNotes}
+                        onClick={() => {
+  if (!canAccessDesktopApp) {
+    setShowUpgradePopup(true);
+    return;
+  }
+  viewReleaseNotes();
+}}
                         disabled={countdown > 0}
                         title={getButtonTitle("View Details")}
                       >
