@@ -53,7 +53,7 @@ import AITotalLeadsToday from "./components/AITotalLeadsToday";
 import AITotalLeadsThisWeek from "./components/AITotalLeadsThisWeek";
 import AITotalLeadsCaptured from "./components/AITotalLeadsCaptured";
 import TaskExecutor2 from "./components/TaskExecutor2"; 
-
+import ExclusiveUsers from "./components/ExclusiveUsers";
 const Layout = () => {
   const location = useLocation();
   const [isAppDomain, setIsAppDomain] = useState(false);
@@ -100,6 +100,7 @@ const Layout = () => {
         <Route path="/contact" element={<LandingPage page="contact.html" />} />
         // In your routes:
         <Route path="/test-dither" element={<TestDither />} />
+        
 
         {/* Protected Routes */}
         <Route
@@ -250,7 +251,15 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
-
+        // Around line 215, with other master routes
+<Route
+  path="/master/exclusive"
+  element={
+    <ProtectedRoute adminOnly={true}>
+      <ExclusiveUsers />
+    </ProtectedRoute>
+  }
+/>
         <Route
           path="/master/expired"
           element={

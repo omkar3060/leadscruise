@@ -878,19 +878,58 @@ useEffect(() => {
   };
 
   // Update the handleDownloadLeadsExcel function
-const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customEnd = null) => {
-  // Check if user can download reports
-  if (!canDownloadReports) {
+// In Dashboard.tsx, update the download reports check:
+// Update the handleDownloadLeadsExcel function in Dashboard.jsx
+// Update the handleDownloadLeadsExcel function in Dashboard.jsx
+const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, customEnd = null) => {
+  const userEmail = localStorage.getItem("userEmail");
+  
+  // First, check if user is exclusive
+  let isExclusiveUser = false;
+  
+  try {
+    console.log("🔍 Checking exclusive status for:", userEmail);
+    const exclusiveCheck = await fetch(`https://api.leadscruise.com/api/check-exclusive/${userEmail}`);
+    
+    if (exclusiveCheck.ok) {
+      const exclusiveData = await exclusiveCheck.json();
+      console.log("📊 Exclusive check response:", exclusiveData);
+      
+      // Strict boolean check
+      if (exclusiveData.success === true && exclusiveData.isExclusive === true) {
+        console.log("✅ User is exclusive - granting download access");
+        isExclusiveUser = true;
+      }
+    }
+  } catch (error) {
+    console.error("⚠️ Error checking exclusive status:", error);
+  }
+
+  // Determine if user has download access
+  const hasDownloadAccess = isExclusiveUser || canDownloadReports;
+  
+  console.log("🎯 Download access decision:");
+  console.log("   - isExclusiveUser:", isExclusiveUser);
+  console.log("   - canDownloadReports:", canDownloadReports);
+  console.log("   - hasDownloadAccess:", hasDownloadAccess);
+
+  // Block access if user is neither exclusive nor has proper subscription
+  if (!hasDownloadAccess) {
+    console.log("🚫 Access denied - showing upgrade popup");
     setShowUpgradePopup(true);
     setShowDownloadDropdown(false);
     return;
   }
 
+  console.log("✅ Access granted - proceeding with download");
+
+  // Check if there are leads to download
   if (!leads || leads.length === 0) {
     alert("No leads available to download.");
     return;
   }
 
+  // Rest of your existing download logic...
   let filteredLeads;
   let label;
 
@@ -952,6 +991,8 @@ const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customE
 
   XLSX.writeFile(workbook, filename);
   setShowDownloadDropdown(false);
+  
+  console.log("✅ Download completed successfully");
 };
 
   // PART 2 - Continuation from handleCustomDateSubmit function
@@ -1426,7 +1467,7 @@ const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customE
             <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
               Settings
             </button>
-            <button
+           <button
   className={styles.buttonLarge}
   onClick={() => {
     if (subscriptionCheckLoading) {
@@ -1434,10 +1475,12 @@ const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customE
       return;
     }
     
-    if (!canDownloadReports) {
-      setShowUpgradePopup(true);
-      return;
-    }
+    // Remove this check - let handleDownloadLeadsExcel decide
+    // if (!canDownloadReports) {
+    //   setShowUpgradePopup(true);
+    //   return;
+    // }
+    
     setShowDownloadDropdown(!showDownloadDropdown);
   }}
   style={{ 

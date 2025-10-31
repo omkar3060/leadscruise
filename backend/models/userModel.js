@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
     autoStartEnabled: {type: Boolean,default: false},
     buyerBalance: { type: Number, default: null },
     firstInvoiceDownloadTime: { type: Date, default: null },
+    // Add this field to your User schema
+isExclusive: {
+  type: Boolean,
+  default: false
+},
   },
   { timestamps: true } // Adds createdAt and updatedAt fields
 );

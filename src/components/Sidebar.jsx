@@ -56,13 +56,22 @@ const Sidebar = ({ status }) => {
         </div>
 
         {location.pathname.includes("/master") && (
-          <div
-            className={`${styles.sidebarIcon} ${styles.tooltip}`}
-            onClick={() => navigate("/master/referrals")}
-          >
-            <MdOutlineRecommend className={styles.icon} />
-            <span className={styles.tooltipText}>Referrals</span>
-          </div>
+          <>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/master/referrals")}
+            >
+              <MdOutlineRecommend className={styles.icon} />
+              <span className={styles.tooltipText}>Referrals</span>
+            </div>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/master/exclusive")}
+            >
+              <span className={styles.icon} style={{ fontSize: '32px' }}>⭐</span>
+              <span className={styles.tooltipText}>Exclusive Users</span>
+            </div>
+          </>
         )}
 
         {!location.pathname.includes("/master") && (
@@ -143,7 +152,7 @@ const Sidebar = ({ status }) => {
               onClick={() => window.open("https://www.exportersindia.com/register-business-online?joinfree=sellurprdtshead", "_blank")}
             >
               <img
-                src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIACAAIAMBEQACEQEDEQH/xAAXAAEAAwAAAAAAAAAAAAAAAAAFBAYH/8QALRAAAQMCBAMHBQEAAAAAAAAAAQIDBAURAAYSMSEycQcTQUJhgaEUI0NRsSL/xAAaAQACAwEBAAAAAAAAAAAAAAACAwEEBQAG/8QAKBEAAgIBBAADCQAAAAAAAAAAAQIAAxEhEjExQYHwEyIkMzRxscHh/9oADAMBAAIRAxEAPwDccdOkd6dEYdDL0pht07IW4AT7YMVuRkCCWUcEyRgIUzTJ3aBVa5m40mVCbQg95rbSDrj6b83vZPU4q1W2s+GHE3tbodDVpRZU+W/Pl4R7P2YpFJYiU2k6VVapOBqPfZFyBqPuR8/rGtpKFfdY/wAqzzN9hXCL2YVnmgUmj9n8zvW0OSUaFmY6AXnHdQusq3uePQcNsM0djvqlb1iReqrSRLPklqYxlSmN1Er+pDAKgvmSDwAPqAQPbFbVOr3My9ZjalKoAYnCWl5kSEhP3v8AQUBzJ8vxbCmGDiGDkZmXVyUV9tcFMgKU1GQNCQLk/aUoWHidRxq1j4BseuRKbfUjMuhpMjMM+PNrjHcwYq+8i09RBKl+DjtuFx4JFwNyTsM72gRSqePZ/UtbdxyZNrMn6mS3RIyiXpCdUgp/Cx5iT4FXKnqT5TiKxtG8+X3/AJOZ590RcAAAAWA2AwqHKHn/ACdUKlVoWYMvONJqcTSFNOK0h0JN0kHYEXIseBB3FuNzTakVqa3GVMRbTvIYdiLxp2bJ8dLZo8SlvEWW/Ikh4J9Uto5uhUnrhBFQPBJjBvPcWo9KZpbLgStx+Q8rXIkukFx5X7P8AHADbAM5Y8wlUCIYGTP/2Q=="
+                src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIACAAIAMBEQACEQEDEQH/xAAXAAEAAwAAAAAAAAAAAAAAAAAFBAYH/8QALRAAAQMCBAMHBQEAAAAAAAAAAQIDBAURAAYSMSEycQcTQVGBlBQiI0NRsST/xAAaAQACAwEBAAAAAAAAAAAAAAACAwEEBQAG/8QAKBEAAgIBBAADCQAAAAAAAAAAAQIAAxEhEjExQYHwEyIkMzRxscHh/9oADAMBAAIRAxEAPwDccdOkd6dEYdDL0pht07IW4AT7YMVuRkCCWUcEyRgIUzTJ3aBVa5m40mVCbQg95rbSDrj6b83vZPU4q1W2s+GHE3tbodDVpRZU+W/Pl4R7P2YpFJYiU2k6VVapOBqPfZFyBqPuR8/rGtpKFfdY/wAqzzN9hXCL2YVnmgUmj9n8zvW0OSUaFmY6AXnHdQusq3uePQcNsM0djvqlb1iReqrSRLPklqYxlSmN1Er+pDAKgvmSDwAPqAQPbFbVOr3My9ZjalKoAYnCWl5kSEhP3v8AQUBzJ8vxbCmGDiGDkZmXVyUV9tcFMgKU1GQNCQLk/aUoWHidRxp1j4BseuRKbfUjMuhpMjMM+PNrjHcwYq+8i09RBKl+DjtuFx4JFwNyTsM72gRSqePZ/UtbdxyZNrMn6mS3RIyiXpCdUgp/Cx5iT4FXKnqT5TiKxtG8+X3/AJOZ590RcAAAAWA2AwqHKHn/ACdUKlVoWYMvONJqcTSFNOK0h0JN0kHYEXIseBB3FuNzTakVqa3GVMRbTvIYdiLxp2bJ8dLZo8SlvEWW/Ikh4J9Uto5uhUnrhBFQPBJjBvPcWo9KZpbLgStx+Q8rXIkukFx5X7P8AHADbAM5Y8wlUCIYGTP/2Q=="
                 className={styles.icon}
                 alt="Exporters India"
                 style={{
@@ -180,8 +189,8 @@ const Sidebar = ({ status }) => {
               }} />
               <span className={styles.tooltipText}>YouTube</span>
             </div>
-            
-            {/* LOGOUT BUTTON MOVED HERE - RIGHT AFTER YOUTUBE */}
+
+            {/* LOGOUT BUTTON */}
             <div className={`${styles.sidebarIcon} ${styles.tooltip}`} onClick={handleLogout}>
               <FiLogOut className={styles.icon} />
               <span className={styles.tooltipText}>Logout</span>
