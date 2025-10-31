@@ -11,7 +11,7 @@ import axios from "axios";
 import AIIcon from '../images/AI.png';
 import { HiUserGroup } from "react-icons/hi";
 import { FaYoutube } from "react-icons/fa";
-
+import SheetsIcon from '../images/sheets-icon.png'; // adjust path as needed
 const Sidebar = ({ status }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,12 +88,21 @@ const Sidebar = ({ status }) => {
               <span className={styles.tooltipText}>AI</span>
             </div>
             <div
-              className={`${styles.sidebarIcon} ${styles.tooltip}`}
-              onClick={() => navigate("/sheets")}
-            >
-              <SiGooglesheets className={styles.icon} />
-              <span className={styles.tooltipText}>Sheets</span>
-            </div>
+  className={`${styles.sidebarIcon} ${styles.tooltip}`}
+  onClick={() => navigate("/sheets")}
+>
+  <img 
+    src={SheetsIcon} 
+    className={styles.icon} 
+    alt="Sheets" 
+    style={{
+      width: "32px",
+      height: "32px",
+      objectFit: "contain",
+    }} 
+  />
+  <span className={styles.tooltipText}>Sheets</span>
+</div>
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/analytics")}
