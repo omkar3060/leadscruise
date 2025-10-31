@@ -986,14 +986,14 @@ const ProfileCredentials = ({
                       >
                         Download {countdown > 0 && `(${countdown}s)`}
                       </button>
-                      <button
+                      {/* <button
                         className="cancel-button"
                         onClick={viewReleaseNotes}
                         disabled={countdown > 0}
                         title={getButtonTitle("View Details")}
                       >
                         Release Notes {countdown > 0 && `(${countdown}s)`}
-                      </button>
+                      </button> */}
                     </div>
                   </>
                 ) : (

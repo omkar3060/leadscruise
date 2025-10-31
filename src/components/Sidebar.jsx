@@ -91,16 +91,7 @@ const Sidebar = ({ status }) => {
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/sheets")}
             >
-              <img
-                src={SheetsIcon}
-                className={styles.icon}
-                alt="Sheets"
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  objectFit: "contain",
-                }}
-              />
+              <SiGooglesheets className={styles.icon} />
               <span className={styles.tooltipText}>Sheets</span>
             </div>
             <div
