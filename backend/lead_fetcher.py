@@ -5364,11 +5364,16 @@ class GitHubUpdateManager:
         """Download and install the update"""
         def update_thread():
             try:
-                self.app.log_to_response("⬇️ Downloading update...")
-                self.app.fetch_button.configure(state='disabled')
+                # Run diagnostics before starting
+                self.diagnose_update_environment()
                 
-                # Switch progress bar to determinate mode
-                self.app.progress.configure(mode='determinate', value=0)
+                self.app.log_to_response("⬇️ Downloading update...")
+                
+                # Disable fetch button on main thread
+                self.app.root.after(0, lambda: self.app.fetch_button.configure(state='disabled'))
+                
+                # Set progress bar to determinate mode (0-1 range for CustomTkinter)
+                self.app.root.after(0, lambda: self.app.progress.set(0))
                 
                 # Create temporary directory
                 with tempfile.TemporaryDirectory() as temp_dir:
@@ -5397,17 +5402,21 @@ class GitHubUpdateManager:
                     # Install update
                     self.install_update(temp_file, version)
                     
+                    # Verify update success
+                    self.app.root.after(0, lambda: self.verify_update_success(version))
+                    
             except Exception as e:
-                self.app.root.after(0, lambda: self.app.log_to_response(f"❌ Update failed: {str(e)}"))
-                self.app.root.after(0, lambda: messagebox.showerror("Update Failed", f"Update installation failed:\n{str(e)}"))
+                error_msg = str(e)  # ✅ Capture error immediately
+                self.app.root.after(0, lambda msg=error_msg: self.app.log_to_response(f"❌ Update failed: {msg}"))
+                self.app.root.after(0, lambda msg=error_msg: messagebox.showerror("Update Failed", f"Update installation failed:\n{msg}"))
             finally:
                 self.app.root.after(0, self.cleanup_after_update)
         
         threading.Thread(target=update_thread, daemon=True).start()
-    
+
     def update_progress(self, progress):
         """Update progress bar"""
-        self.app.progress['value'] = progress
+        self.app.progress.set(progress / 100)  # CustomTkinter uses 0-1 range
         self.app.status_var.set(f"Downloading update... {progress:.1f}%")
     
     def install_update(self, update_file, version):
@@ -5699,7 +5708,9 @@ class GitHubUpdateManager:
     
     def cleanup_after_update(self):
         """Reset UI after update process"""
-        self.app.progress.configure(mode='indeterminate', value=0)
+        # CustomTkinter progress bar doesn't use 'value' parameter
+        self.app.progress.stop()  # Stop any animation
+        self.app.progress.set(0)  # Reset to 0
         self.app.fetch_button.configure(state='normal')
         self.app.status_var.set("Ready to fetch data...")
 
@@ -5821,57 +5832,6 @@ class GitHubUpdateManager:
         
         self.app.log_to_response("="*50)
         return success
-    # Add this method to your GitHubUpdateManager class to call diagnostics
-    def download_and_install_update(self, download_url, version):
-        """Download and install the update - with diagnostics"""
-        def update_thread():
-            try:
-                # Run diagnostics before starting
-                self.diagnose_update_environment()
-                
-                self.app.log_to_response("Downloading update...")
-                self.app.fetch_button.configure(state='disabled')
-                
-                # Switch progress bar to determinate mode
-                self.app.progress.configure(mode='determinate', value=0)
-                
-                # Create temporary directory
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_file = os.path.join(temp_dir, f"leadfetcher-update-v{version}.zip")
-                    
-                    # Download file with progress
-                    response = requests.get(download_url, stream=True, timeout=30)
-                    response.raise_for_status()
-                    
-                    total_size = int(response.headers.get('content-length', 0))
-                    downloaded = 0
-                    
-                    with open(temp_file, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            if chunk:
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                
-                                if total_size > 0:
-                                    progress = (downloaded / total_size) * 100
-                                    self.app.root.after(0, lambda p=progress: self.update_progress(p))
-                    
-                    self.app.root.after(0, lambda: self.app.log_to_response("Download completed"))
-                    self.app.root.after(0, lambda: self.app.status_var.set("Installing update..."))
-                    
-                    # Install update
-                    self.install_update(temp_file, version)
-                    
-                    # Verify update success
-                    self.app.root.after(0, lambda: self.verify_update_success(version))
-                    
-            except Exception as e:
-                self.app.root.after(0, lambda: self.app.log_to_response(f"Update failed: {str(e)}"))
-                self.app.root.after(0, lambda: messagebox.showerror("Update Failed", f"Update installation failed:\n{str(e)}"))
-            finally:
-                self.app.root.after(0, self.cleanup_after_update)
-        
-        threading.Thread(target=update_thread, daemon=True).start()
-
+    
 if __name__ == "__main__":
     main()
