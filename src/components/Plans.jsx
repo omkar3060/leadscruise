@@ -93,110 +93,110 @@ const Plans = () => {
   };
 
   const paymentHandler = async (e) => {
-  e.preventDefault();
-  const email = localStorage.getItem("userEmail");
-  const contact = localStorage.getItem("mobileNumber");
-  const selectedPlan = localStorage.getItem("selectedPlan");
-  
-  if (!referralId.trim()) {
-    alert("Please enter a Referral ID.");
-    return;
-  }
-  
-  try {
-    const res = await axios.get(`https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`);
-    if (!res.data.success) {
-      alert("Invalid Referral ID.");
+    e.preventDefault();
+    const email = localStorage.getItem("userEmail");
+    const contact = localStorage.getItem("mobileNumber");
+    const selectedPlan = localStorage.getItem("selectedPlan");
+
+    if (!referralId.trim()) {
+      alert("Please enter a Referral ID.");
       return;
     }
-  } catch (err) {
-    console.error("Error validating referral:", err);
-    alert("Unable to verify Referral ID. Please try again.");
-    return;
-  }
-  
-  // ✅ Block if user already used demo
-  if (selectedPlan === "7-days") {
+
     try {
-      const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
-      
-      if (res.data.used) {
-        alert(res.data.message || "You have already used the demo subscription. Please choose another plan.");
-        setShowModal(false);
+      const res = await axios.get(`https://api.leadscruise.com/api/referrals/check-referral/${referralId.trim()}`);
+      if (!res.data.success) {
+        alert("Invalid Referral ID.");
         return;
       }
     } catch (err) {
-      console.error("Error checking demo usage:", err);
-      alert("Unable to validate demo subscription. Please try again.");
-      setShowModal(false);
+      console.error("Error validating referral:", err);
+      alert("Unable to verify Referral ID. Please try again.");
       return;
     }
-    
-    // ✅ Directly create a free demo subscription without payment
-    try {
-      const timestamp = Date.now();
-      await axios.post("https://api.leadscruise.com/api/save-payment", {
-        unique_id: await getNextPaymentId(),
-        email,
-        contact,
-        order_id: `FREE-DEMO-${timestamp}`,
-        payment_id: `FREE-DEMO-${timestamp}`,
-        signature: "FREE",
-        order_amount: 0,
-        subscription_type: "7-days",
-      });
-      alert("Demo subscription activated successfully!");
-      navigate("/execute-task");
-      return;
-    } catch (error) {
-      console.error("Error activating demo subscription:", error);
-      setPaymentError("Unable to activate demo. Please try again.");
-      return;
-    }
-  }
-  
-  // 🛒 For paid plans, proceed with Razorpay flow
-  try {
-    const response = await fetch("https://api.leadscruise.com/order", {
-      method: "POST",
-      body: JSON.stringify({ amount, currency, receipt: receiptId }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const order = await response.json();
-    
-    var options = {
-      key: "rzp_live_febmpQBBFIuphK",
-      amount,
-      currency,
-      name: "Focus Engineering",
-      description: "Test Transaction",
-      image: "https://example.com/your_logo",
-      order_id: order.id,
-      prefill: { email, contact },
-      handler: async function (response) {
-        const validationResult = await validateRes(response);
-        if (validationResult && validationResult.success) {
-          await savePaymentDetails(response);
-        } else {
-          console.error("Payment validation failed:", validationResult);
-          setPaymentError("Payment validation failed. Please try again.");
+
+    // ✅ Block if user already used demo
+    if (selectedPlan === "7-days") {
+      try {
+        const res = await axios.get(`https://api.leadscruise.com/api/has-used-demo?contact=${contact}`);
+
+        if (res.data.used) {
+          alert(res.data.message || "You have already used the demo subscription. Please choose another plan.");
+          setShowModal(false);
+          return;
         }
-      },
-      theme: { color: "#3399cc" },
-    };
-    
-    var rzp1 = new window.Razorpay(options);
-    rzp1.on("payment.failed", function () {
+      } catch (err) {
+        console.error("Error checking demo usage:", err);
+        alert("Unable to validate demo subscription. Please try again.");
+        setShowModal(false);
+        return;
+      }
+
+      // ✅ Directly create a free demo subscription without payment
+      try {
+        const timestamp = Date.now();
+        await axios.post("https://api.leadscruise.com/api/save-payment", {
+          unique_id: await getNextPaymentId(),
+          email,
+          contact,
+          order_id: `FREE-DEMO-${timestamp}`,
+          payment_id: `FREE-DEMO-${timestamp}`,
+          signature: "FREE",
+          order_amount: 0,
+          subscription_type: "7-days",
+        });
+        alert("Demo subscription activated successfully!");
+        navigate("/execute-task");
+        return;
+      } catch (error) {
+        console.error("Error activating demo subscription:", error);
+        setPaymentError("Unable to activate demo. Please try again.");
+        return;
+      }
+    }
+
+    // 🛒 For paid plans, proceed with Razorpay flow
+    try {
+      const response = await fetch("https://api.leadscruise.com/order", {
+        method: "POST",
+        body: JSON.stringify({ amount, currency, receipt: receiptId }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const order = await response.json();
+
+      var options = {
+        key: "rzp_live_febmpQBBFIuphK",
+        amount,
+        currency,
+        name: "Focus Engineering",
+        description: "Test Transaction",
+        image: "https://example.com/your_logo",
+        order_id: order.id,
+        prefill: { email, contact },
+        handler: async function (response) {
+          const validationResult = await validateRes(response);
+          if (validationResult && validationResult.success) {
+            await savePaymentDetails(response);
+          } else {
+            console.error("Payment validation failed:", validationResult);
+            setPaymentError("Payment validation failed. Please try again.");
+          }
+        },
+        theme: { color: "#3399cc" },
+      };
+
+      var rzp1 = new window.Razorpay(options);
+      rzp1.on("payment.failed", function () {
+        setPaymentError("Payment unsuccessful. Please try again.");
+        setTimeout(() => navigate("/check-number"), 2000);
+      });
+      rzp1.open();
+    } catch (error) {
+      console.error("Error during payment process:", error);
       setPaymentError("Payment unsuccessful. Please try again.");
       setTimeout(() => navigate("/check-number"), 2000);
-    });
-    rzp1.open();
-  } catch (error) {
-    console.error("Error during payment process:", error);
-    setPaymentError("Payment unsuccessful. Please try again.");
-    setTimeout(() => navigate("/check-number"), 2000);
-  }
-};
+    }
+  };
 
   const validateRes = async (response) => {
     try {
@@ -260,16 +260,16 @@ const Plans = () => {
 
   return (
     <>
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        width: '100%', 
-        height: '100%', 
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
         zIndex: 0
       }}>
         <Dither
-          waveColor={[51/255, 102/255, 128/255]}
+          waveColor={[51 / 255, 102 / 255, 128 / 255]}
           disableAnimation={false}
           enableMouseInteraction={true}
           mouseRadius={0.3}
@@ -288,7 +288,7 @@ const Plans = () => {
           </div>
 
           <div className="plans-grid">
-            {/* One Month Plan */}
+            {/* One Month Plan - Now First */}
             <div className="plan-card">
               <div className="plan-header">
                 <h3>One Month Plan</h3>
@@ -304,6 +304,10 @@ const Plans = () => {
                 <div className="feature-item">
                   <span className="checkmark">✓</span>
                   <span>Unlimited AI Lead reply automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI WhatsApp Reply Automation</span>
                 </div>
                 <div className="feature-item">
                   <span className="checkmark">✓</span>
@@ -342,7 +346,7 @@ const Plans = () => {
               </button>
             </div>
 
-            {/* Three Month Plan */}
+            {/* Three Month Plan - Now Second */}
             <div className="plan-card">
               <div className="plan-header">
                 <h3>Three Month Plan</h3>
@@ -358,6 +362,10 @@ const Plans = () => {
                 <div className="feature-item">
                   <span className="checkmark">✓</span>
                   <span>Unlimited AI Lead reply automation</span>
+                </div>
+                <div className="feature-item">
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI WhatsApp Reply Automation</span>
                 </div>
                 <div className="feature-item">
                   <span className="checkmark">✓</span>
@@ -414,14 +422,9 @@ const Plans = () => {
                   <span>Unlimited AI Lead reply automation</span>
                 </div>
                 <div className="feature-item">
-  <span className="checkmark">✓</span>
-  <span>Download Reports</span>
-</div>
-
-<div className="feature-item">
-  <span className="checkmark">✓</span>
-  <span>API Access</span>
-</div>
+                  <span className="checkmark">✓</span>
+                  <span>Unlimited AI WhatsApp Reply Automation</span>
+                </div>
                 <div className="feature-item">
                   <span className="checkmark">✓</span>
                   <span>Unlimited AI Business Automation</span>
@@ -469,7 +472,7 @@ const Plans = () => {
 
             {/* Yearly Plan - POPULAR */}
             <div className="plan-card plan-card-popular">
-              <div className="popular-badge">Includes WhatsApp Automation</div>
+              <div className="popular-badge">POPULAR</div>
               <div className="plan-header">
                 <h3>Yearly Plan</h3>
                 <p className="plan-subtitle">Features :</p>
@@ -489,15 +492,6 @@ const Plans = () => {
                   <span className="checkmark">✓</span>
                   <span>Unlimited AI WhatsApp Reply Automation</span>
                 </div>
-                <div className="feature-item">
-  <span className="checkmark">✓</span>
-  <span>Download Reports</span>
-</div>
-
-<div className="feature-item">
-  <span className="checkmark">✓</span>
-  <span>API Access</span>
-</div>
                 <div className="feature-item">
                   <span className="checkmark">✓</span>
                   <span>Unlimited AI Business Automation</span>
@@ -586,7 +580,7 @@ const Plans = () => {
           </div>
         )}
       </div>
-      </>
+    </>
   );
 };
 

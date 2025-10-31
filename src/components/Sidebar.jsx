@@ -64,13 +64,13 @@ const Sidebar = ({ status }) => {
               <MdOutlineRecommend className={styles.icon} />
               <span className={styles.tooltipText}>Referrals</span>
             </div>
-            <div
+            {/* <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/master/exclusive")}
             >
               <span className={styles.icon} style={{ fontSize: '32px' }}>⭐</span>
               <span className={styles.tooltipText}>Exclusive Users</span>
-            </div>
+            </div> */}
           </>
         )}
 
@@ -88,21 +88,21 @@ const Sidebar = ({ status }) => {
               <span className={styles.tooltipText}>AI</span>
             </div>
             <div
-  className={`${styles.sidebarIcon} ${styles.tooltip}`}
-  onClick={() => navigate("/sheets")}
->
-  <img 
-    src={SheetsIcon} 
-    className={styles.icon} 
-    alt="Sheets" 
-    style={{
-      width: "32px",
-      height: "32px",
-      objectFit: "contain",
-    }} 
-  />
-  <span className={styles.tooltipText}>Sheets</span>
-</div>
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/sheets")}
+            >
+              <img
+                src={SheetsIcon}
+                className={styles.icon}
+                alt="Sheets"
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  objectFit: "contain",
+                }}
+              />
+              <span className={styles.tooltipText}>Sheets</span>
+            </div>
             <div
               className={`${styles.sidebarIcon} ${styles.tooltip}`}
               onClick={() => navigate("/analytics")}

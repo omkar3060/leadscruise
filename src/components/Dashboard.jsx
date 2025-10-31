@@ -18,9 +18,9 @@ const getScoreColor = (score) => {
       borderColor: '#ddd'
     };
   }
-  
+
   const numScore = parseFloat(score);
-  
+
   if (numScore < 40) {
     return {
       backgroundColor: '#ffebee',
@@ -87,7 +87,7 @@ const Dashboard = () => {
   const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [canDownloadReports, setCanDownloadReports] = useState(false);
-const [subscriptionCheckLoading, setSubscriptionCheckLoading] = useState(true);
+  const [subscriptionCheckLoading, setSubscriptionCheckLoading] = useState(true);
   const navigate = useNavigate();
   const [settings, setSettings] = useState({
     sentences: [],
@@ -120,7 +120,7 @@ const [subscriptionCheckLoading, setSubscriptionCheckLoading] = useState(true);
   const [otpError, setOtpError] = useState('');
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
   const [showCustomDateModal, setShowCustomDateModal] = useState(false);
- const [customStartDate, setCustomStartDate] = useState('');
+  const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
 
@@ -159,54 +159,54 @@ const [subscriptionCheckLoading, setSubscriptionCheckLoading] = useState(true);
       console.error("Error fetching buyer balance:", error);
     }
   }, []);
-useEffect(() => {
-  const fetchUserSubscriptionPlan = async () => {
-    try {
-      const userEmail = localStorage.getItem("userEmail");
-      if (!userEmail) return;
+  useEffect(() => {
+    const fetchUserSubscriptionPlan = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) return;
 
-      const response = await axios.get(`https://api.leadscruise.com/api/get-user-subscription?email=${userEmail}`);
-      setUserSubscriptionPlan(response.data.subscriptionPlan);
-      console.log("User subscription plan:", response.data.subscriptionPlan);
-    } catch (error) {
-      console.error("Failed to fetch subscription plan:", error);
-    }
-  };
+        const response = await axios.get(`https://api.leadscruise.com/api/get-user-subscription?email=${userEmail}`);
+        setUserSubscriptionPlan(response.data.subscriptionPlan);
+        console.log("User subscription plan:", response.data.subscriptionPlan);
+      } catch (error) {
+        console.error("Failed to fetch subscription plan:", error);
+      }
+    };
 
-  fetchUserSubscriptionPlan();
-}, []);
-// Add this useEffect to check active subscriptions
-useEffect(() => {
-  const checkActiveSubscriptions = async () => {
-    try {
-      const userEmail = localStorage.getItem("userEmail");
-      if (!userEmail) {
+    fetchUserSubscriptionPlan();
+  }, []);
+  // Add this useEffect to check active subscriptions
+  useEffect(() => {
+    const checkActiveSubscriptions = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) {
+          setCanDownloadReports(false);
+          setSubscriptionCheckLoading(false);
+          return;
+        }
+
+        const response = await axios.get(
+          `https://api.leadscruise.com/api/get-active-subscriptions?email=${userEmail}`
+        );
+
+        if (response.data.success) {
+          setCanDownloadReports(response.data.canDownloadReports);
+
+          // Log subscription details for debugging
+          console.log("Active Subscriptions:", response.data.activeSubscriptions);
+          console.log("Can Download Reports:", response.data.canDownloadReports);
+        }
+      } catch (error) {
+        console.error("Failed to check active subscriptions:", error);
         setCanDownloadReports(false);
+      } finally {
         setSubscriptionCheckLoading(false);
-        return;
       }
+    };
 
-      const response = await axios.get(
-        `https://api.leadscruise.com/api/get-active-subscriptions?email=${userEmail}`
-      );
-
-      if (response.data.success) {
-        setCanDownloadReports(response.data.canDownloadReports);
-        
-        // Log subscription details for debugging
-        console.log("Active Subscriptions:", response.data.activeSubscriptions);
-        console.log("Can Download Reports:", response.data.canDownloadReports);
-      }
-    } catch (error) {
-      console.error("Failed to check active subscriptions:", error);
-      setCanDownloadReports(false);
-    } finally {
-      setSubscriptionCheckLoading(false);
-    }
-  };
-
-  checkActiveSubscriptions();
-}, []);
+    checkActiveSubscriptions();
+  }, []);
   useEffect(() => {
     fetchBuyerBalance();
 
@@ -878,122 +878,77 @@ useEffect(() => {
   };
 
   // Update the handleDownloadLeadsExcel function
-// In Dashboard.tsx, update the download reports check:
-// Update the handleDownloadLeadsExcel function in Dashboard.jsx
-// Update the handleDownloadLeadsExcel function in Dashboard.jsx
-const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, customEnd = null) => {
-  const userEmail = localStorage.getItem("userEmail");
-  
-  // First, check if user is exclusive
-  let isExclusiveUser = false;
-  
-  try {
-    console.log("🔍 Checking exclusive status for:", userEmail);
-    const exclusiveCheck = await fetch(`https://api.leadscruise.com/api/check-exclusive/${userEmail}`);
-    
-    if (exclusiveCheck.ok) {
-      const exclusiveData = await exclusiveCheck.json();
-      console.log("📊 Exclusive check response:", exclusiveData);
-      
-      // Strict boolean check
-      if (exclusiveData.success === true && exclusiveData.isExclusive === true) {
-        console.log("✅ User is exclusive - granting download access");
-        isExclusiveUser = true;
-      }
+  // In Dashboard.tsx, update the download reports check:
+  // Update the handleDownloadLeadsExcel function in Dashboard.jsx
+  // Update the handleDownloadLeadsExcel function in Dashboard.jsx
+  const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customEnd = null) => {
+    if (!leads || leads.length === 0) {
+      alert("No leads available to download.");
+      return;
     }
-  } catch (error) {
-    console.error("⚠️ Error checking exclusive status:", error);
-  }
 
-  // Determine if user has download access
-  const hasDownloadAccess = isExclusiveUser || canDownloadReports;
-  
-  console.log("🎯 Download access decision:");
-  console.log("   - isExclusiveUser:", isExclusiveUser);
-  console.log("   - canDownloadReports:", canDownloadReports);
-  console.log("   - hasDownloadAccess:", hasDownloadAccess);
+    let filteredLeads;
+    let label;
 
-  // Block access if user is neither exclusive nor has proper subscription
-  if (!hasDownloadAccess) {
-    console.log("🚫 Access denied - showing upgrade popup");
-    setShowUpgradePopup(true);
+    if (dateRange === 'custom' && customStart && customEnd) {
+      const startDate = new Date(customStart);
+      const endDate = new Date(customEnd);
+      endDate.setUTCDate(endDate.getUTCDate() + 1);
+
+      filteredLeads = leads.filter((lead) => {
+        if (!lead.createdAt) return false;
+        const leadDate = new Date(lead.createdAt);
+        return leadDate >= startDate && leadDate < endDate;
+      });
+
+      label = `Custom_${customStart}_to_${customEnd}`;
+    } else if (dateRange === 'all') {
+      filteredLeads = leads;
+      label = 'Total Leads Captured';
+    } else {
+      filteredLeads = filterLeadsByDateRange(dateRange);
+      const dateRangeLabels = {
+        'today': 'Today',
+        'thisWeek': 'This Week',
+        'thisMonth': 'This Month',
+        'thisQuarter': 'This Quarter',
+        'thisYear': 'This Year',
+        'yesterday': 'Yesterday',
+        'previousWeek': 'Previous Week',
+        'previousMonth': 'Previous Month',
+        'previousQuarter': 'Previous Quarter',
+        'previousYear': 'Previous Year'
+      };
+      label = dateRangeLabels[dateRange] || 'Total Leads Captured';
+    }
+
+    if (filteredLeads.length === 0) {
+      alert("No leads found for the selected date range.");
+      return;
+    }
+
+    const formattedData = filteredLeads.map((lead, index) => ({
+      "Sl. No": index + 1,
+      "Tag": lead.source || "Normal",
+      "Product Requested": lead.lead_bought || "N/A",
+      "Address": lead.address || "N/A",
+      "Name": lead.name || "N/A",
+      "Email": lead.email || "N/A",
+      "Mobile": lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : (lead.mobile || lead.user_mobile_number || "N/A"),
+      "Captured At": new Date(lead.createdAt).toLocaleString(),
+      "Score": lead.score && !isNaN(lead.score) && lead.score !== 0 ? lead.score.toFixed(2) : "N/A",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
+
+    const today = new Date().toISOString().split("T")[0];
+    const filename = `${label}_${today}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
     setShowDownloadDropdown(false);
-    return;
-  }
-
-  console.log("✅ Access granted - proceeding with download");
-
-  // Check if there are leads to download
-  if (!leads || leads.length === 0) {
-    alert("No leads available to download.");
-    return;
-  }
-
-  // Rest of your existing download logic...
-  let filteredLeads;
-  let label;
-
-  if (dateRange === 'custom' && customStart && customEnd) {
-    const startDate = new Date(customStart);
-    const endDate = new Date(customEnd);
-    endDate.setUTCDate(endDate.getUTCDate() + 1);
-
-    filteredLeads = leads.filter((lead) => {
-      if (!lead.createdAt) return false;
-      const leadDate = new Date(lead.createdAt);
-      return leadDate >= startDate && leadDate < endDate;
-    });
-
-    label = `Custom_${customStart}_to_${customEnd}`;
-  } else if (dateRange === 'all') {
-    filteredLeads = leads;
-    label = 'Total Leads Captured';
-  } else {
-    filteredLeads = filterLeadsByDateRange(dateRange);
-    const dateRangeLabels = {
-      'today': 'Today',
-      'thisWeek': 'This Week',
-      'thisMonth': 'This Month',
-      'thisQuarter': 'This Quarter',
-      'thisYear': 'This Year',
-      'yesterday': 'Yesterday',
-      'previousWeek': 'Previous Week',
-      'previousMonth': 'Previous Month',
-      'previousQuarter': 'Previous Quarter',
-      'previousYear': 'Previous Year'
-    };
-    label = dateRangeLabels[dateRange] || 'Total Leads Captured';
-  }
-
-  if (filteredLeads.length === 0) {
-    alert("No leads found for the selected date range.");
-    return;
-  }
-
-  const formattedData = filteredLeads.map((lead, index) => ({
-    "Sl. No": index + 1,
-    "Tag": lead.source || "Normal",
-    "Product Requested": lead.lead_bought || "N/A",
-    "Address": lead.address || "N/A",
-    "Name": lead.name || "N/A",
-    "Email": lead.email || "N/A",
-    "Mobile": lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : (lead.mobile || lead.user_mobile_number || "N/A"),
-    "Captured At": new Date(lead.createdAt).toLocaleString(),
-    "Score": lead.score && !isNaN(lead.score) && lead.score !== 0 ? lead.score.toFixed(2) : "N/A",
-  }));
-
-  const worksheet = XLSX.utils.json_to_sheet(formattedData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Total Leads Captured");
-
-  const today = new Date().toISOString().split("T")[0];
-  const filename = `${label}_${today}.xlsx`;
-
-  XLSX.writeFile(workbook, filename);
-  setShowDownloadDropdown(false);
-  
-  console.log("✅ Download completed successfully");
-};
+  };
 
   // PART 2 - Continuation from handleCustomDateSubmit function
 
@@ -1062,29 +1017,29 @@ const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, c
 
   return (
     <div className={styles.dashboardContainer}>
-    
-    {/* Dither Background */}
-    <div style={{ 
-      position: 'fixed', 
-      top: 0, 
-      left: 0, 
-      width: '100%', 
-      height: '100%', 
-      zIndex: 0 
-    }}>
-      <Dither
-        waveColor={[51/255, 102/255, 128/255]}
-        disableAnimation={false}
-        enableMouseInteraction={true}
-        mouseRadius={0.3}
-        colorNum={5}
-        waveAmplitude={0.25}
-        waveFrequency={2.5}
-        waveSpeed={0.03}
-        pixelSize={2.5}
-      />
-    </div>
-    {/* Upgrade Popup Modal */}
+
+      {/* Dither Background */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0
+      }}>
+        <Dither
+          waveColor={[51 / 255, 102 / 255, 128 / 255]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={5}
+          waveAmplitude={0.25}
+          waveFrequency={2.5}
+          waveSpeed={0.03}
+          pixelSize={2.5}
+        />
+      </div>
+      {/* Upgrade Popup Modal */}
       {showUpgradePopup && (
         <div style={{
           position: 'fixed',
@@ -1134,9 +1089,9 @@ const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, c
             </button>
 
             {/* Lock Icon */}
-            <div style={{ 
+            <div style={{
               textAlign: 'center',
-              fontSize: '64px', 
+              fontSize: '64px',
               marginBottom: '20px',
               animation: 'bounce 0.5s ease-in-out'
             }}>
@@ -1144,7 +1099,7 @@ const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, c
             </div>
 
             {/* Title */}
-            <h2 style={{ 
+            <h2 style={{
               color: '#333',
               textAlign: 'center',
               marginBottom: '15px',
@@ -1155,7 +1110,7 @@ const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, c
             </h2>
 
             {/* Description */}
-            <p style={{ 
+            <p style={{
               color: '#666',
               textAlign: 'center',
               marginBottom: '25px',
@@ -1167,8 +1122,8 @@ const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, c
             </p>
 
             {/* Action Buttons */}
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               gap: '10px',
               justifyContent: 'center'
             }}>
@@ -1467,30 +1422,30 @@ const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, c
             <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
               Settings
             </button>
-           <button
-  className={styles.buttonLarge}
-  onClick={() => {
-    if (subscriptionCheckLoading) {
-      alert("Checking subscription status, please wait...");
-      return;
-    }
-    
-    // Remove this check - let handleDownloadLeadsExcel decide
-    // if (!canDownloadReports) {
-    //   setShowUpgradePopup(true);
-    //   return;
-    // }
-    
-    setShowDownloadDropdown(!showDownloadDropdown);
-  }}
-  style={{ 
-    marginBottom: 0,
-    opacity: subscriptionCheckLoading ? 0.6 : 1,
-    cursor: subscriptionCheckLoading ? 'wait' : 'pointer'
-  }}
->
-  {subscriptionCheckLoading ? "Checking..." : "Download Reports"}
-</button>
+            <button
+              className={styles.buttonLarge}
+              onClick={() => {
+                if (subscriptionCheckLoading) {
+                  alert("Checking subscription status, please wait...");
+                  return;
+                }
+
+                // Remove this check - let handleDownloadLeadsExcel decide
+                // if (!canDownloadReports) {
+                //   setShowUpgradePopup(true);
+                //   return;
+                // }
+
+                setShowDownloadDropdown(!showDownloadDropdown);
+              }}
+              style={{
+                marginBottom: 0,
+                opacity: subscriptionCheckLoading ? 0.6 : 1,
+                cursor: subscriptionCheckLoading ? 'wait' : 'pointer'
+              }}
+            >
+              {subscriptionCheckLoading ? "Checking..." : "Download Reports"}
+            </button>
 
             {showDownloadDropdown && (
               <div style={{
@@ -1620,35 +1575,35 @@ const handleDownloadLeadsExcel = async (dateRange = 'all', customStart = null, c
                             : "N/A"}
                         </td>
                         <td>
-  {lead.score && !isNaN(lead.score) && lead.score !== 0 ? (
-    <span style={{
-      padding: '4px 12px',
-      borderRadius: '12px',
-      fontSize: '11px',
-      fontWeight: 'bold',
-      ...getScoreColor(lead.score),
-      border: `1px solid ${getScoreColor(lead.score).borderColor}`,
-      whiteSpace: 'nowrap',
-      display: 'inline-block'
-    }}>
-      {lead.score.toFixed(2)}
-    </span>
-  ) : (
-    <span style={{
-      padding: '4px 12px',
-      borderRadius: '12px',
-      fontSize: '11px',
-      fontWeight: 'bold',
-      backgroundColor: '#f5f5f5',
-      color: '#999',
-      border: '1px solid #ddd',
-      whiteSpace: 'nowrap',
-      display: 'inline-block'
-    }}>
-      N/A
-    </span>
-  )}
-</td>
+                          {lead.score && !isNaN(lead.score) && lead.score !== 0 ? (
+                            <span style={{
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 'bold',
+                              ...getScoreColor(lead.score),
+                              border: `1px solid ${getScoreColor(lead.score).borderColor}`,
+                              whiteSpace: 'nowrap',
+                              display: 'inline-block'
+                            }}>
+                              {lead.score.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span style={{
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 'bold',
+                              backgroundColor: '#f5f5f5',
+                              color: '#999',
+                              border: '1px solid #ddd',
+                              whiteSpace: 'nowrap',
+                              display: 'inline-block'
+                            }}>
+                              N/A
+                            </span>
+                          )}
+                        </td>
                         <td>
                           <img
                             src={isRejected ? redFlag : greyFlag}
