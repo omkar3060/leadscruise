@@ -661,7 +661,7 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, ad
     try:
         response = requests.post(url, json=data)
         if response.status_code == 200:
-            print("Lead data sent successfully!", flush=True)
+            print("AI Lead data sent successfully!", flush=True)
             lead_count += 1
         else:
             print(f"Failed to send data: {response.text}", flush=True)
@@ -2220,6 +2220,7 @@ def main():
                     print(f"Running redirect_and_refresh (count: {redirect_count + 1}/10)...", flush=True)
                     redirect_count += 1
                     redirect_and_refresh(driver, wait)
+                    print("Lead Count:", lead_count, flush=True)
                 else:
                     print("Starting message center processing...", flush=True)
                     total_processed = go_to_message_center_and_fetch(driver)

@@ -2591,6 +2591,7 @@ app.post("/api/store-lead", async (req, res) => {
 
     // Increment lead count
     userCounter.leadCount += 1;
+    console.log(`User ${user_mobile_number} lead count incremented to ${userCounter.leadCount}`);
     await userCounter.save();
 
     console.log("Lead Data Stored:", newLead);
