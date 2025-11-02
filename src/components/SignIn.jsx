@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Dither from "./Dither.tsx"; // Change from ./Dither to ./Dither.tsx
-import { useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./styles.css";
 import "./PaginationSlider.css";
@@ -32,11 +32,11 @@ const useDynamicSeparator = () => {
   useEffect(() => {
     const updateSeparatorHeight = () => {
       const loginBox = document.querySelector('.login-box');
-      
+
       // Only apply on larger screens where separator is visible
       if (loginBox && window.innerWidth > 1200) {
         const boxHeight = loginBox.offsetHeight;
-        
+
         // Set CSS custom property for separator height
         document.documentElement.style.setProperty('--separator-height', boxHeight + 'px');
       } else {
@@ -44,27 +44,27 @@ const useDynamicSeparator = () => {
         document.documentElement.style.removeProperty('--separator-height');
       }
     };
-    
+
     // Update on mount
     updateSeparatorHeight();
-    
+
     // Update on window resize
     const handleResize = () => {
       updateSeparatorHeight();
     };
-    
+
     // Update when login box content changes
     const handleMutation = () => {
       setTimeout(updateSeparatorHeight, 100); // Small delay to ensure DOM is updated
     };
-    
+
     // Set up event listeners
     window.addEventListener('resize', handleResize);
-    
+
     // Use MutationObserver to detect changes in login box content
     const observer = new MutationObserver(handleMutation);
     const loginBox = document.querySelector('.login-box');
-    
+
     if (loginBox) {
       observer.observe(loginBox, {
         childList: true,
@@ -73,7 +73,7 @@ const useDynamicSeparator = () => {
         attributeFilter: ['style', 'class']
       });
     }
-    
+
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -88,7 +88,7 @@ const TypingAnimation = () => {
     "capturing leads automatically !",
     "sending messages on WhatsApp !"
   ];
-  
+
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [currentText, setCurrentText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -97,7 +97,7 @@ const TypingAnimation = () => {
   useEffect(() => {
     const handleTyping = () => {
       const currentMessage = messages[currentMessageIndex];
-      
+
       if (isDeleting) {
         setCurrentText(currentMessage.substring(0, currentText.length - 1));
         setTypingSpeed(25);
@@ -272,25 +272,7 @@ const SignIn = () => {
             alert("Error signing in with GitHub: " + githubError.message);
           }
         }
-      } else if (error.response.status === 403 && error.response.data.activeSession) {
-        // Handle active session error
-        const confirmLogout = window.confirm("You're already logged in on another device. Would you like to log out from all other devices and continue?");
-
-        if (confirmLogout) {
-          try {
-            // Request to force logout from other devices
-            console.log("email", email);
-            await axios.post("https://api.leadscruise.com/api/force-logout", { email });
-
-            // Retry Google login
-            handleGoogleSignIn();
-          } catch (logoutError) {
-            alert("Failed to log out from other devices. Please try again.");
-          }
-        }
-      }
-
-      else {
+      } else {
         alert(error.response?.data?.message || "Google sign-in failed. Please try again.");
       }
     }
@@ -371,23 +353,7 @@ const SignIn = () => {
             alert("Error signing in with Google: " + googleError.message);
           }
         }
-      } else if (error.response.status === 403 && error.response.data.activeSession) {
-        // Handle active session error
-        const confirmLogout = window.confirm("You're already logged in on another device. Would you like to log out from all other devices and continue?");
-
-        if (confirmLogout) {
-          try {
-            // Request to force logout from other devices
-            console.log("email", email);
-            await axios.post("https://api.leadscruise.com/api/force-logout", { email });
-
-            // Retry Google login
-            handleGoogleSignIn();
-          } catch (logoutError) {
-            alert("Failed to log out from other devices. Please try again.");
-          }
-        }
-      }
+      } 
       else {
         alert(error.response?.data?.message || "GitHub sign-in failed. Please try again.");
       }
@@ -404,9 +370,10 @@ const SignIn = () => {
 
   const handleSignIn = async (e) => {
     e.preventDefault();
+    var res;
     try {
       setIsLoading(true);
-      const res = await axios.post("https://api.leadscruise.com/api/login", {
+      res = await axios.post("https://api.leadscruise.com/api/login", {
         email,
         password,
       });
@@ -423,7 +390,7 @@ const SignIn = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("sessionId", res.data.sessionId);
       localStorage.setItem("role", res.data.user.role);
-      
+
       // Clear the login alert flag when user successfully logs in
       sessionStorage.removeItem("loginAlertShown");
 
@@ -457,31 +424,31 @@ const SignIn = () => {
       }
 
       // Check if a payment exists for the user (only if they don't have mobileNumber)
-          try {
-          console.warn("Calling payment API for email:", email);
-          const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
-          console.warn("Payment API response status:", paymentRes.status);
-          console.warn("Payment API response data:", paymentRes.data);
-          console.warn("Payment data length:", paymentRes.data.length);
+      try {
+        console.warn("Calling payment API for email:", email);
+        const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+        console.warn("Payment API response status:", paymentRes.status);
+        console.warn("Payment API response data:", paymentRes.data);
+        console.warn("Payment data length:", paymentRes.data.length);
 
-          // If user doesn't have mobileNumber, check if they have payments
-          if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
-            console.warn("User has payments, going to execute-task");
-            // User has payments but no mobileNumber in profile, use payment contact
-            localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
-            localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
-            navigate("/execute-task");
-            return;
-          } else {
-            console.warn("No payments found or payment data is empty");
-            console.warn("Payment data type:", typeof paymentRes.data);
-            console.warn("Payment data:", paymentRes.data);
-          }
-        } catch (paymentError) {
-          // If payment API fails (e.g., user has no mobileNumber), continue to check-number
-          console.warn("Payment API error:", paymentError.message);
-          console.warn("Payment API error response:", paymentError.response?.data);
+        // If user doesn't have mobileNumber, check if they have payments
+        if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
+          console.warn("User has payments, going to execute-task");
+          // User has payments but no mobileNumber in profile, use payment contact
+          localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+          localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
+          navigate("/execute-task");
+          return;
+        } else {
+          console.warn("No payments found or payment data is empty");
+          console.warn("Payment data type:", typeof paymentRes.data);
+          console.warn("Payment data:", paymentRes.data);
         }
+      } catch (paymentError) {
+        // If payment API fails (e.g., user has no mobileNumber), continue to check-number
+        console.warn("Payment API error:", paymentError.message);
+        console.warn("Payment API error response:", paymentError.response?.data);
+      }
 
       // User has no mobileNumber and no payments, redirect to check-number
       navigate("/check-number");
@@ -494,26 +461,46 @@ const SignIn = () => {
           } else {
             alert(error.response.data.message || "Invalid credentials!");
           }
-        } else if (error.response.status === 403 && error.response.data.activeSession) {
-          // Handle active session error
-          const confirmLogout = window.confirm("You're already logged in on another device. Would you like to log out from all other devices and continue?");
-
-          if (confirmLogout) {
-            // Make a request to force logout from other devices
-            try {
-              await axios.post("https://api.leadscruise.com/api/force-logout", { email });
-              // Retry login
-              handleSignIn();
-            } catch (logoutError) {
-              alert("Failed to log out from other devices. Please try again.");
-            }
-          }
         } else {
           alert("Failed to sign in. Please try again.");
         }
       } else {
         alert("Failed to sign in. Please try again.");
       }
+    }
+    const confirmLogout = window.confirm(
+      `${res.data.message}\n\nDo you want to logout from the other device and login here?`
+    );
+
+    if (confirmLogout) {
+      try {
+        await axios.post("https://api.leadscruise.com/api/logout", {
+          email
+        });
+
+        alert(`Logged out from other session. Retrying login...`);
+
+        // Retry login automatically
+        const retryResponse = await axios.post("https://api.leadscruise.com/api/login", {
+          email,
+          password,
+          platform: "web"
+        });
+
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("token", retryResponse.data.token);
+        localStorage.setItem("sessionId", retryResponse.data.sessionId);
+        localStorage.setItem("role", retryResponse.data.user.role);
+        localStorage.setItem("mobileNumber", retryResponse.data.user.mobileNumber);
+
+        navigate("/dashboard");
+        return;
+      } catch (logoutError) {
+        alert("Failed to logout from other device. Please try again.");
+        console.error("Force logout error:", logoutError);
+      }
+    } else {
+      alert("Login cancelled. You remain logged in on the other device.");
     }
   };
 
@@ -583,17 +570,17 @@ const SignIn = () => {
 
   return (
     <div className="login-page-container" style={{ position: 'relative', overflow: 'hidden' }}>
-  {/* Dither Background */}
-  <div style={{ 
-    position: 'fixed', 
-    top: 0, 
-    left: 0, 
-    width: '100%', 
-    height: '100%', 
-    zIndex: 0 
-  }}>
-    <Dither
-       waveColor={[51/255, 102/255, 128/255]}
+      {/* Dither Background */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0
+      }}>
+        <Dither
+          waveColor={[51 / 255, 102 / 255, 128 / 255]}
           disableAnimation={false}
           enableMouseInteraction={true}
           mouseRadius={0.3}
@@ -602,122 +589,122 @@ const SignIn = () => {
           waveFrequency={2.5}
           waveSpeed={0.03}
           pixelSize={2.5}
-    />
-  </div>
-      
-
-{isLoading && (
-  <div className="loading-overlay">
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <div className="loading-text">Please wait<span className="loading-dots"></span></div>
-      <div className="loading-message">Processing your request</div>
-    </div>
-  </div>
-)}
+        />
+      </div>
 
 
-{isLoading && (
-  <div className="loading-overlay">
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <div className="loading-text">Sending reset email<span className="loading-dots"></span></div>
-      <div className="loading-message">Please check your inbox in a moment</div>
-    </div>
-  </div>
-)}
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Please wait<span className="loading-dots"></span></div>
+            <div className="loading-message">Processing your request</div>
+          </div>
+        </div>
+      )}
 
 
-{isLoading && (
-  <div className="loading-overlay">
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <div className="loading-text">Signing you in<span className="loading-dots"></span></div>
-      <div className="loading-message">This may take a few seconds</div>
-    </div>
-  </div>
-)}
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Sending reset email<span className="loading-dots"></span></div>
+            <div className="loading-message">Please check your inbox in a moment</div>
+          </div>
+        </div>
+      )}
 
 
-{isLoading && (
-  <div className="loading-overlay">
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <div className="loading-text">Connecting<span className="loading-dots"></span></div>
-      <div className="loading-message">Authenticating with your account</div>
-    </div>
-  </div>
-)}
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Signing you in<span className="loading-dots"></span></div>
+            <div className="loading-message">This may take a few seconds</div>
+          </div>
+        </div>
+      )}
+
+
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Connecting<span className="loading-dots"></span></div>
+            <div className="loading-message">Authenticating with your account</div>
+          </div>
+        </div>
+      )}
       <div className="login-form-wrapper">
         <div className="login-box">
-  <div className="login-form-container">
-    <div className="header-row">
-      <button 
-        className="back-button-top" 
-        onClick={() => window.location.href = 'https://leadscruise.com'}
-        aria-label="Go back to home"
-      >
-        ← Back
-      </button>
-      <h1 className="login-title">Login</h1>
-    </div>
-
-          
-          <button className="social-button" onClick={handleGoogleSignIn}>
-              Continue with Google
-          </button>
-
-          <button className="social-button">
-              Continue with Facebook
-          </button>
-
-          <div className="divider-container">
-            <div className="divider-line"></div>
-            <span className="divider-text">OR</span>
-            <div className="divider-line"></div>
-          </div>
-
-          <form onSubmit={handleSignIn}>
-            <div className="input-group">
-              <label htmlFor="email">Email</label>
-              <input 
-                type="email" 
-                id="email" 
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required 
-              />
+          <div className="login-form-container">
+            <div className="header-row">
+              <button
+                className="back-button-top"
+                onClick={() => window.location.href = 'https://leadscruise.com'}
+                aria-label="Go back to home"
+              >
+                ← Back
+              </button>
+              <h1 className="login-title">Login</h1>
             </div>
-            <div className="input-group">
-              <div className="password-label-group">
-                <label htmlFor="password">Password</label>
-                <a className="forgot-password-link" onClick={handleForgotPassword}>Forgot Password?</a>
-              </div>
-              <div className="password-input-wrapper">
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  id="password" 
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+
+
+            <button className="social-button" onClick={handleGoogleSignIn}>
+              Continue with Google
+            </button>
+
+            <button className="social-button">
+              Continue with Facebook
+            </button>
+
+            <div className="divider-container">
+              <div className="divider-line"></div>
+              <span className="divider-text">OR</span>
+              <div className="divider-line"></div>
+            </div>
+
+            <form onSubmit={handleSignIn}>
+              <div className="input-group">
+                <label htmlFor="email">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                <button type="button" className="show-password-button" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
               </div>
-            </div>
-            <button type="submit" className="login-button" >Login</button>
-          </form>
-          
-          <p className="signup-prompt">
-            Don't have an account? 
+              <div className="input-group">
+                <div className="password-label-group">
+                  <label htmlFor="password">Password</label>
+                  <a className="forgot-password-link" onClick={handleForgotPassword}>Forgot Password?</a>
+                </div>
+                <div className="password-input-wrapper">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button type="button" className="show-password-button" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+              <button type="submit" className="login-button" >Login</button>
+            </form>
+
+            <p className="signup-prompt">
+              Don't have an account?
               <a href="#" onClick={() => navigate('/signup')} className="signup-now-link">Sign up</a>
               <span> Now!</span>
-          </p>
-          
-        </div>
+            </p>
+
+          </div>
         </div>
       </div>
 

@@ -8,27 +8,30 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     firstTime: { type: Boolean, default: true },
     mobileNumber: { type: String, sparse: true },
-    savedPassword: { type: String }, // Store encrypted password
+    savedPassword: { type: String },
     status: { type: String, default: "Stopped" },
     role: { type: String, enum: ["admin", "user"], default: "user" },
     startTime: { type: Date },
     apiKey: { type: String },
-    sheetsId: { type: String }, // New field
+    sheetsId: { type: String },
     phoneNumber: { type: String },
     lastLogin: { type: Date },
+
+    // ✅ Web session fields (existing)
     activeToken: { type: String, default: null },
-    sessionId: { type: String, default: null }, // Added for session management
-    adminPassword: { type: String},
-    autoStartEnabled: {type: Boolean,default: false},
+    sessionId: { type: String, default: null },
+
+    // ✅ Desktop session fields (new)
+    desktopToken: { type: String, default: null },
+    desktopSessionId: { type: String, default: null },
+
+    adminPassword: { type: String },
+    autoStartEnabled: { type: Boolean, default: false },
     buyerBalance: { type: Number, default: null },
     firstInvoiceDownloadTime: { type: Date, default: null },
-    // Add this field to your User schema
-isExclusive: {
-  type: Boolean,
-  default: false
-},
+    isExclusive: { type: Boolean, default: false },
   },
-  { timestamps: true } // Adds createdAt and updatedAt fields
+  { timestamps: true }
 );
 
 const User = mongoose.model("User", userSchema);

@@ -2230,23 +2230,24 @@ class LoginApp:
         session_id = base64.urlsafe_b64encode(session_data).decode()
         return session_id
 
+
     def login(self):
         """Authenticate user with the LeadsCruise API"""
         email = self.email_var.get().strip()
         password = self.password_var.get()
 
-        print(f"DEBUG: Starting login for {email}")  # Debug print
+        print(f"DEBUG: Starting login for {email}")
 
         if not email or not password:
             self.root.after(0, lambda: self.modern_ui.show_error("Email and password are required!"))
             return
 
         try:
-            # Prepare login data
             login_data = {
                 "email": email,
                 "password": password,
-                "emailVerified": False
+                "emailVerified": False,
+                "platform": "desktop"
             }
 
             headers = {
@@ -2254,31 +2255,29 @@ class LoginApp:
                 'User-Agent': 'LeadFetcher-Client/1.0'
             }
 
-            print(f"DEBUG: Sending request to {self.login_url}")  # Debug print
+            print(f"DEBUG: Sending request to {self.login_url}")
 
-            # Make API request
             response = requests.post(
                 self.login_url,
                 json=login_data,
                 headers=headers,
                 timeout=30
             )
+            self.log_to_response("🔄 Processing login response...")
 
-            print(f"DEBUG: Response status: {response.status_code}")  # Debug print
+            self.log_to_response(f"DEBUG: Response status: {response.status_code}")
 
             if response.status_code == 200:
                 try:
                     data = response.json()
-                    print(f"DEBUG: Response data: {data.get('success')}")  # Debug print
+                    self.log_to_response(f"DEBUG: Response data: {data.get('success')}")
 
                     if data.get('success'):
-                        # Extract user info
                         user_data = data.get('user', {})
                         token = data.get('token')
                         session_id = data.get('sessionId')
                         mobile_number = user_data.get('mobileNumber', '')
 
-                        # Generate token and session ID if not provided by API
                         if not token:
                             print("⚠️ No token from API, generating local token...")
                             token = self.generate_token(email, password)
@@ -2287,7 +2286,6 @@ class LoginApp:
                             print("⚠️ No session ID from API, generating local session ID...")
                             session_id = self.generate_session_id()
 
-                        # Store user data for main app
                         self.user_data = {
                             'email': user_data.get('email', email),
                             'role': user_data.get('role', 'user'),
@@ -2296,26 +2294,65 @@ class LoginApp:
                             'sessionId': session_id
                         }
 
-                        print(f"✅ Login successful for {email}")  # Debug print
+                        print(f"✅ Login successful for {email}")
 
-                        # Save login data if "Remember me" is checked
                         if self.remember_me_var.get():
                             self.save_login_data(self.user_data)
 
-                        # Update UI on main thread
                         self.root.after(0, lambda: self.modern_ui.show_success("Login successful!"))
-
-                        # Close login window and open main app
                         self.root.after(500, self.open_main_app)
 
                     else:
                         error_msg = data.get('message', 'Login failed')
-                        print(f"❌ Login failed: {error_msg}")  # Debug print
-                        self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
+                        self.log_to_response(f"❌ Login failed: {error_msg}")
+
+                        # ✅ Handle "already logged in" (for both web and desktop)
+                        if "already logged in" in error_msg.lower():
+                            # Detect platform mentioned in backend message
+                            platform_detected = "desktop" if "desktop" in error_msg.lower() else "web"
+
+                            user_choice = messagebox.askyesno(
+                                "Active Session Detected",
+                                f"{error_msg}\n\nDo you want to logout from the other {platform_detected} device and login here?"
+                            )
+
+                            if user_choice:
+                                try:
+                                    # ✅ Call force logout API
+                                    force_logout_url = "https://api.leadscruise.com/api/force-logout"
+                                    force_res = requests.post(
+                                        force_logout_url,
+                                        json={"email": email, "platform": "desktop"},
+                                        headers=headers,
+                                        timeout=15
+                                    )
+
+                                    if force_res.status_code == 200:
+                                        print("✅ Force logout successful. Retrying login...")
+                                        # Retry login automatically
+                                        self.root.after(500, self.login)
+                                    else:
+                                        msg = "Failed to logout from the other device. Please try again later."
+                                        print(f"❌ {msg}")
+                                        self.root.after(0, lambda: self.modern_ui.show_error(msg))
+
+                                except Exception as e:
+                                    print(f"❌ Force logout error: {e}")
+                                    self.root.after(0, lambda: self.modern_ui.show_error(
+                                        "Error while logging out from the other device."
+                                    ))
+                            else:
+                                print("User cancelled re-login attempt.")
+                                self.root.after(0, lambda: self.modern_ui.show_info(
+                                    "Login cancelled. You are still logged in on another device."
+                                ))
+
+                        else:
+                            self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
                 except json.JSONDecodeError as e:
                     error_msg = f"Failed to parse response: {str(e)}"
-                    print(f"❌ JSON error: {error_msg}")  # Debug print
+                    print(f"❌ JSON error: {error_msg}")
                     self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
             else:
@@ -2325,23 +2362,23 @@ class LoginApp:
                     error_msg = error_data.get('message', error_msg)
                 except:
                     pass
-                print(f"❌ HTTP error: {error_msg}")  # Debug print
+                print(f"❌ HTTP error: {error_msg}")
                 self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
         except requests.exceptions.Timeout:
             error_msg = "Request timeout (30 seconds)"
-            print(f"❌ Timeout: {error_msg}")  # Debug print
+            print(f"❌ Timeout: {error_msg}")
             self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
         except requests.exceptions.ConnectionError:
             error_msg = "Connection error - check internet connection"
-            print(f"❌ Connection error: {error_msg}")  # Debug print
+            print(f"❌ Connection error: {error_msg}")
             self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
         except Exception as e:
             error_msg = f"Unexpected error: {str(e)}"
-            print(f"❌ Exception: {error_msg}")  # Debug print
-            print(f"Traceback: {traceback.format_exc()}")  # Debug traceback
+            print(f"❌ Exception: {error_msg}")
+            print(f"Traceback: {traceback.format_exc()}")
             self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
     def _cleanup_login_gui(self):

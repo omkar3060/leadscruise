@@ -1549,7 +1549,7 @@ const Dashboard = () => {
                     Score
                     {sortField === "score" && (sortOrder === "asc" ? "🔼" : "🔽")}
                   </th>
-                  <th style={{ width: "6%" }}>Action</th>
+                  {/* <th style={{ width: "6%" }}>Action</th> */}
                 </tr>
               </thead>
 
@@ -1604,7 +1604,7 @@ const Dashboard = () => {
                             </span>
                           )}
                         </td>
-                        <td>
+                        {/* <td>
                           <img
                             src={isRejected ? redFlag : greyFlag}
                             alt={isRejected ? "Reject Flag" : "Accept Flag"}
@@ -1621,7 +1621,7 @@ const Dashboard = () => {
                               })
                             }
                           />
-                        </td>
+                        </td> */}
                       </tr>
                     );
                   })

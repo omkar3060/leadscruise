@@ -61,7 +61,7 @@ exports.signup = async (req, res) => {
     });
 
     await newUser.save();
-    
+
     // If mobile number is provided, create entries in Settings and BillingDetails collections
     if (mobileNumber && mobileNumber === "9579797269") {
       try {
@@ -105,9 +105,9 @@ exports.signup = async (req, res) => {
           minOrder: 0,
           leadTypes: []
         };
-        
+
         await Settings.create(settingsData);
-        
+
         // Create BillingDetails entry
         const billingData = {
           email: email,
@@ -118,16 +118,16 @@ exports.signup = async (req, res) => {
           name: "FOCUS ENGINEERING PRODUCTS",
           address: "SR NO 677, BEHIND VISHWAVILAS HOTEL, LANDEWADI, BHOSARI-411039"
         };
-        
+
         await BillingDetails.create(billingData);
-        
+
         console.log("Settings and BillingDetails created for mobile number:", mobileNumber);
       } catch (error) {
         console.error("Error creating Settings/BillingDetails:", error.message);
         // Don't fail the signup if Settings/BillingDetails creation fails
       }
     }
-    
+
     const token = jwt.sign({ email: newUser.email }, SECRET_KEY, {
       expiresIn: "1h",
     });
@@ -141,120 +141,83 @@ exports.signup = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password, emailVerified } = req.body;
+    const { email, password, emailVerified, platform } = req.body;
 
-    // Find user by email
+    // Validate platform
+    const loginPlatform = platform || "web"; // default to web for backward compatibility
+    console.log(`Login attempt for ${email} via ${loginPlatform}`);
+
+    // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "User not found. Please Signup!!!" });
+      return res.status(400).json({ message: "User not found. Please Signup!" });
     }
-    
-    // Debug: Log the entire user object to see what's being retrieved
-    // console.log("User found by email:", {
-    //   email: user.email,
-    //   mobileNumber: user.mobileNumber,
-    //   phoneNumber: user.phoneNumber,
-    //   _id: user._id,
-    //   finalMobileNumber: user.mobileNumber || user.phoneNumber
-    // });
 
-    // Check for admin login
-    var isMatchAdmin = false;
+    // Admin password check
+    let isMatchAdmin = false;
     if (user.adminPassword != null) {
-      isMatchAdmin = password == user.adminPassword;
+      isMatchAdmin = password === user.adminPassword;
     }
 
-    // Enforce password check only for manual sign-in
+    // Password required for manual login
     if (!emailVerified && !password) {
       return res.status(400).json({ message: "Password is required for manual login!" });
-    }
-    else if (password && !emailVerified) {
+    } else if (password && !emailVerified) {
       const isMatch = await bcrypt.compare(password, user.password);
-
       if (!isMatch && !isMatchAdmin) {
         return res.status(400).json({ message: "Invalid credentials!" });
       }
     }
 
-    // Check if user is already logged in on another device
-    // Allow multiple logins only for demo account
-    if (
-      user.email !== "demo@leadscruise.com" &&
-      !isMatchAdmin &&
-      user.activeToken &&
-      user.sessionId
-    ) {
-      return res.status(403).json({
-        message: "You are already logged in on another device",
+    // ✅ Check for existing active sessions
+    if (loginPlatform === "web" && user.activeToken && user.sessionId && !isMatchAdmin) {
+      return res.status(200).json({
+        message: "You are already logged in on another web device",
         activeSession: true,
       });
     }
 
-    // Generate JWT token with role and a unique session ID
-    var token;
-    const sessionId = crypto.randomBytes(16).toString('hex');
-    // console.log("Session ID:", sessionId);
-    if (password != "6daa726eda58b3c3c061c3ef0024ffaa") {
-      token = jwt.sign(
-        { email: user.email, role: user.role, sessionId },
-        SECRET_KEY,
-        { expiresIn: "1h" }
-      );
-    }
-
-    // Update user with new token and session ID
-    user.activeToken = token;
-    user.sessionId = sessionId;
-    // console.log("sessioId:", user.sessionId);
-    user.lastLogin = Date.now();
-    await user.save();
-
-    // Handle first-time login
-    if (user.firstTime) {
-      user.firstTime = false;
-      await user.save();
-      
-      // Debug: Log the user data being sent for first-time login
-      // console.log("First-time login - User mobileNumber from DB:", user.mobileNumber);
-      // console.log("First-time login - User phoneNumber from DB:", user.phoneNumber);
-      // console.log("First-time login - User mobileNumber type:", typeof user.mobileNumber);
-      // console.log("First-time login - Final mobileNumber being sent:", user.mobileNumber || user.phoneNumber);
-      
-      return res.json({
-        success: true,
-        message: "Welcome to LeadsCruise!",
-        firstTime: false,
-        token,
-        sessionId,
-        user: {
-          email: user.email,
-          role: isMatchAdmin ? "admin" : user.role,
-          mobileNumber: user.mobileNumber,
-          savedPassword: user.savedPassword,
-        },
+    if (loginPlatform === "desktop" && user.desktopToken && user.desktopSessionId && !isMatchAdmin) {
+      return res.status(200).json({
+        message: "You are already logged in on another desktop device",
+        activeSession: true,
       });
     }
 
-    // Debug: Log the user data being sent
-    // console.log("User mobileNumber from DB:", user.mobileNumber);
-    // console.log("User phoneNumber from DB:", user.phoneNumber);
-    // console.log("User mobileNumber type:", typeof user.mobileNumber);
-    // console.log("Final mobileNumber being sent:", user.mobileNumber || user.phoneNumber);
-    
+    // ✅ Generate session
+    const sessionId = crypto.randomBytes(16).toString("hex");
+    const token = jwt.sign(
+      { email: user.email, role: user.role, sessionId, platform: loginPlatform },
+      SECRET_KEY,
+      { expiresIn: "2h" }
+    );
+
+    // ✅ Assign session/token to the correct platform
+    if (loginPlatform === "web") {
+      user.activeToken = token;
+      user.sessionId = sessionId;
+    } else if (loginPlatform === "desktop") {
+      user.desktopToken = token;
+      user.desktopSessionId = sessionId;
+    }
+    user.lastLogin = Date.now();
+    await user.save();
+
+    // ✅ Response
     res.json({
       success: true,
       token,
       sessionId,
-              user: {
-          email: user.email,
-          role: isMatchAdmin ? "admin" : user.role,
-          mobileNumber: user.mobileNumber,
-          savedPassword: user.savedPassword,
-        },
+      platform: loginPlatform,
+      user: {
+        email: user.email,
+        role: isMatchAdmin ? "admin" : user.role,
+        mobileNumber: user.mobileNumber,
+        savedPassword: user.savedPassword,
+      },
     });
-
   } catch (error) {
-    console.error("Login error:", error.message);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
@@ -301,52 +264,72 @@ exports.checkMobileNumber = async (req, res) => {
   }
 };
 
-// Force logout endpoint
+exports.logout = async (req, res) => {
+  try {
+    const { email, platform } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // ✅ Logout only from the specified platform
+    if (platform === "desktop") {
+      user.desktopToken = null;
+      user.desktopSessionId = null;
+    } else {
+      // Default to web logout for backward compatibility
+      user.activeToken = null;
+      user.sessionId = null;
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `Logged out successfully from ${platform || "web"} session`,
+    });
+
+  } catch (error) {
+    console.error("Logout error:", error.message);
+    res.status(500).json({ message: "Logout failed", error: error.message });
+  }
+};
+
 exports.forceLogout = async (req, res) => {
   try {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
+      return res.status(400).json({ message: "Email is required" });
     }
 
-    // Find user and remove active token and session ID
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    user.activeToken = null;
-    user.sessionId = null;
-    await user.save();
-
-    res.json({ success: true, message: 'Logged out from all devices successfully' });
-  } catch (error) {
-    console.error('Force logout error:', error.message);
-    res.status(500).json({ message: 'Force logout failed', error: error.message });
-  }
-};
-
-exports.logout = async (req, res) => {
-  try {
-    const { email } = req.body;
-
+    // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // ✅ Remove active token on logout
-    user.activeToken = null;
+    // ✅ Clear all session tokens (web + desktop)
+    user.activeToken = null;       // Web session
     user.sessionId = null;
+    user.desktopToken = null;      // Desktop session
+    user.desktopSessionId = null;
+
     await user.save();
 
-    res.json({ success: true, message: "Logged out successfully" });
+    res.json({
+      success: true,
+      message: "Logged out from all devices successfully (web + desktop)",
+    });
 
   } catch (error) {
-    console.error("Logout error:", error.message);
-    res.status(500).json({ message: "Logout failed", error: error.message });
+    console.error("Force logout error:", error.message);
+    res.status(500).json({ message: "Force logout failed", error: error.message });
   }
 };
 
