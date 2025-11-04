@@ -74,6 +74,15 @@ const Sidebar = ({ status }) => {
           </>
         )}
 
+        {location.pathname.includes("/master") && (
+          <>
+            <div className={`${styles.sidebarIcon} ${styles.tooltip}`} onClick={handleLogout}>
+              <FiLogOut className={styles.icon} />
+              <span className={styles.tooltipText}>Logout</span>
+            </div>
+          </>
+        )}
+
         {!location.pathname.includes("/master") && (
           <>
             <div

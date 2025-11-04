@@ -54,7 +54,7 @@ exports.getPaymentsByEmail = async (req, res) => {
 exports.getAllSubscriptions = async (req, res) => {
   try {
     // Fetch all payments
-    const subscriptions = await Payment.find().sort({ createdAt: -1 });
+    const subscriptions = await Payment.find().sort({ created_at: -1 });
 
     // Fetch user details and attach refId
     const subscriptionsWithRefId = await Promise.all(

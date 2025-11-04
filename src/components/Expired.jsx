@@ -45,13 +45,12 @@ const ExpiredSubscriptions = () => {
   const calculateRemainingDays = (createdAt, subscriptionType) => {
     const createdDate = new Date(createdAt);
     const expiryDate = new Date(createdDate);
-
     const SUBSCRIPTION_DURATIONS = {
       "1-day": 1,
       "7-days": 7,
       "3-days": 3,
-      "One Month": 30,
-      "6 Months": 180,
+      "one-mo": 30,
+      "six-mo": 180,
       "year-mo": 365,
     };
 
@@ -60,7 +59,7 @@ const ExpiredSubscriptions = () => {
 
     const today = new Date();
     const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-
+    console.log("Remaining Days:", remainingDays," ", createdAt, "Subscription Type:", subscriptionType);
     return remainingDays > 0 ? remainingDays : "Expired";
   };
 
