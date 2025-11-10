@@ -146,7 +146,8 @@ def ensure_directory_exists(path):
 def get_user_directory(phone_number):
     """Get the directory path for a specific user based on phone number"""
     sanitized_number = sanitize_phone_number(phone_number)
-    user_dir = os.path.join(os.getcwd(), "whatsapp_profiles", sanitized_number)
+    # ✅ FIX: Use APP_DIR instead of os.getcwd()
+    user_dir = os.path.join(APP_DIR, "whatsapp_profiles", sanitized_number)
     return ensure_directory_exists(user_dir)
 
 def get_cookies_file_path(phone_number):
@@ -162,12 +163,14 @@ def get_profile_directory(phone_number):
 
 def chmod_recursive(path):
     """Recursively set permissions for a directory and its contents"""
-    for root, dirs, files in os.walk(path):
-        for d in dirs:
-            os.chmod(os.path.join(root, d), 0o755)
-        for f in files:
-            os.chmod(os.path.join(root, f), 0o755)
-    os.chmod(path, 0o755)
+    # Only run on Unix-like systems
+    if platform.system() != "Windows":
+        for root, dirs, files in os.walk(path):
+            for d in dirs:
+                os.chmod(os.path.join(root, d), 0o755)
+            for f in files:
+                os.chmod(os.path.join(root, f), 0o755)
+        os.chmod(path, 0o755)
 
 def find_geckodriver():
     """Find geckodriver in common locations or PATH"""
@@ -3404,7 +3407,7 @@ class LeadFetcherApp:
         
         # Navigation buttons
         nav_buttons = [
-            ("📱 Fetch Leads", self.show_fetch_panel), 
+            ("📱 Send WhatsApp Messages", self.show_fetch_panel), 
             ("💬 WhatsApp Connection", self.show_whatsapp_connection_panel),
         ]
         
@@ -3438,10 +3441,13 @@ class LeadFetcherApp:
         self.content_area.pack(side="right", fill="both", expand=True)
         
         # Show dashboard by default
-        self.show_fetch_panel()
+        self.show_whatsapp_connection_panel()
 
     def show_whatsapp_connection_panel(self):
-        """Show WhatsApp connection panel"""
+        """Show WhatsApp connection panel with state restoration"""
+        # Store current panel
+        self.current_panel = 'whatsapp'
+        
         self.clear_content_area()
         
         # Header
@@ -3454,7 +3460,7 @@ class LeadFetcherApp:
                     font=ctk.CTkFont(size=13),
                     text_color="#a0aec0").pack(anchor="w", pady=(5, 0))
         
-        # Main content with cards (LEFT and RIGHT layout like Fetch Leads)
+        # Main content with cards
         content = ctk.CTkFrame(self.content_area, fg_color="transparent")
         content.pack(pady=20, padx=30, fill="both", expand=True)
         
@@ -3504,8 +3510,10 @@ class LeadFetcherApp:
                     font=ctk.CTkFont(size=13, weight="bold"),
                     text_color="#a0aec0").pack(anchor="w", pady=(0, 5))
         
+        # ✅ CRITICAL: Restore WhatsApp number if available
+        display_text = self.whatsapp_number if self.whatsapp_number else "Loading..."
         self.wa_number_display = ctk.CTkLabel(wa_number_content,
-                                            text="Loading...",
+                                            text=display_text,
                                             font=ctk.CTkFont(size=16, weight="bold"),
                                             text_color="#60a5fa")
         self.wa_number_display.pack(anchor="w")
@@ -3523,8 +3531,13 @@ class LeadFetcherApp:
         status_content = ctk.CTkFrame(status_frame, fg_color="transparent")
         status_content.pack(pady=15, padx=15, fill="x")
         
+        # ✅ CRITICAL: Restore connection status
+        status_icon = "🟢" if self.whatsapp_connected else "🔴"
+        status_text = "Connected" if self.whatsapp_connected else "Disconnected"
+        status_color = "#10b981" if self.whatsapp_connected else "#ef4444"
+        
         self.whatsapp_status_icon = ctk.CTkLabel(status_content, 
-                                                text="🔴", 
+                                                text=status_icon, 
                                                 font=ctk.CTkFont(size=24))
         self.whatsapp_status_icon.pack(side="left", padx=(0, 15))
         
@@ -3532,13 +3545,16 @@ class LeadFetcherApp:
         status_text_frame.pack(side="left", fill="x", expand=True)
         
         self.whatsapp_status_label = ctk.CTkLabel(status_text_frame,
-                                                text="Disconnected",
+                                                text=status_text,
                                                 font=ctk.CTkFont(size=14, weight="bold"),
-                                                text_color="#ef4444")
+                                                text_color=status_color)
         self.whatsapp_status_label.pack(anchor="w")
         
+        number_label_text = f"Connected to: {self.whatsapp_number}" if self.whatsapp_connected else \
+                        (f"WhatsApp number: {self.whatsapp_number}" if self.whatsapp_number else "No WhatsApp number configured")
+        
         self.whatsapp_number_label = ctk.CTkLabel(status_text_frame,
-                                                text="No WhatsApp number configured",
+                                                text=number_label_text,
                                                 font=ctk.CTkFont(size=11),
                                                 text_color="#a0aec0")
         self.whatsapp_number_label.pack(anchor="w", pady=(3, 0))
@@ -3547,6 +3563,10 @@ class LeadFetcherApp:
         button_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
         button_frame.pack(pady=20, padx=20, fill="x")
         
+        # ✅ CRITICAL: Restore button states
+        connect_state = "disabled" if (not self.whatsapp_number or self.whatsapp_connected) else "normal"
+        disconnect_state = "normal" if self.whatsapp_connected else "disabled"
+        
         self.connect_btn = ctk.CTkButton(button_frame,
                                         text="🔌 Connect WhatsApp",
                                         height=50,
@@ -3554,7 +3574,7 @@ class LeadFetcherApp:
                                         fg_color="#10b981",
                                         hover_color="#059669",
                                         command=self.connect_whatsapp,
-                                        state="disabled")
+                                        state=connect_state)
         self.connect_btn.pack(fill="x", pady=(0, 10))
         
         self.disconnect_btn = ctk.CTkButton(button_frame,
@@ -3564,7 +3584,7 @@ class LeadFetcherApp:
                                         fg_color="#ef4444",
                                         hover_color="#dc2626",
                                         command=self.disconnect_whatsapp,
-                                        state="disabled")
+                                        state=disconnect_state)
         self.disconnect_btn.pack(fill="x")
         
         # Instructions
@@ -3587,9 +3607,9 @@ class LeadFetcherApp:
                         font=ctk.CTkFont(size=11),
                         text_color="#a0aec0").pack(pady=2, padx=15, anchor="w")
         
-        ctk.CTkLabel(instructions, text="", height=5).pack()  # Spacing
+        ctk.CTkLabel(instructions, text="", height=5).pack()
         
-        # ========== RIGHT PANEL - Activity Log (Same as Fetch Leads) ==========
+        # ========== RIGHT PANEL - Activity Log ==========
         right_panel = ctk.CTkFrame(content, fg_color="#1a1f2e", corner_radius=15)
         right_panel.pack(side="right", fill="both", expand=True)
         
@@ -3601,7 +3621,7 @@ class LeadFetcherApp:
                     font=ctk.CTkFont(size=18, weight="bold")).pack(side="left")
         
         self.toggle_logs_button = ctk.CTkButton(log_header, 
-                                            text="👁️ Show Details",
+                                            text="🙈 Hide Details" if self.logs_visible else "👁️ Show Details",
                                             width=120,
                                             height=32,
                                             fg_color="#2d3548",
@@ -3609,10 +3629,14 @@ class LeadFetcherApp:
                                             command=self.toggle_logs)
         self.toggle_logs_button.pack(side="right")
         
-        # Log display area (hidden by default)
+        # Log display area
         self.log_container = ctk.CTkFrame(right_panel, fg_color="#2d3548", corner_radius=10)
-        self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
-        self.log_container.pack_forget()  # Hide initially
+        
+        # ✅ CRITICAL: Restore log visibility state
+        if self.logs_visible:
+            self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
+        else:
+            self.log_container.pack_forget()
         
         # Create scrolled text widget for logs
         self.response_text = scrolledtext.ScrolledText(
@@ -3628,6 +3652,12 @@ class LeadFetcherApp:
         )
         self.response_text.pack(pady=10, padx=10, fill="both", expand=True)
         
+        # ✅ CRITICAL: Restore log content
+        self.response_text.config(state=tk.NORMAL)
+        for log_message in self.persistent_logs:
+            self.response_text.insert(tk.END, log_message + '\n')
+        self.response_text.see(tk.END)
+        
         # Clear logs button
         clear_btn = ctk.CTkButton(self.log_container, 
                                 text="🗑️ Clear Logs",
@@ -3637,12 +3667,10 @@ class LeadFetcherApp:
                                 command=self.clear_response)
         clear_btn.pack(pady=(0, 10), padx=10, fill="x")
         
-        # WhatsApp Verification Code Display (reuse from fetch panel if exists)
+        # WhatsApp Verification Code Display
         self.verification_frame = ctk.CTkFrame(right_panel, 
                                             fg_color="#1e3a8a", 
                                             corner_radius=10)
-        self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
-        self.verification_frame.pack_forget()  # Hide by default
         
         ver_content = ctk.CTkFrame(self.verification_frame, fg_color="transparent")
         ver_content.pack(fill="x", padx=15, pady=12)
@@ -3652,7 +3680,7 @@ class LeadFetcherApp:
                     text_color="white").pack(side="left", padx=(0, 10))
         
         self.verification_code_label = ctk.CTkLabel(ver_content,
-                                                text="------",
+                                                text=self.current_verification_code or "------",
                                                 font=ctk.CTkFont(size=24, weight="bold"),
                                                 text_color="white",
                                                 fg_color="#3b82f6",
@@ -3670,9 +3698,19 @@ class LeadFetcherApp:
                                             command=self.copy_verification_code)
         self.copy_code_button.pack(side="left", padx=5)
         
-        # ✅ AUTO-FETCH: Automatically fetch WhatsApp number when panel loads
-        # Use after() to allow UI to render first, then fetch
-        self.root.after(100, self.fetch_whatsapp_number)
+        # ✅ CRITICAL: Show verification frame if code exists
+        if self.current_verification_code:
+            self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
+        else:
+            self.verification_frame.pack_forget()
+        
+        # ✅ AUTO-FETCH: Only fetch if we don't have the number yet
+        if not self.whatsapp_number:
+            self.root.after(100, self.fetch_whatsapp_number)
+        
+        # Force UI update
+        self.root.update_idletasks()
+        print(f"✅ WhatsApp panel loaded - Logs visible: {self.logs_visible}, Connected: {self.whatsapp_connected}")
 
     def fetch_whatsapp_number(self):
         """Fetch WhatsApp number from backend"""
@@ -4041,7 +4079,10 @@ class LeadFetcherApp:
                         text_color=color).pack(pady=(0, 20))
     
     def show_fetch_panel(self):
-        """Show lead fetching panel"""
+        """Show lead fetching panel with state restoration"""
+        # Store current panel
+        self.current_panel = 'fetch'
+        
         self.clear_content_area()
         
         # Header
@@ -4075,9 +4116,9 @@ class LeadFetcherApp:
         
         self.mobile_var = tk.StringVar(value=self.default_mobile)
         self.mobile_entry = ctk.CTkEntry(mobile_frame, height=45, 
-                                         textvariable=self.mobile_var,
-                                         placeholder_text="Enter mobile number",
-                                         font=ctk.CTkFont(size=13))
+                                        textvariable=self.mobile_var,
+                                        placeholder_text="Enter mobile number",
+                                        font=ctk.CTkFont(size=13))
         self.mobile_entry.pack(fill="x")
         
         # Options
@@ -4090,9 +4131,9 @@ class LeadFetcherApp:
         # Send confirmation checkbox
         self.send_confirmation_var = tk.BooleanVar(value=True)
         confirm_cb = ctk.CTkCheckBox(options_frame, 
-                                     text="Send confirmation when data received",
-                                     variable=self.send_confirmation_var,
-                                     font=ctk.CTkFont(size=12))
+                                    text="Send confirmation when data received",
+                                    variable=self.send_confirmation_var,
+                                    font=ctk.CTkFont(size=12))
         confirm_cb.pack(anchor="w", pady=5)
         
         # Auto-fetch checkbox
@@ -4109,12 +4150,12 @@ class LeadFetcherApp:
         fetch_btn_frame.pack(pady=20, padx=20, fill="x")
         
         self.fetch_button = ctk.CTkButton(fetch_btn_frame, 
-                                         text="🚀 Fetch Leads Data",
-                                         height=50,
-                                         font=ctk.CTkFont(size=15, weight="bold"),
-                                         fg_color="#3b82f6",
-                                         hover_color="#2563eb",
-                                         command=self.fetch_data_threaded)
+                                        text="🚀 Send WhatsApp Messages",
+                                        height=50,
+                                        font=ctk.CTkFont(size=15, weight="bold"),
+                                        fg_color="#3b82f6",
+                                        hover_color="#2563eb",
+                                        command=self.fetch_data_threaded)
         self.fetch_button.pack(fill="x")
         
         # Status section
@@ -4148,18 +4189,22 @@ class LeadFetcherApp:
                     font=ctk.CTkFont(size=18, weight="bold")).pack(side="left")
         
         self.toggle_logs_button = ctk.CTkButton(log_header, 
-                                               text="👁️ Show Details",
-                                               width=120,
-                                               height=32,
-                                               fg_color="#2d3548",
-                                               hover_color="#3d4558",
-                                               command=self.toggle_logs)
+                                            text="🙈 Hide Details" if self.logs_visible else "👁️ Show Details",
+                                            width=120,
+                                            height=32,
+                                            fg_color="#2d3548",
+                                            hover_color="#3d4558",
+                                            command=self.toggle_logs)
         self.toggle_logs_button.pack(side="right")
         
-        # Log display area (hidden by default)
+        # Log display area
         self.log_container = ctk.CTkFrame(right_panel, fg_color="#2d3548", corner_radius=10)
-        self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
-        self.log_container.pack_forget()  # Hide initially
+        
+        # ✅ CRITICAL: Restore log visibility state IMMEDIATELY
+        if self.logs_visible:
+            self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
+        else:
+            self.log_container.pack_forget()
         
         # Create scrolled text widget for logs
         self.response_text = scrolledtext.ScrolledText(
@@ -4175,21 +4220,25 @@ class LeadFetcherApp:
         )
         self.response_text.pack(pady=10, padx=10, fill="both", expand=True)
         
+        # ✅ CRITICAL: Restore log content
+        self.response_text.config(state=tk.NORMAL)
+        for log_message in self.persistent_logs:
+            self.response_text.insert(tk.END, log_message + '\n')
+        self.response_text.see(tk.END)
+        
         # Clear logs button
         clear_btn = ctk.CTkButton(self.log_container, 
-                                 text="🗑️ Clear Logs",
-                                 height=35,
-                                 fg_color="#ef4444",
-                                 hover_color="#dc2626",
-                                 command=self.clear_response)
+                                text="🗑️ Clear Logs",
+                                height=35,
+                                fg_color="#ef4444",
+                                hover_color="#dc2626",
+                                command=self.clear_response)
         clear_btn.pack(pady=(0, 10), padx=10, fill="x")
         
         # WhatsApp Verification Code Display
         self.verification_frame = ctk.CTkFrame(right_panel, 
-                                              fg_color="#1e3a8a", 
-                                              corner_radius=10)
-        self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
-        self.verification_frame.pack_forget()  # Hide by default
+                                            fg_color="#1e3a8a", 
+                                            corner_radius=10)
         
         ver_content = ctk.CTkFrame(self.verification_frame, fg_color="transparent")
         ver_content.pack(fill="x", padx=15, pady=12)
@@ -4199,24 +4248,34 @@ class LeadFetcherApp:
                     text_color="white").pack(side="left", padx=(0, 10))
         
         self.verification_code_label = ctk.CTkLabel(ver_content,
-                                                   text="------",
-                                                   font=ctk.CTkFont(size=24, weight="bold"),
-                                                   text_color="white",
-                                                   fg_color="#3b82f6",
-                                                   corner_radius=8,
-                                                   width=150,
-                                                   height=40)
+                                                text=self.current_verification_code or "------",
+                                                font=ctk.CTkFont(size=24, weight="bold"),
+                                                text_color="white",
+                                                fg_color="#3b82f6",
+                                                corner_radius=8,
+                                                width=150,
+                                                height=40)
         self.verification_code_label.pack(side="left", padx=5)
         
         self.copy_code_button = ctk.CTkButton(ver_content,
-                                             text="📋 Copy",
-                                             width=80,
-                                             height=40,
-                                             fg_color="#10b981",
-                                             hover_color="#059669",
-                                             command=self.copy_verification_code)
+                                            text="📋 Copy",
+                                            width=80,
+                                            height=40,
+                                            fg_color="#10b981",
+                                            hover_color="#059669",
+                                            command=self.copy_verification_code)
         self.copy_code_button.pack(side="left", padx=5)
-    
+        
+        # ✅ CRITICAL: Show verification frame if code exists
+        if self.current_verification_code:
+            self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
+        else:
+            self.verification_frame.pack_forget()
+        
+        # Force UI update
+        self.root.update_idletasks()
+        print(f"✅ Fetch panel loaded - Logs visible: {self.logs_visible}, Code: {self.current_verification_code}")
+
     def show_whatsapp_panel(self):
         """Show WhatsApp automation panel"""
         self.clear_content_area()
@@ -4235,10 +4294,10 @@ class LeadFetcherApp:
                     font=ctk.CTkFont(size=16)).pack(pady=100)
     
     def clear_content_area(self):
-        """Clear all widgets from content area WITHOUT resetting state - IMPROVED"""
+        """Clear content area while preserving state - IMPROVED"""
         print("🧹 Clearing content area...")
         
-        # 1. Cancel ALL pending after() callbacks first
+        # 1. Cancel ALL pending after() callbacks
         print(f"Cancelling {len(self._after_ids)} pending callbacks...")
         for after_id in self._after_ids:
             try:
@@ -4247,46 +4306,42 @@ class LeadFetcherApp:
                 pass
         self._after_ids.clear()
         
-        # 2. Clear GUI update queue to prevent accessing destroyed widgets
-        print("Clearing GUI update queue...")
-        while not self.gui_update_queue.empty():
-            try:
-                self.gui_update_queue.get_nowait()
-            except:
-                break
+        # 2. Preserve state variables BEFORE destroying widgets
+        preserved_state = {
+            'logs_visible': self.logs_visible if hasattr(self, 'logs_visible') else False,
+            'logs_authenticated': self.logs_authenticated if hasattr(self, 'logs_authenticated') else False,
+            'persistent_logs': self.persistent_logs.copy() if hasattr(self, 'persistent_logs') else [],
+            'current_verification_code': self.current_verification_code if hasattr(self, 'current_verification_code') else None,
+            'whatsapp_number': self.whatsapp_number if hasattr(self, 'whatsapp_number') else None,
+            'whatsapp_connected': self.whatsapp_connected if hasattr(self, 'whatsapp_connected') else False,
+        }
         
-        # 3. Preserve state variables
-        temp_logs_visible = self.logs_visible if hasattr(self, 'logs_visible') else False
-        temp_logs_authenticated = self.logs_authenticated if hasattr(self, 'logs_authenticated') else False
-        temp_persistent_logs = self.persistent_logs if hasattr(self, 'persistent_logs') else []
+        # 3. Mark widgets as invalid BEFORE destroying
+        widget_attrs = ['response_text', 'log_container', 'toggle_logs_button', 
+                        'verification_frame', 'verification_code_label']
+        for attr in widget_attrs:
+            if hasattr(self, attr):
+                setattr(self, attr, None)
         
-        # 4. Mark widgets as invalid BEFORE destroying
-        if hasattr(self, 'response_text'):
-            self.response_text = None
-        if hasattr(self, 'log_container'):
-            self.log_container = None
-        if hasattr(self, 'toggle_logs_button'):
-            self.toggle_logs_button = None
-        
-        # 5. Now destroy all widgets
+        # 4. Destroy all widgets
         for widget in self.content_area.winfo_children():
             try:
                 widget.destroy()
             except:
                 pass
         
-        # 6. Force update to ensure widgets are fully destroyed
+        # 5. Force update to ensure widgets are fully destroyed
         try:
             self.content_area.update_idletasks()
         except:
             pass
         
-        # 7. Restore state
-        self.logs_visible = temp_logs_visible
-        self.logs_authenticated = temp_logs_authenticated
-        self.persistent_logs = temp_persistent_logs
+        # 6. Restore state
+        for key, value in preserved_state.items():
+            setattr(self, key, value)
         
-        print("✅ Content area cleared successfully")
+        print("✅ Content area cleared, state preserved")
+
 
     def toggle_logs(self):
         """Toggle log visibility"""
