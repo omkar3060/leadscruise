@@ -113,6 +113,7 @@ const SUBSCRIPTION_DURATIONS = {
   "three-mo": 60,
   "six-mo": 180,
   "year-mo": 365,
+  "7-days": 7,
 };
 
 // Function to check if a subscription has expired

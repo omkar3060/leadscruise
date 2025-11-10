@@ -1955,12 +1955,112 @@ resetLeadCounters();
 
 // Schedule cron job to run every day at 5 AM
 cron.schedule("0 5 * * *", resetLeadCounters);
+// Function to check subscription validity and stop expired users
+const checkSubscriptionsAndStop = async () => {
+  try {
+    console.log("Running subscription check at 5 AM...");
+    
+    // Get all payments with their subscription details
+    const payments = await Payment.find({}).sort({ created_at: -1 });
+    
+    // Group payments by email to get the latest subscription for each user
+    const userSubscriptions = new Map();
+    
+    payments.forEach(payment => {
+      if (!userSubscriptions.has(payment.email)) {
+        const subscriptionDays = SUBSCRIPTION_DURATIONS[payment.subscription_type] || 0;
+        const createdDate = new Date(payment.created_at);
+        const expiryDate = new Date(createdDate.getTime() + subscriptionDays * 24 * 60 * 60 * 1000);
+        const currentDate = new Date();
+        const daysRemaining = Math.floor((expiryDate - currentDate) / (1000 * 60 * 60 * 24));
+        
+        userSubscriptions.set(payment.email, {
+          email: payment.email,
+          uniqueId: payment.unique_id, // ✅ Store the unique_id from payment
+          expiryDate,
+          daysRemaining,
+          hasValidSubscription: daysRemaining > 0,
+          subscriptionType: payment.subscription_type
+        });
+      }
+    });
+    
+    // Find all users with active status or running processes
+    const activeUsers = await User.find({ 
+      status: { $ne: "Stopped" }
+    });
+    
+    console.log(`Found ${activeUsers.length} active users to check`);
+    
+    // Check each active user's subscription
+    for (const user of activeUsers) {
+      const subscription = userSubscriptions.get(user.email);
+      
+      // If no subscription found or subscription expired
+      if (!subscription || !subscription.hasValidSubscription) {
+        console.log(`User ${user.email} has expired/no subscription. Stopping service...`);
+        
+        // Use the unique_id from payment record
+        const uniqueId = subscription?.uniqueId;
+        
+        if (uniqueId) {
+          try {
+            // Call the stop route logic
+            const pythonProcess = activePythonProcesses.get(uniqueId);
+            if (pythonProcess) {
+              console.log(`Sending SIGINT to Python script for ${user.email} (uniqueId: ${uniqueId})...`);
+              activePythonProcesses.delete(uniqueId);
+              cleanupDisplay(uniqueId);
+              pythonProcess.kill("SIGINT");
+            }
+            
+            // Reset user status in DB
+            await User.findOneAndUpdate(
+              { email: user.email },
+              { 
+                status: "Stopped", 
+                startTime: new Date(), 
+                autoStartEnabled: false 
+              },
+              { new: true }
+            );
+            
+            console.log(`Successfully stopped service for ${user.email}`);
+          } catch (error) {
+            console.error(`Error stopping service for ${user.email}:`, error);
+          }
+        } else {
+          // Just update the status if no uniqueId found
+          await User.findOneAndUpdate(
+            { email: user.email },
+            { 
+              status: "Stopped", 
+              autoStartEnabled: false 
+            },
+            { new: true }
+          );
+          console.log(`Updated status for ${user.email} (no uniqueId found)`);
+        }
+      } else {
+        console.log(`User ${user.email} has valid subscription (${subscription.daysRemaining} days remaining)`);
+      }
+    }
+    
+    console.log("Subscription check completed");
+  } catch (error) {
+    console.error("Error in subscription check:", error);
+  }
+};
+
+// Schedule cron job to run every day at 5 AM
+cron.schedule("0 5 * * *", checkSubscriptionsAndStop);
 
 const SUBSCRIPTION_DURATIONS = {
   "one-mo": 30,
   "three-mo": 60,
   "six-mo": 180,
   "year-mo": 365,
+  "7-days": 7,
 };
 
 // cron.schedule("0 6 * * *", async () => {
