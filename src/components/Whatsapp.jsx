@@ -353,16 +353,16 @@ const Whatsapp = () => {
     }
   }, []);
 
-  const updateWhatsappNumber = async () => {
+const updateWhatsappNumber = async () => {
   if (!newWhatsappNumber) {
     alert("WhatsApp number cannot be empty!");
     return;
   }
-  
+
   updateLoadingState(true);
   setIsLoading(true);
   setError(null);
-  
+
   try {
     const mobileNumber = localStorage.getItem("mobileNumber");
 
@@ -374,16 +374,31 @@ const Whatsapp = () => {
         body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
       }
     );
-    
+
     const data = await res.json();
-    
+
     if (res.ok) {
-      alert("WhatsApp number linked successfully!");
-      setWhatsappNumber(newWhatsappNumber);
-      setIsEditingWhatsapp(false);
-      // Set verification code to "111" to indicate successful linking
-      setVerificationCode("111");
-    } else {
+      if (data.alreadyLinked) {
+        // Instance already exists, just show as linked without opening URL
+        alert("WhatsApp number is already linked!");
+        setWhatsappNumber(newWhatsappNumber);
+        setIsEditingWhatsapp(false);
+        setVerificationCode("111");
+      } else {
+        // New instance created, open QR page and start monitoring
+        setWhatsappNumber(newWhatsappNumber);
+        setIsEditingWhatsapp(false);
+
+        // Open QR page in new tab only for new instances
+        if (data.qrUrl) {
+          const qrWindow = window.open(data.qrUrl, "_blank");
+          
+          // Start polling to check connection status by fetching the URL
+          startConnectionPolling(mobileNumber, newWhatsappNumber, data.qrUrl, qrWindow);
+        }
+      }
+    }
+    else {
       alert(data.error || "Failed to update WhatsApp number.");
       setError("Failed to update WhatsApp number");
     }
@@ -394,6 +409,91 @@ const Whatsapp = () => {
   } finally {
     setIsLoading(false);
     updateLoadingState(false);
+  }
+};
+
+const startConnectionPolling = (mobileNumber, whatsappNumber, qrUrl, qrWindow) => {
+  let pollCount = 0;
+  const maxPolls = 180; // Poll for 3 minutes (180 * 1 second)
+  
+  const pollInterval = setInterval(async () => {
+    pollCount++;
+    
+    // Stop polling after max attempts
+    if (pollCount > maxPolls) {
+      clearInterval(pollInterval);
+      console.log("Polling timeout - stopped checking connection status");
+      return;
+    }
+
+    // Check if the window is still open
+    if (qrWindow && qrWindow.closed) {
+      clearInterval(pollInterval);
+      console.log("QR window closed - stopped polling");
+      return;
+    }
+
+    try {
+      // Fetch the HTML content of the QR page
+      const response = await fetch(qrUrl);
+      const html = await response.text();
+      
+      // Parse the HTML to check for connection status
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Find the status badge element
+      const statusBadge = doc.getElementById('connection-status');
+      
+      if (statusBadge) {
+        const statusText = statusBadge.textContent.trim().toUpperCase();
+        const dataState = statusBadge.getAttribute('data-state');
+        
+        console.log(`Connection status: ${statusText}, data-state: ${dataState}`);
+        
+        // Check if status is "OPEN" or "CONNECTED"
+        if (statusText === 'OPEN' || statusText === 'CONNECTED' || dataState === 'connected' || dataState === 'open') {
+          clearInterval(pollInterval);
+          
+          // Close the QR window
+          if (qrWindow && !qrWindow.closed) {
+            qrWindow.close();
+          }
+
+          // Update verification code in backend
+          await updateVerificationCode(mobileNumber);
+          
+          // Update local state
+          setVerificationCode("111");
+          
+          alert("WhatsApp linked successfully!");
+          
+          console.log("WhatsApp connection established successfully");
+        }
+      }
+    } catch (error) {
+      console.error("Error checking connection status:", error);
+      // Continue polling even if there's an error
+    }
+  }, 2000); // Poll every 2 seconds
+};
+
+const updateVerificationCode = async (mobileNumber) => {
+  try {
+    const res = await fetch(
+      "https://api.leadscruise.com/api/whatsapp-settings/update-verification-code",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobileNumber, verificationCode: "111" }),
+      }
+    );
+
+    if (!res.ok) {
+      console.error("Failed to update verification code in backend");
+    }
+  } catch (error) {
+    console.error("Error updating verification code:", error);
   }
 };
 
@@ -446,272 +546,252 @@ const Whatsapp = () => {
 
   return (
     <>
-    {/* Dither Background */}
-    <div style={{ 
-      position: 'fixed', 
-      top: 0, 
-      left: 0, 
-      width: '100%', 
-      height: '100%', 
-      zIndex: 0
-    }}>
-      <Dither
-        waveColor={[51/255, 102/255, 128/255]}
-        disableAnimation={false}
-        enableMouseInteraction={true}
-        mouseRadius={0.3}
-        colorNum={5}
-        waveAmplitude={0.25}
-        waveFrequency={2.5}
-        waveSpeed={0.03}
-        pixelSize={2.5}
-      />
-    </div>
-    <div
-      className="settings-page-wrapper"
-      style={windowWidth <= 768 ? { marginLeft: 0 } : {}}
-    >
-      {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
-      <DashboardHeader
-        style={
-          windowWidth <= 768
-            ? {
-              left: 0,
-              width: "100%",
-              marginLeft: 0,
-              padding: "15px",
-            }
-            : {}
-        }
-      />
-      <div className="settings-scroll-container">
-        <div className="sheets-container">
-          {/* WhatsApp Settings Section */}
-          <div className="table-container whatsapp-settings-table">
-            <h2>WhatsApp Settings</h2>
-            {messages.length > 0 ? (
-              <ul>
-                {messages.map((msg) => (
-                  <li key={msg.id}>{msg.text}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No messages added.</p>
-            )}
-            <div className="edit-button-container">
-              <button
-                type="button"
-                className="edit-button"
-                style={{
-                  backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
-                  cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
-                  color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
-                }}
-                onClick={handleEditClick}
-              >
-                Edit
-              </button>
-            </div>
-          </div>
-
-          <ProfileCredentials
-            isProfilePage={true}
-            newWhatsappNumber={newWhatsappNumber}
-            setNewWhatsappNumber={setNewWhatsappNumber}
-            isEditingWhatsapp={isEditingWhatsapp}
-            setIsEditingWhatsapp={setIsEditingWhatsapp}
-            updateWhatsappNumber={updateWhatsappNumber}
-            verificationCode={verificationCode}
-            setVerificationCode={setVerificationCode}
-            isLoading={isLoading}
-            editLockedUntil={editLockedUntil}
-            setEditLockedUntil={setEditLockedUntil}
-            justUpdated={justUpdated}
-            setJustUpdated={setJustUpdated}
-            error={error}
-          />
-        </div>
+      {/* Dither Background */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0
+      }}>
+        <Dither
+          waveColor={[51 / 255, 102 / 255, 128 / 255]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={5}
+          waveAmplitude={0.25}
+          waveFrequency={2.5}
+          waveSpeed={0.03}
+          pixelSize={2.5}
+        />
       </div>
-      {showPopup && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '30px',
-            borderRadius: '10px',
-            width: '500px',
-            maxHeight: '70vh',
-            overflow: 'auto',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
-          }}>
-            <h3 style={{ marginBottom: '20px', color: '#333' }}>
-              Edit Phone Numbers
-            </h3>
-
-            {/* Existing phone numbers */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ color: '#555', marginBottom: '10px' }}>
-                Extracted Phone Numbers:
-              </h4>
-              {phoneNumbers.length > 0 ? (
-                phoneNumbers.map((phone) => (
-                  <div key={phone.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginBottom: '10px',
-                    padding: '8px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '4px'
-                  }}>
-                    <input
-                      type="text"
-                      value={phone.number}
-                      onChange={(e) => handleEditNumber(phone.id, e.target.value)}
-                      style={{
-                        flex: 1,
-                        padding: '8px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        marginRight: '10px'
-                      }}
-                    />
-                    <button
-                      onClick={() => handleDeleteNumber(phone.id)}
-                      style={{
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        width: 'fit-content',
-                        marginBottom: '0'
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))
+      <div
+        className="settings-page-wrapper"
+        style={windowWidth <= 768 ? { marginLeft: 0 } : {}}
+      >
+        {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
+        <DashboardHeader
+          style={
+            windowWidth <= 768
+              ? {
+                left: 0,
+                width: "100%",
+                marginLeft: 0,
+                padding: "15px",
+              }
+              : {}
+          }
+        />
+        <div className="settings-scroll-container">
+          <div className="sheets-container">
+            {/* WhatsApp Settings Section */}
+            <div className="table-container whatsapp-settings-table">
+              <h2>WhatsApp Settings</h2>
+              {messages.length > 0 ? (
+                <ul>
+                  {messages.map((msg) => (
+                    <li key={msg.id}>{msg.text}</li>
+                  ))}
+                </ul>
               ) : (
-                <p style={{ color: '#666', fontStyle: 'italic' }}>
-                  No phone numbers found in messages
-                </p>
+                <p>No messages added.</p>
               )}
-            </div>
-
-            {/* Add new phone number */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ color: '#555', marginBottom: '10px' }}>
-                Add New Phone Number:
-              </h4>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="text"
-                  value={newNumber}
-                  onChange={(e) => setNewNumber(e.target.value)}
-                  placeholder="Enter phone number"
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    marginRight: '10px'
-                  }}
-                />
+              <div className="edit-button-container">
                 <button
-                  onClick={handleAddNumber}
+                  type="button"
+                  className="edit-button"
                   style={{
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    width: 'fit-content',
-                    marginBottom: '0'
+                    backgroundColor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#ccc" : "",
+                    cursor: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "not-allowed" : "pointer",
+                    color: localStorage.getItem("userEmail") === "demo@leadscruise.com" ? "#666" : ""
                   }}
+                  onClick={handleEditClick}
                 >
-                  Add
+                  Edit
                 </button>
               </div>
             </div>
 
-            {/* Action buttons */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '10px',
-              marginTop: '20px'
-            }}>
-              <button
-                onClick={() => setShowPopup(false)}
-                style={{
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 20px',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  marginBottom: '0'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                style={{
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 20px',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  marginBottom: '0'
-                }}
-              >
-                Save
-              </button>
-            </div>
+            <ProfileCredentials
+              isProfilePage={true}
+              newWhatsappNumber={newWhatsappNumber}
+              setNewWhatsappNumber={setNewWhatsappNumber}
+              isEditingWhatsapp={isEditingWhatsapp}
+              setIsEditingWhatsapp={setIsEditingWhatsapp}
+              updateWhatsappNumber={updateWhatsappNumber}
+              verificationCode={verificationCode}
+              setVerificationCode={setVerificationCode}
+              isLoading={isLoading}
+              editLockedUntil={editLockedUntil}
+              setEditLockedUntil={setEditLockedUntil}
+              justUpdated={justUpdated}
+              setJustUpdated={setJustUpdated}
+              error={error}
+            />
           </div>
         </div>
-      )}
-      <div className="support-info support-info-width">
-        <h3 className="support-info__title">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="support-info__title-icon"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-          Need Help?
-        </h3>
-        <div className="support-info__content">
-          <p className="support-info__paragraph">
+        {showPopup && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '30px',
+              borderRadius: '10px',
+              width: '500px',
+              maxHeight: '70vh',
+              overflow: 'auto',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+            }}>
+              <h3 style={{ marginBottom: '20px', color: '#333' }}>
+                Edit Phone Numbers
+              </h3>
+
+              {/* Existing phone numbers */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ color: '#555', marginBottom: '10px' }}>
+                  Extracted Phone Numbers:
+                </h4>
+                {phoneNumbers.length > 0 ? (
+                  phoneNumbers.map((phone) => (
+                    <div key={phone.id} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      marginBottom: '10px',
+                      padding: '8px',
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: '4px'
+                    }}>
+                      <input
+                        type="text"
+                        value={phone.number}
+                        onChange={(e) => handleEditNumber(phone.id, e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          marginRight: '10px'
+                        }}
+                      />
+                      <button
+                        onClick={() => handleDeleteNumber(phone.id)}
+                        style={{
+                          backgroundColor: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          width: 'fit-content',
+                          marginBottom: '0'
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ color: '#666', fontStyle: 'italic' }}>
+                    No phone numbers found in messages
+                  </p>
+                )}
+              </div>
+
+              {/* Add new phone number */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ color: '#555', marginBottom: '10px' }}>
+                  Add New Phone Number:
+                </h4>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={newNumber}
+                    onChange={(e) => setNewNumber(e.target.value)}
+                    placeholder="Enter phone number"
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginRight: '10px'
+                    }}
+                  />
+                  <button
+                    onClick={handleAddNumber}
+                    style={{
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      width: 'fit-content',
+                      marginBottom: '0'
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '10px',
+                marginTop: '20px'
+              }}>
+                <button
+                  onClick={() => setShowPopup(false)}
+                  style={{
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    marginBottom: '0'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    marginBottom: '0'
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="support-info support-info-width">
+          <h3 className="support-info__title">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="support-info__icon"
-              width="20"
-              height="20"
+              className="support-info__title-icon"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -719,96 +799,19 @@ const Whatsapp = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-              <polyline points="22,6 12,13 2,6"></polyline>
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-            If you encounter any issues, contact our support team at &nbsp;{" "}
-            <a
-              href="mailto:support@leadscruise.com"
-              className="support-info__link"
-            >
-              support@leadscruise.com
-            </a>
-          </p>
-          <p className="support-info__paragraph">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="support-info__icon"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-            For FAQs, visit our&nbsp;{" "}
-            <a
-              href="https://leadscruise.com"
-              className="support-info__link support-info__link--with-icon"
-            >
-              Landing Page
+            Need Help?
+          </h3>
+          <div className="support-info__content">
+            <p className="support-info__paragraph">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="support-info__external-icon"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
-            </a>
-          </p>
-          <p className="support-info__paragraph">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="support-info__icon"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect
-                x="2"
-                y="2"
+                className="support-info__icon"
                 width="20"
                 height="20"
-                rx="2.18"
-                ry="2.18"
-              ></rect>
-              <line x1="10" y1="15" x2="10" y2="9"></line>
-              <line x1="14" y1="15" x2="14" y2="9"></line>
-              <line x1="7" y1="12" x2="17" y2="12"></line>
-            </svg>
-            Watch our&nbsp;{" "}
-            <a
-              href="https://www.youtube.com/watch?v=yQgrVTUYlvk"
-              className="support-info__link support-info__link--with-icon"
-            >
-              Demo Video
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="support-info__external-icon"
-                width="16"
-                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -816,16 +819,113 @@ const Whatsapp = () => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
               </svg>
-            </a>
-            &nbsp;for a quick tutorial on how to use our whatsapp feature.
-          </p>
+              If you encounter any issues, contact our support team at &nbsp;{" "}
+              <a
+                href="mailto:support@leadscruise.com"
+                className="support-info__link"
+              >
+                support@leadscruise.com
+              </a>
+            </p>
+            <p className="support-info__paragraph">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="support-info__icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              For FAQs, visit our&nbsp;{" "}
+              <a
+                href="https://leadscruise.com"
+                className="support-info__link support-info__link--with-icon"
+              >
+                Landing Page
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="support-info__external-icon"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+            </p>
+            <p className="support-info__paragraph">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="support-info__icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect
+                  x="2"
+                  y="2"
+                  width="20"
+                  height="20"
+                  rx="2.18"
+                  ry="2.18"
+                ></rect>
+                <line x1="10" y1="15" x2="10" y2="9"></line>
+                <line x1="14" y1="15" x2="14" y2="9"></line>
+                <line x1="7" y1="12" x2="17" y2="12"></line>
+              </svg>
+              Watch our&nbsp;{" "}
+              <a
+                href="https://www.youtube.com/watch?v=yQgrVTUYlvk"
+                className="support-info__link support-info__link--with-icon"
+              >
+                Demo Video
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="support-info__external-icon"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+              &nbsp;for a quick tutorial on how to use our whatsapp feature.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

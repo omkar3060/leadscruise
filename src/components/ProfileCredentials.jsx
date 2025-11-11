@@ -479,36 +479,36 @@ const ProfileCredentials = ({
     }
   };
 
-  const unlinkWhatsappNumber = async () => {
-    const confirmed = window.confirm("Are you sure you want to unlink your WhatsApp number?");
-    if (!confirmed) return;
+const unlinkWhatsappNumber = async () => {
+  const confirmed = window.confirm("Are you sure you want to unlink your WhatsApp number?");
+  if (!confirmed) return;
 
-    try {
-      const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/whatsapp-logout", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ mobileNumber })
-      });
+  try {
+    const res = await fetch("https://api.leadscruise.com/api/whatsapp-settings/whatsapp-logout", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ mobileNumber })
+    });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert("WhatsApp unlinked successfully");
-        setVerificationCode(null);
-        setNewWhatsappNumber("");
+    const data = await res.json();
+    if (res.ok) {
+      alert("WhatsApp unlinked successfully");
+      setVerificationCode(null);
+      setNewWhatsappNumber("");
 
-        const lockUntil = Date.now() + 1 * 60 * 1000;
-        localStorage.setItem("editLockedUntil", lockUntil);
-        setEditLockedUntil(lockUntil);
-      } else {
-        alert(`Error: ${data.error}`);
-      }
-    } catch (err) {
-      console.error("Unlink failed:", err);
-      alert("Something went wrong while unlinking WhatsApp");
+      const lockUntil = Date.now() + 1 * 60 * 1000;
+      localStorage.setItem("editLockedUntil", lockUntil);
+      setEditLockedUntil(lockUntil);
+    } else {
+      alert(`Error: ${data.error}`);
     }
-  };
+  } catch (err) {
+    console.error("Unlink failed:", err);
+    alert("Something went wrong while unlinking WhatsApp");
+  }
+};
 
   const downloadLatestRelease = () => {
     if (!latestRelease || !latestRelease.assets || latestRelease.assets.length === 0) {
@@ -960,48 +960,6 @@ const ProfileCredentials = ({
                 <span className="no-code">Edit and update your number to link</span>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {isWhatsAppPage && (
-        <div className="credentials-section">
-          <h3 className="credentials-header centered-header">Desktop Application</h3>
-          <div className="credentials-content">
-            <div className="credential-group">
-              <div className="whatsapp-number-container">
-                {downloadLoading ? (
-                  <div className="loading-spinner">
-                    <div className="spinner1"></div>
-                    <span>Checking for updates...</span>
-                  </div>
-                ) : latestRelease ? (
-                  <>
-                    <div className="edit-button-container">
-                      <button
-                        className="update-api-btn"
-                        onClick={downloadLatestRelease}
-                        disabled={countdown > 0}
-                        title={getButtonTitle("Download")}
-                      >
-                        Download {countdown > 0 && `(${countdown}s)`}
-                      </button>
-                      {/* <button
-                        className="cancel-button"
-                        onClick={viewReleaseNotes}
-                        disabled={countdown > 0}
-                        title={getButtonTitle("View Details")}
-                      >
-                        Release Notes {countdown > 0 && `(${countdown}s)`}
-                      </button> */}
-                    </div>
-                  </>
-                ) : (
-                  <span className="mobile-text">Unable to fetch release information</span>
-                )}
-              </div>
-            </div>
-            {downloadError && <div className="error-message">{downloadError}</div>}
           </div>
         </div>
       )}
