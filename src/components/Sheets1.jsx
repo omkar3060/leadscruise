@@ -75,6 +75,34 @@ const Sheets = () => {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
+  // Cache helper functions
+  const getCachedLeads = (mobileNumber) => {
+    const cacheKey = `leads_cache_${mobileNumber}`;
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      const age = Date.now() - timestamp;
+
+      // Cache valid for 5 minutes (300000ms)
+      if (age < 300000) {
+        console.log('✅ Cache HIT - Using cached leads');
+        return data;
+      }
+    }
+
+    console.log('❌ Cache MISS - Fetching fresh leads');
+    return null;
+  };
+
+  const setCachedLeads = (mobileNumber, leads) => {
+    const cacheKey = `leads_cache_${mobileNumber}`;
+    localStorage.setItem(cacheKey, JSON.stringify({
+      data: leads,
+      timestamp: Date.now()
+    }));
+  };
+
   const fetchBuyerBalance = useCallback(async () => {
     try {
       const userEmail = localStorage.getItem("userEmail");
@@ -750,6 +778,15 @@ const Sheets = () => {
         navigate(-1);
         return;
       }
+
+      // ✅ CHECK CACHE FIRST
+      const cachedData = getCachedLeads(userMobile);
+      if (cachedData) {
+        setLeads(cachedData);
+        setIsLoadingLeads(false);
+        return; // Exit early with cached data
+      }
+
       setIsLoadingLeads(true);
 
       if (userMobile === "9999999999") {
@@ -765,6 +802,10 @@ const Sheets = () => {
 
       if (response.status === 200) {
         console.log("🔍 Sarfaraz lead:", response.data.leads.find(l => l.name === "Sarfaraz"));
+
+        // ✅ CACHE THE RESPONSE
+        setCachedLeads(userMobile, response.data.leads);
+
         setLeads(response.data.leads);
         setTotalLeads(response.data.totalLeads);
       }
