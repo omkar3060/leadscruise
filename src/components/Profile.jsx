@@ -250,10 +250,10 @@ const Profile = () => {
       case "3-days":
         start.setDate(start.getDate() + 3);
         break;
-      case "one month":
+      case "one-mo":
         start.setDate(start.getDate() + 30); // Approximate month duration
         break;
-      case "6 months":
+      case "six-mo":
         start.setDate(start.getDate() + 180);
         break;
       case "year-mo":
@@ -318,7 +318,6 @@ const Profile = () => {
       {/* Sidebar */}
       <Sidebar status={status} />
 
-      {/* Fixed Dashboard Header */}
       {/* Fixed Dashboard Header */}
       <DashboardHeader style={{ position: 'relative', zIndex: 1000 }} />
 

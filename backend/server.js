@@ -1318,7 +1318,79 @@ const otpRequests = new Map();
 const otpFailures = new Map();
 
 const activePythonProcesses = new Map();
+// Add this endpoint to your server.js file (around line 1400-1500)
 
+app.get("/api/get-active-subscriptions", async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
+    // Find all payments for this user
+    const allPayments = await Payment.find({ email })
+      .sort({ created_at: -1 })
+      .exec();
+
+    if (!allPayments || allPayments.length === 0) {
+      return res.json({
+        success: true,
+        hasActiveSubscription: false,
+        canDownloadReports: false,
+        activeSubscriptions: [],
+        message: "No subscriptions found"
+      });
+    }
+
+    const now = new Date();
+    const activeSubscriptions = [];
+
+    // Check each payment to see if it's still active
+    for (const payment of allPayments) {
+      const subscriptionDays = getSubscriptionDuration(payment.subscription_type);
+      const expirationDate = new Date(payment.created_at);
+      expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+
+      // If subscription is still active
+      if (now < expirationDate) {
+        activeSubscriptions.push({
+          type: payment.subscription_type,
+          startDate: payment.created_at,
+          expirationDate: expirationDate.toISOString(),
+          daysRemaining: Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24))
+        });
+      }
+    }
+
+    // Determine if user can download reports
+    // User can download reports if they have ANY active subscription that is NOT one-mo or three-mo
+    const canDownloadReports = activeSubscriptions.some(sub =>
+      sub.type !== 'one-mo' &&
+      sub.type !== 'three-mo' &&
+      sub.type !== '7-days'
+    );
+
+    res.json({
+      success: true,
+      hasActiveSubscription: activeSubscriptions.length > 0,
+      canDownloadReports,
+      activeSubscriptions,
+      totalActiveSubscriptions: activeSubscriptions.length
+    });
+
+  } catch (error) {
+    console.error("Error fetching active subscriptions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
 app.post("/api/execute-task", async (req, res) => {
   // Set a higher timeout for this specific response
   res.setTimeout(900000); // 15 minutes
@@ -1587,7 +1659,7 @@ else
 
 We typically respond within some minutes!`;
 
-          // Upsert WhatsApp settings for the user's mobile number
+          // Upsert whatsapp settings for the user's mobile number
           await WhatsappSettings.findOneAndUpdate(
             { mobileNumber }, // match by main mobileNumber
             {
@@ -1603,7 +1675,7 @@ We typically respond within some minutes!`;
 
           console.log(`WhatsApp message saved for ${mobileNumber}`);
         } catch (whatsAppError) {
-          console.error("Error saving WhatsApp settings:", whatsAppError);
+          console.error("Error saving whatsapp settings:", whatsAppError);
         }
 
 
@@ -1649,7 +1721,55 @@ const UserLeadCounter = mongoose.model(
   "UserLeadCounter",
   userLeadCounterSchema
 );
+// Add this endpoint after your other user-related routes (around line 1400-1500)
 
+app.get("/api/get-user-subscription", async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
+    // Find the latest payment for this user
+    const latestPayment = await Payment.findOne({ email })
+      .sort({ created_at: -1 })
+      .exec();
+
+    if (!latestPayment) {
+      return res.status(404).json({
+        success: false,
+        message: "No subscription found for this user"
+      });
+    }
+
+    // Check if subscription is still active
+    const subscriptionDays = getSubscriptionDuration(latestPayment.subscription_type);
+    const expirationDate = new Date(latestPayment.created_at);
+    expirationDate.setDate(expirationDate.getDate() + subscriptionDays);
+
+    const isActive = new Date() < expirationDate;
+
+    res.json({
+      success: true,
+      subscriptionPlan: latestPayment.subscription_type,
+      isActive,
+      expirationDate: expirationDate.toISOString(),
+      createdAt: latestPayment.created_at
+    });
+
+  } catch (error) {
+    console.error("Error fetching user subscription:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
 app.post("/api/update-max-captures", async (req, res) => {
   try {
     console.log("Received Data:", req.body); // Debugging
@@ -1835,12 +1955,112 @@ resetLeadCounters();
 
 // Schedule cron job to run every day at 5 AM
 cron.schedule("0 5 * * *", resetLeadCounters);
+// Function to check subscription validity and stop expired users
+const checkSubscriptionsAndStop = async () => {
+  try {
+    console.log("Running subscription check at 5 AM...");
+
+    // Get all payments with their subscription details
+    const payments = await Payment.find({}).sort({ created_at: -1 });
+
+    // Group payments by email to get the latest subscription for each user
+    const userSubscriptions = new Map();
+
+    payments.forEach(payment => {
+      if (!userSubscriptions.has(payment.email)) {
+        const subscriptionDays = SUBSCRIPTION_DURATIONS[payment.subscription_type] || 0;
+        const createdDate = new Date(payment.created_at);
+        const expiryDate = new Date(createdDate.getTime() + subscriptionDays * 24 * 60 * 60 * 1000);
+        const currentDate = new Date();
+        const daysRemaining = Math.floor((expiryDate - currentDate) / (1000 * 60 * 60 * 24));
+
+        userSubscriptions.set(payment.email, {
+          email: payment.email,
+          uniqueId: payment.unique_id, // ✅ Store the unique_id from payment
+          expiryDate,
+          daysRemaining,
+          hasValidSubscription: daysRemaining > 0,
+          subscriptionType: payment.subscription_type
+        });
+      }
+    });
+
+    // Find all users with active status or running processes
+    const activeUsers = await User.find({
+      status: { $ne: "Stopped" }
+    });
+
+    console.log(`Found ${activeUsers.length} active users to check`);
+
+    // Check each active user's subscription
+    for (const user of activeUsers) {
+      const subscription = userSubscriptions.get(user.email);
+
+      // If no subscription found or subscription expired
+      if (!subscription || !subscription.hasValidSubscription) {
+        console.log(`User ${user.email} has expired/no subscription. Stopping service...`);
+
+        // Use the unique_id from payment record
+        const uniqueId = subscription?.uniqueId;
+
+        if (uniqueId) {
+          try {
+            // Call the stop route logic
+            const pythonProcess = activePythonProcesses.get(uniqueId);
+            if (pythonProcess) {
+              console.log(`Sending SIGINT to Python script for ${user.email} (uniqueId: ${uniqueId})...`);
+              activePythonProcesses.delete(uniqueId);
+              cleanupDisplay(uniqueId);
+              pythonProcess.kill("SIGINT");
+            }
+
+            // Reset user status in DB
+            await User.findOneAndUpdate(
+              { email: user.email },
+              {
+                status: "Stopped",
+                startTime: new Date(),
+                autoStartEnabled: false
+              },
+              { new: true }
+            );
+
+            console.log(`Successfully stopped service for ${user.email}`);
+          } catch (error) {
+            console.error(`Error stopping service for ${user.email}:`, error);
+          }
+        } else {
+          // Just update the status if no uniqueId found
+          await User.findOneAndUpdate(
+            { email: user.email },
+            {
+              status: "Stopped",
+              autoStartEnabled: false
+            },
+            { new: true }
+          );
+          console.log(`Updated status for ${user.email} (no uniqueId found)`);
+        }
+      } else {
+        console.log(`User ${user.email} has valid subscription (${subscription.daysRemaining} days remaining)`);
+      }
+    }
+
+    console.log("Subscription check completed");
+  } catch (error) {
+    console.error("Error in subscription check:", error);
+  }
+};
+
+// Schedule cron job to run every day at 5 AM
+cron.schedule("0 5 * * *", checkSubscriptionsAndStop);
 
 const SUBSCRIPTION_DURATIONS = {
   "one-mo": 30,
   "three-mo": 60,
   "six-mo": 180,
   "year-mo": 365,
+  "7-days": 7,
 };
 
 // cron.schedule("0 6 * * *", async () => {
@@ -2471,6 +2691,7 @@ app.post("/api/store-lead", async (req, res) => {
 
     // Increment lead count
     userCounter.leadCount += 1;
+    console.log(`User ${user_mobile_number} lead count incremented to ${userCounter.leadCount}`);
     await userCounter.save();
 
     console.log("Lead Data Stored:", newLead);
@@ -2760,7 +2981,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
 //           verificationCode = codeMatch[1];
 //           console.log(`Verification code captured for ${messageItem._id}: ${verificationCode}`);
 //           try {
-//             // Update the verificationCode in WhatsApp settings
+//             // Update the verificationCode in whatsapp settings
 //             await WhatsAppSettings.findOneAndUpdate(
 //               { mobileNumber: messageItem.user_mobile_number },
 //               { verificationCode },
@@ -3130,88 +3351,161 @@ app.post("/api/data-received-confirmation", async (req, res) => {
   }
 });
 
-app.get("/api/get-user-leads-with-message/:userMobile", async (req, res) => {
+app.post("/api/store-fetched-lead", async (req, res) => {
   try {
-    const { userMobile } = req.params;
+    const {
+      name,
+      email,
+      mobile,
+      user_mobile_number,
+      lead_bought,
+      timestamp_text,
+      uniqueId,
+      address
+    } = req.body;
 
-    if (!userMobile) {
-      return res.status(400).json({ error: "User mobile number is required" });
+    if (!name || !mobile || !user_mobile_number || !lead_bought || !timestamp_text) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Fetch WhatsApp settings for this user
-    const settings = await WhatsAppSettings.findOne({ mobileNumber: userMobile });
-    const user = await User.findOne({ mobileNumber: userMobile });
+    // ✅ Step 1: Check for duplicate leads in FetchedLead collection
+    const existingFetchedLead = await FetchedLead.findOne({
+      name,
+      mobile,
+      user_mobile_number,
+      lead_bought,
+      address,
+    });
 
-    if (!settings || !settings.whatsappNumber || !settings.messages || settings.messages.length === 0) {
-      console.warn("No WhatsApp settings found for this user");
-      return res.status(404).json({
-        success: false,
-        message: "No WhatsApp settings found for this user"
+    if (existingFetchedLead) {
+      console.log("Duplicate lead detected in FetchedLead. Stopping script for user:", user_mobile_number);
+
+      const processKey = uniqueId ? uniqueId + 100000 : null;
+      if (processKey && activePythonProcesses.has(processKey)) {
+        const pythonProcess = activePythonProcesses.get(processKey);
+
+        try {
+          pythonProcess.kill("SIGTERM");
+          setTimeout(() => {
+            if (activePythonProcesses.has(processKey)) {
+              console.log(`Force killing Python process for uniqueId: ${uniqueId}`);
+              pythonProcess.kill("SIGKILL");
+            }
+          }, 2000);
+        } catch (error) {
+          console.error("Error terminating Python process:", error);
+          pythonProcess.kill("SIGKILL");
+        }
+
+        activePythonProcesses.delete(processKey);
+
+        if (uniqueId && otpRequests.has(uniqueId)) {
+          otpRequests.delete(uniqueId);
+          otpFailures.delete(uniqueId);
+        }
+
+        cleanupDisplay(uniqueId);
+        console.log(`Python process terminated for uniqueId: ${uniqueId}`);
+      }
+
+      return res.status(409).json({
+        error: "DUPLICATE_LEAD_STOP_SCRIPT",
+        message: "Lead fetching stopped due to duplicate detection",
+        action: "script_terminated",
       });
     }
 
-    // Fetch all leads
-    const leads = await FetchedLead.find({
-      user_mobile_number: userMobile
-    })
-      .sort({ createdAt: -1 })
-      .select("name email mobile lead_bought createdAt address");
-
-    // Prepare message for each lead
-    const leadsWithMessages = leads.map((lead) => {
-      let templateMessage = settings.messages[0]; // pick first template
-      templateMessage = templateMessage
-        .replace("{lead_name}", lead.name || "")
-        .replace("{lead_product_requested}", lead.lead_bought || "")
-        .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
-
-      return {
-        ...lead._doc,
-        whatsappMessage: templateMessage,
-        receiverNumber: lead.mobile
-      };
+    // ✅ Step 2: Check if lead already exists in AI-generated leads collection
+    const existingAILead = await Lead.findOne({
+      name,
+      email,
+      mobile,
+      user_mobile_number,
+      $expr: {
+        $eq: [
+          { $substr: ["$lead_bought", 0, 10] },
+          lead_bought.substring(0, 10),
+        ],
+      },
+      address,
+      source: "AI",
+      aiProcessed: true,
     });
 
-    const responsePayload = {
-      success: true,
-      totalLeads: leadsWithMessages.length,
-      leads: leadsWithMessages,
-      generated_at: new Date().toISOString()
-    };
+    // ✅ Step 3: Determine source and score
+    const leadSource = existingAILead ? "AI" : "Manual";
+    const isAIProcessed = !existingAILead;
+    const scoreValue = existingAILead ? existingAILead.score || 0 : 0;
 
-    // Get LeadFetcher application directory
-    const leadFetcherDir = getLeadFetcherDirectory();
-    const filePath = path.join(leadFetcherDir, "api_response.json");
+    // ✅ Step 4: Store the new fetched lead
+    const newLead = new FetchedLead({
+      name,
+      email,
+      mobile,
+      user_mobile_number,
+      lead_bought,
+      address,
+      createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
+      source: leadSource,
+      aiProcessed: isAIProcessed,
+      score: scoreValue,
+    });
 
-    // Fallback directory (current working directory)
-    const fallbackDir = process.cwd();
+    await newLead.save();
+    console.log("Lead saved successfully in FetchedLead:", newLead._id);
 
-    // Save response to api_response.json in LeadFetcher directory
-    const writeSuccess = safeWriteFile(
-      filePath,
-      JSON.stringify(responsePayload, null, 2),
-      fallbackDir
-    );
+    // ✅ Step 5: Send WhatsApp message after saving lead
+    try {
+      // Fetch WhatsApp settings and user info
+      const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
+      const user = await User.findOne({ mobileNumber: user_mobile_number });
 
-    console.log(`📁 Target directory: ${leadFetcherDir}`);
-    console.log(`📄 API response file: ${filePath}`);
-    console.log(`📊 Total leads processed: ${leadsWithMessages.length}`);
+      if (settings && settings.instanceToken && settings.instanceName && settings.messages && settings.messages.length > 0) {
+        // Prepare WhatsApp message using template
+        let templateMessage = settings.messages[0];
+        templateMessage = templateMessage
+          .replace("{lead_name}", name || "")
+          .replace("{lead_product_requested}", lead_bought || "")
+          .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
 
-    // Add file location to response
-    const responseWithLocation = {
-      ...responsePayload,
-      file_location: writeSuccess ? filePath : path.join(fallbackDir, "api_response.json")
-    };
+        // Send WhatsApp message via LeadsCruise Connect API
+        const whatsappApiUrl = `https://connect.leadscruise.com/message/sendText/${settings.instanceName}`;
 
-    res.status(200).json(responseWithLocation);
+        const whatsappResponse = await fetch(whatsappApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': settings.instanceToken
+          },
+          body: JSON.stringify({
+            number: mobile, // Lead's mobile number
+            text: templateMessage
+          })
+        });
+
+        if (whatsappResponse.ok) {
+          const whatsappData = await whatsappResponse.json();
+          console.log("WhatsApp message sent successfully:", whatsappData);
+        } else {
+          const errorText = await whatsappResponse.text();
+          console.error("Failed to send WhatsApp message:", whatsappResponse.status, errorText);
+        }
+      } else {
+        console.warn("WhatsApp settings not configured properly for user:", user_mobile_number);
+      }
+    } catch (whatsappError) {
+      console.error("Error sending WhatsApp message:", whatsappError);
+      // Don't fail the entire request if WhatsApp sending fails
+    }
+
+    return res.json({
+      message: "Lead stored successfully",
+      lead: newLead,
+    });
 
   } catch (error) {
-    console.error("Error fetching user leads with message:", error);
-    res.status(500).json({
-      success: false,
-      error: "Internal server error",
-      message: error.message
-    });
+    console.error("Error storing fetched lead:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

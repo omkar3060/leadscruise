@@ -146,7 +146,8 @@ def ensure_directory_exists(path):
 def get_user_directory(phone_number):
     """Get the directory path for a specific user based on phone number"""
     sanitized_number = sanitize_phone_number(phone_number)
-    user_dir = os.path.join(os.getcwd(), "whatsapp_profiles", sanitized_number)
+    # ✅ FIX: Use APP_DIR instead of os.getcwd()
+    user_dir = os.path.join(APP_DIR, "whatsapp_profiles", sanitized_number)
     return ensure_directory_exists(user_dir)
 
 def get_cookies_file_path(phone_number):
@@ -162,12 +163,14 @@ def get_profile_directory(phone_number):
 
 def chmod_recursive(path):
     """Recursively set permissions for a directory and its contents"""
-    for root, dirs, files in os.walk(path):
-        for d in dirs:
-            os.chmod(os.path.join(root, d), 0o755)
-        for f in files:
-            os.chmod(os.path.join(root, f), 0o755)
-    os.chmod(path, 0o755)
+    # Only run on Unix-like systems
+    if platform.system() != "Windows":
+        for root, dirs, files in os.walk(path):
+            for d in dirs:
+                os.chmod(os.path.join(root, d), 0o755)
+            for f in files:
+                os.chmod(os.path.join(root, f), 0o755)
+        os.chmod(path, 0o755)
 
 def find_geckodriver():
     """Find geckodriver in common locations or PATH"""
@@ -916,54 +919,124 @@ def input_phone_number_in_new_chat(driver, phone_number):
             return False
 
 def select_contact_from_search_results(driver):
-        """Select the first contact from search results"""
-        logger.info("Looking for first contact in search results...")
-        
-        # Try multiple selectors for the first contact in search results
-        contact_selectors = [
-            (By.XPATH, "//div[@role='gridcell']//div[@role='gridcell']"),
-            (By.XPATH, "//div[@class='_ak8o']"),
-            (By.XPATH, "//div[@class='_ak8q']"),
-            (By.XPATH, "//div[contains(@class, 'x1n2onr6') and @role='row']"),
-            (By.XPATH, "//div[@role='row']//div[@role='gridcell']"),
-            (By.XPATH, "//div[contains(@class, 'x1n2onr6') and @role='gridcell']")
-        ]
-        
-        contact_element = None
-        for selector_type, selector in contact_selectors:
-            try:
-                # Find all elements matching the selector
-                contact_elements = driver.find_elements(selector_type, selector)
-                if contact_elements:
-                    # Get the first visible element
-                    for element in contact_elements:
-                        if element.is_displayed():
-                            contact_element = element
-                            logger.info(f"Found first contact using selector: {selector}")
-                            break
-                    if contact_element:
-                        break
-            except:
-                continue
-        
-        if not contact_element:
-            logger.warning("Could not find any contact in search results")
-            return False
-        
+    """Select the first contact from search results"""
+    logger.info("Looking for first contact in search results...")
+    
+    # Wait a moment for the search results to appear
+    time.sleep(2)
+    
+    # Try multiple selectors for the first contact in search results
+    contact_selectors = [
+        # More specific selectors targeting the clickable container
+        (By.XPATH, "//div[@role='listitem']//div[@role='button' and @tabindex='-1']"),
+        (By.XPATH, "//div[@role='listitem']//div[contains(@class, '_ak72')]"),
+        (By.XPATH, "//div[@class='_ak72 false false _ak73 _asiw _ap1- _ap1_']"),
+        # Target the gridcell that contains the contact name
+        (By.XPATH, "//div[@role='gridcell' and @aria-colindex='2']//ancestor::div[@role='button']"),
+        # Fallback to original selectors
+        (By.XPATH, "//div[@role='gridcell']//div[@role='gridcell']"),
+        (By.XPATH, "//div[@class='_ak8o']"),
+        (By.XPATH, "//div[@class='_ak8q']"),
+        (By.XPATH, "//div[contains(@class, 'x1n2onr6') and @role='row']"),
+        (By.XPATH, "//div[@role='row']//div[@role='gridcell']"),
+        (By.XPATH, "//div[contains(@class, 'x1n2onr6') and @role='gridcell']")
+    ]
+    
+    contact_element = None
+    for selector_type, selector in contact_selectors:
         try:
-            # Click on the contact
-            logger.info("Clicking on contact...")
-            contact_element.click()
-            logger.info("Successfully clicked on contact!")
+            # Wait for elements to be present
+            wait = WebDriverWait(driver, 10)
+            contact_elements = wait.until(EC.presence_of_all_elements_located((selector_type, selector)))
             
-            # Wait a moment after clicking
+            if contact_elements:
+                # Get the first visible element
+                for element in contact_elements:
+                    if element.is_displayed():
+                        contact_element = element
+                        logger.info(f"Found first contact using selector: {selector}")
+                        break
+                if contact_element:
+                    break
+        except Exception as e:
+            logger.debug(f"Selector {selector} failed: {e}")
+            continue
+    
+    if not contact_element:
+        logger.warning("Could not find any contact in search results")
+        return False
+    
+    try:
+        # Method 1: Try scrolling into view first, then click
+        try:
+            logger.info("Method 1: Scrolling into view and clicking...")
+            driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", contact_element)
+            time.sleep(1)
+            
+            # Wait for element to be clickable
+            wait = WebDriverWait(driver, 10)
+            clickable_element = wait.until(EC.element_to_be_clickable(contact_element))
+            clickable_element.click()
+            logger.info("Successfully clicked on contact using Method 1!")
             time.sleep(3)
-            
             return True
         except Exception as e:
-            logger.error(f"Error clicking on contact: {e}")
-            logger.debug(traceback.format_exc())
-            return False
+            logger.error(f"Method 1 failed: {e}")
+        
+        # Method 2: Try using JavaScript click
+        try:
+            logger.info("Method 2: Using JavaScript click...")
+            driver.execute_script("arguments[0].click();", contact_element)
+            logger.info("Successfully clicked on contact using Method 2!")
+            time.sleep(3)
+            return True
+        except Exception as e:
+            logger.error(f"Method 2 failed: {e}")
+        
+        # Method 3: Try using ActionChains with move_to_element
+        try:
+            logger.info("Method 3: Using ActionChains move_to_element...")
+            actions = ActionChains(driver)
+            actions.move_to_element(contact_element).pause(0.5).click().perform()
+            logger.info("Successfully clicked on contact using Method 3!")
+            time.sleep(3)
+            return True
+        except Exception as e:
+            logger.error(f"Method 3 failed: {e}")
+        
+        # Method 4: Try finding a parent container and clicking that
+        try:
+            logger.info("Method 4: Finding parent button container...")
+            # Try to find the parent button element
+            parent_button = contact_element.find_element(By.XPATH, "./ancestor::div[@role='button']")
+            if parent_button:
+                logger.info("Found parent button container")
+                driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", parent_button)
+                time.sleep(1)
+                driver.execute_script("arguments[0].click();", parent_button)
+                logger.info("Successfully clicked on parent button using Method 4!")
+                time.sleep(3)
+                return True
+        except Exception as e:
+            logger.error(f"Method 4 failed: {e}")
+        
+        # Method 5: Try pressing Enter key on the element
+        try:
+            logger.info("Method 5: Using Enter key...")
+            contact_element.send_keys(Keys.RETURN)
+            logger.info("Successfully activated contact using Enter key!")
+            time.sleep(3)
+            return True
+        except Exception as e:
+            logger.error(f"Method 5 failed: {e}")
+        
+        logger.error("All methods failed to click on contact")
+        return False
+        
+    except Exception as e:
+        logger.error(f"Error clicking on contact: {e}")
+        logger.debug(traceback.format_exc())
+        return False
 
 def send_message_to_contact(driver, message):
         """Send a message to the selected contact"""
@@ -1479,10 +1552,33 @@ def perform_login_steps(driver, wait, phone_number, ui_callback=None):
         # Wait for and click the "Log in with phone number" button
         logger.info("Looking for 'Log in with phone number' button...")
         
-        # Find the login button using XPath
-        login_button = wait.until(
-            EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Log in with phone number')]"))
-        )
+        # Updated selectors based on the HTML structure you provided
+        login_button_selectors = [
+            # Try the parent div with role="button"
+            (By.XPATH, "//div[@role='button' and .//div[contains(text(), 'Log in with phone number')]]"),
+            # Try finding by the specific class combination
+            (By.XPATH, "//div[@role='button' and contains(@class, 'xujl8zx')]"),
+            # Try the nested div with exact text
+            (By.XPATH, "//div[text()='Log in with phone number']/ancestor::div[@role='button']"),
+            # Fallback to any clickable element with the text
+            (By.XPATH, "//*[contains(text(), 'Log in with phone number') and (@role='button' or ancestor::*[@role='button'])]"),
+        ]
+        
+        login_button = None
+        for selector_type, selector in login_button_selectors:
+            try:
+                login_button = wait.until(
+                    EC.element_to_be_clickable((selector_type, selector))
+                )
+                logger.info(f"Found login button using selector: {selector}")
+                break
+            except TimeoutException:
+                logger.debug(f"Could not find login button with selector: {selector}")
+        
+        if not login_button:
+            logger.error("Could not find 'Log in with phone number' button with any selector")
+            return False
+        
         logger.info("Found login button, clicking now...")
         login_button.click()
         logger.info("Successfully clicked login button!")
@@ -1603,7 +1699,12 @@ def perform_login_steps(driver, wait, phone_number, ui_callback=None):
             logger.error("❌ Phone number validation failed - error message persists")
             # Take screenshot to debug
             error_screenshot = f"screenshots/validation_error_{int(time.time())}.png"
-            logger.info(f"📸 Error screenshot: {error_screenshot}")
+            os.makedirs("screenshots", exist_ok=True)
+            try:
+                # driver.save_screenshot(error_screenshot)
+                logger.info(f"📸 Error screenshot: {error_screenshot}")
+            except:
+                pass
             return False
 
         # Double-check that the Next button is enabled/clickable
@@ -1622,7 +1723,11 @@ def perform_login_steps(driver, wait, phone_number, ui_callback=None):
         # Take screenshot for debugging
         screenshot_path = f"screenshots/phone_validated_{int(time.time())}.png"
         os.makedirs("screenshots", exist_ok=True)
-        logger.info(f"📸 Screenshot saved: {screenshot_path}")
+        try:
+            # driver.save_screenshot(screenshot_path)
+            logger.info(f"📸 Screenshot saved: {screenshot_path}")
+        except:
+            pass
         
         # Now find and click the "Next" button
         logger.info("Looking for 'Next' button...")
@@ -1660,7 +1765,11 @@ def perform_login_steps(driver, wait, phone_number, ui_callback=None):
         time.sleep(5)
         screenshot_path = f"screenshots/next_{int(time.time())}.png"
         os.makedirs("screenshots", exist_ok=True)
-        logger.info(f"📸 Screenshot saved: {screenshot_path}")
+        try:
+            # driver.save_screenshot(screenshot_path)
+            logger.info(f"📸 Screenshot saved: {screenshot_path}")
+        except:
+            pass
         
         # Now wait for the verification code to appear
         logger.info("Waiting for verification code to appear...")
@@ -1708,7 +1817,8 @@ def perform_login_steps(driver, wait, phone_number, ui_callback=None):
     except Exception as e:
         logger.error(f"Error during login or input handling: {e}")
         logger.debug(traceback.format_exc())
-        return False      
+        return False
+
 
 class SessionManager:
     """Helper class to manage session validation across the app"""
@@ -2160,23 +2270,24 @@ class LoginApp:
         session_id = base64.urlsafe_b64encode(session_data).decode()
         return session_id
 
+
     def login(self):
         """Authenticate user with the LeadsCruise API"""
         email = self.email_var.get().strip()
         password = self.password_var.get()
 
-        print(f"DEBUG: Starting login for {email}")  # Debug print
+        print(f"DEBUG: Starting login for {email}")
 
         if not email or not password:
             self.root.after(0, lambda: self.modern_ui.show_error("Email and password are required!"))
             return
 
         try:
-            # Prepare login data
             login_data = {
                 "email": email,
                 "password": password,
-                "emailVerified": False
+                "emailVerified": False,
+                "platform": "desktop"
             }
 
             headers = {
@@ -2184,31 +2295,29 @@ class LoginApp:
                 'User-Agent': 'LeadFetcher-Client/1.0'
             }
 
-            print(f"DEBUG: Sending request to {self.login_url}")  # Debug print
+            print(f"DEBUG: Sending request to {self.login_url}")
 
-            # Make API request
             response = requests.post(
                 self.login_url,
                 json=login_data,
                 headers=headers,
                 timeout=30
             )
+            self.log_to_response("🔄 Processing login response...")
 
-            print(f"DEBUG: Response status: {response.status_code}")  # Debug print
+            self.log_to_response(f"DEBUG: Response status: {response.status_code}")
 
             if response.status_code == 200:
                 try:
                     data = response.json()
-                    print(f"DEBUG: Response data: {data.get('success')}")  # Debug print
+                    self.log_to_response(f"DEBUG: Response data: {data.get('success')}")
 
                     if data.get('success'):
-                        # Extract user info
                         user_data = data.get('user', {})
                         token = data.get('token')
                         session_id = data.get('sessionId')
                         mobile_number = user_data.get('mobileNumber', '')
 
-                        # Generate token and session ID if not provided by API
                         if not token:
                             print("⚠️ No token from API, generating local token...")
                             token = self.generate_token(email, password)
@@ -2217,7 +2326,6 @@ class LoginApp:
                             print("⚠️ No session ID from API, generating local session ID...")
                             session_id = self.generate_session_id()
 
-                        # Store user data for main app
                         self.user_data = {
                             'email': user_data.get('email', email),
                             'role': user_data.get('role', 'user'),
@@ -2226,26 +2334,65 @@ class LoginApp:
                             'sessionId': session_id
                         }
 
-                        print(f"✅ Login successful for {email}")  # Debug print
+                        print(f"✅ Login successful for {email}")
 
-                        # Save login data if "Remember me" is checked
                         if self.remember_me_var.get():
                             self.save_login_data(self.user_data)
 
-                        # Update UI on main thread
                         self.root.after(0, lambda: self.modern_ui.show_success("Login successful!"))
-
-                        # Close login window and open main app
                         self.root.after(500, self.open_main_app)
 
                     else:
                         error_msg = data.get('message', 'Login failed')
-                        print(f"❌ Login failed: {error_msg}")  # Debug print
-                        self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
+                        self.log_to_response(f"❌ Login failed: {error_msg}")
+
+                        # ✅ Handle "already logged in" (for both web and desktop)
+                        if "already logged in" in error_msg.lower():
+                            # Detect platform mentioned in backend message
+                            platform_detected = "desktop" if "desktop" in error_msg.lower() else "web"
+
+                            user_choice = messagebox.askyesno(
+                                "Active Session Detected",
+                                f"{error_msg}\n\nDo you want to logout from the other {platform_detected} device and login here?"
+                            )
+
+                            if user_choice:
+                                try:
+                                    # ✅ Call force logout API
+                                    force_logout_url = "https://api.leadscruise.com/api/force-logout"
+                                    force_res = requests.post(
+                                        force_logout_url,
+                                        json={"email": email, "platform": "desktop"},
+                                        headers=headers,
+                                        timeout=15
+                                    )
+
+                                    if force_res.status_code == 200:
+                                        print("✅ Force logout successful. Retrying login...")
+                                        # Retry login automatically
+                                        self.root.after(500, self.login)
+                                    else:
+                                        msg = "Failed to logout from the other device. Please try again later."
+                                        print(f"❌ {msg}")
+                                        self.root.after(0, lambda: self.modern_ui.show_error(msg))
+
+                                except Exception as e:
+                                    print(f"❌ Force logout error: {e}")
+                                    self.root.after(0, lambda: self.modern_ui.show_error(
+                                        "Error while logging out from the other device."
+                                    ))
+                            else:
+                                print("User cancelled re-login attempt.")
+                                self.root.after(0, lambda: self.modern_ui.show_info(
+                                    "Login cancelled. You are still logged in on another device."
+                                ))
+
+                        else:
+                            self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
                 except json.JSONDecodeError as e:
                     error_msg = f"Failed to parse response: {str(e)}"
-                    print(f"❌ JSON error: {error_msg}")  # Debug print
+                    print(f"❌ JSON error: {error_msg}")
                     self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
             else:
@@ -2255,23 +2402,23 @@ class LoginApp:
                     error_msg = error_data.get('message', error_msg)
                 except:
                     pass
-                print(f"❌ HTTP error: {error_msg}")  # Debug print
+                print(f"❌ HTTP error: {error_msg}")
                 self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
         except requests.exceptions.Timeout:
             error_msg = "Request timeout (30 seconds)"
-            print(f"❌ Timeout: {error_msg}")  # Debug print
+            print(f"❌ Timeout: {error_msg}")
             self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
         except requests.exceptions.ConnectionError:
             error_msg = "Connection error - check internet connection"
-            print(f"❌ Connection error: {error_msg}")  # Debug print
+            print(f"❌ Connection error: {error_msg}")
             self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
         except Exception as e:
             error_msg = f"Unexpected error: {str(e)}"
-            print(f"❌ Exception: {error_msg}")  # Debug print
-            print(f"Traceback: {traceback.format_exc()}")  # Debug traceback
+            print(f"❌ Exception: {error_msg}")
+            print(f"Traceback: {traceback.format_exc()}")
             self.root.after(0, lambda: self.modern_ui.show_error(error_msg))
 
     def _cleanup_login_gui(self):
@@ -2417,6 +2564,17 @@ class LeadFetcherApp:
         
         # NEW: Verification code tracking
         self.current_verification_code = None
+        self.whatsapp_number = None
+        self.whatsapp_connected = False
+        self.whatsapp_driver = None
+        # NEW: Add state preservation for panels
+        self.current_panel = None
+        self.panel_cache = {}  # Cache panel widgets
+        self._after_ids = []  # Track all after() callback IDs
+        self._current_panel_widgets = set()
+        # Store persistent log state
+        self.persistent_logs = []  # Store log messages
+        self.max_log_lines = 1000  # Limit log history
         
         self.conditional_autostart = ConditionalAutoStart(app_name="LeadFetcher")
         
@@ -2472,29 +2630,34 @@ class LeadFetcherApp:
             print(f"❌ Failed to setup GUI logging: {e}")
        
     def process_gui_updates(self):
-        """Process GUI updates from background threads - runs on main thread"""
+        """Process GUI updates from background threads - IMPROVED"""
         try:
             # Process all pending updates
             updates_processed = 0
             while True:
                 try:
                     update_func = self.gui_update_queue.get_nowait()
-                    update_func()  # Execute the function on main thread
-                    updates_processed += 1
+                    try:
+                        update_func()  # Execute the function on main thread
+                        updates_processed += 1
+                    except tk.TclError:
+                        # Widget was destroyed - skip this update
+                        pass
+                    except Exception as e:
+                        print(f"Error executing GUI update: {e}")
                 except queue.Empty:
                     break
-                except Exception as e:
-                    print(f"Error executing GUI update: {e}")
             
             if updates_processed > 0:
                 print(f"✅ Processed {updates_processed} GUI updates")
         except Exception as e:
             print(f"Error in process_gui_updates: {e}")
         
-        # Schedule next check - store the ID so we can cancel if needed
+        # Schedule next check and track the ID
         try:
             if self.root and self.root.winfo_exists():
                 self._gui_processor_id = self.root.after(100, self.process_gui_updates)
+                # Don't add to _after_ids - this one should persist
         except Exception as e:
             print(f"Failed to schedule next GUI update: {e}")
 
@@ -2659,8 +2822,6 @@ class LeadFetcherApp:
 
             menu = pystray.Menu(
                 pystray.MenuItem("Show App", self.show_window),
-                pystray.MenuItem("Force Show (Backup)", self.force_show_window),
-                pystray.MenuItem("---", None),
                 pystray.MenuItem("Quit", self.quit_app)
             )
             
@@ -2782,6 +2943,17 @@ class LeadFetcherApp:
         print("🔄 force_show_window called")
         self.send_message("force_restore_window")
 
+    def _restart_main_loop(self):
+        """Restart the main event loop if it stopped"""
+        try:
+            print("🔧 Attempting to restart main loop...")
+            # Process any pending events
+            self.root.update_idletasks()
+            self.root.update()
+            print("✅ Main loop restarted")
+        except Exception as e:
+            print(f"❌ Failed to restart main loop: {e}")
+
     def _restore_window_main_thread(self):
         """Restore window - called on main thread via periodic check"""
         try:
@@ -2812,32 +2984,29 @@ class LeadFetcherApp:
                 try:
                     print("📝 Attempting to restore log visibility...")
                     
-                    # CRITICAL: First ensure the widget state is NORMAL so it can be edited/displayed
+                    # CRITICAL: Ensure widget state is NORMAL so it can be edited/displayed
                     self.response_text.config(state=tk.NORMAL)
                     
-                    # Grid the widget
-                    self.response_text.grid(row=8, column=0, columnspan=3, 
-                                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                    # ✅ FIX: Use pack instead of grid since log_container uses pack
+                    self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
                     
                     # Update button text BEFORE forcing update
-                    self.toggle_logs_button.config(text="Hide Logs")
-                    self.log_label.config(text="API Response (Logs Visible):")
+                    self.toggle_logs_button.config(text="🙈 Hide Details")
                     
                     # Force a complete update cycle
                     self.root.update_idletasks()
                     self.root.update()
                     
                     # Verify it's visible
-                    is_mapped = self.response_text.winfo_ismapped()
-                    print(f"✅ Logs restored - Widget mapped: {is_mapped}, State: {self.response_text.cget('state')}")
+                    is_mapped = self.log_container.winfo_ismapped()
+                    print(f"✅ Logs restored - Container mapped: {is_mapped}, Response text state: {self.response_text.cget('state')}")
                     
                     if not is_mapped:
-                        print("⚠️ Widget not mapped, forcing grid again...")
-                        self.response_text.grid(row=8, column=0, columnspan=3, 
-                                            sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                        print("⚠️ Container not mapped, forcing pack again...")
+                        self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
                         self.root.update_idletasks()
                         self.root.update()
-                        print(f"✅ After force grid - Widget mapped: {self.response_text.winfo_ismapped()}")
+                        print(f"✅ After force pack - Container mapped: {self.log_container.winfo_ismapped()}")
                     
                     # Scroll to end
                     try:
@@ -2906,18 +3075,6 @@ class LeadFetcherApp:
             except:
                 pass
 
-    def _restart_main_loop(self):
-        """Restart the main event loop if it stopped"""
-        try:
-            print("🔧 Attempting to restart main loop...")
-            # Process any pending events
-            self.root.update_idletasks()
-            self.root.update()
-            print("✅ Main loop restarted")
-        except Exception as e:
-            print(f"❌ Failed to restart main loop: {e}")
-
-
     def restore_window_main_thread(self):
         """Restore window - runs in main thread"""
         print("=" * 60)
@@ -2973,13 +3130,11 @@ class LeadFetcherApp:
                     # CRITICAL: Ensure widget state is NORMAL
                     self.response_text.config(state=tk.NORMAL)
                     
-                    # Grid the widget
-                    self.response_text.grid(row=8, column=0, columnspan=3, 
-                                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                    # ✅ FIX: Use pack instead of grid
+                    self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
                     
                     # Update labels
-                    self.toggle_logs_button.config(text="Hide Logs")
-                    self.log_label.config(text="API Response (Logs Visible):")
+                    self.toggle_logs_button.config(text="🙈 Hide Details")
                     
                     # Force complete update
                     self.root.update_idletasks()
@@ -2991,7 +3146,7 @@ class LeadFetcherApp:
                     except:
                         pass
                     
-                    print(f"✅ Logs restored - Widget mapped: {self.response_text.winfo_ismapped()}")
+                    print(f"✅ Logs restored - Container mapped: {self.log_container.winfo_ismapped()}")
                 except Exception as e:
                     print(f"❌ Error restoring log visibility: {e}")
                     import traceback
@@ -3076,13 +3231,11 @@ class LeadFetcherApp:
                         # CRITICAL: Ensure widget state is NORMAL
                         self.response_text.config(state=tk.NORMAL)
                         
-                        # Grid the widget
-                        self.response_text.grid(row=8, column=0, columnspan=3, 
-                        sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+                        # ✅ FIX: Use pack instead of grid
+                        self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
                         
                         # Update labels
-                        self.toggle_logs_button.config(text="Hide Logs")
-                        self.log_label.config(text="API Response (Logs Visible):")
+                        self.toggle_logs_button.config(text="🙈 Hide Details")
                         
                         # Force complete update
                         self.root.update_idletasks()
@@ -3094,7 +3247,7 @@ class LeadFetcherApp:
                         except:
                             pass
                         
-                        print(f"✅ Logs restored after force - Widget mapped: {self.response_text.winfo_ismapped()}")
+                        print(f"✅ Logs restored after force - Container mapped: {self.log_container.winfo_ismapped()}")
                     except Exception as e:
                         print(f"❌ Error restoring log visibility: {e}")
                         import traceback
@@ -3214,56 +3367,6 @@ class LeadFetcherApp:
             return True
         return False
     
-    def quit_app(self, icon=None, item=None):
-        """Completely exit the application and kill related processes"""
-        print("quit_app called")  # Debug print
-        try:
-            # Stop any auto-fetch timer
-            if hasattr(self, 'auto_fetch_timer') and self.auto_fetch_timer:
-                self.root.after_cancel(self.auto_fetch_timer)
-
-            # Stop tray icon if running
-            if self.tray_icon:
-                print("Stopping tray icon before quit...")
-                self.tray_icon.stop()
-                self.tray_icon = None
-
-            self.log_to_response("❌ Application closing...")
-
-            # Gracefully close Tkinter
-            if self.root and self.root.winfo_exists():
-                self.root.quit()
-                self.root.destroy()
-
-            print("🔻 Killing firefox and leadfetcher processes...")
-
-            # ---- Force terminate related processes ----
-            if os.name == "nt":  # Windows
-                subprocess.call("taskkill /F /IM firefox.exe /T", shell=True)
-                subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True)
-            else:  # Linux / macOS
-                subprocess.call("pkill -f firefox", shell=True)
-                subprocess.call("pkill -f leadfetcher", shell=True)
-
-            print("✅ All related processes killed successfully.")
-
-            # Exit the app
-            sys.exit(0)
-
-        except Exception as e:
-            print(f"Error during quit: {e}")
-            try:
-                # Try to kill processes even if something failed
-                if os.name == "nt":
-                    subprocess.call("taskkill /F /IM firefox.exe /T", shell=True)
-                    subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True)
-                else:
-                    subprocess.call("pkill -f firefox", shell=True)
-                    subprocess.call("pkill -f leadfetcher", shell=True)
-            except Exception:
-                pass
-            sys.exit(0)
-
     def setup_gui(self):
         main_container = ctk.CTkFrame(self.root, corner_radius=0, fg_color="#0a0f1e")
         main_container.pack(fill="both", expand=True)
@@ -3304,15 +3407,16 @@ class LeadFetcherApp:
         
         # Navigation buttons
         nav_buttons = [
-            ("📱 Fetch Leads", self.show_fetch_panel), 
+            ("📱 Send WhatsApp Messages", self.show_fetch_panel), 
+            ("💬 WhatsApp Connection", self.show_whatsapp_connection_panel),
         ]
         
         for text, command in nav_buttons:
             btn = ctk.CTkButton(nav_frame, text=text, height=40,
-                               fg_color="transparent", 
-                               hover_color="#2d3548",
-                               anchor="w",
-                               command=command if command else lambda: None)
+                            fg_color="transparent", 
+                            hover_color="#2d3548",
+                            anchor="w",
+                            command=command if command else lambda: None)
             btn.pack(fill="x", pady=2)
         
         # Bottom actions
@@ -3320,19 +3424,627 @@ class LeadFetcherApp:
         bottom_frame.pack(side="bottom", pady=20, padx=15, fill="x")
         
         ctk.CTkButton(bottom_frame, text="🔄 Check Updates",
-                     height=35, fg_color="#2d3548", hover_color="#3d4558",
-                     command=self.check_for_updates_clicked).pack(fill="x", pady=5)
+                    height=35, fg_color="#2d3548", hover_color="#3d4558",
+                    command=self.check_for_updates_clicked).pack(fill="x", pady=5)
         
         ctk.CTkButton(bottom_frame, text="🚪 Logout",
-                     height=35, fg_color="#ef4444", hover_color="#dc2626",
-                     command=self.logout).pack(fill="x", pady=5)
+                    height=35, fg_color="#ef4444", hover_color="#dc2626",
+                    command=self.logout).pack(fill="x", pady=5)
+        
+        # ✅ NEW: Quit Application Button
+        ctk.CTkButton(bottom_frame, text="⛔ Quit Application",
+                    height=35, fg_color="#7f1d1d", hover_color="#991b1b",
+                    command=self.confirm_and_quit).pack(fill="x", pady=5)
         
         # ========== MAIN CONTENT AREA ==========
         self.content_area = ctk.CTkFrame(main_container, corner_radius=0, fg_color="#0a0f1e")
         self.content_area.pack(side="right", fill="both", expand=True)
         
         # Show dashboard by default
-        self.show_fetch_panel()
+        self.show_whatsapp_connection_panel()
+
+    def show_whatsapp_connection_panel(self):
+        """Show WhatsApp connection panel with state restoration"""
+        # Store current panel
+        self.current_panel = 'whatsapp'
+        
+        self.clear_content_area()
+        
+        # Header
+        header = ctk.CTkFrame(self.content_area, fg_color="transparent")
+        header.pack(pady=20, padx=30, fill="x")
+        
+        ctk.CTkLabel(header, text="WhatsApp Connection", 
+                    font=ctk.CTkFont(size=28, weight="bold")).pack(anchor="w")
+        ctk.CTkLabel(header, text="Connect your WhatsApp number to enable automated messaging", 
+                    font=ctk.CTkFont(size=13),
+                    text_color="#a0aec0").pack(anchor="w", pady=(5, 0))
+        
+        # Main content with cards
+        content = ctk.CTkFrame(self.content_area, fg_color="transparent")
+        content.pack(pady=20, padx=30, fill="both", expand=True)
+        
+        # ========== LEFT PANEL - Configuration ==========
+        left_panel = ctk.CTkFrame(content, fg_color="#1a1f2e", corner_radius=15)
+        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 15))
+        
+        # Card header
+        ctk.CTkLabel(left_panel, text="Configuration", 
+                    font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(20, 15), padx=20, anchor="w")
+        
+        # Mobile number field
+        mobile_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
+        mobile_frame.pack(pady=10, padx=20, fill="x")
+        
+        ctk.CTkLabel(mobile_frame, text="📱 Mobile Number", 
+                    font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(0, 8))
+        
+        input_row = ctk.CTkFrame(mobile_frame, fg_color="transparent")
+        input_row.pack(fill="x")
+        
+        self.wa_mobile_var = tk.StringVar(value=self.default_mobile)
+        self.wa_mobile_entry = ctk.CTkEntry(input_row, 
+                                            height=45, 
+                                            textvariable=self.wa_mobile_var,
+                                            placeholder_text="Enter mobile number",
+                                            font=ctk.CTkFont(size=13))
+        self.wa_mobile_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        fetch_btn = ctk.CTkButton(input_row,
+                                text="🔍 Fetch",
+                                height=45,
+                                width=100,
+                                fg_color="#3b82f6",
+                                hover_color="#2563eb",
+                                command=self.fetch_whatsapp_number)
+        fetch_btn.pack(side="right")
+        
+        # WhatsApp Number Display
+        wa_number_frame = ctk.CTkFrame(left_panel, fg_color="#2d3548", corner_radius=10)
+        wa_number_frame.pack(pady=15, padx=20, fill="x")
+        
+        wa_number_content = ctk.CTkFrame(wa_number_frame, fg_color="transparent")
+        wa_number_content.pack(pady=15, padx=15, fill="x")
+        
+        ctk.CTkLabel(wa_number_content, text="💬 WhatsApp Number:", 
+                    font=ctk.CTkFont(size=13, weight="bold"),
+                    text_color="#a0aec0").pack(anchor="w", pady=(0, 5))
+        
+        # ✅ CRITICAL: Restore WhatsApp number if available
+        display_text = self.whatsapp_number if self.whatsapp_number else "Loading..."
+        self.wa_number_display = ctk.CTkLabel(wa_number_content,
+                                            text=display_text,
+                                            font=ctk.CTkFont(size=16, weight="bold"),
+                                            text_color="#60a5fa")
+        self.wa_number_display.pack(anchor="w")
+        
+        # Connection Status
+        status_section = ctk.CTkFrame(left_panel, fg_color="transparent")
+        status_section.pack(pady=15, padx=20, fill="x")
+        
+        ctk.CTkLabel(status_section, text="📡 Connection Status", 
+                    font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(0, 10))
+        
+        status_frame = ctk.CTkFrame(status_section, fg_color="#2d3548", corner_radius=10)
+        status_frame.pack(fill="x")
+        
+        status_content = ctk.CTkFrame(status_frame, fg_color="transparent")
+        status_content.pack(pady=15, padx=15, fill="x")
+        
+        # ✅ CRITICAL: Restore connection status
+        status_icon = "🟢" if self.whatsapp_connected else "🔴"
+        status_text = "Connected" if self.whatsapp_connected else "Disconnected"
+        status_color = "#10b981" if self.whatsapp_connected else "#ef4444"
+        
+        self.whatsapp_status_icon = ctk.CTkLabel(status_content, 
+                                                text=status_icon, 
+                                                font=ctk.CTkFont(size=24))
+        self.whatsapp_status_icon.pack(side="left", padx=(0, 15))
+        
+        status_text_frame = ctk.CTkFrame(status_content, fg_color="transparent")
+        status_text_frame.pack(side="left", fill="x", expand=True)
+        
+        self.whatsapp_status_label = ctk.CTkLabel(status_text_frame,
+                                                text=status_text,
+                                                font=ctk.CTkFont(size=14, weight="bold"),
+                                                text_color=status_color)
+        self.whatsapp_status_label.pack(anchor="w")
+        
+        number_label_text = f"Connected to: {self.whatsapp_number}" if self.whatsapp_connected else \
+                        (f"WhatsApp number: {self.whatsapp_number}" if self.whatsapp_number else "No WhatsApp number configured")
+        
+        self.whatsapp_number_label = ctk.CTkLabel(status_text_frame,
+                                                text=number_label_text,
+                                                font=ctk.CTkFont(size=11),
+                                                text_color="#a0aec0")
+        self.whatsapp_number_label.pack(anchor="w", pady=(3, 0))
+        
+        # Action buttons
+        button_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
+        button_frame.pack(pady=20, padx=20, fill="x")
+        
+        # ✅ CRITICAL: Restore button states
+        connect_state = "disabled" if (not self.whatsapp_number or self.whatsapp_connected) else "normal"
+        disconnect_state = "normal" if self.whatsapp_connected else "disabled"
+        
+        self.connect_btn = ctk.CTkButton(button_frame,
+                                        text="🔌 Connect WhatsApp",
+                                        height=50,
+                                        font=ctk.CTkFont(size=15, weight="bold"),
+                                        fg_color="#10b981",
+                                        hover_color="#059669",
+                                        command=self.connect_whatsapp,
+                                        state=connect_state)
+        self.connect_btn.pack(fill="x", pady=(0, 10))
+        
+        self.disconnect_btn = ctk.CTkButton(button_frame,
+                                        text="🔌 Disconnect",
+                                        height=50,
+                                        font=ctk.CTkFont(size=15, weight="bold"),
+                                        fg_color="#ef4444",
+                                        hover_color="#dc2626",
+                                        command=self.disconnect_whatsapp,
+                                        state=disconnect_state)
+        self.disconnect_btn.pack(fill="x")
+        
+        # Instructions
+        instructions = ctk.CTkFrame(left_panel, fg_color="#2d3548", corner_radius=10)
+        instructions.pack(pady=(10, 20), padx=20, fill="x")
+        
+        ctk.CTkLabel(instructions, text="ℹ️ Instructions", 
+                    font=ctk.CTkFont(size=12, weight="bold")).pack(pady=(15, 10), padx=15, anchor="w")
+        
+        instruction_text = [
+            "1. WhatsApp number will be fetched automatically",
+            "2. Click 'Connect WhatsApp' to start",
+            "3. Scan QR code or enter verification code",
+            "4. Status will update when connected"
+        ]
+        
+        for text in instruction_text:
+            ctk.CTkLabel(instructions, 
+                        text=text,
+                        font=ctk.CTkFont(size=11),
+                        text_color="#a0aec0").pack(pady=2, padx=15, anchor="w")
+        
+        ctk.CTkLabel(instructions, text="", height=5).pack()
+        
+        # ========== RIGHT PANEL - Activity Log ==========
+        right_panel = ctk.CTkFrame(content, fg_color="#1a1f2e", corner_radius=15)
+        right_panel.pack(side="right", fill="both", expand=True)
+        
+        # Log header with toggle
+        log_header = ctk.CTkFrame(right_panel, fg_color="transparent")
+        log_header.pack(pady=20, padx=20, fill="x")
+        
+        ctk.CTkLabel(log_header, text="📋 Activity Log", 
+                    font=ctk.CTkFont(size=18, weight="bold")).pack(side="left")
+        
+        self.toggle_logs_button = ctk.CTkButton(log_header, 
+                                            text="🙈 Hide Details" if self.logs_visible else "👁️ Show Details",
+                                            width=120,
+                                            height=32,
+                                            fg_color="#2d3548",
+                                            hover_color="#3d4558",
+                                            command=self.toggle_logs)
+        self.toggle_logs_button.pack(side="right")
+        
+        # Log display area
+        self.log_container = ctk.CTkFrame(right_panel, fg_color="#2d3548", corner_radius=10)
+        
+        # ✅ CRITICAL: Restore log visibility state
+        if self.logs_visible:
+            self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
+        else:
+            self.log_container.pack_forget()
+        
+        # Create scrolled text widget for logs
+        self.response_text = scrolledtext.ScrolledText(
+            self.log_container,
+            height=20,
+            width=50,
+            bg="#1a1f2e",
+            fg="#e5e7eb",
+            font=("Consolas", 10),
+            insertbackground="#60a5fa",
+            relief=tk.FLAT,
+            borderwidth=0
+        )
+        self.response_text.pack(pady=10, padx=10, fill="both", expand=True)
+        
+        # ✅ CRITICAL: Restore log content
+        self.response_text.config(state=tk.NORMAL)
+        for log_message in self.persistent_logs:
+            self.response_text.insert(tk.END, log_message + '\n')
+        self.response_text.see(tk.END)
+        
+        # Clear logs button
+        clear_btn = ctk.CTkButton(self.log_container, 
+                                text="🗑️ Clear Logs",
+                                height=35,
+                                fg_color="#ef4444",
+                                hover_color="#dc2626",
+                                command=self.clear_response)
+        clear_btn.pack(pady=(0, 10), padx=10, fill="x")
+        
+        # WhatsApp Verification Code Display
+        self.verification_frame = ctk.CTkFrame(right_panel, 
+                                            fg_color="#1e3a8a", 
+                                            corner_radius=10)
+        
+        ver_content = ctk.CTkFrame(self.verification_frame, fg_color="transparent")
+        ver_content.pack(fill="x", padx=15, pady=12)
+        
+        ctk.CTkLabel(ver_content, text="🔐 WhatsApp Verification Code:",
+                    font=ctk.CTkFont(size=11, weight="bold"),
+                    text_color="white").pack(side="left", padx=(0, 10))
+        
+        self.verification_code_label = ctk.CTkLabel(ver_content,
+                                                text=self.current_verification_code or "------",
+                                                font=ctk.CTkFont(size=24, weight="bold"),
+                                                text_color="white",
+                                                fg_color="#3b82f6",
+                                                corner_radius=8,
+                                                width=150,
+                                                height=40)
+        self.verification_code_label.pack(side="left", padx=5)
+        
+        self.copy_code_button = ctk.CTkButton(ver_content,
+                                            text="📋 Copy",
+                                            width=80,
+                                            height=40,
+                                            fg_color="#10b981",
+                                            hover_color="#059669",
+                                            command=self.copy_verification_code)
+        self.copy_code_button.pack(side="left", padx=5)
+        
+        # ✅ CRITICAL: Show verification frame if code exists
+        if self.current_verification_code:
+            self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
+        else:
+            self.verification_frame.pack_forget()
+        
+        # ✅ AUTO-FETCH: Only fetch if we don't have the number yet
+        if not self.whatsapp_number:
+            self.root.after(100, self.fetch_whatsapp_number)
+        
+        # Force UI update
+        self.root.update_idletasks()
+        print(f"✅ WhatsApp panel loaded - Logs visible: {self.logs_visible}, Connected: {self.whatsapp_connected}")
+
+    def fetch_whatsapp_number(self):
+        """Fetch WhatsApp number from backend"""
+        mobile = self.wa_mobile_var.get().strip()
+        
+        if not mobile:
+            messagebox.showerror("Error", "Please enter a mobile number!")
+            return
+        
+        self.log_to_response(f"🔄 Fetching WhatsApp number for {mobile}...")
+        
+        def fetch_thread():
+            try:
+                api_url = f"https://api.leadscruise.com/api/whatsapp-settings/get-whatsapp-number?mobileNumber={mobile}"
+                response = requests.get(api_url, timeout=10)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("success") and data.get("data"):
+                        whatsapp_number = data["data"].get("whatsappNumber", mobile)
+                        
+                        # Update UI in main thread
+                        def update_ui():
+                            self.whatsapp_number = whatsapp_number
+                            self.wa_number_display.configure(text=whatsapp_number)
+                            self.connect_btn.configure(state="normal")
+                            self.log_to_response(f"✅ WhatsApp number fetched: {whatsapp_number}")
+                            messagebox.showinfo("Success", f"WhatsApp number found: {whatsapp_number}")
+                        
+                        self.gui_update_queue.put(update_ui)
+                    else:
+                        def show_error():
+                            self.log_to_response("⚠️ No WhatsApp number found in database")
+                            messagebox.showwarning("Not Found", "No WhatsApp number configured for this mobile number")
+                        
+                        self.gui_update_queue.put(show_error)
+                else:
+                    def show_error():
+                        self.log_to_response(f"❌ Failed to fetch WhatsApp number. HTTP {response.status_code}")
+                        messagebox.showerror("Error", f"Failed to fetch data from server")
+                    
+                    self.gui_update_queue.put(show_error)
+                    
+            except Exception as e:
+                error_msg = f"❌ Error fetching WhatsApp number: {str(e)}"
+                self.log_to_response(error_msg)
+                
+                def show_error():
+                    messagebox.showerror("Error", f"Failed to fetch WhatsApp number:\n{str(e)}")
+                
+                self.gui_update_queue.put(show_error)
+        
+        threading.Thread(target=fetch_thread, daemon=True).start()
+
+    def connect_whatsapp(self):
+        """Connect to WhatsApp"""
+        if not self.whatsapp_number:
+            messagebox.showerror("Error", "Please fetch WhatsApp number first!")
+            return
+        
+        # Disable connect button during connection
+        self.connect_btn.configure(state="disabled", text="🔄 Connecting...")
+        self.log_to_response(f"🔌 Starting WhatsApp connection for {self.whatsapp_number}...")
+        
+        def connection_thread():
+            try:
+                # Call the whatsapp_login function
+                exit_code = self.whatsapp_login(self.whatsapp_number)
+                
+                if exit_code == 0:
+                    # Success
+                    def update_success():
+                        self.whatsapp_connected = True
+                        self.update_whatsapp_status(True)
+                        self.connect_btn.configure(state="disabled", text="🔌 Connect WhatsApp")
+                        self.disconnect_btn.configure(state="normal")
+                        self.log_to_response("✅ WhatsApp connected successfully!")
+                        messagebox.showinfo("Success", "WhatsApp connected successfully!")
+                    
+                    self.gui_update_queue.put(update_success)
+                else:
+                    # Failed
+                    def update_failure():
+                        self.whatsapp_connected = False
+                        self.update_whatsapp_status(False)
+                        self.connect_btn.configure(state="normal", text="🔌 Connect WhatsApp")
+                        self.log_to_response(f"❌ WhatsApp connection failed with code: {exit_code}")
+                        messagebox.showerror("Connection Failed", "Failed to connect to WhatsApp. Please try again.")
+                    
+                    self.gui_update_queue.put(update_failure)
+                    
+            except Exception as e:
+                error_msg = f"❌ WhatsApp connection error: {str(e)}"
+                self.log_to_response(error_msg)
+                self.log_to_response(f"Traceback: {traceback.format_exc()}")
+                
+                def update_error():
+                    self.connect_btn.configure(state="normal", text="🔌 Connect WhatsApp")
+                    messagebox.showerror("Error", f"Connection error:\n{str(e)}")
+                
+                self.gui_update_queue.put(update_error)
+        
+        threading.Thread(target=connection_thread, daemon=True).start()
+
+    def disconnect_whatsapp(self):
+        """Disconnect WhatsApp"""
+        result = messagebox.askyesno(
+            "Disconnect WhatsApp",
+            "Are you sure you want to disconnect WhatsApp?\n\nThis will close the WhatsApp session."
+        )
+        
+        if result:
+            self.log_to_response("🔌 Disconnecting WhatsApp...")
+            
+            try:
+                # Quit the driver if it exists
+                if self.whatsapp_driver:
+                    try:
+                        self.whatsapp_driver.quit()
+                    except:
+                        pass
+                    self.whatsapp_driver = None
+                
+                # Kill Firefox processes
+                for proc in psutil.process_iter(['pid', 'name']):
+                    try:
+                        if proc.info['name'] and proc.info['name'].lower() in ['firefox.exe', 'firefox', 'geckodriver.exe', 'geckodriver']:
+                            os.kill(proc.info['pid'], signal.SIGTERM)
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+                
+                self.whatsapp_connected = False
+                self.update_whatsapp_status(False)
+                self.connect_btn.configure(state="normal")
+                self.disconnect_btn.configure(state="disabled")
+                
+                self.log_to_response("✅ WhatsApp disconnected successfully")
+                messagebox.showinfo("Disconnected", "WhatsApp disconnected successfully")
+                
+            except Exception as e:
+                self.log_to_response(f"❌ Error disconnecting: {str(e)}")
+                messagebox.showerror("Error", f"Failed to disconnect:\n{str(e)}")
+
+    def update_whatsapp_status(self, connected):
+        """Update WhatsApp connection status in UI"""
+        if connected:
+            self.whatsapp_status_icon.configure(text="🟢")
+            self.whatsapp_status_label.configure(text="Connected", text_color="#10b981")
+            self.whatsapp_number_label.configure(text=f"Connected to: {self.whatsapp_number}")
+        else:
+            self.whatsapp_status_icon.configure(text="🔴")
+            self.whatsapp_status_label.configure(text="Disconnected", text_color="#ef4444")
+            if self.whatsapp_number:
+                self.whatsapp_number_label.configure(text=f"WhatsApp number: {self.whatsapp_number}")
+            else:
+                self.whatsapp_number_label.configure(text="No WhatsApp number configured")
+
+    def whatsapp_login(self, phone_number):
+        """Perform WhatsApp login - Modified version"""
+        if phone_number is None:
+            logger.error("Phone number is required")
+            return 1
+        
+        logger.info(f"Processing WhatsApp login for phone number: {phone_number}")
+        
+        # Set up Firefox driver with user-specific profile
+        driver = setup_firefox_driver(phone_number)
+        
+        if driver is None:
+            logger.error("Failed to set up WebDriver")
+            return 1
+        
+        # Store driver reference
+        self.whatsapp_driver = driver
+        
+        try:
+            # Load cookies from previous session
+            cookies_loaded = load_cookies(driver, phone_number)
+            
+            # Load additional session data
+            session_data_loaded = load_session_data(driver, phone_number)
+            
+            # Navigate to WhatsApp Web
+            logger.info("Navigating to WhatsApp Web...")
+            driver.get(WHATSAPP_URL)
+            
+            # Wait for page to load
+            logger.info("Waiting for WhatsApp Web to load...")
+            time.sleep(10)
+            
+            logger.info(f"Page title: {driver.title}")
+            logger.info(f"Current URL: {driver.current_url}")
+            
+            # Check if already logged in
+            if check_if_already_logged_in(driver):
+                logger.info("Already logged in")
+                self.log_to_response("✅ Already logged in to WhatsApp")
+                return 0
+            else:
+                # Create a WebDriverWait instance
+                wait = WebDriverWait(driver, 30)
+                
+                # Perform the login steps
+                login_successful = perform_login_steps(driver, wait, phone_number, ui_callback=self)
+                
+                if login_successful:
+                    logger.info("Login process completed successfully!")
+                    self.log_to_response("✅ WhatsApp login successful!")
+                    return 0
+                else:
+                    logger.error("Login process failed!")
+                    self.log_to_response("❌ WhatsApp login failed!")
+                    return 1
+        
+        except Exception as e:
+            logger.error(f"Error during WhatsApp login: {e}")
+            logger.debug(traceback.format_exc())
+            self.log_to_response(f"❌ Login error: {str(e)}")
+            return 1
+
+    def confirm_and_quit(self):
+        """Show confirmation dialog before quitting the application"""
+        print("🔴 confirm_and_quit called")
+        
+        try:
+            # Make sure window is visible and on top
+            try:
+                if self.root.state() == 'withdrawn':
+                    self.root.deiconify()
+                self.root.lift()
+                self.root.attributes('-topmost', True)
+                self.root.after(100, lambda: self.root.attributes('-topmost', False))
+            except:
+                pass
+            
+            # Show confirmation dialog
+            result = messagebox.askyesno(
+                "Quit Application", 
+                "Are you sure you want to quit?\n\n"
+                "⚠️ This will:\n"
+                "• Stop all background processes\n"
+                "• Kill Firefox and related processes\n"
+                "• Completely exit the application\n\n"
+                "Note: Use 'Logout' to keep your session for next time.",
+                parent=self.root,
+                icon='warning'
+            )
+            
+            if result:
+                print("✅ User confirmed quit")
+                self.log_to_response("🔴 User initiated application quit...")
+                
+                # Set force_quit flag to bypass tray minimization
+                self.force_quit = True
+                
+                # Call quit_app
+                self.quit_app()
+            else:
+                print("❌ User cancelled quit")
+                self.log_to_response("❌ Quit cancelled by user")
+                
+        except Exception as e:
+            print(f"❌ Error in confirm_and_quit: {e}")
+            import traceback
+            traceback.print_exc()
+
+
+    def quit_app(self, icon=None, item=None):
+        """Completely exit the application and kill related processes"""
+        print("quit_app called")  # Debug print
+        try:
+            # Mark app as stopped
+            if hasattr(self, 'conditional_autostart'):
+                self.conditional_autostart.mark_app_stopped()
+            
+            # Stop any auto-fetch timer
+            if hasattr(self, 'auto_fetch_timer') and self.auto_fetch_timer:
+                self.root.after_cancel(self.auto_fetch_timer)
+
+            # Stop tray icon if running
+            if self.tray_icon:
+                print("Stopping tray icon before quit...")
+                try:
+                    self.tray_icon.stop()
+                except:
+                    pass
+                self.tray_icon = None
+
+            self.log_to_response("❌ Application closing...")
+
+            # Gracefully close Tkinter
+            if self.root and self.root.winfo_exists():
+                try:
+                    self.root.quit()
+                    self.root.destroy()
+                except:
+                    pass
+
+            print("🔻 Killing firefox and leadfetcher processes...")
+
+            # ---- Force terminate related processes ----
+            if os.name == "nt":  # Windows
+                subprocess.call("taskkill /F /IM firefox.exe /T", shell=True, 
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:  # Linux / macOS
+                subprocess.call("pkill -f firefox", shell=True,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.call("pkill -f leadfetcher", shell=True,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            print("✅ All related processes killed successfully.")
+
+            # Exit the app
+            sys.exit(0)
+
+        except Exception as e:
+            print(f"Error during quit: {e}")
+            try:
+                # Try to kill processes even if something failed
+                if os.name == "nt":
+                    subprocess.call("taskkill /F /IM firefox.exe /T", shell=True,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.call("taskkill /F /IM leadfetcher.exe /T", shell=True,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    subprocess.call("pkill -f firefox", shell=True,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.call("pkill -f leadfetcher", shell=True,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
+            sys.exit(0)
 
     def show_dashboard(self):
         """Show dashboard overview"""
@@ -3367,7 +4079,10 @@ class LeadFetcherApp:
                         text_color=color).pack(pady=(0, 20))
     
     def show_fetch_panel(self):
-        """Show lead fetching panel"""
+        """Show lead fetching panel with state restoration"""
+        # Store current panel
+        self.current_panel = 'fetch'
+        
         self.clear_content_area()
         
         # Header
@@ -3401,9 +4116,9 @@ class LeadFetcherApp:
         
         self.mobile_var = tk.StringVar(value=self.default_mobile)
         self.mobile_entry = ctk.CTkEntry(mobile_frame, height=45, 
-                                         textvariable=self.mobile_var,
-                                         placeholder_text="Enter mobile number",
-                                         font=ctk.CTkFont(size=13))
+                                        textvariable=self.mobile_var,
+                                        placeholder_text="Enter mobile number",
+                                        font=ctk.CTkFont(size=13))
         self.mobile_entry.pack(fill="x")
         
         # Options
@@ -3416,9 +4131,9 @@ class LeadFetcherApp:
         # Send confirmation checkbox
         self.send_confirmation_var = tk.BooleanVar(value=True)
         confirm_cb = ctk.CTkCheckBox(options_frame, 
-                                     text="Send confirmation when data received",
-                                     variable=self.send_confirmation_var,
-                                     font=ctk.CTkFont(size=12))
+                                    text="Send confirmation when data received",
+                                    variable=self.send_confirmation_var,
+                                    font=ctk.CTkFont(size=12))
         confirm_cb.pack(anchor="w", pady=5)
         
         # Auto-fetch checkbox
@@ -3435,12 +4150,12 @@ class LeadFetcherApp:
         fetch_btn_frame.pack(pady=20, padx=20, fill="x")
         
         self.fetch_button = ctk.CTkButton(fetch_btn_frame, 
-                                         text="🚀 Fetch Leads Data",
-                                         height=50,
-                                         font=ctk.CTkFont(size=15, weight="bold"),
-                                         fg_color="#3b82f6",
-                                         hover_color="#2563eb",
-                                         command=self.fetch_data_threaded)
+                                        text="🚀 Send WhatsApp Messages",
+                                        height=50,
+                                        font=ctk.CTkFont(size=15, weight="bold"),
+                                        fg_color="#3b82f6",
+                                        hover_color="#2563eb",
+                                        command=self.fetch_data_threaded)
         self.fetch_button.pack(fill="x")
         
         # Status section
@@ -3474,18 +4189,22 @@ class LeadFetcherApp:
                     font=ctk.CTkFont(size=18, weight="bold")).pack(side="left")
         
         self.toggle_logs_button = ctk.CTkButton(log_header, 
-                                               text="👁️ Show Details",
-                                               width=120,
-                                               height=32,
-                                               fg_color="#2d3548",
-                                               hover_color="#3d4558",
-                                               command=self.toggle_logs)
+                                            text="🙈 Hide Details" if self.logs_visible else "👁️ Show Details",
+                                            width=120,
+                                            height=32,
+                                            fg_color="#2d3548",
+                                            hover_color="#3d4558",
+                                            command=self.toggle_logs)
         self.toggle_logs_button.pack(side="right")
         
-        # Log display area (hidden by default)
+        # Log display area
         self.log_container = ctk.CTkFrame(right_panel, fg_color="#2d3548", corner_radius=10)
-        self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
-        self.log_container.pack_forget()  # Hide initially
+        
+        # ✅ CRITICAL: Restore log visibility state IMMEDIATELY
+        if self.logs_visible:
+            self.log_container.pack(pady=(0, 20), padx=20, fill="both", expand=True)
+        else:
+            self.log_container.pack_forget()
         
         # Create scrolled text widget for logs
         self.response_text = scrolledtext.ScrolledText(
@@ -3501,21 +4220,25 @@ class LeadFetcherApp:
         )
         self.response_text.pack(pady=10, padx=10, fill="both", expand=True)
         
+        # ✅ CRITICAL: Restore log content
+        self.response_text.config(state=tk.NORMAL)
+        for log_message in self.persistent_logs:
+            self.response_text.insert(tk.END, log_message + '\n')
+        self.response_text.see(tk.END)
+        
         # Clear logs button
         clear_btn = ctk.CTkButton(self.log_container, 
-                                 text="🗑️ Clear Logs",
-                                 height=35,
-                                 fg_color="#ef4444",
-                                 hover_color="#dc2626",
-                                 command=self.clear_response)
+                                text="🗑️ Clear Logs",
+                                height=35,
+                                fg_color="#ef4444",
+                                hover_color="#dc2626",
+                                command=self.clear_response)
         clear_btn.pack(pady=(0, 10), padx=10, fill="x")
         
         # WhatsApp Verification Code Display
         self.verification_frame = ctk.CTkFrame(right_panel, 
-                                              fg_color="#1e3a8a", 
-                                              corner_radius=10)
-        self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
-        self.verification_frame.pack_forget()  # Hide by default
+                                            fg_color="#1e3a8a", 
+                                            corner_radius=10)
         
         ver_content = ctk.CTkFrame(self.verification_frame, fg_color="transparent")
         ver_content.pack(fill="x", padx=15, pady=12)
@@ -3525,24 +4248,34 @@ class LeadFetcherApp:
                     text_color="white").pack(side="left", padx=(0, 10))
         
         self.verification_code_label = ctk.CTkLabel(ver_content,
-                                                   text="------",
-                                                   font=ctk.CTkFont(size=24, weight="bold"),
-                                                   text_color="white",
-                                                   fg_color="#3b82f6",
-                                                   corner_radius=8,
-                                                   width=150,
-                                                   height=40)
+                                                text=self.current_verification_code or "------",
+                                                font=ctk.CTkFont(size=24, weight="bold"),
+                                                text_color="white",
+                                                fg_color="#3b82f6",
+                                                corner_radius=8,
+                                                width=150,
+                                                height=40)
         self.verification_code_label.pack(side="left", padx=5)
         
         self.copy_code_button = ctk.CTkButton(ver_content,
-                                             text="📋 Copy",
-                                             width=80,
-                                             height=40,
-                                             fg_color="#10b981",
-                                             hover_color="#059669",
-                                             command=self.copy_verification_code)
+                                            text="📋 Copy",
+                                            width=80,
+                                            height=40,
+                                            fg_color="#10b981",
+                                            hover_color="#059669",
+                                            command=self.copy_verification_code)
         self.copy_code_button.pack(side="left", padx=5)
-    
+        
+        # ✅ CRITICAL: Show verification frame if code exists
+        if self.current_verification_code:
+            self.verification_frame.pack(pady=(0, 20), padx=20, fill="x")
+        else:
+            self.verification_frame.pack_forget()
+        
+        # Force UI update
+        self.root.update_idletasks()
+        print(f"✅ Fetch panel loaded - Logs visible: {self.logs_visible}, Code: {self.current_verification_code}")
+
     def show_whatsapp_panel(self):
         """Show WhatsApp automation panel"""
         self.clear_content_area()
@@ -3561,15 +4294,55 @@ class LeadFetcherApp:
                     font=ctk.CTkFont(size=16)).pack(pady=100)
     
     def clear_content_area(self):
-        """Clear all widgets from content area"""
+        """Clear content area while preserving state - IMPROVED"""
+        print("🧹 Clearing content area...")
+        
+        # 1. Cancel ALL pending after() callbacks
+        print(f"Cancelling {len(self._after_ids)} pending callbacks...")
+        for after_id in self._after_ids:
+            try:
+                self.root.after_cancel(after_id)
+            except:
+                pass
+        self._after_ids.clear()
+        
+        # 2. Preserve state variables BEFORE destroying widgets
+        preserved_state = {
+            'logs_visible': self.logs_visible if hasattr(self, 'logs_visible') else False,
+            'logs_authenticated': self.logs_authenticated if hasattr(self, 'logs_authenticated') else False,
+            'persistent_logs': self.persistent_logs.copy() if hasattr(self, 'persistent_logs') else [],
+            'current_verification_code': self.current_verification_code if hasattr(self, 'current_verification_code') else None,
+            'whatsapp_number': self.whatsapp_number if hasattr(self, 'whatsapp_number') else None,
+            'whatsapp_connected': self.whatsapp_connected if hasattr(self, 'whatsapp_connected') else False,
+        }
+        
+        # 3. Mark widgets as invalid BEFORE destroying
+        widget_attrs = ['response_text', 'log_container', 'toggle_logs_button', 
+                        'verification_frame', 'verification_code_label']
+        for attr in widget_attrs:
+            if hasattr(self, attr):
+                setattr(self, attr, None)
+        
+        # 4. Destroy all widgets
         for widget in self.content_area.winfo_children():
-            widget.destroy()
-    
+            try:
+                widget.destroy()
+            except:
+                pass
+        
+        # 5. Force update to ensure widgets are fully destroyed
+        try:
+            self.content_area.update_idletasks()
+        except:
+            pass
+        
+        # 6. Restore state
+        for key, value in preserved_state.items():
+            setattr(self, key, value)
+        
+        print("✅ Content area cleared, state preserved")
 
-            self.log_container.pack_forget()
-            self.logs_visible = False
-            self.toggle_logs_button.configure(text="👁️ Show Details")
-    
+
     def toggle_logs(self):
         """Toggle log visibility"""
         if not self.logs_visible:
@@ -4104,7 +4877,6 @@ class LeadFetcherApp:
             
             self.gui_update_queue.put(cleanup_ui)
 
-
     def send_confirmation_response(self, mobile, received_data):
         """Send confirmation back to the server that data was received"""
         try:
@@ -4184,7 +4956,6 @@ class LeadFetcherApp:
         finally:
             # Run WhatsApp automation after confirmation
             self.run_whatsapp_automation(mobile)
-
 
     def test_webdriver_modified(self, phone_number=None):
         """Modified test_webdriver without infinite loop and sys.exit()"""
@@ -4294,6 +5065,7 @@ class LeadFetcherApp:
 
 
         # REPLACE your run_whatsapp_automation method with this:
+    
     def run_whatsapp_automation(self, mobile_number):
         """Run the WhatsApp automation in a separate thread, after fetching WhatsApp number from DB.
         If it finishes or exits abruptly, schedule another attempt after 10 minutes.
@@ -4381,20 +5153,35 @@ class LeadFetcherApp:
         self.log_to_response(f"📱 WhatsApp automation started in background thread (Total active: {len(self.whatsapp_threads)})...")
 
     def log_to_response(self, message):
-        """Thread-safe method to append log messages and detect verification codes"""
+        """Thread-safe method to append log messages - IMPROVED"""
         # Always print to console as backup
         print(f"LOG: {message}")
+        
+        # Store in persistent log history
+        if not hasattr(self, 'persistent_logs'):
+            self.persistent_logs = []
+        
+        self.persistent_logs.append(message)
+        
+        # Trim log history if too long
+        if len(self.persistent_logs) > self.max_log_lines:
+            self.persistent_logs = self.persistent_logs[-self.max_log_lines:]
         
         # Use GUI update queue instead of root.after()
         def _do_log():
             try:
-                # Check if widget exists and is valid
-                if not hasattr(self, 'response_text') or not self.response_text:
-                    print(f"DEBUG: response_text not available")
+                # CRITICAL: Check if widget exists AND is valid
+                if not hasattr(self, 'response_text'):
                     return
                 
-                if not self.response_text.winfo_exists():
-                    print(f"DEBUG: Widget no longer exists!")
+                if self.response_text is None:
+                    return
+                
+                # Check if widget hasn't been destroyed
+                try:
+                    if not self.response_text.winfo_exists():
+                        return
+                except:
                     return
                 
                 # CRITICAL: Always set to NORMAL before inserting
@@ -4409,23 +5196,18 @@ class LeadFetcherApp:
                 # Check if message contains a verification code
                 self.detect_and_show_verification_code(message)
                 
-                print(f"DEBUG: Message logged successfully to GUI")
-                
+            except tk.TclError as e:
+                # Widget was destroyed - this is normal during panel switch
+                print(f"Widget destroyed (expected during panel switch): {e}")
             except Exception as e:
                 print(f"ERROR in _do_log: {e}")
-                import traceback
-                traceback.print_exc()
         
-        # Add to GUI update queue instead of using root.after()
+        # Add to GUI update queue
         if hasattr(self, 'gui_update_queue'):
             try:
                 self.gui_update_queue.put(_do_log)
-                print(f"DEBUG: Log queued for GUI update")
             except Exception as e:
                 print(f"ERROR: Failed to queue log: {e}")
-        else:
-            print(f"ERROR: gui_update_queue not available")
-
 
     def _append_to_text(self, message):
         """Append text to response area and scroll to bottom"""
@@ -5235,11 +6017,16 @@ class GitHubUpdateManager:
         """Download and install the update"""
         def update_thread():
             try:
-                self.app.log_to_response("⬇️ Downloading update...")
-                self.app.fetch_button.configure(state='disabled')
+                # Run diagnostics before starting
+                self.diagnose_update_environment()
                 
-                # Switch progress bar to determinate mode
-                self.app.progress.configure(mode='determinate', value=0)
+                self.app.log_to_response("⬇️ Downloading update...")
+                
+                # Disable fetch button on main thread
+                self.app.root.after(0, lambda: self.app.fetch_button.configure(state='disabled'))
+                
+                # Set progress bar to determinate mode (0-1 range for CustomTkinter)
+                self.app.root.after(0, lambda: self.app.progress.set(0))
                 
                 # Create temporary directory
                 with tempfile.TemporaryDirectory() as temp_dir:
@@ -5268,17 +6055,21 @@ class GitHubUpdateManager:
                     # Install update
                     self.install_update(temp_file, version)
                     
+                    # Verify update success
+                    self.app.root.after(0, lambda: self.verify_update_success(version))
+                    
             except Exception as e:
-                self.app.root.after(0, lambda: self.app.log_to_response(f"❌ Update failed: {str(e)}"))
-                self.app.root.after(0, lambda: messagebox.showerror("Update Failed", f"Update installation failed:\n{str(e)}"))
+                error_msg = str(e)  # ✅ Capture error immediately
+                self.app.root.after(0, lambda msg=error_msg: self.app.log_to_response(f"❌ Update failed: {msg}"))
+                self.app.root.after(0, lambda msg=error_msg: messagebox.showerror("Update Failed", f"Update installation failed:\n{msg}"))
             finally:
                 self.app.root.after(0, self.cleanup_after_update)
         
         threading.Thread(target=update_thread, daemon=True).start()
-    
+
     def update_progress(self, progress):
         """Update progress bar"""
-        self.app.progress['value'] = progress
+        self.app.progress.set(progress / 100)  # CustomTkinter uses 0-1 range
         self.app.status_var.set(f"Downloading update... {progress:.1f}%")
     
     def install_update(self, update_file, version):
@@ -5570,7 +6361,9 @@ class GitHubUpdateManager:
     
     def cleanup_after_update(self):
         """Reset UI after update process"""
-        self.app.progress.configure(mode='indeterminate', value=0)
+        # CustomTkinter progress bar doesn't use 'value' parameter
+        self.app.progress.stop()  # Stop any animation
+        self.app.progress.set(0)  # Reset to 0
         self.app.fetch_button.configure(state='normal')
         self.app.status_var.set("Ready to fetch data...")
 
@@ -5692,57 +6485,6 @@ class GitHubUpdateManager:
         
         self.app.log_to_response("="*50)
         return success
-    # Add this method to your GitHubUpdateManager class to call diagnostics
-    def download_and_install_update(self, download_url, version):
-        """Download and install the update - with diagnostics"""
-        def update_thread():
-            try:
-                # Run diagnostics before starting
-                self.diagnose_update_environment()
-                
-                self.app.log_to_response("Downloading update...")
-                self.app.fetch_button.configure(state='disabled')
-                
-                # Switch progress bar to determinate mode
-                self.app.progress.configure(mode='determinate', value=0)
-                
-                # Create temporary directory
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_file = os.path.join(temp_dir, f"leadfetcher-update-v{version}.zip")
-                    
-                    # Download file with progress
-                    response = requests.get(download_url, stream=True, timeout=30)
-                    response.raise_for_status()
-                    
-                    total_size = int(response.headers.get('content-length', 0))
-                    downloaded = 0
-                    
-                    with open(temp_file, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            if chunk:
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                
-                                if total_size > 0:
-                                    progress = (downloaded / total_size) * 100
-                                    self.app.root.after(0, lambda p=progress: self.update_progress(p))
-                    
-                    self.app.root.after(0, lambda: self.app.log_to_response("Download completed"))
-                    self.app.root.after(0, lambda: self.app.status_var.set("Installing update..."))
-                    
-                    # Install update
-                    self.install_update(temp_file, version)
-                    
-                    # Verify update success
-                    self.app.root.after(0, lambda: self.verify_update_success(version))
-                    
-            except Exception as e:
-                self.app.root.after(0, lambda: self.app.log_to_response(f"Update failed: {str(e)}"))
-                self.app.root.after(0, lambda: messagebox.showerror("Update Failed", f"Update installation failed:\n{str(e)}"))
-            finally:
-                self.app.root.after(0, self.cleanup_after_update)
-        
-        threading.Thread(target=update_thread, daemon=True).start()
-
+    
 if __name__ == "__main__":
     main()

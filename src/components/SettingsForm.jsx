@@ -327,12 +327,13 @@ const SettingsForm = () => {
       left: 0, 
       width: '100%', 
       height: '100%', 
-      zIndex: 0
+      zIndex: -1,
+      //pointerEvents: 'none'  // THIS IS CRITICAL - prevents blocking clicks
     }}>
       <Dither
         waveColor={[51/255, 102/255, 128/255]}
         disableAnimation={false}
-        enableMouseInteraction={true}
+        enableMouseInteraction={false}
         mouseRadius={0.3}
         colorNum={5}
         waveAmplitude={0.25}

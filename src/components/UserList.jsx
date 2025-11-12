@@ -14,25 +14,75 @@ const UsersList = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('https://api.leadscruise.com/api/users', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        setUsers(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch users');
-        setLoading(false);
-      }
+useEffect(() => {
+  const calculateRemainingDays = (createdAt, subscriptionType) => {
+    const createdDate = new Date(createdAt);
+    const expiryDate = new Date(createdDate);
+
+    const SUBSCRIPTION_DURATIONS = {
+      "1-day": 1,
+      "3-days": 3,
+      "7-days": 7,
+      "one-mo": 30,
+      "six-mo": 180,
+      "year-mo": 365,
     };
 
-    fetchUsers();
-  }, []);
+    const duration = SUBSCRIPTION_DURATIONS[subscriptionType] || 30;
+    expiryDate.setDate(expiryDate.getDate() + duration);
+
+    const today = new Date();
+    const remainingDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+    return remainingDays > 0; // true if active
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch users
+      const [usersRes, paymentsRes] = await Promise.all([
+        axios.get('https://api.leadscruise.com/api/users', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }),
+        axios.get('https://api.leadscruise.com/api/get-all-subscriptions', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+      ]);
+
+      const usersData = usersRes.data;
+      const paymentsData = paymentsRes.data;
+
+      // Attach subscription status
+      const usersWithStatus = usersData.map(user => {
+        const userPayments = paymentsData
+          .filter(p => p.email === user.email)
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        if (userPayments.length === 0) {
+          return { ...user, subscriptionStatus: "Not Active" };
+        }
+
+        const latestPayment = userPayments[0];
+        const isActive = calculateRemainingDays(latestPayment.created_at, latestPayment.subscription_type);
+
+        return {
+          ...user,
+          subscriptionStatus: isActive ? "Active" : "Not Active"
+        };
+      });
+
+      setUsers(usersWithStatus);
+      setLoading(false);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch users');
+      setLoading(false);
+    }
+  };
+
+  fetchUsers();
+}, []);
 
   const handleSort = (key) => {
     let direction = 'asc';

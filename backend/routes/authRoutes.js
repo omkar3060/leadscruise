@@ -290,7 +290,170 @@ router.get("/verify-session", async (req, res) => {
       .json({ activeSession: false, message: "Session verification failed" });
   }
 });
+// Add these endpoints to your server.js file (around line 1500-2000)
 
+// ========================
+// EXCLUSIVE USERS ENDPOINTS
+// ========================
+
+// Get all exclusive users
+router.get("/exclusive-users", async (req, res) => {
+  try {
+    const exclusiveUsers = await User.find({ isExclusive: true })
+      .select('email username mobileNumber createdAt')
+      .sort({ createdAt: -1 });
+    
+    res.json(exclusiveUsers);
+  } catch (error) {
+    console.error("Error fetching exclusive users:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to fetch exclusive users" 
+    });
+  }
+});
+
+// Add user to exclusive list
+router.post("/exclusive-users/add", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+
+    // Prevent demo account from being added
+    if (email === "demo@leadscruise.com") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Cannot add demo account to exclusive list" 
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    if (user.isExclusive) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User is already in exclusive list" 
+      });
+    }
+
+    user.isExclusive = true;
+    await user.save();
+
+    console.log(`✅ User ${email} added to exclusive list`);
+
+    res.json({ 
+      success: true, 
+      message: "User added to exclusive list successfully",
+      user: {
+        email: user.email,
+        username: user.username,
+        mobileNumber: user.mobileNumber
+      }
+    });
+
+  } catch (error) {
+    console.error("Error adding exclusive user:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to add user to exclusive list" 
+    });
+  }
+});
+
+// Remove user from exclusive list
+router.delete("/exclusive-users/remove", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    if (!user.isExclusive) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User is not in exclusive list" 
+      });
+    }
+
+    user.isExclusive = false;
+    await user.save();
+
+    console.log(`✅ User ${email} removed from exclusive list`);
+
+    res.json({ 
+      success: true, 
+      message: "User removed from exclusive list successfully" 
+    });
+
+  } catch (error) {
+    console.error("Error removing exclusive user:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to remove user from exclusive list" 
+    });
+  }
+});
+
+// Check if user is exclusive
+router.get("/check-exclusive/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+
+    const user = await User.findOne({ email }).select('isExclusive');
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      isExclusive: user.isExclusive || false 
+    });
+
+  } catch (error) {
+    console.error("Error checking exclusive status:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to check exclusive status" 
+    });
+  }
+});
 router.get("/user-status", async (req, res) => {
   const userEmail = req.query.email;
 

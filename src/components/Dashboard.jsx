@@ -10,7 +10,55 @@ import redFlag from "../images/red_flag.png";
 import greyFlag from "../images/grey_flag.png";
 import { minor } from "@mui/material";
 import demoLeads from "../data/demoLeads";
+const getScoreColor = (score) => {
+  if (!score || isNaN(score) || score === 0) {
+    return {
+      backgroundColor: '#f5f5f5',
+      color: '#999',
+      borderColor: '#ddd'
+    };
+  }
 
+  const numScore = parseFloat(score);
+
+  if (numScore < 40) {
+    return {
+      backgroundColor: '#ffebee',
+      color: '#c62828',
+      borderColor: '#ef5350'
+    };
+  } else if (numScore >= 40 && numScore < 50) {
+    return {
+      backgroundColor: '#fff3e0',
+      color: '#e65100',
+      borderColor: '#ff9800'
+    };
+  } else if (numScore >= 50 && numScore < 60) {
+    return {
+      backgroundColor: '#fffde7',
+      color: '#f57f17',
+      borderColor: '#ffeb3b'
+    };
+  } else if (numScore >= 60 && numScore < 70) {
+    return {
+      backgroundColor: '#e3f2fd',
+      color: '#1565c0',
+      borderColor: '#42a5f5'
+    };
+  } else if (numScore >= 70 && numScore < 80) {
+    return {
+      backgroundColor: '#e8f5e9',
+      color: '#2e7d32',
+      borderColor: '#66bb6a'
+    };
+  } else { // >= 80
+    return {
+      backgroundColor: '#c8e6c9',
+      color: '#1b5e20',
+      borderColor: '#4caf50'
+    };
+  }
+};
 const LoadingScreen = () => (
   <div className="loading-overlay">
     <div className="loading-container">
@@ -38,6 +86,8 @@ const Dashboard = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [canDownloadReports, setCanDownloadReports] = useState(false);
+  const [subscriptionCheckLoading, setSubscriptionCheckLoading] = useState(true);
   const navigate = useNavigate();
   const [settings, setSettings] = useState({
     sentences: [],
@@ -45,6 +95,7 @@ const Dashboard = () => {
     h2WordArray: [],
   });
   const [buyerBalance, setBuyerBalance] = useState(null);
+  const [userSubscriptionPlan, setUserSubscriptionPlan] = useState(null);
   const [showZeroBalanceAlert, setShowZeroBalanceAlert] = useState(false);
   const [isVisible, setIsVisible] = useState(
     localStorage.getItem("isVisible") === "true" || false
@@ -71,6 +122,7 @@ const Dashboard = () => {
   const [showCustomDateModal, setShowCustomDateModal] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
 
   useEffect(() => {
     const fetchMessageCount = async () => {
@@ -107,7 +159,54 @@ const Dashboard = () => {
       console.error("Error fetching buyer balance:", error);
     }
   }, []);
+  useEffect(() => {
+    const fetchUserSubscriptionPlan = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) return;
 
+        const response = await axios.get(`https://api.leadscruise.com/api/get-user-subscription?email=${userEmail}`);
+        setUserSubscriptionPlan(response.data.subscriptionPlan);
+        console.log("User subscription plan:", response.data.subscriptionPlan);
+      } catch (error) {
+        console.error("Failed to fetch subscription plan:", error);
+      }
+    };
+
+    fetchUserSubscriptionPlan();
+  }, []);
+  // Add this useEffect to check active subscriptions
+  useEffect(() => {
+    const checkActiveSubscriptions = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) {
+          setCanDownloadReports(false);
+          setSubscriptionCheckLoading(false);
+          return;
+        }
+
+        const response = await axios.get(
+          `https://api.leadscruise.com/api/get-active-subscriptions?email=${userEmail}`
+        );
+
+        if (response.data.success) {
+          setCanDownloadReports(response.data.canDownloadReports);
+
+          // Log subscription details for debugging
+          console.log("Active Subscriptions:", response.data.activeSubscriptions);
+          console.log("Can Download Reports:", response.data.canDownloadReports);
+        }
+      } catch (error) {
+        console.error("Failed to check active subscriptions:", error);
+        setCanDownloadReports(false);
+      } finally {
+        setSubscriptionCheckLoading(false);
+      }
+    };
+
+    checkActiveSubscriptions();
+  }, []);
   useEffect(() => {
     fetchBuyerBalance();
 
@@ -778,6 +877,10 @@ const Dashboard = () => {
     });
   };
 
+  // Update the handleDownloadLeadsExcel function
+  // In Dashboard.tsx, update the download reports check:
+  // Update the handleDownloadLeadsExcel function in Dashboard.jsx
+  // Update the handleDownloadLeadsExcel function in Dashboard.jsx
   const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customEnd = null) => {
     if (!leads || leads.length === 0) {
       alert("No leads available to download.");
@@ -914,29 +1017,183 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboardContainer}>
-    
-    {/* Dither Background */}
-    <div style={{ 
-      position: 'fixed', 
-      top: 0, 
-      left: 0, 
-      width: '100%', 
-      height: '100%', 
-      zIndex: 0 
-    }}>
-      <Dither
-        waveColor={[51/255, 102/255, 128/255]}
-        disableAnimation={false}
-        enableMouseInteraction={true}
-        mouseRadius={0.3}
-        colorNum={5}
-        waveAmplitude={0.25}
-        waveFrequency={2.5}
-        waveSpeed={0.03}
-        pixelSize={2.5}
-      />
-    </div>
 
+      {/* Dither Background */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0
+      }}>
+        <Dither
+          waveColor={[51 / 255, 102 / 255, 128 / 255]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={5}
+          waveAmplitude={0.25}
+          waveFrequency={2.5}
+          waveSpeed={0.03}
+          pixelSize={2.5}
+        />
+      </div>
+      {/* Upgrade Popup Modal */}
+      {showUpgradePopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+            animation: 'slideIn 0.3s ease-out',
+            position: 'relative'
+          }}>
+            {/* Close button */}
+            <button
+              onClick={() => setShowUpgradePopup(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'transparent',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#999',
+                padding: '0',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '0'
+              }}
+            >
+              ×
+            </button>
+
+            {/* Lock Icon */}
+            <div style={{
+              textAlign: 'center',
+              fontSize: '64px',
+              marginBottom: '20px',
+              animation: 'bounce 0.5s ease-in-out'
+            }}>
+              🔒
+            </div>
+
+            {/* Title */}
+            <h2 style={{
+              color: '#333',
+              textAlign: 'center',
+              marginBottom: '15px',
+              fontSize: '24px',
+              fontWeight: '600'
+            }}>
+              Subscription Required
+            </h2>
+
+            {/* Description */}
+            <p style={{
+              color: '#666',
+              textAlign: 'center',
+              marginBottom: '25px',
+              fontSize: '15px',
+              lineHeight: '1.6'
+            }}>
+              Download Reports feature is only available for 6-month and yearly subscription plans.
+              Please upgrade your plan to access this feature.
+            </p>
+
+            {/* Action Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => setShowUpgradePopup(false)}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'background-color 0.2s',
+                  marginBottom: '0'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#5a6268'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#6c757d'}
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={() => {
+                  setShowUpgradePopup(false);
+                  navigate('/plans');
+                }}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'background-color 0.2s',
+                  marginBottom: '0'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
+              >
+                Go to Plans Page →
+              </button>
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes slideIn {
+              from {
+                opacity: 0;
+                transform: translateY(-30px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+
+            @keyframes bounce {
+              0%, 100% {
+                transform: translateY(0);
+              }
+              50% {
+                transform: translateY(-10px);
+              }
+            }
+          `}</style>
+        </div>
+      )}
       {showCustomDateModal && (
         <div style={{
           position: 'fixed',
@@ -1167,10 +1424,27 @@ const Dashboard = () => {
             </button>
             <button
               className={styles.buttonLarge}
-              onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
-              style={{ marginBottom: 0 }}
+              onClick={() => {
+                if (subscriptionCheckLoading) {
+                  alert("Checking subscription status, please wait...");
+                  return;
+                }
+
+                // Remove this check - let handleDownloadLeadsExcel decide
+                // if (!canDownloadReports) {
+                //   setShowUpgradePopup(true);
+                //   return;
+                // }
+
+                setShowDownloadDropdown(!showDownloadDropdown);
+              }}
+              style={{
+                marginBottom: 0,
+                opacity: subscriptionCheckLoading ? 0.6 : 1,
+                cursor: subscriptionCheckLoading ? 'wait' : 'pointer'
+              }}
             >
-              Download Reports
+              {subscriptionCheckLoading ? "Checking..." : "Download Reports"}
             </button>
 
             {showDownloadDropdown && (
@@ -1275,7 +1549,7 @@ const Dashboard = () => {
                     Score
                     {sortField === "score" && (sortOrder === "asc" ? "🔼" : "🔽")}
                   </th>
-                  <th style={{ width: "6%" }}>Action</th>
+                  {/* <th style={{ width: "6%" }}>Action</th> */}
                 </tr>
               </thead>
 
@@ -1301,11 +1575,36 @@ const Dashboard = () => {
                             : "N/A"}
                         </td>
                         <td>
-                          {lead.score && !isNaN(lead.score) && lead.score !== 0
-                            ? lead.score.toFixed(2)
-                            : "N/A"}
+                          {lead.score && !isNaN(lead.score) && lead.score !== 0 ? (
+                            <span style={{
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 'bold',
+                              ...getScoreColor(lead.score),
+                              border: `1px solid ${getScoreColor(lead.score).borderColor}`,
+                              whiteSpace: 'nowrap',
+                              display: 'inline-block'
+                            }}>
+                              {lead.score.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span style={{
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 'bold',
+                              backgroundColor: '#f5f5f5',
+                              color: '#999',
+                              border: '1px solid #ddd',
+                              whiteSpace: 'nowrap',
+                              display: 'inline-block'
+                            }}>
+                              N/A
+                            </span>
+                          )}
                         </td>
-                        <td>
+                        {/* <td>
                           <img
                             src={isRejected ? redFlag : greyFlag}
                             alt={isRejected ? "Reject Flag" : "Accept Flag"}
@@ -1322,7 +1621,7 @@ const Dashboard = () => {
                               })
                             }
                           />
-                        </td>
+                        </td> */}
                       </tr>
                     );
                   })

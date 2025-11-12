@@ -11,7 +11,7 @@ import axios from "axios";
 import AIIcon from '../images/AI.png';
 import { HiUserGroup } from "react-icons/hi";
 import { FaYoutube } from "react-icons/fa";
-
+import SheetsIcon from '../images/sheets-icon.png'; // adjust path as needed
 const Sidebar = ({ status }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,13 +56,31 @@ const Sidebar = ({ status }) => {
         </div>
 
         {location.pathname.includes("/master") && (
-          <div
-            className={`${styles.sidebarIcon} ${styles.tooltip}`}
-            onClick={() => navigate("/master/referrals")}
-          >
-            <MdOutlineRecommend className={styles.icon} />
-            <span className={styles.tooltipText}>Referrals</span>
-          </div>
+          <>
+            <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/master/referrals")}
+            >
+              <MdOutlineRecommend className={styles.icon} />
+              <span className={styles.tooltipText}>Referrals</span>
+            </div>
+            {/* <div
+              className={`${styles.sidebarIcon} ${styles.tooltip}`}
+              onClick={() => navigate("/master/exclusive")}
+            >
+              <span className={styles.icon} style={{ fontSize: '32px' }}>⭐</span>
+              <span className={styles.tooltipText}>Exclusive Users</span>
+            </div> */}
+          </>
+        )}
+
+        {location.pathname.includes("/master") && (
+          <>
+            <div className={`${styles.sidebarIcon} ${styles.tooltip}`} onClick={handleLogout}>
+              <FiLogOut className={styles.icon} />
+              <span className={styles.tooltipText}>Logout</span>
+            </div>
+          </>
         )}
 
         {!location.pathname.includes("/master") && (
@@ -143,7 +161,8 @@ const Sidebar = ({ status }) => {
               onClick={() => window.open("https://www.exportersindia.com/register-business-online?joinfree=sellurprdtshead", "_blank")}
             >
               <img
-                src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIACAAIAMBEQACEQEDEQH/xAAXAAEAAwAAAAAAAAAAAAAAAAAFBAYH/8QALRAAAQMCBAMHBQEAAAAAAAAAAQIDBAURAAYSMSEycQcTQUJhgaEUI0NRsSL/xAAaAQACAwEBAAAAAAAAAAAAAAACAwEEBQAG/8QAKBEAAgIBBAADCQAAAAAAAAAAAQIAAxEEEiExQYHwEyIkMzRxscHh/9oADAMBAAIRAxEAPwDccdOkd6dEYdDL0pht07IW4AT7YMVuRkCCWUcEyRgIUzTJ3aBVa5m40mVCbQg95rbSDrj6b83vZPU4q1W2s+GHE3tbodDVpRZU+W/Pl4R7P2YpFJYiU2k6VVapOBqPfZFyBqPuR8/rGtpKFfdY/wAqzzN9hXCL2YVnmgUmj9n8zvW0OSUaFmY6AXnHdQusq3uePQcNsM0djvqlb1iReqrSRLPklqYxlSmN1Er+pDAKgvmSDxAPqAQPbFbVOr3My9ZjalKoAYnCWl5kSEhP3v8AQUBzJ8vxbCmGDiGDkZmXVyUV9tcFMgKU1GQNCQLk/aUoWHidRxq1j4BseuRKbfUjMuhpMjMM+PNrjHcwYq+8i09RBKl+DjtuFx4JFwNyTsM72gRSqePZ/UtbdxyZNrMn6mS3RIyiXpCdUgp/Cx5iT4FXKnqT5TiKxtG8+X3/AJOY590RcAAAAWA2AwqHKHn/ACdUKlVoWYMvONJqcTSFNOK0h0JN0kHYEXIseBB3FuNzTakVqa3GVMRbTvIYdiLxp2bJ8dLZo8SlvEWW/Ikh4J9Uto5uhUnrhBFQPBJjBvPcWo9KZpbLgStx+Q8rXIkukFx5X7P8AHADbAM5Y8wlUCIYGTP/2Q=="
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAA4CAMAAACfWMssAAABI1BMVEX///8BOpfSAQHKAQEBPaIBO5zlAADeAQEASL8APaTtAAC5AAC+AQFoAAA1bM0ARbfS0tAAAF381dX8xcXyUlLxS0v/9vb94eHrJSXbSEjwfHzm2dneLy/Yz8/UMzOsAADTlpa9zux1mdxEdc9Xg9GnvOSWRETIycmxxegAMa4AC4UAF4kARMAkYMbr7/mupKR2SUptMTGAdHXh5OQADHWYmZ3v7uuPlq8aT7rP2+8APsAAHWlie8SttdBmdaTb5fQALJ9HWZE4RGpTX4iJqN0AObCOkJvDyd9KU3J6jbsAFnZzd4JrhLkaLV1yfqEADWFGc8E1S30AS6wAH3VXe7u0tLgALHYAG1kKL2wALZYrWqYAAE9ZXW8ADlKZpcu1uckbTaIgi1TiAAACHklEQVRIie2VbXeaMBTHYcpGdG1G9/zYYWVWibhNpOIedM5oRdt1Le2WatXv/ykGCE10NIyds3P2wv8rk3t//G+u5CIIG230D7Vzf+evsAe5XO7ho9Tc4ye3fT1NDT67EyjzPC344lagzMu04KtMoN17acHX+bueMlsJaWphb3u7qLFbb3bz+fxWiYvt75UrehkhVDWY3drbd+/rPMwotsxG3TooyzJqJlTGyq62PgQP/ohkufyJibQTOOQsO6e2PMvPDGfcgCyjVdSphSV7jugLDalcwxOMutHvpgzRVxrS4vIj9bCsX3e8CSHu01oGvEK93C670Gn/ZzzDIoad82ihQggPaWzI4WzPw7Fo2dCkb6Y954AFzHgYVYhHNDbmcF4qxI1opWF4RGPtYw6oYQBI1FPvKd+YN9PlXacTCMD1EV2sMLnt77xKTwEAZ+Git8IJ7nkcEcr2OHARVg1+sDdI/cnhhH0CsmCZoZGuxYYueYbCjGSzgaNRqIxWIr2jeCLUMATVxWTVQHX4EyoAzwTNnK6UKRiLKZcLSs061nz9PO4VnxMGRJIk8tsYGytJo9To+ODB2u7QrCVwgnAqiaJ0scZVGvHJrGZEFEXCXh/DNfs3pjMivqVEh9ngUvkDP09z3bOUFuH8tMfkij/xqY5N0ddYtQczV1LW/lCe+op/Tr+7+mSa6otmjSam4yiTwwb3+xKreqmUHtroP9AvZNxHwj27918AAAAASUVORK5CYII="
+                //src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIACAAIAMBEQACEQEDEQH/xAAXAAEAAwAAAAAAAAAAAAAAAAAFBAYH/8QALRAAAQMCBAMHBQEAAAAAAAAAAQIDBAURAAYSMSEycQcTQVGBlBQiI0NRsST/xAAaAQACAwEBAAAAAAAAAAAAAAACAwEEBQAG/8QAKBEAAgIBBAADCQAAAAAAAAAAAQIAAxEhEjExQYHwEyIkMzRxscHh/9oADAMBAAIRAxEAPwDccdOkd6dEYdDL0pht07IW4AT7YMVuRkCCWUcEyRgIUzTJ3aBVa5m40mVCbQg95rbSDrj6b83vZPU4q1W2s+GHE3tbodDVpRZU+W/Pl4R7P2YpFJYiU2k6VVapOBqPfZFyBqPuR8/rGtpKFfdY/wAqzzN9hXCL2YVnmgUmj9n8zvW0OSUaFmY6AXnHdQusq3uePQcNsM0djvqlb1iReqrSRLPklqYxlSmN1Er+pDAKgvmSDwAPqAQPbFbVOr3My9ZjalKoAYnCWl5kSEhP3v8AQUBzJ8vxbCmGDiGDkZmXVyUV9tcFMgKU1GQNCQLk/aUoWHidRxp1j4BseuRKbfUjMuhpMjMM+PNrjHcwYq+8i09RBKl+DjtuFx4JFwNyTsM72gRSqePZ/UtbdxyZNrMn6mS3RIyiXpCdUgp/Cx5iT4FXKnqT5TiKxtG8+X3/AJOZ590RcAAAAWA2AwqHKHn/ACdUKlVoWYMvONJqcTSFNOK0h0JN0kHYEXIseBB3FuNzTakVqa3GVMRbTvIYdiLxp2bJ8dLZo8SlvEWW/Ikh4J9Uto5uhUnrhBFQPBJjBvPcWo9KZpbLgStx+Q8rXIkukFx5X7P8AHADbAM5Y8wlUCIYGTP/2Q=="
                 className={styles.icon}
                 alt="Exporters India"
                 style={{
@@ -180,12 +199,14 @@ const Sidebar = ({ status }) => {
               }} />
               <span className={styles.tooltipText}>YouTube</span>
             </div>
+
+            {/* LOGOUT BUTTON */}
+            <div className={`${styles.sidebarIcon} ${styles.tooltip}`} onClick={handleLogout}>
+              <FiLogOut className={styles.icon} />
+              <span className={styles.tooltipText}>Logout</span>
+            </div>
           </>
         )}
-      </div>
-      <div className={`${styles.sidebarIcon} ${styles.tooltip}`} onClick={handleLogout}>
-        <FiLogOut className={styles.icon} />
-        <span className={styles.tooltipText}>Logout</span>
       </div>
     </div>
   );

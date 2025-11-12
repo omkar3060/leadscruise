@@ -10,6 +10,55 @@ import styles from "./Dashboard.module.css";
 import demoLeads from "../data/demoLeads";
 import demoSettings from "../data/demoSettings";
 import * as XLSX from "xlsx";
+const getScoreColor = (score) => {
+  if (!score || isNaN(score) || score === 0) {
+    return {
+      backgroundColor: '#f5f5f5',
+      color: '#999',
+      borderColor: '#ddd'
+    };
+  }
+
+  const numScore = parseFloat(score);
+
+  if (numScore < 40) {
+    return {
+      backgroundColor: '#ffebee',
+      color: '#c62828',
+      borderColor: '#ef5350'
+    };
+  } else if (numScore >= 40 && numScore < 50) {
+    return {
+      backgroundColor: '#fff3e0',
+      color: '#e65100',
+      borderColor: '#ff9800'
+    };
+  } else if (numScore >= 50 && numScore < 60) {
+    return {
+      backgroundColor: '#fffde7',
+      color: '#f57f17',
+      borderColor: '#ffeb3b'
+    };
+  } else if (numScore >= 60 && numScore < 70) {
+    return {
+      backgroundColor: '#e3f2fd',
+      color: '#1565c0',
+      borderColor: '#42a5f5'
+    };
+  } else if (numScore >= 70 && numScore < 80) {
+    return {
+      backgroundColor: '#e8f5e9',
+      color: '#2e7d32',
+      borderColor: '#66bb6a'
+    };
+  } else { // >= 80
+    return {
+      backgroundColor: '#c8e6c9',
+      color: '#1b5e20',
+      borderColor: '#4caf50'
+    };
+  }
+};
 
 const LoadingScreen = () => (
   <div className="loading-overlay">
@@ -47,6 +96,8 @@ const Sheets = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isStarting, setIsStarting] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [canDownloadReports, setCanDownloadReports] = useState(false);
+  const [subscriptionCheckLoading, setSubscriptionCheckLoading] = useState(true);
   const [timer, setTimer] = useState(0);
   const [settings, setSettings] = useState({
     sentences: [],
@@ -74,6 +125,7 @@ const Sheets = () => {
   const [showCustomDateModal, setShowCustomDateModal] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
 
   // Cache helper functions
   const getCachedLeads = (mobileNumber) => {
@@ -196,6 +248,38 @@ const Sheets = () => {
     }
     return null;
   }, [buyerBalance, status, isVisible]);
+  // Add this useEffect to check active subscriptions (place it after other useEffect hooks)
+  useEffect(() => {
+    const checkActiveSubscriptions = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) {
+          setCanDownloadReports(false);
+          setSubscriptionCheckLoading(false);
+          return;
+        }
+
+        const response = await axios.get(
+          `https://api.leadscruise.com/api/get-active-subscriptions?email=${userEmail}`
+        );
+
+        if (response.data.success) {
+          setCanDownloadReports(response.data.canDownloadReports);
+
+          // Log subscription details for debugging
+          console.log("Active Subscriptions:", response.data.activeSubscriptions);
+          console.log("Can Download Reports:", response.data.canDownloadReports);
+        }
+      } catch (error) {
+        console.error("Failed to check active subscriptions:", error);
+        setCanDownloadReports(false);
+      } finally {
+        setSubscriptionCheckLoading(false);
+      }
+    };
+
+    checkActiveSubscriptions();
+  }, []);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -969,6 +1053,8 @@ const Sheets = () => {
     });
   };
 
+  // Update the handleDownloadLeadsExcel function (replace the existing one)
+  // Update the handleDownloadLeadsExcel function (replace the existing one)
   const handleDownloadLeadsExcel = (dateRange = 'all', customStart = null, customEnd = null) => {
     if (!leads || leads.length === 0) {
       alert("No leads available to download.");
@@ -1057,467 +1143,664 @@ const Sheets = () => {
     setCustomEndDate('');
   };
   return (
-     <>
-    {/* Add Dither Background */}
-    <div style={{ 
-      position: 'fixed', 
-      top: 0, 
-      left: 0, 
-      width: '100%', 
-      height: '100%', 
-      zIndex: 0 
-    }}>
-      <Dither
-        waveColor={[51/255, 102/255, 128/255]}
-        disableAnimation={false}
-        enableMouseInteraction={true}
-        mouseRadius={0.3}
-        colorNum={5}
-        waveAmplitude={0.25}
-        waveFrequency={2.5}
-        waveSpeed={0.03}
-        pixelSize={2.5}
-      />
-    </div>
-    <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
-      {showCustomDateModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '30px',
-            maxWidth: '400px',
-            width: '90%',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-          }}>
-            <h3 style={{ marginBottom: '20px', color: '#333' }}>Select Custom Date Range</h3>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
-                Start Date:
-              </label>
-              <input
-                type="date"
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '6px',
-                  border: '1px solid #ddd',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '25px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
-                End Date:
-              </label>
-              <input
-                type="date"
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '6px',
-                  border: '1px solid #ddd',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => {
-                  setShowCustomDateModal(false);
-                  setCustomStartDate('');
-                  setCustomEndDate('');
-                }}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '6px',
-                  border: '1px solid #ddd',
-                  backgroundColor: 'white',
-                  color: '#666',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCustomDateSubmit}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: '#2196F3',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Download
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showOtpWaitPopup && !showOtpPopup && !cancelled && (
-        <div className={styles['otp-popup-overlay']}>
-          <div className={styles['otp-popup-container']}>
-            <h3 className={styles['otp-popup-title']}>Please Wait...</h3>
-            <p className={styles['otp-popup-description']}>
-              We are requesting the OTP. You will be able to enter it shortly.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {showOtpPopup && !cancelled && (
-        <div className={styles['otp-popup-overlay']}>
-          <div className={styles['otp-popup-container']}>
-            <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
-            <p className={styles['otp-popup-description']}>
-              Please enter the 4-digit OTP sent to your mobile number.
-            </p>
-            <input
-              type="text"
-              value={otpValue}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                setOtpValue(value);
-              }}
-              placeholder="Enter 4-digit OTP"
-              className={styles['otp-input']}
-              maxLength="4"
-              autoFocus
-            />
-            <div className={styles['otp-buttons']}>
-              <button
-                onClick={() => {
-                  setShowOtpPopup(false);
-                  localStorage.setItem("showOtpPopup", "false");
-                  setShowOtpWaitPopup(false);
-                  localStorage.setItem("showOtpWaitPopup", "false");
-                  setOtpValue('');
-                  setOtpRequestId(null);
-                  setCancelled(true);
-                  localStorage.setItem("cancelled", "true");
-                }}
-                className={`${styles['otp-button']} ${styles['otp-button-cancel']}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleOtpSubmit}
-                disabled={otpValue.length !== 4}
-                className={`${styles['otp-button']} ${styles['otp-button-submit']}`}
-              >
-                Submit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {zeroBalanceAlertMemo}
-
-      {isLoading && <LoadingScreen />}
-
-      {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
-      <DashboardHeader
-        status={status}
-        handleStart={handleStartScript}
-        handleStop={handleStop}
-        isDisabled={isDisabled}
-        timer={timer}
-        isStarting={isStarting}
-        cooldownActive={cooldownActive}
-        cooldownTime={cooldownTime}
-      />
-
+    <>
+      {/* Add Dither Background */}
       <div style={{
-        background: "#fff",
-        borderRadius: "8px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        padding: "20px 40px",
-        margin: "0px 20px 15px 20px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0
       }}>
-
-        <div className={styles.metricsSection}>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
-            <strong>{metrics.totalLeadsToday}</strong>
-            <span>Leads Purchased Today</span>
-          </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsThisWeek")}>
-            <strong>{metrics.totalLeadsThisWeek}</strong>
-            <span>Leads Purchased This Week</span>
-          </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
-            <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
-            <span>Lead Manager Replies Today</span>
-          </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
-            <strong>{messageCount * metrics.totalLeadsToday || 0}</strong>
-            <span>Whatsapp Replies Today</span>
-          </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
-            <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
-            <span>Emails Sent Today</span>
-          </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
-            <strong>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}</strong>
-            <span>Total Emails Sent</span>
-          </div>
-          <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
-            <strong>{metrics.totalLeadsCaptured}</strong>
-            <span>Total Leads Captured</span>
-          </div>
-        </div>
-
-        <div
-          className="download-reports-container"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-            marginLeft: "20px",
-            position: "relative"
-          }}
-        >
-          <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
-            Settings
-          </button>
-          <button
-            className={styles.buttonLarge}
-            onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
-            style={{ marginBottom: 0 }}
-          >
-            Download Reports
-          </button>
-
-          {showDownloadDropdown && (
+        <Dither
+          waveColor={[51 / 255, 102 / 255, 128 / 255]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={5}
+          waveAmplitude={0.25}
+          waveFrequency={2.5}
+          waveSpeed={0.03}
+          pixelSize={2.5}
+        />
+      </div>
+      <div className="settings-page-wrapper" style={windowWidth <= 768 ? { marginLeft: 0 } : {}}>
+        {/* Upgrade Popup Modal */}
+        {showUpgradePopup && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px'
+          }}>
             <div style={{
-              position: 'absolute',
-              right: 0,
-              marginTop: '4px',
               backgroundColor: 'white',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              minWidth: '200px',
-              zIndex: 1000,
-              overflow: 'hidden'
+              borderRadius: '12px',
+              padding: '30px',
+              maxWidth: '500px',
+              width: '100%',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+              animation: 'slideIn 0.3s ease-out',
+              position: 'relative'
             }}>
-              {[
-                { label: 'Today', value: 'today' },
-                { label: 'This Week', value: 'thisWeek' },
-                { label: 'This Month', value: 'thisMonth' },
-                { label: 'This Quarter', value: 'thisQuarter' },
-                { label: 'This Year', value: 'thisYear' },
-                { label: 'Yesterday', value: 'yesterday' },
-                { label: 'Previous Week', value: 'previousWeek' },
-                { label: 'Previous Month', value: 'previousMonth' },
-                { label: 'Previous Quarter', value: 'previousQuarter' },
-                { label: 'Previous Year', value: 'previousYear' },
-                { label: 'Custom', value: 'custom' }
-              ].map((option) => (
-                <div
-                  key={option.value}
-                  onClick={() => {
-                    if (option.value === 'custom') {
-                      setShowDownloadDropdown(false);
-                      setShowCustomDateModal(true);
-                    } else {
-                      handleDownloadLeadsExcel(option.value);
-                    }
-                  }}
+              {/* Close button */}
+              <button
+                onClick={() => setShowUpgradePopup(false)}
+                style={{
+                  position: 'absolute',
+                  top: '15px',
+                  right: '15px',
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#999',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '0'
+                }}
+              >
+                ×
+              </button>
+
+              {/* Lock Icon */}
+              <div style={{
+                textAlign: 'center',
+                fontSize: '64px',
+                marginBottom: '20px',
+                animation: 'bounce 0.5s ease-in-out'
+              }}>
+                🔒
+              </div>
+
+              {/* Title */}
+              <h2 style={{
+                color: '#333',
+                textAlign: 'center',
+                marginBottom: '15px',
+                fontSize: '24px',
+                fontWeight: '600'
+              }}>
+                Subscription Required
+              </h2>
+
+              {/* Description */}
+              <p style={{
+                color: '#666',
+                textAlign: 'center',
+                marginBottom: '25px',
+                fontSize: '15px',
+                lineHeight: '1.6'
+              }}>
+                Download Reports feature is only available for 6-month and yearly subscription plans.
+                Please upgrade your plan to access this feature.
+              </p>
+
+              {/* Action Buttons */}
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={() => setShowUpgradePopup(false)}
                   style={{
-                    padding: '12px 20px',
+                    padding: '12px 24px',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    color: option.value === 'thisMonth' ? 'white' : '#333',
-                    backgroundColor: option.value === 'thisMonth' ? '#2196F3' : 'white',
-                    transition: 'background-color 0.2s ease',
-                    borderBottom: '1px solid #f0f0f0'
+                    fontWeight: '600',
+                    transition: 'background-color 0.2s',
+                    marginBottom: '0'
                   }}
-                  onMouseEnter={(e) => {
-                    if (option.value !== 'thisMonth') {
-                      e.target.style.backgroundColor = '#f5f5f5';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (option.value !== 'thisMonth') {
-                      e.target.style.backgroundColor = 'white';
-                    }
-                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#5a6268'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#6c757d'}
                 >
-                  {option.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-      </div>
-
-      <div className="settings-scroll-container">
-        <div className="sheets-container">
-          <div className="table-container table-container-height">
-            {isLoadingLeads ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                Loading leads...
-              </div>
-            ) : leads.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '40px 20px',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  backgroundColor: '#fefefe',
-                  boxShadow: '0 4px 12px rgba(49, 13, 13, 0.05)',
-                  maxWidth: '500px',
-                  margin: '40px auto',
-                }}
-              >
-                <div style={{ fontSize: '40px', color: '#999', marginBottom: '16px' }}>
-                  <span role="img" aria-label="no leads">📭</span>
-                </div>
-                <h3 style={{ color: '#555', marginBottom: '8px' }}>No leads found</h3>
-                <p style={{ color: '#777', fontSize: '14px' }}>
-                  We couldn't find any leads in the last 30 days. Try to fetch them by clicking on the start button.
-                </p>
+                  Maybe Later
+                </button>
                 <button
-                  onClick={() => window.location.reload()}
-                  style={{
-                    marginTop: '20px',
-                    padding: '8px 16px',
-                    backgroundColor: '#007bff',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    marginBottom: '0px',
+                  onClick={() => {
+                    setShowUpgradePopup(false);
+                    navigate('/plans');
                   }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'background-color 0.2s',
+                    marginBottom: '0'
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
                 >
-                  Refresh
+                  Go to Plans Page →
                 </button>
               </div>
-            ) : (
-              <div style={{ overflowX: 'auto' }} className="sheets-page-table">
-                <table className={`${styles.sheetsPageTable} ${styles.tablePadding}`}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: '50px' }}>Sl No.</th>
-                      <th style={{ width: '80px' }}>Tag</th>
-                      <th>Product Requested</th>
-                      <th>Address</th>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Mobile</th>
-                      <th>Date</th>
-                      <th style={{ width: '100px' }}>Score</th>
-                      <th style={{ width: '100px' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{ overflowY: 'auto' }}>
-                    {leads.map((lead, index) => {
-                      const isRejected = isLeadRejected(lead.lead_bought);
-                      return (
-                        <tr
-                          key={lead._id || index}
-                          style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}
-                        >
-                          <td>{index + 1}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <span style={{
-                              padding: '4px 12px',
-                              borderRadius: '12px',
-                              fontSize: '11px',
-                              fontWeight: 'bold',
-                              backgroundColor: lead.source === 'AI' ? '#e3f2fd' : '#fff3e0',
-                              color: lead.source === 'AI' ? '#1976d2' : '#f57c00',
-                              border: `1px solid ${lead.source === 'AI' ? '#90caf9' : '#ffb74d'}`,
-                              whiteSpace: 'nowrap',
-                              display: 'inline-block'
-                            }}>
-                              {lead.source || 'Normal'}
-                            </span>
-                          </td>
-                          <td>{lead.lead_bought}</td>
-                          <td>{lead.address || 'N/A'}</td>
-                          <td>{lead.name}</td>
-                          <td>{lead.email || 'N/A'}</td>
-                          <td>{lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile}</td>
-                          <td>
-                            {lead.createdAt
-                              ? new Date(lead.createdAt).toLocaleString("en-IN", {
-                                timeZone: "UTC"
-                              })
-                              : "N/A"}
-                          </td>
-                          <td>
-                          {lead.score && !isNaN(lead.score) && lead.score !== 0
-                            ? lead.score.toFixed(2)
-                            : "N/A"}
-                        </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <button
-                              onClick={() => handleToggleRejected(lead.lead_bought, isRejected)}
-                              style={{
-                                padding: '8px 0px',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '22px',
-                                backgroundColor: 'transparent',
-                                transition: 'transform 0.2s ease',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                margin: '0 auto',
-                                height: '40px',
-                              }}
-                              onMouseOver={(e) => {
-                                e.target.style.transform = 'scale(1.1)';
-                              }}
-                              onMouseOut={(e) => {
-                                e.target.style.transform = 'scale(1)';
-                              }}
-                              title={isRejected ? 'Remove from Rejected' : 'Add to Rejected'}
-                            >
-                              {isRejected ? '🚩' : '🏳️'}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            </div>
+
+            <style>{`
+            @keyframes slideIn {
+              from {
+                opacity: 0;
+                transform: translateY(-30px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+
+            @keyframes bounce {
+              0%, 100% {
+                transform: translateY(0);
+              }
+              50% {
+                transform: translateY(-10px);
+              }
+            }
+          `}</style>
+          </div>
+        )}
+        {showCustomDateModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '30px',
+              maxWidth: '400px',
+              width: '90%',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+            }}>
+              <h3 style={{ marginBottom: '20px', color: '#333' }}>Select Custom Date Range</h3>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
+                  Start Date:
+                </label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '25px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontSize: '14px' }}>
+                  End Date:
+                </label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => {
+                    setShowCustomDateModal(false);
+                    setCustomStartDate('');
+                    setCustomEndDate('');
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    backgroundColor: 'white',
+                    color: '#666',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCustomDateSubmit}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: '#2196F3',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Download
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showOtpWaitPopup && !showOtpPopup && !cancelled && (
+          <div className={styles['otp-popup-overlay']}>
+            <div className={styles['otp-popup-container']}>
+              <h3 className={styles['otp-popup-title']}>Please Wait...</h3>
+              <p className={styles['otp-popup-description']}>
+                We are requesting the OTP. You will be able to enter it shortly.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {showOtpPopup && !cancelled && (
+          <div className={styles['otp-popup-overlay']}>
+            <div className={styles['otp-popup-container']}>
+              <h3 className={styles['otp-popup-title']}>Enter OTP</h3>
+              <p className={styles['otp-popup-description']}>
+                Please enter the 4-digit OTP sent to your mobile number.
+              </p>
+              <input
+                type="text"
+                value={otpValue}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setOtpValue(value);
+                }}
+                placeholder="Enter 4-digit OTP"
+                className={styles['otp-input']}
+                maxLength="4"
+                autoFocus
+              />
+              <div className={styles['otp-buttons']}>
+                <button
+                  onClick={() => {
+                    setShowOtpPopup(false);
+                    localStorage.setItem("showOtpPopup", "false");
+                    setShowOtpWaitPopup(false);
+                    localStorage.setItem("showOtpWaitPopup", "false");
+                    setOtpValue('');
+                    setOtpRequestId(null);
+                    setCancelled(true);
+                    localStorage.setItem("cancelled", "true");
+                  }}
+                  className={`${styles['otp-button']} ${styles['otp-button-cancel']}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleOtpSubmit}
+                  disabled={otpValue.length !== 4}
+                  className={`${styles['otp-button']} ${styles['otp-button-submit']}`}
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {zeroBalanceAlertMemo}
+
+        {isLoading && <LoadingScreen />}
+
+        {(windowWidth > 768 || sidebarOpen) && <Sidebar status={status} />}
+        <DashboardHeader
+          status={status}
+          handleStart={handleStartScript}
+          handleStop={handleStop}
+          isDisabled={isDisabled}
+          timer={timer}
+          isStarting={isStarting}
+          cooldownActive={cooldownActive}
+          cooldownTime={cooldownTime}
+        />
+
+        <div style={{
+          background: "#fff",
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          padding: "20px 40px",
+          margin: "0px 20px 15px 20px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+
+          <div className={styles.metricsSection}>
+            <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
+              <strong>{metrics.totalLeadsToday}</strong>
+              <span>Leads Purchased Today</span>
+            </div>
+            <div className={styles.metric} onClick={() => navigate("/TotalLeadsThisWeek")}>
+              <strong>{metrics.totalLeadsThisWeek}</strong>
+              <span>Leads Purchased This Week</span>
+            </div>
+            <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
+              <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
+              <span>Lead Manager Replies Today</span>
+            </div>
+            <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
+              <strong>{messageCount * metrics.totalLeadsToday || 0}</strong>
+              <span>Whatsapp Replies Today</span>
+            </div>
+            <div className={styles.metric} onClick={() => navigate("/TotalLeadsToday")}>
+              <strong>{metrics.totalLeadsToday * (settings?.sentences?.length || 0)}</strong>
+              <span>Emails Sent Today</span>
+            </div>
+            <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
+              <strong>{metrics.totalLeadsCaptured * (settings?.sentences?.length || 0)}</strong>
+              <span>Total Emails Sent</span>
+            </div>
+            <div className={styles.metric} onClick={() => navigate("/TotalLeadsCaptured")}>
+              <strong>{metrics.totalLeadsCaptured}</strong>
+              <span>Total Leads Captured</span>
+            </div>
+          </div>
+
+          <div
+            className="download-reports-container"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+              marginLeft: "20px",
+              position: "relative"
+            }}
+          >
+            <button className={styles.buttonSmall} onClick={() => navigate("/settings")}>
+              Settings
+            </button>
+            <button
+              className={styles.buttonLarge}
+              onClick={() => {
+                if (subscriptionCheckLoading) {
+                  alert("Checking subscription status, please wait...");
+                  return;
+                }
+
+                // Remove this check - let handleDownloadLeadsExcel decide
+                // if (!canDownloadReports) {
+                //   setShowUpgradePopup(true);
+                //   return;
+                // }
+
+                setShowDownloadDropdown(!showDownloadDropdown);
+              }}
+              style={{
+                marginBottom: 0,
+                opacity: subscriptionCheckLoading ? 0.6 : 1,
+                cursor: subscriptionCheckLoading ? 'wait' : 'pointer'
+              }}
+            >
+              {subscriptionCheckLoading ? "Checking..." : "Download Reports"}
+            </button>
+
+            {showDownloadDropdown && (
+              <div style={{
+                position: 'absolute',
+                right: 0,
+                marginTop: '4px',
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                minWidth: '200px',
+                zIndex: 1000,
+                overflow: 'hidden'
+              }}>
+                {[
+                  { label: 'Today', value: 'today' },
+                  { label: 'This Week', value: 'thisWeek' },
+                  { label: 'This Month', value: 'thisMonth' },
+                  { label: 'This Quarter', value: 'thisQuarter' },
+                  { label: 'This Year', value: 'thisYear' },
+                  { label: 'Yesterday', value: 'yesterday' },
+                  { label: 'Previous Week', value: 'previousWeek' },
+                  { label: 'Previous Month', value: 'previousMonth' },
+                  { label: 'Previous Quarter', value: 'previousQuarter' },
+                  { label: 'Previous Year', value: 'previousYear' },
+                  { label: 'Custom', value: 'custom' }
+                ].map((option) => (
+                  <div
+                    key={option.value}
+                    onClick={() => {
+                      if (option.value === 'custom') {
+                        setShowDownloadDropdown(false);
+                        setShowCustomDateModal(true);
+                      } else {
+                        handleDownloadLeadsExcel(option.value);
+                      }
+                    }}
+                    style={{
+                      padding: '12px 20px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: option.value === 'thisMonth' ? 'white' : '#333',
+                      backgroundColor: option.value === 'thisMonth' ? '#2196F3' : 'white',
+                      transition: 'background-color 0.2s ease',
+                      borderBottom: '1px solid #f0f0f0'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (option.value !== 'thisMonth') {
+                        e.target.style.backgroundColor = '#f5f5f5';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (option.value !== 'thisMonth') {
+                        e.target.style.backgroundColor = 'white';
+                      }
+                    }}
+                  >
+                    {option.label}
+                  </div>
+                ))}
               </div>
             )}
           </div>
+
+        </div>
+
+        <div className="settings-scroll-container">
+          <div className="sheets-container">
+            <div className="table-container table-container-height">
+              {isLoadingLeads ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  Loading leads...
+                </div>
+              ) : leads.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px',
+                    backgroundColor: '#fefefe',
+                    boxShadow: '0 4px 12px rgba(49, 13, 13, 0.05)',
+                    maxWidth: '500px',
+                    margin: '40px auto',
+                  }}
+                >
+                  <div style={{ fontSize: '40px', color: '#999', marginBottom: '16px' }}>
+                    <span role="img" aria-label="no leads">📭</span>
+                  </div>
+                  <h3 style={{ color: '#555', marginBottom: '8px' }}>No leads found</h3>
+                  <p style={{ color: '#777', fontSize: '14px' }}>
+                    We couldn't find any leads in the last 30 days. Try to fetch them by clicking on the start button.
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    style={{
+                      marginTop: '20px',
+                      padding: '8px 16px',
+                      backgroundColor: '#007bff',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      marginBottom: '0px',
+                    }}
+                  >
+                    Refresh
+                  </button>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }} className="sheets-page-table">
+                  <table className={`${styles.sheetsPageTable} ${styles.tablePadding}`}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: '50px' }}>Sl No.</th>
+                        <th style={{ width: '80px' }}>Tag</th>
+                        <th>Product Requested</th>
+                        <th>Address</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>Date</th>
+                        <th style={{ width: '100px' }}>Score</th>
+                        <th style={{ width: '100px' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody style={{ overflowY: 'auto' }}>
+                      {leads.map((lead, index) => {
+                        const isRejected = isLeadRejected(lead.lead_bought);
+                        return (
+                          <tr
+                            key={lead._id || index}
+                            style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}
+                          >
+                            <td>{index + 1}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span style={{
+                                padding: '4px 12px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                backgroundColor: lead.source === 'AI' ? '#e3f2fd' : '#fff3e0',
+                                color: lead.source === 'AI' ? '#1976d2' : '#f57c00',
+                                border: `1px solid ${lead.source === 'AI' ? '#90caf9' : '#ffb74d'}`,
+                                whiteSpace: 'nowrap',
+                                display: 'inline-block'
+                              }}>
+                                {lead.source || 'Normal'}
+                              </span>
+                            </td>
+                            <td>{lead.lead_bought}</td>
+                            <td>{lead.address || 'N/A'}</td>
+                            <td>{lead.name}</td>
+                            <td>{lead.email || 'N/A'}</td>
+                            <td>{lead.mobile?.startsWith('0') ? lead.mobile.slice(1) : lead.mobile}</td>
+                            <td>
+                              {lead.createdAt
+                                ? new Date(lead.createdAt).toLocaleString("en-IN", {
+                                  timeZone: "UTC"
+                                })
+                                : "N/A"}
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              {lead.score && !isNaN(lead.score) && lead.score !== 0 ? (
+                                <span style={{
+                                  padding: '4px 12px',
+                                  borderRadius: '12px',
+                                  fontSize: '11px',
+                                  fontWeight: 'bold',
+                                  ...getScoreColor(lead.score),
+                                  border: `1px solid ${getScoreColor(lead.score).borderColor}`,
+                                  whiteSpace: 'nowrap',
+                                  display: 'inline-block'
+                                }}>
+                                  {lead.score.toFixed(2)}
+                                </span>
+                              ) : (
+                                <span style={{
+                                  padding: '4px 12px',
+                                  borderRadius: '12px',
+                                  fontSize: '11px',
+                                  fontWeight: 'bold',
+                                  backgroundColor: '#f5f5f5',
+                                  color: '#999',
+                                  border: '1px solid #ddd',
+                                  whiteSpace: 'nowrap',
+                                  display: 'inline-block'
+                                }}>
+                                  N/A
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <button
+                                onClick={() => handleToggleRejected(lead.lead_bought, isRejected)}
+                                style={{
+                                  padding: '8px 0px',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '22px',
+                                  backgroundColor: 'transparent',
+                                  transition: 'transform 0.2s ease',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  margin: '0 auto',
+                                  height: '40px',
+                                }}
+                                onMouseOver={(e) => {
+                                  e.target.style.transform = 'scale(1.1)';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.target.style.transform = 'scale(1)';
+                                }}
+                                title={isRejected ? 'Remove from Rejected' : 'Add to Rejected'}
+                              >
+                                {isRejected ? '🚩' : '🏳️'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

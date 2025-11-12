@@ -6,8 +6,15 @@ pyinstaller --onefile --windowed `
     --collect-all pystray `
     --collect-all keyring `
     --collect-all PIL `
+    --collect-all customtkinter `
     --hidden-import=win32con `
     --hidden-import=win32api `
     --hidden-import=winreg `
+    --hidden-import=win32gui `
+    --hidden-import=pywintypes `
+    --hidden-import=cryptography.fernet `
+    --hidden-import=psutil `
+    --hidden-import=pyvirtualdisplay `
+    --hidden-import=login_ui `
     --name "LeadFetcher" `
     lead_fetcher.py

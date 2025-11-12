@@ -661,7 +661,7 @@ def send_data_to_dashboard(name, mobile, email=None, user_mobile_number=None, ad
     try:
         response = requests.post(url, json=data)
         if response.status_code == 200:
-            print("Lead data sent successfully!", flush=True)
+            print("AI Lead data sent successfully!", flush=True)
             lead_count += 1
         else:
             print(f"Failed to send data: {response.text}", flush=True)
@@ -2148,12 +2148,10 @@ def redirect_and_refresh(driver, wait):
                 print("\n=== Running Scorer ===", flush=True)
                 threshold_score = int(input_data.get("thresholdScore", 0))
                 score, breakdown, should_contact = get_lead_score(
-                    unique_id=unique_id,
-                    lead_path=unique_lead_filename,
-                    products_filename='products',
-                    config_path='config.json',
-                    score_threshold=threshold_score
-                )
+    unique_id=unique_id,
+    config_path='config.json',
+    score_threshold=threshold_score
+)
                 if should_contact:
                     print(f"✓ Lead scored {score:.2f} - Contacting buyer", flush=True)
                     if click_contact_buyer_now_button(driver, wait):
@@ -2222,6 +2220,7 @@ def main():
                     print(f"Running redirect_and_refresh (count: {redirect_count + 1}/10)...", flush=True)
                     redirect_count += 1
                     redirect_and_refresh(driver, wait)
+                    print("Lead Count:", lead_count, flush=True)
                 else:
                     print("Starting message center processing...", flush=True)
                     total_processed = go_to_message_center_and_fetch(driver)

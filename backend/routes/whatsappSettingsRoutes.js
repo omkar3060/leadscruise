@@ -52,162 +52,256 @@ router.post(
 router.get("/get", getSettings);
 router.delete('/remove-file', removeFile);
 router.get("/get-message-count", getTodaysMessageCount);
+// router.put("/update-whatsapp-number", async (req, res) => {
+//   try {
+//     const { mobileNumber, newWhatsappNumber } = req.body;
+
+//     if (!mobileNumber || !newWhatsappNumber) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     const updated = await WhatsAppSettings.findOneAndUpdate(
+//       { mobileNumber },
+//       {
+//         $set: { whatsappNumber: newWhatsappNumber, verificationCode: "111" },
+//       },
+//       { new: true, upsert: true } // Add upsert: true
+//     );
+
+//     if (!updated) {
+//       return res.status(404).json({ error: "Settings not found for this mobile number" });
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: "WhatsApp number updated successfully",
+//       data: updated
+//     });
+
+//     // try {
+//     //   // Create a promise to handle the Python process
+//     //   const pythonProcessPromise = new Promise((resolve, reject) => {
+//     //     let verificationCode = null;
+//     //     let errorOutput = "";
+//     //     let isCompleted = false;
+//     //     let alreadyLoggedIn = false;
+
+//     //     // Start the Python process
+//     //     const pythonProcess = spawn('python3', [
+//     //       'whatsapp_login.py',
+//     //       newWhatsappNumber,
+//     //     ]);
+
+//     //     const rl = readline.createInterface({ input: pythonProcess.stdout });
+
+//     //     rl.on('line', async (line) => {
+//     //       console.log(`Python output: ${line}`);
+
+//     //       // Check for "Already logged in" message
+//     //       if (line.includes("Login successful! Chats found.")) {
+//     //         alreadyLoggedIn = true;
+//     //         verificationCode = "111";
+//     //         console.log("Detected already logged in. Setting verification code to 111");
+
+//     //         try {
+//     //           // Update the verificationCode immediately in DB
+//     //           await WhatsAppSettings.findOneAndUpdate(
+//     //             { mobileNumber },
+//     //             { verificationCode },
+//     //             { new: true }
+//     //           );
+//     //           console.log("Verification code updated in DB (Already logged in case)");
+//     //         } catch (dbError) {
+//     //           console.error("Error updating verification code:", dbError);
+//     //           // Continue execution even if DB update fails
+//     //         }
+//     //       }
+
+//     //       // Handle specific errors that should be ignored
+//     //       if (line.includes("504 Gateway Time-out") ||
+//     //         line.includes("Failed to send data") ||
+//     //         line.includes("Send button not found or not clickable")) {
+//     //         console.warn("Detected known error but continuing execution:", line);
+//     //         // These are expected errors we want to ignore
+//     //       }
+
+//     //       const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
+//     //       if (codeMatch && codeMatch[1]) {
+//     //         verificationCode = codeMatch[1];
+//     //         console.log(`Verification code captured: ${verificationCode}`);
+
+//     //         try {
+//     //           // Update the verificationCode immediately in DB
+//     //           await WhatsAppSettings.findOneAndUpdate(
+//     //             { mobileNumber },
+//     //             { verificationCode },
+//     //             { new: true }
+//     //           );
+//     //           console.log("Verification code updated in DB");
+//     //         } catch (dbError) {
+//     //           console.error("Error updating verification code:", dbError);
+//     //           // Continue execution even if DB update fails
+//     //         }
+//     //       }
+//     //     });
+
+//     //     pythonProcess.stderr.on('data', (data) => {
+//     //       const errorMsg = data.toString();
+//     //       errorOutput += errorMsg;
+//     //       console.error(`Python error: ${errorMsg}`);
+//     //     });
+
+//     //     pythonProcess.on('close', (code) => {
+//     //       if (isCompleted) return; // Prevent double resolution
+//     //       isCompleted = true;
+
+//     //       console.log(`WhatsApp script exited with code ${code}`);
+
+//     //       if (code === 0 || code === null) {
+//     //         // Consider both 0 and null (killed by timeout) as successful completions
+//     //         resolve({ success: true, verificationCode, alreadyLoggedIn });
+//     //       } else {
+//     //         resolve({
+//     //           success: false,
+//     //           code,
+//     //           error: errorOutput,
+//     //           message: `WhatsApp script failed with code ${code}`
+//     //         });
+//     //       }
+//     //     });
+
+//     //     pythonProcess.on('error', (err) => {
+//     //       if (isCompleted) return;
+//     //       isCompleted = true;
+
+//     //       console.error("Failed to start Python process:", err);
+//     //       reject(err);
+//     //     });
+
+//     //     // Set a hard timeout to ensure we ALWAYS wait the full 10 minutes
+//     //     // This guarantees we won't process another WhatsApp request until this one is done
+//     //     const timeout = setTimeout(() => {
+//     //       if (isCompleted) return;
+//     //       isCompleted = true;
+
+//     //       console.log("WhatsApp script reached the mandatory 10-minute timeout, completing process");
+//     //       pythonProcess.kill();
+//     //       resolve({
+//     //         success: true,
+//     //         timeout: true,
+//     //         message: "WhatsApp script completed after full 10-minute wait",
+//     //         verificationCode,
+//     //         alreadyLoggedIn
+//     //       });
+//     //     }, 20 * 60 * 1000); // Full 20 minutes (1,200,000 ms)
+//     //     // Clear the timeout if the process completes before timeout
+//     //     pythonProcess.on('close', () => {
+//     //       clearTimeout(timeout);
+//     //     });
+//     //   });
+
+//     //   // Wait for the Python process to complete - this will block for up to 10 minutes
+//     //   console.log("Waiting for WhatsApp script to complete (up to 10 minutes)...");
+//     //   const result = await pythonProcessPromise;
+//     //   console.log("WhatsApp script process completed:", result);
+
+//     // } catch (pythonError) {
+//     //   console.error("Error in WhatsApp script execution:", pythonError);
+//     // }
+//   } catch (err) {
+//     console.error("Error updating WhatsApp number:", err);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
 router.put("/update-whatsapp-number", async (req, res) => {
   try {
-    const { mobileNumber, newWhatsappNumber } = req.body;
+    var { mobileNumber, newWhatsappNumber } = req.body;
 
     if (!mobileNumber || !newWhatsappNumber) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Create instanceName dynamically
+    if (newWhatsappNumber.length < 10) {
+      return res.status(400).json({ error: "Invalid WhatsApp number" });
+    }
+    else if (newWhatsappNumber.length === 10) {
+      newWhatsappNumber = `91${newWhatsappNumber}`;
+    }
+
+    const instanceName = `wa-${newWhatsappNumber}`;
+    const description = `LeadsCruise AI pairing for ${newWhatsappNumber}`;
+
+    console.log("Creating LeadsCruise Connect QR page for instanceName:", instanceName);
+
+    // Call external LeadsCruise Connect API
+    const connectResponse = await fetch("https://connect.leadscruise.com/custom/qr-page", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": "81150b867e07bf0324f937b5897987e63010f33ffe01adb2582466f7cef6c718"
+      },
+      body: JSON.stringify({ instanceName, description })
+    });
+
+    const connectData = await connectResponse.json();
+
+    if (!connectResponse.ok) {
+      console.error("Connect API Error:", connectData);
+
+      // Check if instance already exists
+      if (connectData.response?.message?.[0]?.includes("already exists")) {
+        // Check if we already have this WhatsApp number in DB
+        const existingSettings = await WhatsAppSettings.findOne({
+          mobileNumber
+        });
+
+        if (existingSettings && existingSettings.whatsappNumber === newWhatsappNumber) {
+          // Already linked to this number
+          return res.status(200).json({
+            success: true,
+            message: "WhatsApp number already linked",
+            data: existingSettings,
+            alreadyLinked: true
+          });
+        }
+      }
+
+      return res.status(500).json({
+        error: "Failed to create WhatsApp QR page",
+        details: connectData
+      });
+    }
+
+    // Extract relevant data from response
+    const { url, pageId, instance, expiresAt } = connectData;
+    const token = instance?.token;
+
+    // Save all info in DB
     const updated = await WhatsAppSettings.findOneAndUpdate(
       { mobileNumber },
       {
-        $set: { whatsappNumber: newWhatsappNumber, verificationCode: "111" },
+        $set: {
+          whatsappNumber: newWhatsappNumber,
+          qrPageUrl: url,
+          pageId,
+          instanceName: instanceName,
+          instanceToken: token,
+          expiresAt
+        }
       },
-      { new: true, upsert: true } // Add upsert: true
+      { new: true, upsert: true }
     );
-
-    if (!updated) {
-      return res.status(404).json({ error: "Settings not found for this mobile number" });
-    }
 
     res.status(200).json({
       success: true,
-      message: "WhatsApp number updated successfully",
-      data: updated
+      message: "WhatsApp number linked successfully",
+      data: updated,
+      qrUrl: url, // frontend will open this URL only for new instances
+      alreadyLinked: false
     });
 
-    // try {
-    //   // Create a promise to handle the Python process
-    //   const pythonProcessPromise = new Promise((resolve, reject) => {
-    //     let verificationCode = null;
-    //     let errorOutput = "";
-    //     let isCompleted = false;
-    //     let alreadyLoggedIn = false;
-
-    //     // Start the Python process
-    //     const pythonProcess = spawn('python3', [
-    //       'whatsapp_login.py',
-    //       newWhatsappNumber,
-    //     ]);
-
-    //     const rl = readline.createInterface({ input: pythonProcess.stdout });
-
-    //     rl.on('line', async (line) => {
-    //       console.log(`Python output: ${line}`);
-
-    //       // Check for "Already logged in" message
-    //       if (line.includes("Login successful! Chats found.")) {
-    //         alreadyLoggedIn = true;
-    //         verificationCode = "111";
-    //         console.log("Detected already logged in. Setting verification code to 111");
-
-    //         try {
-    //           // Update the verificationCode immediately in DB
-    //           await WhatsAppSettings.findOneAndUpdate(
-    //             { mobileNumber },
-    //             { verificationCode },
-    //             { new: true }
-    //           );
-    //           console.log("Verification code updated in DB (Already logged in case)");
-    //         } catch (dbError) {
-    //           console.error("Error updating verification code:", dbError);
-    //           // Continue execution even if DB update fails
-    //         }
-    //       }
-
-    //       // Handle specific errors that should be ignored
-    //       if (line.includes("504 Gateway Time-out") ||
-    //         line.includes("Failed to send data") ||
-    //         line.includes("Send button not found or not clickable")) {
-    //         console.warn("Detected known error but continuing execution:", line);
-    //         // These are expected errors we want to ignore
-    //       }
-
-    //       const codeMatch = line.match(/WHATSAPP_VERIFICATION_CODE:([A-Z0-9-]+)/);
-    //       if (codeMatch && codeMatch[1]) {
-    //         verificationCode = codeMatch[1];
-    //         console.log(`Verification code captured: ${verificationCode}`);
-
-    //         try {
-    //           // Update the verificationCode immediately in DB
-    //           await WhatsAppSettings.findOneAndUpdate(
-    //             { mobileNumber },
-    //             { verificationCode },
-    //             { new: true }
-    //           );
-    //           console.log("Verification code updated in DB");
-    //         } catch (dbError) {
-    //           console.error("Error updating verification code:", dbError);
-    //           // Continue execution even if DB update fails
-    //         }
-    //       }
-    //     });
-
-    //     pythonProcess.stderr.on('data', (data) => {
-    //       const errorMsg = data.toString();
-    //       errorOutput += errorMsg;
-    //       console.error(`Python error: ${errorMsg}`);
-    //     });
-
-    //     pythonProcess.on('close', (code) => {
-    //       if (isCompleted) return; // Prevent double resolution
-    //       isCompleted = true;
-
-    //       console.log(`WhatsApp script exited with code ${code}`);
-
-    //       if (code === 0 || code === null) {
-    //         // Consider both 0 and null (killed by timeout) as successful completions
-    //         resolve({ success: true, verificationCode, alreadyLoggedIn });
-    //       } else {
-    //         resolve({
-    //           success: false,
-    //           code,
-    //           error: errorOutput,
-    //           message: `WhatsApp script failed with code ${code}`
-    //         });
-    //       }
-    //     });
-
-    //     pythonProcess.on('error', (err) => {
-    //       if (isCompleted) return;
-    //       isCompleted = true;
-
-    //       console.error("Failed to start Python process:", err);
-    //       reject(err);
-    //     });
-
-    //     // Set a hard timeout to ensure we ALWAYS wait the full 10 minutes
-    //     // This guarantees we won't process another WhatsApp request until this one is done
-    //     const timeout = setTimeout(() => {
-    //       if (isCompleted) return;
-    //       isCompleted = true;
-
-    //       console.log("WhatsApp script reached the mandatory 10-minute timeout, completing process");
-    //       pythonProcess.kill();
-    //       resolve({
-    //         success: true,
-    //         timeout: true,
-    //         message: "WhatsApp script completed after full 10-minute wait",
-    //         verificationCode,
-    //         alreadyLoggedIn
-    //       });
-    //     }, 20 * 60 * 1000); // Full 20 minutes (1,200,000 ms)
-    //     // Clear the timeout if the process completes before timeout
-    //     pythonProcess.on('close', () => {
-    //       clearTimeout(timeout);
-    //     });
-    //   });
-
-    //   // Wait for the Python process to complete - this will block for up to 10 minutes
-    //   console.log("Waiting for WhatsApp script to complete (up to 10 minutes)...");
-    //   const result = await pythonProcessPromise;
-    //   console.log("WhatsApp script process completed:", result);
-
-    // } catch (pythonError) {
-    //   console.error("Error in WhatsApp script execution:", pythonError);
-    // }
   } catch (err) {
     console.error("Error updating WhatsApp number:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -235,6 +329,36 @@ router.get('/verification-code/:mobileNumber', async (req, res) => {
   }
 });
 
+router.put("/update-verification-code", async (req, res) => {
+  try {
+    const { mobileNumber, verificationCode } = req.body;
+
+    if (!mobileNumber || !verificationCode) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const updated = await WhatsAppSettings.findOneAndUpdate(
+      { mobileNumber },
+      { $set: { verificationCode } },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "WhatsApp settings not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Verification code updated successfully",
+      data: updated
+    });
+
+  } catch (err) {
+    console.error("Error updating verification code:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 router.put("/whatsapp-logout", async (req, res) => {
   const { mobileNumber } = req.body;
 
@@ -250,15 +374,48 @@ router.put("/whatsapp-logout", async (req, res) => {
     }
 
     const whatsappNumber = record.whatsappNumber;
+    const instanceName = record.instanceName;
+    const instanceToken = record.instanceToken;
 
-    // Remove both whatsappNumber and verificationCode from database
+    // Call LeadsCruise Connect API to logout the instance
+    if (instanceName && instanceToken) {
+      try {
+        const logoutResponse = await fetch(
+          `https://connect.leadscruise.com/instance/logout/${instanceName}`,
+          {
+            method: "DELETE",
+            headers: {
+              "apikey": instanceToken
+            }
+          }
+        );
+
+        if (logoutResponse.ok) {
+          console.log(`Successfully logged out instance: ${instanceName}`);
+        } else {
+          const logoutData = await logoutResponse.json();
+          console.error("Logout API Error:", logoutData);
+          // Continue with local cleanup even if API call fails
+        }
+      } catch (logoutError) {
+        console.error("Error calling logout API:", logoutError);
+        // Continue with local cleanup even if API call fails
+      }
+    }
+
+    // Remove all WhatsApp related fields from database
     await WhatsAppSettings.findOneAndUpdate(
       { mobileNumber },
-      { 
-        $unset: { 
+      {
+        $unset: {
           whatsappNumber: "",
-          verificationCode: "" 
-        } 
+          verificationCode: "",
+          qrPageUrl: "",
+          pageId: "",
+          instanceName: "",
+          instanceToken: "",
+          expiresAt: ""
+        }
       }
     );
 
@@ -270,12 +427,21 @@ router.put("/whatsapp-logout", async (req, res) => {
     );
 
     // Use fs-extra to remove the directory safely
-    await fs.remove(profileDir);
+    try {
+      await fs.remove(profileDir);
+      console.log(`Profile directory deleted: ${profileDir}`);
+    } catch (dirError) {
+      console.error("Error deleting profile directory:", dirError);
+      // Continue even if directory deletion fails
+    }
 
-    res.json({ message: "WhatsApp unlinked and associated profile directory deleted successfully" });
+    res.json({
+      message: "WhatsApp unlinked successfully",
+      details: "Instance logged out, database cleared, and profile directory deleted"
+    });
   } catch (err) {
     console.error("Error during WhatsApp unlinking:", err);
-    res.status(500).json({ error: "Failed to unlink WhatsApp and delete profile directory" });
+    res.status(500).json({ error: "Failed to unlink WhatsApp" });
   }
 });
 

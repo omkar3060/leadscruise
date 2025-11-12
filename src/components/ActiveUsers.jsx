@@ -23,8 +23,8 @@ const ActiveUsers = () => {
         "1-day": 1,
         "7-days": 7,
         "3-days": 3,
-        "One Month": 30,
-        "6 Months": 180,
+        "one-mo": 30,
+        "six-mo": 180,
         "year-mo": 365,
       };
 
@@ -55,17 +55,23 @@ const ActiveUsers = () => {
         const payments = paymentResponse.data;
 
         // ✅ Filter only users with an active subscription
-        const activeUsers = response.data.filter(user => {
+        const activeUsers = response.data.map(user => {
           const userPayments = payments
             .filter(payment => payment.email === user.email)
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Latest first
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-          if (userPayments.length === 0) return false;
+          if (userPayments.length === 0) {
+            return { ...user, subscriptionStatus: "Not Active" };
+          }
 
           const latestPayment = userPayments[0];
-          return calculateRemainingDays(latestPayment.created_at, latestPayment.subscription_type);
+          const isActive = calculateRemainingDays(latestPayment.created_at, latestPayment.subscription_type);
 
-        });
+          return {
+            ...user,
+            subscriptionStatus: isActive ? "Active" : "Not Active"
+          };
+        }).filter(user => user.subscriptionStatus === "Active");
 
         setUsers(activeUsers);
       } catch (err) {
