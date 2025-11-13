@@ -39,3 +39,5 @@ config.json
 json_lister_*.txt
 products_*.json
 lead_*.json
+google-*
+ngrok*

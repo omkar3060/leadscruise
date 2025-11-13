@@ -33,6 +33,13 @@ const whatsappSettingsRoutes = require("./routes/whatsappSettingsRoutes");
 const analyticsRouter = require("./routes/analytics.js");
 const teammateRoutes = require('./routes/teammates');
 const path = require("path");
+
+
+// Configuration
+const WORKER_SERVER_URL = "http://82.112.227.97:5001"; // Your Server 2 URL
+
+// Store OTP requests that came from worker server
+const workerOtpRequests = new Map();
 const os = require("os");
 const server = createServer(app); // ✅ Create HTTP server
 server.setTimeout(15 * 60 * 1000);
@@ -48,12 +55,10 @@ app.set("io", io);
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  cors({
-    origin: ["https://app.leadscruise.com", "http://localhost:3000", "http://localhost:3001"],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: '*',
+  credentials: false
+}));
 const User = require("./models/userModel");
 console.log("Attempting to connect to MongoDB with URI:", process.env.MONGODB_URI);
 // MongoDB Connection
@@ -64,7 +69,18 @@ mongoose
   })
   .then(() => console.log("Connected to MongoDB"))
   .catch((error) => console.error("MongoDB connection error:", error));
+//const WORKER_SERVER_URL = process.env.WORKER_SERVER_URL || "http://localhost:5001";
 
+// In-memory mapping of uniqueId to userEmail
+const uniqueIdToEmailMap = new Map();
+
+// Map to store OTP requests from worker server
+//const workerOtpRequests = new Map();
+
+// Helper function to get email from uniqueId
+async function getUserEmailFromUniqueId(uniqueId) {
+  return uniqueIdToEmailMap.get(uniqueId);
+}
 //RazorPay handlers
 
 app.post("/order", async (req, res) => {
@@ -847,6 +863,9 @@ app.post("/api/create-demo-subscription", async (req, res) => {
       details: error.message
     });
   }
+});
+app.get('/health', (req, res) => {
+  res.status(200).send('Healthy ✅');
 });
 
 // ✅ Webhook creates "one-mo" payment for autopay charges
@@ -2170,8 +2189,7 @@ app.post("/api/cycle", async (req, res) => {
   ) {
     return res.status(400).json({
       status: "error",
-      message:
-        "Invalid input format. sentences, wordArray, and h2WordArray should be arrays.",
+      message: "Invalid input format. sentences, wordArray, and h2WordArray should be arrays.",
     });
   }
 
@@ -2209,7 +2227,10 @@ app.post("/api/cycle", async (req, res) => {
     { status: "Running", startTime },
     { new: true, upsert: true }
   );
-
+  // ✅ ADD THIS LINE HERE ⬇️
+  uniqueIdToEmailMap.set(uniqueId, userEmail);
+  console.log(`[Mapping] Stored: ${uniqueId} -> ${userEmail}`);
+  // ✅ END OF ADDITION ⬆️
   let userCounter = await UserLeadCounter.findOne({
     user_mobile_number: mobileNumber,
   });
@@ -2221,152 +2242,152 @@ app.post("/api/cycle", async (req, res) => {
     });
     await userCounter.save();
   }
-  let leadCount = userCounter.leadCount, maxCaptures = userCounter.maxCaptures;
 
-  const inputData = JSON.stringify({
-    sentences,
-    wordArray,
-    h2WordArray,
-    mobileNumber,
-    password,
-    uniqueId,
-    minOrder,
-    leadTypes,
-    selectedStates,
-    leadCount,
-    maxCaptures,
-    thresholdScore,
-  });
+  let leadCount = userCounter.leadCount;
+  let maxCaptures = userCounter.maxCaptures;
 
-  console.log("Spawning Python LOGIN process...");
+  try {
+    console.log(`[Main Server] Forwarding to: ${WORKER_SERVER_URL}/api/start-login-script`);
+    console.log(`[Main Server] Request data:`, { uniqueId, userEmail, mobileNumber });
 
-  // Spawn the login script instead of the monolithic script
-  const pythonProcess = spawn("python3", ["-u", "login_script.py"]);
-
-  // Store the Python process reference using `uniqueId`
-  activePythonProcesses.set(uniqueId, pythonProcess);
-
-  console.log("Sending data to Python login script:", inputData);
-  pythonProcess.stdin.write(inputData + "\n");
-
-  let result = "";
-  let error = "";
-
-  pythonProcess.stdout.on("data", (data) => {
-    const dataString = data.toString();
-    console.log("Python script stdout:", dataString);
-    result += dataString;
-
-    // Check for buyer balance information
-    if (dataString.includes("BUYER_BALANCE:")) {
-      const balanceMatch = dataString.match(/BUYER_BALANCE:(\d+)/);
-      if (balanceMatch && balanceMatch[1]) {
-        const balance = parseInt(balanceMatch[1], 10);
-
-        User.findOneAndUpdate(
-          { email: userEmail },
-          { buyerBalance: balance },
-          { new: true }
-        ).then((updatedUser) => {
-          console.log(`Updated buyer balance for ${userEmail} to ${balance}`);
-        }).catch(err => {
-          console.error("Error updating buyer balance:", err);
-        });
-      }
-    }
-
-    if (dataString.includes("ZERO_BALANCE_DETECTED")) {
-      console.log("Zero balance detected for user:", userEmail);
-    }
-
-    if (dataString.includes("OTP_REQUEST_INITIATED")) {
-      console.log("OTP request detected for uniqueId:", uniqueId);
-      const requestId = Date.now().toString();
-      otpRequests.set(uniqueId, {
-        requestId,
-        timestamp: new Date(),
-        otpReceived: false,
-        otp: null
-      });
-    }
-
-    if (dataString.includes("OTP_FAILED_INCORRECT")) {
-      console.log("Incorrect OTP detected for", uniqueId);
-      otpFailures.set(uniqueId, true);
-    }
-
-    if (dataString.includes("ROUTE_TO:")) {
-      const routeMatch = dataString.match(/ROUTE_TO:(.+)/);
-      if (routeMatch && routeMatch[1]) {
-        const route = routeMatch[1].trim();
-        console.log(`Python script requests routing to: ${route}`);
-
-        if (route === "/execute-task") {
-          (async () => {
-            await User.findOneAndUpdate(
-              { email: userEmail },
-              { status: "Stopped", autoStartEnabled: false },
-              { new: true }
-            );
-
-            if (!responseSent) {
-              res.status(400).json({
-                status: "error",
-                message: "Enter password button not found. Please login to your leads provider account first.",
-                route: "/execute-task"
-              });
-              responseSent = true;
-            }
-
-            pythonProcess.kill("SIGINT");
-            activePythonProcesses.delete(uniqueId);
-            cleanupDisplay(uniqueId);
-          })();
-          return;
+    const workerResponse = await axios.post(
+      `${WORKER_SERVER_URL}/api/start-login-script`,
+      {
+        sentences,
+        wordArray,
+        h2WordArray,
+        mobileNumber,
+        password,
+        uniqueId,
+        userEmail,
+        minOrder,
+        leadTypes,
+        selectedStates,
+        leadCount,
+        maxCaptures,
+        thresholdScore,
+      },
+      {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json',
+          //'x-worker-api-key': WORKER_API_KEY
         }
       }
-    }
-  });
+    );
 
-  pythonProcess.stderr.on("data", (data) => {
-    console.error("Python script stderr:", data.toString());
-    error += data.toString();
-  });
+    console.log(`[Main Server] Worker response:`, workerResponse.data);
 
-  let killedDueToLimit = false;
-  let responseSent = false;
+    res.json({
+      status: "success",
+      message: "Script started on worker server",
+      uniqueId
+    });
 
-  pythonProcess.on("close", async (code) => {
-    pythonProcess.stdin.end();
-    activePythonProcesses.delete(uniqueId);
-    otpRequests.delete(uniqueId);
-    otpFailures.delete(uniqueId);
-    console.log(`Python login script exited with code: ${code}`);
+  } catch (error) {
+    // ✅ ADD MORE DETAILED ERROR LOGGING
+    console.error("[Main Server] Worker server error details:");
+    console.error("- Error message:", error.message);
+    console.error("- Error code:", error.code);
+    console.error("- Worker URL:", WORKER_SERVER_URL);
 
-    cleanupDisplay(uniqueId);
-
-    if (!killedDueToLimit) {
-      await User.findOneAndUpdate(
-        { email: userEmail },
-        { status: "Stopped", startTime: new Date(), autoStartEnabled: false },
-        { new: true }
-      );
+    if (error.response) {
+      console.error("- Response status:", error.response.status);
+      console.error("- Response data:", error.response.data);
+    } else if (error.request) {
+      console.error("- No response received from worker server");
+      console.error("- Request config:", error.config);
     }
 
-    if (!responseSent) {
-      if (code === 0) {
-        res.json({ status: "success", message: "Successfully executed!!" });
-      } else {
-        res.status(500).json({
-          status: "error",
-          message: `AI failed`,
-        });
-      }
-      responseSent = true;
-    }
-  });
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      { status: "Stopped", autoStartEnabled: false },
+      { new: true }
+    );
+
+    uniqueIdToEmailMap.delete(uniqueId);
+
+    res.status(500).json({
+      status: "error",
+      message: "Failed to start script on worker server",
+      error: error.message,
+      code: error.code,
+      workerUrl: WORKER_SERVER_URL
+    });
+  }
 });
 
+// Worker notifies main server that OTP is required
+app.post("/api/worker/otp-required", (req, res) => {
+  const { uniqueId, requestId, timestamp } = req.body;
+
+  console.log(`[Main Server] OTP required notification from worker: ${uniqueId}`);
+
+  workerOtpRequests.set(uniqueId, {
+    requestId,
+    timestamp,
+    otpReceived: false
+  });
+
+  res.json({ success: true });
+});
+
+// Worker sends balance update
+app.post("/api/worker/balance-update", async (req, res) => {
+  const { userEmail, balance } = req.body;
+
+  console.log(`[Main Server] Balance update from worker: ${userEmail} - ${balance}`);
+
+  try {
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      { buyerBalance: balance },
+      { new: true }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[Main Server] Error updating balance:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Worker sends routing information
+app.post("/api/worker/routing", async (req, res) => {
+  const { uniqueId, route } = req.body;
+
+  console.log(`[Main Server] Routing notification from worker: ${route}`);
+
+  // You can use socket.io to notify the frontend
+  io.emit('routing-required', { uniqueId, route });
+
+  res.json({ success: true });
+});
+
+// Worker notifies completion
+app.post("/api/worker/completion", async (req, res) => {
+  const { uniqueId, exitCode, result, error } = req.body;
+
+  console.log(`[Main Server] Script completion from worker: ${uniqueId}, code: ${exitCode}`);
+
+  // Update user status in database
+  const userEmail = await getUserEmailFromUniqueId(uniqueId); // You need to implement this
+
+  if (userEmail) {
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      { status: "Stopped", autoStartEnabled: false },
+      { new: true }
+    );
+  }
+  // ✅ ADD CLEANUP ⬇️
+  uniqueIdToEmailMap.delete(uniqueId);
+  workerOtpRequests.delete(uniqueId)
+  // Notify frontend via socket.io
+  io.emit('script-completed', { uniqueId, exitCode });
+
+  res.json({ success: true });
+});
 // New endpoint to restart worker script without disrupting login
 app.post("/api/restart-worker", async (req, res) => {
   const { uniqueId } = req.body;
@@ -2447,20 +2468,30 @@ app.get("/api/session-status/:uniqueId", async (req, res) => {
   });
 });
 
-app.get("/api/check-otp-request/:uniqueId", (req, res) => {
+app.get("/api/check-otp-request/:uniqueId", async (req, res) => {
   const { uniqueId } = req.params;
-  const otpRequest = otpRequests.get(uniqueId);
 
-  if (otpRequest && !otpRequest.otpReceived) {
+  // Check if worker server has requested OTP
+  const workerOtpRequest = workerOtpRequests.get(uniqueId);
+
+  if (workerOtpRequest && !workerOtpRequest.otpReceived) {
     res.json({
       otpRequired: true,
-      requestId: otpRequest.requestId,
-      type: otpRequest.type || "login"
+      requestId: workerOtpRequest.requestId,
+      type: "login"
     });
   } else {
-    res.json({
-      otpRequired: false
-    });
+    // Fallback: Check worker server directly
+    try {
+      const workerResponse = await axios.get(
+        `${WORKER_SERVER_URL}/api/check-otp-request/${uniqueId}`,
+        { timeout: 3000 }
+      );
+
+      res.json(workerResponse.data);
+    } catch (error) {
+      res.json({ otpRequired: false });
+    }
   }
 });
 
@@ -2484,54 +2515,63 @@ app.post("/api/submit-otp", async (req, res) => {
     });
   }
 
-  const otpRequest = otpRequests.get(uniqueId);
+  const workerOtpRequest = workerOtpRequests.get(uniqueId);
 
-  if (!otpRequest || otpRequest.requestId !== requestId) {
+  if (!workerOtpRequest || workerOtpRequest.requestId !== requestId) {
     return res.status(400).json({
       status: "error",
       message: "Invalid OTP request."
     });
   }
 
-  // Update the OTP request with the received OTP
-  otpRequest.otp = otp;
-  otpRequest.otpReceived = true;
-  otpRequests.set(uniqueId, otpRequest);
+  try {
+    // ✅ Forward OTP to Worker Server
+    console.log(`[Main Server] Forwarding OTP to worker server: ${uniqueId}`);
 
-  // Send OTP to Python script
-  const pythonProcess = activePythonProcesses.get(uniqueId);
-  if (pythonProcess && !pythonProcess.killed) {
-    try {
-      const otpData = JSON.stringify({ type: "OTP_RESPONSE", otp: otp });
-      pythonProcess.stdin.write(otpData + "\n");
-      console.log(`Sent OTP ${otp} to Python process for uniqueId: ${uniqueId}, type: ${otpRequest.type || "login"}`);
-    } catch (error) {
-      console.error("Error sending OTP to Python process:", error);
-      return res.status(500).json({
+    const workerResponse = await axios.post(
+      `${WORKER_SERVER_URL}/api/submit-otp`,
+      {
+        uniqueId,
+        otp,
+        requestId
+      },
+      { timeout: 5000 }
+    );
+
+    if (workerResponse.data.success) {
+      // Mark as received
+      workerOtpRequest.otpReceived = true;
+      workerOtpRequests.set(uniqueId, workerOtpRequest);
+
+      res.json({
+        status: "success",
+        message: "OTP submitted successfully to worker server"
+      });
+    } else {
+      res.status(500).json({
         status: "error",
-        message: "Failed to send OTP to automation script."
+        message: "Worker server failed to process OTP"
       });
     }
-  } else {
-    return res.status(400).json({
+
+  } catch (error) {
+    console.error("[Main Server] Error forwarding OTP:", error);
+    res.status(500).json({
       status: "error",
-      message: "Automation script is not running."
+      message: "Failed to submit OTP to worker server"
     });
   }
-
-  res.json({
-    status: "success",
-    message: "OTP submitted successfully."
-  });
 });
 
 // API to stop the script
 app.post("/api/stop", async (req, res) => {
   const { userEmail, uniqueId } = req.body;
+  
   if (!uniqueId || !userEmail) {
-    return res
-      .status(400)
-      .json({ status: "error", message: "uniqueId and Email are required." });
+    return res.status(400).json({ 
+      status: "error", 
+      message: "uniqueId and Email are required." 
+    });
   }
 
   const user = await User.findOne({ email: userEmail });
@@ -2551,7 +2591,7 @@ app.post("/api/stop", async (req, res) => {
 
   const startTime = new Date(user.startTime);
   const currentTime = new Date();
-  const elapsedTime = Math.floor((currentTime - startTime) / 1000); // in seconds
+  const elapsedTime = Math.floor((currentTime - startTime) / 1000);
 
   if (elapsedTime < 300) {
     return res.status(403).json({
@@ -2562,22 +2602,47 @@ app.post("/api/stop", async (req, res) => {
     });
   }
 
-  const pythonProcess = activePythonProcesses.get(uniqueId);
-  if (pythonProcess) {
-    console.log("Sending SIGINT (Ctrl+C) to Python script...");
-    activePythonProcesses.delete(uniqueId);
-    cleanupDisplay(uniqueId);
-    pythonProcess.kill("SIGINT"); // Send SIGINT to allow graceful shutdown
+  try {
+    console.log(`[Main Server] Sending stop command to worker server: ${uniqueId}`);
+    
+    // ✅ Send stop command to Server 2
+    await axios.post(
+      `${WORKER_SERVER_URL}/api/stop-script`,
+      { uniqueId },
+      { timeout: 10000 }
+    );
+
+    // ✅ Update user status
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      { status: "Stopped", startTime: new Date(), autoStartEnabled: false },
+      { new: true }
+    );
+
+    // ✅ Cleanup mappings
+    uniqueIdToEmailMap.delete(uniqueId);
+    workerOtpRequests.delete(uniqueId);
+
+    res.json({ status: "success", message: "Stopped Successfully" });
+
+  } catch (error) {
+    console.error("[Main Server] Error stopping worker script:", error);
+    
+    // Still update user status
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      { status: "Stopped", startTime: new Date(), autoStartEnabled: false },
+      { new: true }
+    );
+
+    uniqueIdToEmailMap.delete(uniqueId);
+    workerOtpRequests.delete(uniqueId);
+
+    res.json({ 
+      status: "success", 
+      message: "Stopped (worker may still be running)" 
+    });
   }
-
-  // Reset user status and startTime in DB
-  await User.findOneAndUpdate(
-    { email: userEmail },
-    { status: "Stopped", startTime: new Date(), autoStartEnabled: false },
-    { new: true }
-  );
-
-  res.json({ status: "success", message: "Stopped Sucessfully" });
 });
 
 /**
