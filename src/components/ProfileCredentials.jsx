@@ -498,7 +498,7 @@ const unlinkWhatsappNumber = async () => {
       setVerificationCode(null);
       setNewWhatsappNumber("");
 
-      const lockUntil = Date.now() + 1 * 60 * 1000;
+      const lockUntil = Date.now() + 1 * 300 * 1000;
       localStorage.setItem("editLockedUntil", lockUntil);
       setEditLockedUntil(lockUntil);
     } else {

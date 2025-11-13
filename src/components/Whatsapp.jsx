@@ -353,130 +353,138 @@ const Whatsapp = () => {
     }
   }, []);
 
-const updateWhatsappNumber = async () => {
-  if (!newWhatsappNumber) {
-    alert("WhatsApp number cannot be empty!");
-    return;
-  }
-
-  updateLoadingState(true);
-  setIsLoading(true);
-  setError(null);
-
-  try {
-    const mobileNumber = localStorage.getItem("mobileNumber");
-
-    const res = await fetch(
-      "https://api.leadscruise.com/api/whatsapp-settings/update-whatsapp-number",
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
-      }
-    );
-
-    const data = await res.json();
-
-    if (res.ok) {
-      if (data.alreadyLinked) {
-        // Instance already exists, just show as linked without opening URL
-        alert("WhatsApp number is already linked!");
-        setWhatsappNumber(newWhatsappNumber);
-        setIsEditingWhatsapp(false);
-        setVerificationCode("111");
-      } else {
-        // New instance created, open QR page and start monitoring
-        setWhatsappNumber(newWhatsappNumber);
-        setIsEditingWhatsapp(false);
-
-        // Open QR page in new tab only for new instances
-        if (data.qrUrl) {
-          const qrWindow = window.open(data.qrUrl, "_blank");
-          
-          // Start polling to check connection status by fetching the URL
-          startConnectionPolling(mobileNumber, newWhatsappNumber, data.qrUrl, qrWindow);
-        }
-      }
+  const updateWhatsappNumber = async () => {
+    if (!newWhatsappNumber) {
+      alert("WhatsApp number cannot be empty!");
+      return;
     }
-    else {
-      alert(data.error || "Failed to update WhatsApp number.");
-      setError("Failed to update WhatsApp number");
-    }
-  } catch (error) {
-    console.error("Update error:", error);
-    alert("Server error during update.");
-    setError("Failed to update WhatsApp number");
-  } finally {
-    setIsLoading(false);
-    updateLoadingState(false);
-  }
-};
-
-const startConnectionPolling = (mobileNumber, whatsappNumber, qrUrl, qrWindow) => {
-  let pollCount = 0;
-  const maxPolls = 180; // Poll for 3 minutes (180 * 1 second)
   
-  const pollInterval = setInterval(async () => {
-    pollCount++;
-    
-    // Stop polling after max attempts
-    if (pollCount > maxPolls) {
-      clearInterval(pollInterval);
-      console.log("Polling timeout - stopped checking connection status");
-      return;
-    }
-
-    // Check if the window is still open
-    if (qrWindow && qrWindow.closed) {
-      clearInterval(pollInterval);
-      console.log("QR window closed - stopped polling");
-      return;
-    }
-
+    updateLoadingState(true);
+    setIsLoading(true);
+    setError(null);
+  
     try {
-      // Fetch the HTML content of the QR page
-      const response = await fetch(qrUrl);
-      const html = await response.text();
-      
-      // Parse the HTML to check for connection status
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // Find the status badge element
-      const statusBadge = doc.getElementById('connection-status');
-      
-      if (statusBadge) {
-        const statusText = statusBadge.textContent.trim().toUpperCase();
-        const dataState = statusBadge.getAttribute('data-state');
-        
-        console.log(`Connection status: ${statusText}, data-state: ${dataState}`);
-        
-        // Check if status is "OPEN" or "CONNECTED"
-        if (statusText === 'OPEN' || statusText === 'CONNECTED' || dataState === 'connected' || dataState === 'open') {
-          clearInterval(pollInterval);
-          
-          // Close the QR window
-          if (qrWindow && !qrWindow.closed) {
-            qrWindow.close();
-          }
-
-          // Update verification code in backend
-          await updateVerificationCode(mobileNumber);
-          
-          // Update local state
-          setVerificationCode("111");
-          
-          alert("WhatsApp linked successfully!");
-          
-          console.log("WhatsApp connection established successfully");
+      const mobileNumber = localStorage.getItem("mobileNumber");
+  
+      const res = await fetch(
+        "https://api.leadscruise.com/api/whatsapp-settings/update-whatsapp-number",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mobileNumber, newWhatsappNumber }),
         }
+      );
+  
+      const data = await res.json();
+  
+      if (res.ok) {
+        if (data.alreadyLinked) {
+          // Instance already exists, just show as linked without opening URL
+          alert("WhatsApp number is already linked!");
+          setWhatsappNumber(newWhatsappNumber);
+          setIsEditingWhatsapp(false);
+          setVerificationCode("111");
+        } else {
+          // New instance created, open QR page and start monitoring
+          setWhatsappNumber(newWhatsappNumber);
+          setIsEditingWhatsapp(false);
+  
+          // Open QR page in popup window
+          if (data.qrUrl) {
+            // Calculate center position
+            const width = 600;
+            const height = 700;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+            
+            const popupFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
+            
+            const qrWindow = window.open(data.qrUrl, "WhatsApp QR Code", popupFeatures);
+            
+            // Start polling to check connection status by fetching the URL
+            startConnectionPolling(mobileNumber, newWhatsappNumber, data.qrUrl, qrWindow);
+          }
+        }
+      }
+      else {
+        alert(data.error || "Failed to update WhatsApp number.");
+        setError("Failed to update WhatsApp number");
       }
     } catch (error) {
-      console.error("Error checking connection status:", error);
-      // Continue polling even if there's an error
+      console.error("Update error:", error);
+      alert("Server error during update.");
+      setError("Failed to update WhatsApp number");
+    } finally {
+      setIsLoading(false);
+      updateLoadingState(false);
     }
-  }, 2000); // Poll every 2 seconds
-};
+  };
+  
+  const startConnectionPolling = (mobileNumber, whatsappNumber, qrUrl, qrWindow) => {
+    let pollCount = 0;
+    const maxPolls = 180; // Poll for 3 minutes (180 * 1 second)
+    
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+      
+      // Stop polling after max attempts
+      if (pollCount > maxPolls) {
+        clearInterval(pollInterval);
+        console.log("Polling timeout - stopped checking connection status");
+        return;
+      }
+  
+      // Check if the window is still open
+      if (qrWindow && qrWindow.closed) {
+        clearInterval(pollInterval);
+        console.log("QR window closed - stopped polling");
+        return;
+      }
+  
+      try {
+        // Fetch the HTML content of the QR page
+        const response = await fetch(qrUrl);
+        const html = await response.text();
+        
+        // Parse the HTML to check for connection status
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Find the status badge element
+        const statusBadge = doc.getElementById('connection-status');
+        
+        if (statusBadge) {
+          const statusText = statusBadge.textContent.trim().toUpperCase();
+          const dataState = statusBadge.getAttribute('data-state');
+          
+          console.log(`Connection status: ${statusText}, data-state: ${dataState}`);
+          
+          // Check if status is "OPEN" or "CONNECTED"
+          if (statusText === 'OPEN' || statusText === 'CONNECTED' || dataState === 'connected' || dataState === 'open') {
+            clearInterval(pollInterval);
+            
+            // Close the QR window
+            if (qrWindow && !qrWindow.closed) {
+              qrWindow.close();
+            }
+  
+            // Update verification code in backend
+            await updateVerificationCode(mobileNumber);
+            
+            // Update local state
+            setVerificationCode("111");
+            
+            alert("WhatsApp linked successfully!");
+            
+            console.log("WhatsApp connection established successfully");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking connection status:", error);
+        // Continue polling even if there's an error
+      }
+    }, 2000); // Poll every 2 seconds
+  };
 
 const updateVerificationCode = async (mobileNumber) => {
   try {
