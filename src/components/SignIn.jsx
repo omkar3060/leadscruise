@@ -353,7 +353,7 @@ const SignIn = () => {
             alert("Error signing in with Google: " + googleError.message);
           }
         }
-      } 
+      }
       else {
         alert(error.response?.data?.message || "GitHub sign-in failed. Please try again.");
       }
@@ -370,18 +370,117 @@ const SignIn = () => {
 
   const handleSignIn = async (e) => {
     e.preventDefault();
-    var res;
     try {
       setIsLoading(true);
-      res = await axios.post("https://api.leadscruise.com/api/login", {
+      const res = await axios.post("https://api.leadscruise.com/api/login", {
         email,
         password,
+        platform: "web",
       });
 
+      // ✅ Check if user is already logged in on another device
+      if (res.data.activeSession === true) {
+        setIsLoading(false);
+        const confirmLogout = window.confirm(
+          `You are already logged in on another device.\n\nDo you want to logout from the other device and login here?`
+        );
+
+        if (confirmLogout) {
+          try {
+            setIsLoading(true);
+
+            // Logout from other device
+            await axios.post("https://api.leadscruise.com/api/logout", {
+              email
+            });
+
+            // Retry login automatically
+            const retryResponse = await axios.post("https://api.leadscruise.com/api/login", {
+              email,
+              password,
+              platform: "web",
+            });
+
+            if (rememberMe) {
+              saveCredentials(email, password);
+            } else {
+              localStorage.removeItem("lastUsedCredentials");
+            }
+
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("password", password);
+            localStorage.setItem("token", retryResponse.data.token);
+            localStorage.setItem("sessionId", retryResponse.data.sessionId);
+            localStorage.setItem("role", retryResponse.data.user.role);
+
+            sessionStorage.removeItem("loginAlertShown");
+
+            // ✅ Follow the same navigation logic as normal login
+            if (email === "demo@leadscruise.com" && (password === "Demo@5477" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
+              try {
+                const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+                if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
+                  localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+                  localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
+                }
+              } catch (paymentError) {
+                console.warn("Demo user payment API error:", paymentError.message);
+              }
+              navigate("/dashboard");
+              return;
+            }
+
+            if (email === "support@leadscruise.com" && (password === "Focus@8073" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
+              navigate("/master");
+              return;
+            }
+
+            if (retryResponse.data.user.mobileNumber && retryResponse.data.user.savedPassword) {
+              localStorage.setItem("mobileNumber", retryResponse.data.user.mobileNumber);
+              localStorage.setItem("savedPassword", retryResponse.data.user.savedPassword);
+              navigate("/dashboard");
+              return;
+            } else {
+              console.warn("User does not have mobileNumber, checking payments");
+            }
+
+            try {
+              console.warn("Calling payment API for email:", email);
+              const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
+              console.warn("Payment API response status:", paymentRes.status);
+              console.warn("Payment API response data:", paymentRes.data);
+
+              if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
+                console.warn("User has payments, going to execute-task");
+                localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
+                localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
+                navigate("/execute-task");
+                return;
+              } else {
+                console.warn("No payments found or payment data is empty");
+              }
+            } catch (paymentError) {
+              console.warn("Payment API error:", paymentError.message);
+            }
+
+            navigate("/check-number");
+            return;
+          } catch (logoutError) {
+            setIsLoading(false);
+            alert("Failed to logout from other device. Please try again.");
+            console.error("Force logout error:", logoutError);
+            return;
+          }
+        } else {
+          // User cancelled, do nothing
+          return;
+        }
+      }
+
+      // ✅ Normal login flow (no active session)
       if (rememberMe) {
         saveCredentials(email, password);
       } else {
-        // Clear last used credentials if remember me is not checked
         localStorage.removeItem("lastUsedCredentials");
       }
 
@@ -391,11 +490,9 @@ const SignIn = () => {
       localStorage.setItem("sessionId", res.data.sessionId);
       localStorage.setItem("role", res.data.user.role);
 
-      // Clear the login alert flag when user successfully logs in
       sessionStorage.removeItem("loginAlertShown");
 
       if (email === "demo@leadscruise.com" && (password === "Demo@5477" || password === "6daa726eda58b3c3c061c3ef0024ffaa")) {
-        // Check if a payment exists for the demo user
         try {
           const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
           if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
@@ -423,37 +520,29 @@ const SignIn = () => {
         console.warn("User does not have mobileNumber, checking payments");
       }
 
-      // Check if a payment exists for the user (only if they don't have mobileNumber)
       try {
         console.warn("Calling payment API for email:", email);
         const paymentRes = await axios.get(`https://api.leadscruise.com/api/payments?email=${email}`);
         console.warn("Payment API response status:", paymentRes.status);
         console.warn("Payment API response data:", paymentRes.data);
-        console.warn("Payment data length:", paymentRes.data.length);
 
-        // If user doesn't have mobileNumber, check if they have payments
         if (paymentRes.status === 200 && Array.isArray(paymentRes.data) && paymentRes.data.length > 0) {
           console.warn("User has payments, going to execute-task");
-          // User has payments but no mobileNumber in profile, use payment contact
           localStorage.setItem("mobileNumber", paymentRes.data[0].contact);
           localStorage.setItem("unique_id", paymentRes.data[0].unique_id);
           navigate("/execute-task");
           return;
         } else {
           console.warn("No payments found or payment data is empty");
-          console.warn("Payment data type:", typeof paymentRes.data);
-          console.warn("Payment data:", paymentRes.data);
         }
       } catch (paymentError) {
-        // If payment API fails (e.g., user has no mobileNumber), continue to check-number
         console.warn("Payment API error:", paymentError.message);
-        console.warn("Payment API error response:", paymentError.response?.data);
       }
 
-      // User has no mobileNumber and no payments, redirect to check-number
       navigate("/check-number");
     } catch (error) {
       setIsLoading(false);
+
       if (error.response) {
         if (error.response.status === 400) {
           if (error.response.data.message === "User not found. Please Signup!!!") {
@@ -467,40 +556,6 @@ const SignIn = () => {
       } else {
         alert("Failed to sign in. Please try again.");
       }
-    }
-    const confirmLogout = window.confirm(
-      `${res.data.message}\n\nDo you want to logout from the other device and login here?`
-    );
-
-    if (confirmLogout) {
-      try {
-        await axios.post("https://api.leadscruise.com/api/logout", {
-          email
-        });
-
-        alert(`Logged out from other session. Retrying login...`);
-
-        // Retry login automatically
-        const retryResponse = await axios.post("https://api.leadscruise.com/api/login", {
-          email,
-          password,
-          platform: "web"
-        });
-
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("token", retryResponse.data.token);
-        localStorage.setItem("sessionId", retryResponse.data.sessionId);
-        localStorage.setItem("role", retryResponse.data.user.role);
-        localStorage.setItem("mobileNumber", retryResponse.data.user.mobileNumber);
-
-        navigate("/dashboard");
-        return;
-      } catch (logoutError) {
-        alert("Failed to logout from other device. Please try again.");
-        console.error("Force logout error:", logoutError);
-      }
-    } else {
-      alert("Login cancelled. You remain logged in on the other device.");
     }
   };
 
