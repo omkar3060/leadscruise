@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import styles from "./Header.module.css";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaCheck, FaUser, FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaCog, FaWhatsapp, FaFileExcel, FaSignOutAlt, FaArrowLeft, FaSave, FaUndo, FaHeadset, FaWallet } from "react-icons/fa";
+import { FaCheck, FaUser, FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaCog, FaWhatsapp, FaFileExcel, FaSignOutAlt, FaArrowLeft, FaSave, FaUndo, FaHeadset, FaWallet, FaChartBar, FaShoppingCart, FaYoutube, FaPhone } from "react-icons/fa";
 import { io } from 'socket.io-client';
 
 const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSubmit, handleRevert, timer, isStarting, cooldownActive, cooldownTime }) => {
@@ -656,9 +656,17 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           <div className={styles.profileDropdown}>
             <ul>
               <li onClick={() => handleNavigation("/profile")}><FaUser /> Profile</li>
+              <li onClick={() => handleNavigation("/dashboard")}><FaChartBar /> Dashboard</li>
+              <li onClick={() => handleNavigation("/ai")}><FaPlay /> AI</li>
+              <li onClick={() => handleNavigation("/analytics")}><FaChartBar /> Analytics</li>
               <li onClick={() => handleNavigation("/settings")}><FaCog /> Settings</li>
               <li onClick={() => handleNavigation("/whatsapp")}><FaWhatsapp /> WhatsApp</li>
               <li onClick={() => handleNavigation("/sheets")}><FaFileExcel /> Sheets</li>
+              <li onClick={() => window.open("https://seller.indiamart.com/", "_blank")}><FaShoppingCart /> IndiaMart</li>
+              <li onClick={() => window.open("https://www.youtube.com/@FocusEngineeringProducts", "_blank")}><FaYoutube /> YouTube</li>
+              <li onClick={() => window.open("https://www.tradeindia.com/join_now/upload_product.html", "_blank")}><FaShoppingCart /> Trade India</li>
+              <li onClick={() => window.open("https://www.exportersindia.com/register-business-online?joinfree=sellurprdtshead", "_blank")}><FaShoppingCart /> Exporters India</li>
+              <li onClick={() => window.open("https://www.justdial.com/Advertise?source=77", "_blank")}><FaPhone /> JustDial</li>
               {isMobile && (
                 <li onClick={() => setIsPopupOpen(true)} className={styles.supportItem}>
                   <FaHeadset /> Contact Support
