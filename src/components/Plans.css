@@ -1,6 +1,7 @@
 body {
   background: transparent !important;
   background-image: none !important;
+  overflow: auto !important;
 }
 .plans-container {
   height: 100vh;
@@ -14,7 +15,7 @@ body {
   font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
   box-sizing: border-box;
   margin: 0 auto;
-  overflow: hidden; /* Remove scroll */
+  overflow: auto; /* Remove scroll */
 }
 
 .plans-content {
@@ -424,6 +425,7 @@ body {
 @media (max-width: 1400px) and (min-width: 1200px) {
   .plans-container {
     padding: 15px;
+    overflow-y: auto; /* Re-enable scroll for smaller screens */
   }
   
   .plans-header h2 {
@@ -455,13 +457,14 @@ body {
     overflow-y: auto;
     height: auto;
     min-height: 100vh;
-    padding: 20px 10px;
+    padding: 10px 10px 20px 10px; /* Reduced top padding from 20px to 10px */
   }
   
   .plans-grid {
     grid-template-columns: 1fr;
     gap: 20px;
     padding: 0;
+    margin-top: 10px;
   }
   
   .plan-card {
@@ -469,9 +472,41 @@ body {
     margin: 0 auto;
     height: auto;
   }
+  .plans-header {
+  margin-bottom: 15px; /* Reduced from 20px */
+}
+  .plans-header h2 {
+    font-size: 16px;
+    text-align: center;
+  }
+  .popular-badge {
+  top: -8px; /* Reduced from -10px */
+  padding: 3px 12px; /* Smaller badge */
+  font-size: 10px; /* Smaller text */
+}
+}
+/* NEW - For phones with height ≤ 700px */
+@media (max-width: 768px) and (max-height: 700px) {
+  .plans-container {
+    padding: 5px 10px 20px 10px; /* Even less top padding */
+  }
+  
+  .plans-header {
+    margin-bottom: 10px; /* Tighter spacing */
+  }
   
   .plans-header h2 {
-    font-size: 18px;
-    text-align: center;
+    font-size: 14px; /* Smaller title */
+  }
+  
+  .plans-header .go-back-btn {
+    padding: 5px 12px; /* Smaller button */
+    font-size: 0.75rem;
+  }
+  
+  .popular-badge {
+    top: -6px; /* Even closer to card */
+    padding: 2px 10px;
+    font-size: 9px;
   }
 }
