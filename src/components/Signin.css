@@ -820,16 +820,13 @@ html, body {
   .login-box {
     padding: 1.5rem 1rem;
     border-radius: 6px;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.15),
-      rgba(255, 255, 255, 0.1)
-    );
+    background: white; /* Solid white instead of transparent gradient */
   }
   
   .login-title {
     font-size: 1.625rem;
     margin-bottom: 1.25rem;
+    text-align: left; /* Add this line */
   }
   
   .input-group {
