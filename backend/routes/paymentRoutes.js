@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const cron = require("node-cron");
 
 // Configure Multer for handling file uploads (store files in memory)
 const storage = multer.memoryStorage();
@@ -148,17 +149,55 @@ router.get("/get-subscription/:email", async (req, res) => {
     const renewalDate = new Date(createdDate);
     renewalDate.setDate(renewalDate.getDate() + subscriptionDuration);
 
-    // Check Subscription Status
+    // Calculate days remaining from renewal date
     const today = new Date();
-    const status = today < renewalDate ? "ACTIVE" : "EXPIRED";
+    today.setHours(0, 0, 0, 0);
+    const renewalDateOnly = new Date(renewalDate);
+    renewalDateOnly.setHours(0, 0, 0, 0);
+    const diffTime = renewalDateOnly - today;
+    const calculatedDaysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Get days_remaining from database (if it exists)
+    const dbDaysRemaining = subscription.days_remaining || 0;
+    
+    // console.log("Calculated Days Remaining:", calculatedDaysRemaining);
+    // console.log("DB Days Remaining:", dbDaysRemaining);
+    
+    // Use the maximum of both values
+    const daysRemaining = Math.max(calculatedDaysRemaining, dbDaysRemaining);
+
+    // Calculate the correct renewal date based on the max days remaining
+    const finalRenewalDate = new Date(today);
+    finalRenewalDate.setDate(finalRenewalDate.getDate() + daysRemaining);
+
+    // Check Subscription Status
+    const status = daysRemaining > 0 ? "ACTIVE" : "EXPIRED";
 
     res.json({
-      renewal_date: renewalDate.toISOString().split("T")[0], // Format: YYYY-MM-DD
-      status: status, unique_id: subscription.unique_id
+      renewal_date: finalRenewalDate.toISOString().split("T")[0], // Format: YYYY-MM-DD
+      status: status,
+      unique_id: subscription.unique_id,
+      days_remaining: daysRemaining,
+      autopay_enabled: subscription.autopay_enabled || false
     });
   } catch (error) {
     console.error("Error fetching subscription details:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+cron.schedule("0 0 * * *", async () => {
+  try {
+    console.log("⏳ Running daily subscription cycle...");
+
+    const result = await Payment.updateMany(
+      { days_remaining: { $gt: 0 } },   // only if days_remaining exists & > 0
+      { $inc: { days_remaining: -1 } }  // decrement by 1
+    );
+
+    console.log("✅ Daily subscription update completed:", result.modifiedCount, "documents updated");
+  } catch (error) {
+    console.error("❌ Error updating days_remaining:", error);
   }
 });
 

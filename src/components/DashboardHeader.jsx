@@ -243,38 +243,28 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
           console.warn("No user email found in localStorage.");
           return;
         }
-
+  
         const response = await axios.get(`https://api.leadscruise.com/api/get-subscription/${userEmail}`);
-        const { renewal_date, status, unique_id, autopay_enabled } = response.data;
-
+        const { renewal_date, status, unique_id, autopay_enabled, days_remaining } = response.data;
+  
         // Set autopay status
         setHasAutopay(autopay_enabled === true || autopay_enabled === 1);
-
+  
         if (!unique_id) {
           console.warn("Unique ID is missing from the response.");
         } else {
           localStorage.setItem("unique_id", unique_id);
         }
-
+  
         setSubscriptionDetails({ renewal_date, status, unique_id });
         localStorage.setItem("subscriptionDetails", JSON.stringify(response.data));
-
-        if (!renewal_date) {
-          console.warn("Invalid renewal date received.");
-          return;
-        }
-
-        const renewalDate = new Date(renewal_date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diffTime = renewalDate - today;
-        let remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (remainingDays < 0) {
-          remainingDays = 0;
-        }
+  
+        // Use days_remaining from backend (which is already the max of DB and calculated)
+        const remainingDays = Math.max(days_remaining || 0, 0);
+        
         setDaysLeft(remainingDays);
         setIsSubscriptionActive(remainingDays > 0);
-
+  
         const hasSeenPopup = localStorage.getItem("hasSeenPopup");
         if (
           userEmail?.trim().toLowerCase() !== "support@leadscruise.com" &&
@@ -288,15 +278,15 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         }
       } catch (error) {
         console.error("Error fetching subscription details:", error.response?.data || error.message);
-
+  
         if (error.response?.data?.message === "No subscription found") {
           const today = new Date().toISOString().split("T")[0];
           setSubscriptionDetails({ renewal_date: today, status: "Expired", unique_id: "Unavailable" });
           localStorage.setItem("subscriptionDetails", JSON.stringify({ renewal_date: today, status: "Expired", unique_id: "Unavailable" }));
-
+  
           setDaysLeft(0);
           setIsSubscriptionActive(false);
-
+  
           const hasSeenPopup = localStorage.getItem("hasSeenPopup");
           if (!hasSeenPopup) {
             setShowPopup(true);
@@ -306,7 +296,7 @@ const DashboardHeader = ({ status, handleStart, handleStop, isDisabled, handleSu
         }
       }
     };
-
+  
     fetchSubscriptionDetails();
   }, []);
 
