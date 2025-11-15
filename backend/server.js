@@ -1727,7 +1727,13 @@ We typically respond within some minutes!`;
     });
   });
 });
-
+const whatsappFilterSchema = new mongoose.Schema({
+  userEmail: { type: String, required: true, unique: true },
+  todayOnlyEnabled: { type: Boolean, default: true },
+  enabledAt: { type: Date, default: Date.now },
+  expiresAt: { type: Date, default: () => new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) }
+});
+const WhatsAppFilter = mongoose.model("WhatsAppFilter", whatsappFilterSchema);
 const userLeadCounterSchema = new mongoose.Schema({
   user_mobile_number: { type: String, required: true, unique: true },
   leadCount: { type: Number, default: 0 },
@@ -2158,7 +2164,114 @@ const SUBSCRIPTION_DURATIONS = {
 //     console.error("Cron job error:", err.message);
 //   }
 // });
+// Get WhatsApp filter status
+app.get("/api/whatsapp-filter/status", async (req, res) => {
+  try {
+    const { userEmail } = req.query;
 
+    if (!userEmail) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User email is required" 
+      });
+    }
+
+    let filter = await WhatsAppFilter.findOne({ userEmail });
+
+    // If no filter exists, create one with default settings
+    if (!filter) {
+      filter = new WhatsAppFilter({
+        userEmail,
+        todayOnlyEnabled: true,
+        enabledAt: new Date(),
+        expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+      });
+      await filter.save();
+    }
+
+    // Check if filter has expired (auto-disable after 3 days)
+    const now = new Date();
+    if (filter.todayOnlyEnabled && now >= filter.expiresAt) {
+      filter.todayOnlyEnabled = false;
+      await filter.save();
+    }
+
+    // Calculate time remaining
+    const timeRemaining = filter.expiresAt - now;
+    const daysRemaining = Math.max(0, Math.floor(timeRemaining / (1000 * 60 * 60 * 24)));
+    const hoursRemaining = Math.max(0, Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+
+    res.json({
+      success: true,
+      todayOnlyEnabled: filter.todayOnlyEnabled,
+      enabledAt: filter.enabledAt,
+      expiresAt: filter.expiresAt,
+      daysRemaining,
+      hoursRemaining,
+      hasExpired: now >= filter.expiresAt
+    });
+
+  } catch (error) {
+    console.error("Error fetching WhatsApp filter status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
+
+// Toggle WhatsApp filter
+app.post("/api/whatsapp-filter/toggle", async (req, res) => {
+  try {
+    const { userEmail, enabled } = req.body;
+
+    if (!userEmail) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User email is required" 
+      });
+    }
+
+    let filter = await WhatsAppFilter.findOne({ userEmail });
+
+    if (!filter) {
+      // Create new filter
+      filter = new WhatsAppFilter({
+        userEmail,
+        todayOnlyEnabled: enabled,
+        enabledAt: enabled ? new Date() : null,
+        expiresAt: enabled ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) : null
+      });
+    } else {
+      // Update existing filter
+      filter.todayOnlyEnabled = enabled;
+      
+      if (enabled) {
+        // Reset timer when re-enabled
+        filter.enabledAt = new Date();
+        filter.expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      }
+    }
+
+    await filter.save();
+
+    res.json({
+      success: true,
+      message: `WhatsApp filter ${enabled ? 'enabled' : 'disabled'} successfully`,
+      todayOnlyEnabled: filter.todayOnlyEnabled,
+      expiresAt: filter.expiresAt
+    });
+
+  } catch (error) {
+    console.error("Error toggling WhatsApp filter:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
+  }
+});
 app.post("/api/cycle", async (req, res) => {
   console.log("Received raw data:", JSON.stringify(req.body, null, 2));
   let {
@@ -2821,7 +2934,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // ✅ Step 1: Check for duplicate leads in FetchedLead collection
+    // Check for duplicate leads
     const existingFetchedLead = await FetchedLead.findOne({
       name,
       mobile,
@@ -2868,7 +2981,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       });
     }
 
-    // ✅ Step 2: Check if lead already exists in AI-generated leads collection
+    // Check if lead already exists in AI-generated leads
     const existingAILead = await Lead.findOne({
       name,
       email,
@@ -2885,12 +2998,11 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       aiProcessed: true,
     });
 
-    // ✅ Step 3: Determine source and score
     const leadSource = existingAILead ? "AI" : "Manual";
     const isAIProcessed = !existingAILead;
-    const scoreValue = existingAILead ? existingAILead.score || 0 : 0; // 👈 fetch score if found
+    const scoreValue = existingAILead ? existingAILead.score || 0 : 0;
 
-    // ✅ Step 4: Store the new fetched lead
+    // Store the new fetched lead
     const newLead = new FetchedLead({
       name,
       email,
@@ -2901,11 +3013,107 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       createdAt: timestamp_text ? new Date(timestamp_text) : new Date(),
       source: leadSource,
       aiProcessed: isAIProcessed,
-      score: scoreValue, // 👈 store the same score in fetched lead
+      score: scoreValue,
     });
 
     await newLead.save();
     console.log("Lead saved successfully in FetchedLead:", newLead._id);
+
+    // ✅ NEW: Check WhatsApp filter status before sending message
+    try {
+      const user = await User.findOne({ mobileNumber: user_mobile_number });
+      const userEmail = user?.email;
+
+      if (!userEmail) {
+        console.warn("User email not found for mobile:", user_mobile_number);
+        return res.json({
+          message: "Lead stored successfully",
+          lead: newLead,
+        });
+      }
+
+      // Check filter status
+      let filter = await WhatsAppFilter.findOne({ userEmail });
+      
+      // Auto-create filter if it doesn't exist (default: ON for 3 days)
+      if (!filter) {
+        filter = new WhatsAppFilter({
+          userEmail,
+          todayOnlyEnabled: true,
+          enabledAt: new Date(),
+          expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+        });
+        await filter.save();
+      }
+
+      // Check if filter has expired
+      const now = new Date();
+      if (filter.todayOnlyEnabled && now >= filter.expiresAt) {
+        filter.todayOnlyEnabled = false;
+        await filter.save();
+      }
+
+      // ✅ NEW: Only send WhatsApp if filter allows it
+      let shouldSendWhatsApp = true;
+      
+      if (filter.todayOnlyEnabled) {
+        // Filter is ON: Only send for today's leads
+        const leadDate = new Date(timestamp_text);
+        const today = new Date();
+        
+        // Check if lead is from today (same date)
+        const isToday = 
+          leadDate.getDate() === today.getDate() &&
+          leadDate.getMonth() === today.getMonth() &&
+          leadDate.getFullYear() === today.getFullYear();
+        
+        shouldSendWhatsApp = isToday;
+        
+        if (!isToday) {
+          console.log(`WhatsApp filter ON: Skipping message for lead from ${leadDate.toDateString()} (not today)`);
+        }
+      }
+
+      // Send WhatsApp message only if filter allows
+      if (shouldSendWhatsApp) {
+        const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
+
+        if (settings && settings.instanceToken && settings.instanceName && settings.messages && settings.messages.length > 0) {
+          let templateMessage = settings.messages[0];
+          templateMessage = templateMessage
+            .replace("{lead_name}", name || "")
+            .replace("{lead_product_requested}", lead_bought || "")
+            .replace("{leadscruise_email}", userEmail || "support@leadscruise.com");
+
+          const whatsappApiUrl = `https://connect.leadscruise.com/message/sendText/${settings.instanceName}`;
+
+          const whatsappResponse = await fetch(whatsappApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': settings.instanceToken
+            },
+            body: JSON.stringify({
+              number: mobile,
+              text: templateMessage
+            })
+          });
+
+          if (whatsappResponse.ok) {
+            const whatsappData = await whatsappResponse.json();
+            console.log("WhatsApp message sent successfully:", whatsappData);
+          } else {
+            const errorText = await whatsappResponse.text();
+            console.error("Failed to send WhatsApp message:", whatsappResponse.status, errorText);
+          }
+        } else {
+          console.warn("WhatsApp settings not configured properly for user:", user_mobile_number);
+        }
+      }
+    } catch (whatsappError) {
+      console.error("Error sending WhatsApp message:", whatsappError);
+      // Don't fail the entire request if WhatsApp sending fails
+    }
 
     return res.json({
       message: "Lead stored successfully",
@@ -3433,7 +3641,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // ✅ Step 1: Check for duplicate leads in FetchedLead collection
+    // Check for duplicate leads
     const existingFetchedLead = await FetchedLead.findOne({
       name,
       mobile,
@@ -3480,7 +3688,7 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       });
     }
 
-    // ✅ Step 2: Check if lead already exists in AI-generated leads collection
+    // Check if lead already exists in AI-generated leads
     const existingAILead = await Lead.findOne({
       name,
       email,
@@ -3497,12 +3705,11 @@ app.post("/api/store-fetched-lead", async (req, res) => {
       aiProcessed: true,
     });
 
-    // ✅ Step 3: Determine source and score
     const leadSource = existingAILead ? "AI" : "Manual";
     const isAIProcessed = !existingAILead;
     const scoreValue = existingAILead ? existingAILead.score || 0 : 0;
 
-    // ✅ Step 4: Store the new fetched lead
+    // Store the new fetched lead
     const newLead = new FetchedLead({
       name,
       email,
@@ -3519,44 +3726,96 @@ app.post("/api/store-fetched-lead", async (req, res) => {
     await newLead.save();
     console.log("Lead saved successfully in FetchedLead:", newLead._id);
 
-    // ✅ Step 5: Send WhatsApp message after saving lead
+    // ✅ NEW: Check WhatsApp filter status before sending message
     try {
-      // Fetch WhatsApp settings and user info
-      const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
       const user = await User.findOne({ mobileNumber: user_mobile_number });
+      const userEmail = user?.email;
 
-      if (settings && settings.instanceToken && settings.instanceName && settings.messages && settings.messages.length > 0) {
-        // Prepare WhatsApp message using template
-        let templateMessage = settings.messages[0];
-        templateMessage = templateMessage
-          .replace("{lead_name}", name || "")
-          .replace("{lead_product_requested}", lead_bought || "")
-          .replace("{leadscruise_email}", user?.email || "support@leadscruise.com");
-
-        // Send WhatsApp message via LeadsCruise Connect API
-        const whatsappApiUrl = `https://connect.leadscruise.com/message/sendText/${settings.instanceName}`;
-
-        const whatsappResponse = await fetch(whatsappApiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': settings.instanceToken
-          },
-          body: JSON.stringify({
-            number: mobile, // Lead's mobile number
-            text: templateMessage
-          })
+      if (!userEmail) {
+        console.warn("User email not found for mobile:", user_mobile_number);
+        return res.json({
+          message: "Lead stored successfully",
+          lead: newLead,
         });
+      }
 
-        if (whatsappResponse.ok) {
-          const whatsappData = await whatsappResponse.json();
-          console.log("WhatsApp message sent successfully:", whatsappData);
-        } else {
-          const errorText = await whatsappResponse.text();
-          console.error("Failed to send WhatsApp message:", whatsappResponse.status, errorText);
+      // Check filter status
+      let filter = await WhatsAppFilter.findOne({ userEmail });
+      
+      // Auto-create filter if it doesn't exist (default: ON for 3 days)
+      if (!filter) {
+        filter = new WhatsAppFilter({
+          userEmail,
+          todayOnlyEnabled: true,
+          enabledAt: new Date(),
+          expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+        });
+        await filter.save();
+      }
+
+      // Check if filter has expired
+      const now = new Date();
+      if (filter.todayOnlyEnabled && now >= filter.expiresAt) {
+        filter.todayOnlyEnabled = false;
+        await filter.save();
+      }
+
+      // ✅ NEW: Only send WhatsApp if filter allows it
+      let shouldSendWhatsApp = true;
+      
+      if (filter.todayOnlyEnabled) {
+        // Filter is ON: Only send for today's leads
+        const leadDate = new Date(timestamp_text);
+        const today = new Date();
+        
+        // Check if lead is from today (same date)
+        const isToday = 
+          leadDate.getDate() === today.getDate() &&
+          leadDate.getMonth() === today.getMonth() &&
+          leadDate.getFullYear() === today.getFullYear();
+        
+        shouldSendWhatsApp = isToday;
+        
+        if (!isToday) {
+          console.log(`WhatsApp filter ON: Skipping message for lead from ${leadDate.toDateString()} (not today)`);
         }
-      } else {
-        console.warn("WhatsApp settings not configured properly for user:", user_mobile_number);
+      }
+
+      // Send WhatsApp message only if filter allows
+      if (shouldSendWhatsApp) {
+        const settings = await WhatsAppSettings.findOne({ mobileNumber: user_mobile_number });
+
+        if (settings && settings.instanceToken && settings.instanceName && settings.messages && settings.messages.length > 0) {
+          let templateMessage = settings.messages[0];
+          templateMessage = templateMessage
+            .replace("{lead_name}", name || "")
+            .replace("{lead_product_requested}", lead_bought || "")
+            .replace("{leadscruise_email}", userEmail || "support@leadscruise.com");
+
+          const whatsappApiUrl = `https://connect.leadscruise.com/message/sendText/${settings.instanceName}`;
+
+          const whatsappResponse = await fetch(whatsappApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': settings.instanceToken
+            },
+            body: JSON.stringify({
+              number: mobile,
+              text: templateMessage
+            })
+          });
+
+          if (whatsappResponse.ok) {
+            const whatsappData = await whatsappResponse.json();
+            console.log("WhatsApp message sent successfully:", whatsappData);
+          } else {
+            const errorText = await whatsappResponse.text();
+            console.error("Failed to send WhatsApp message:", whatsappResponse.status, errorText);
+          }
+        } else {
+          console.warn("WhatsApp settings not configured properly for user:", user_mobile_number);
+        }
       }
     } catch (whatsappError) {
       console.error("Error sending WhatsApp message:", whatsappError);

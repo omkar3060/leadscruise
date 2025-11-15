@@ -149,7 +149,157 @@ const StatesDropdown = ({ userEmail, automationStatus }) => {
     </div>
   );
 };
+const WhatsAppFilterToggle = ({ userEmail, automationStatus }) => {
+  const [isEnabled, setIsEnabled] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [timeInfo, setTimeInfo] = useState({
+    daysRemaining: 0,
+    hoursRemaining: 0,
+    hasExpired: false
+  });
 
+  const fetchFilterStatus = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `https://api.leadscruise.com/api/whatsapp-filter/status?userEmail=${userEmail}`
+      );
+
+      if (response.data.success) {
+        setIsEnabled(response.data.todayOnlyEnabled);
+        setTimeInfo({
+          daysRemaining: response.data.daysRemaining,
+          hoursRemaining: response.data.hoursRemaining,
+          hasExpired: response.data.hasExpired
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch WhatsApp filter status:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (userEmail) {
+      fetchFilterStatus();
+      
+      // Auto-refresh every minute to update countdown
+      const interval = setInterval(fetchFilterStatus, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [userEmail, fetchFilterStatus]);
+
+  const handleToggle = async () => {
+    if (automationStatus === "Running") {
+      alert("Cannot change WhatsApp filter while automation is running");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const newState = !isEnabled;
+      
+      const response = await axios.post(
+        "https://api.leadscruise.com/api/whatsapp-filter/toggle",
+        {
+          userEmail,
+          enabled: newState
+        }
+      );
+
+      if (response.data.success) {
+        setIsEnabled(newState);
+        await fetchFilterStatus(); // Refresh to get updated expiry time
+        
+        if (newState) {
+          alert("WhatsApp filter enabled! Messages will only be sent for today's leads for the next 3 days.");
+        } else {
+          alert("WhatsApp filter disabled. All leads will receive WhatsApp messages.");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to toggle WhatsApp filter:", error);
+      alert("Failed to update WhatsApp filter. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusText = () => {
+    if (!isEnabled) {
+      return "All Leads (Filter OFF)";
+    }
+    
+    if (timeInfo.hasExpired) {
+      return "Expired - All Leads";
+    }
+    
+    if (timeInfo.daysRemaining > 0) {
+      return `Today's Leads Only (${timeInfo.daysRemaining}d ${timeInfo.hoursRemaining}h left)`;
+    }
+    
+    return `Today's Leads Only (${timeInfo.hoursRemaining}h left)`;
+  };
+
+  const getStatusColor = () => {
+    if (!isEnabled || timeInfo.hasExpired) return "#6c757d";
+    if (timeInfo.daysRemaining === 0 && timeInfo.hoursRemaining < 6) return "#ff9800";
+    return "#28a745";
+  };
+
+  return (
+    <div className="credentials-section">
+      <div className="credentials-header">WhatsApp Message Filter</div>
+      <div className="whatsapp-filter-container">
+        <div className="filter-info">
+          <div className="filter-status-text" style={{ color: getStatusColor() }}>
+            {loading ? "Loading..." : getStatusText()}
+          </div>
+          <div className="filter-description">
+            {isEnabled && !timeInfo.hasExpired ? (
+              <>
+                <span style={{ color: "#28a745", fontWeight: "600" }}>✓ Active:</span> 
+                {" "}Only sending WhatsApp messages for leads captured today
+              </>
+            ) : (
+              <>
+                <span style={{ color: "#6c757d", fontWeight: "600" }}>○ Inactive:</span> 
+                {" "}(default behavior)
+              </>
+            )}
+          </div>
+        </div>
+        
+        <label className="whatsapp-filter-switch">
+          <input
+            type="checkbox"
+            checked={isEnabled && !timeInfo.hasExpired}
+            onChange={handleToggle}
+            disabled={loading || automationStatus === "Running"}
+          />
+          <span className="whatsapp-filter-slider"></span>
+        </label>
+      </div>
+      
+      {/*{isEnabled && !timeInfo.hasExpired && (
+        <div className="filter-warning">
+          <span style={{ fontSize: "18px" }}>⏱️</span>
+          <span>
+            This filter will automatically turn off in{" "}
+            {timeInfo.daysRemaining > 0 && `${timeInfo.daysRemaining} day${timeInfo.daysRemaining > 1 ? 's' : ''} `}
+            {timeInfo.hoursRemaining > 0 && `${timeInfo.hoursRemaining} hour${timeInfo.hoursRemaining > 1 ? 's' : ''}`}
+          </span>
+        </div>
+      )}*/}
+      
+      {automationStatus === "Running" && (
+        <div className="filter-locked-message">
+          🔒 Filter locked while automation is running
+        </div>
+      )}
+    </div>
+  );
+};
 const ProfileCredentials = ({
   isProfilePage,
   newWhatsappNumber,
@@ -963,7 +1113,12 @@ const unlinkWhatsappNumber = async () => {
           </div>
         </div>
       )}
-
+      {isSettingsPage && !isWhatsAppPage && (
+  <WhatsAppFilterToggle 
+    userEmail={localStorage.getItem("userEmail")}
+    automationStatus={automationStatus}
+  />
+)}
       {/* Upgrade Popup Modal - Only shows when non-yearly user clicks buttons */}
       {showUpgradePopup && (
         <div style={{
